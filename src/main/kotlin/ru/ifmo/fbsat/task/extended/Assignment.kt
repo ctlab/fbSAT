@@ -1,0 +1,228 @@
+package ru.ifmo.fbsat.task.extended
+
+import ru.ifmo.fbsat.automaton.Algorithm
+import ru.ifmo.fbsat.automaton.Automaton
+import ru.ifmo.fbsat.automaton.BinaryAlgorithm
+import ru.ifmo.fbsat.automaton.NodeType
+import ru.ifmo.fbsat.automaton.ParseTreeGuard
+import ru.ifmo.fbsat.scenario.CounterExampleTree
+import ru.ifmo.fbsat.scenario.ScenarioTree
+import ru.ifmo.fbsat.utils.BooleanMultiArray
+import ru.ifmo.fbsat.utils.IntMultiArray
+import ru.ifmo.fbsat.utils.MultiArray
+
+internal class Assignment(
+    val scenarioTree: ScenarioTree,
+    val C: Int,
+    val K: Int,
+    val P: Int,
+    // val T: Int,
+    // val N: Int,
+    val color: IntMultiArray,
+    val transition: IntMultiArray,
+    val activeTransition: BooleanMultiArray,
+    val inputEvent: IntMultiArray,
+    val outputEvent: IntMultiArray,
+    val algorithm: MultiArray<Algorithm>,
+    val nodeType: MultiArray<NodeType>,
+    val terminal: IntMultiArray,
+    val parent: IntMultiArray,
+    val childLeft: IntMultiArray,
+    val childRight: IntMultiArray,
+    val value: BooleanMultiArray,
+    val childValueLeft: BooleanMultiArray,
+    val childValueRight: BooleanMultiArray,
+    val firstFired: BooleanMultiArray,
+    val notFired: BooleanMultiArray
+) {
+    companion object {
+        @Suppress("LocalVariableName")
+        fun fromRaw(
+            raw: BooleanArray,
+            reduction: Reduction
+        ): Assignment {
+            val scenarioTree = reduction.scenarioTree
+            // Constants
+            val C = reduction.C
+            val K = reduction.K
+            val P = reduction.P
+            val V = scenarioTree.size
+            val E = scenarioTree.inputEvents.size
+            val O = scenarioTree.outputEvents.size
+            val U = scenarioTree.uniqueInputs.size
+            val X = scenarioTree.uniqueInputs.first().length
+            val Z = scenarioTree.uniqueOutputs.first().length
+            // Automaton variables
+            val color = IntMultiArray.new(V) { (v) ->
+                (1..C).firstOrNull { c -> raw[reduction.color[v, c] - 1] }
+                    ?: throw IllegalStateException("color[v = $v] is undefined")
+            }
+            val transition = IntMultiArray.new(C, K) { (i, k) ->
+                (1..C).firstOrNull { j -> raw[reduction.transition[i, k, j] - 1] }
+                    ?: 0
+            }
+            val activeTransition = BooleanMultiArray.new(C, C, E, U) { (i, j, e, u) ->
+                raw[reduction.activeTransition[i, j, e, u] - 1]
+            }
+            val inputEvent = IntMultiArray.new(C, K) { (c, k) ->
+                (1..E).firstOrNull { e -> raw[reduction.inputEvent[c, k, e] - 1] }
+                    ?: 0
+            }
+            val outputEvent = IntMultiArray.new(C) { (c) ->
+                (1..O).firstOrNull { o -> raw[reduction.outputEvent[c, o] - 1] }
+                    ?: throw IllegalStateException("outputEvent[c = $c] is undefined")
+            }
+            val algorithm = MultiArray.new<Algorithm>(C) { (c) ->
+                BinaryAlgorithm(
+                    // Note: c is 1-based, z is 0-based
+                    algorithm0 = BooleanArray(Z) { z -> raw[reduction.algorithm0[c, z + 1] - 1] },
+                    algorithm1 = BooleanArray(Z) { z -> raw[reduction.algorithm1[c, z + 1] - 1] }
+                )
+            }
+            // Guards variables
+            val nodeType = MultiArray.new(C, K, P) { (c, k, p) ->
+                NodeType.values().firstOrNull { nt -> raw[reduction.nodeType[c, k, p, nt.value] - 1] }
+                    ?: throw IllegalStateException("nodeType[c,k,p = $c,$k,$p] is undefined")
+            }
+            val terminal = IntMultiArray.new(C, K, P) { (c, k, p) ->
+                (1..X).firstOrNull { x -> raw[reduction.terminal[c, k, p, x] - 1] }
+                    ?: 0
+            }
+            val parent = IntMultiArray.new(C, K, P) { (c, k, p) ->
+                (1..P).firstOrNull { ch -> raw[reduction.parent[c, k, p, ch] - 1] }
+                    ?: 0
+            }
+            val childLeft = IntMultiArray.new(C, K, P) { (c, k, p) ->
+                (1..P).firstOrNull { ch -> raw[reduction.childLeft[c, k, p, ch] - 1] }
+                    ?: 0
+            }
+            val childRight = IntMultiArray.new(C, K, P) { (c, k, p) ->
+                (1..P).firstOrNull { ch -> raw[reduction.childRight[c, k, p, ch] - 1] }
+                    ?: 0
+            }
+            val nodeValue = BooleanMultiArray.new(C, K, P, U) { (c, k, p, u) ->
+                raw[reduction.nodeValue[c, k, p, u] - 1]
+            }
+            val childValueLeft = BooleanMultiArray.new(C, K, P, U) { (c, k, p, u) ->
+                raw[reduction.childValueLeft[c, k, p, u] - 1]
+            }
+            val childValueRight = BooleanMultiArray.new(C, K, P, U) { (c, k, p, u) ->
+                raw[reduction.childValueRight[c, k, p, u] - 1]
+            }
+            val firstFired = BooleanMultiArray.new(C, U, K) { (c, u, k) ->
+                raw[reduction.firstFired[c, u, k] - 1]
+            }
+            val notFired = BooleanMultiArray.new(C, U, K) { (c, u, k) ->
+                raw[reduction.notFired[c, u, k] - 1]
+            }
+            // Number of transitions:
+            // val T = transition.values.count { it != 0 }
+            // Number of nodes (total guards size):
+            // val N = nodeType.values.count { it != NodeType.NONE }
+
+            return Assignment(
+                scenarioTree, C, K, P,
+                color, transition, activeTransition, inputEvent, outputEvent, algorithm,
+                nodeType, terminal, parent, childLeft, childRight,
+                nodeValue, childValueLeft, childValueRight, firstFired, notFired
+            )
+        }
+    }
+}
+
+@Suppress("LocalVariableName")
+internal fun Assignment.toAutomaton(): Automaton {
+    val automaton = Automaton(scenarioTree)
+
+    for (c in 1..C)
+        automaton.addState(
+            id = c,
+            outputEvent = scenarioTree.outputEvents[outputEvent[c] - 1],
+            algorithm = algorithm[c]
+        )
+
+    for (c in 1..C)
+        for (k in 1..K)
+            if (transition[c, k] != 0)
+                automaton.addTransition(
+                    sourceId = c,
+                    destinationId = transition[c, k],
+                    inputEvent = scenarioTree.inputEvents[inputEvent[c, k] - 1],
+                    guard = ParseTreeGuard(
+                        nodeType = MultiArray.new(P) { (p) -> nodeType[c, k, p] },
+                        terminal = IntMultiArray.new(P) { (p) -> terminal[c, k, p] },
+                        parent = IntMultiArray.new(P) { (p) -> parent[c, k, p] },
+                        childLeft = IntMultiArray.new(P) { (p) -> childLeft[c, k, p] },
+                        childRight = IntMultiArray.new(P) { (p) -> childRight[c, k, p] },
+                        inputNames = scenarioTree.inputNames
+                    )
+                )
+
+    return automaton
+}
+
+internal class CEAssignment(
+    val ceTree: CounterExampleTree,
+    val C: Int,
+    val K: Int,
+    val P: Int,
+    val activeTransition: BooleanMultiArray,
+    val nodeValue: BooleanMultiArray,
+    val childValueLeft: BooleanMultiArray,
+    val childValueRight: BooleanMultiArray,
+    val firstFired: BooleanMultiArray,
+    val notFired: BooleanMultiArray,
+    val satisfaction: IntMultiArray
+) {
+    companion object {
+        @Suppress("LocalVariableName")
+        fun fromRaw(
+            raw: BooleanArray,
+            reduction: CEReduction
+        ): CEAssignment {
+            val ceTree = reduction.ceTree
+            // Constants
+            val C = reduction.C
+            val K = reduction.K
+            val P = reduction.P
+            val E = ceTree.inputEvents.size
+            val U = ceTree.uniqueInputs.size
+            val X = ceTree.uniqueInputs.first().length
+            val Z = ceTree.uniqueOutputs.first().length
+            // Automaton variables
+            val activeTransition = BooleanMultiArray.new(C, C, E, ceTree.uniqueInputs.size) { (i, j, e, u) ->
+                raw[reduction.activeTransition[i, j, e, u] - 1]
+            }
+            // Guards variables
+            val nodeValue = BooleanMultiArray.new(C, K, P, U) { (c, k, p, u) ->
+                raw[reduction.nodeValue[c, k, p, u] - 1]
+            }
+            val childValueLeft = BooleanMultiArray.new(C, K, P, U) { (c, k, p, u) ->
+                raw[reduction.childValueLeft[c, k, p, u] - 1]
+            }
+            val childValueRight = BooleanMultiArray.new(C, K, P, U) { (c, k, p, u) ->
+                raw[reduction.childValueRight[c, k, p, u] - 1]
+            }
+            val firstFired = BooleanMultiArray.new(C, U, K) { (c, u, k) ->
+                raw[reduction.firstFired[c, u, k] - 1]
+            }
+            val notFired = BooleanMultiArray.new(C, U, K) { (c, u, k) ->
+                raw[reduction.notFired[c, u, k] - 1]
+            }
+            // Counterexample variables
+            val satisfaction = IntMultiArray.new(ceTree.size) { (v) ->
+                (1..C).firstOrNull { c -> raw[reduction.satisfaction[v, c] - 1] }
+                    ?: 0
+            }
+
+            println("[.] satisfaction: ${satisfaction.values.joinToString(" ", "[", "]") { it.toString() }}")
+
+            return CEAssignment(
+                ceTree, C, K, P,
+                activeTransition,
+                nodeValue, childValueLeft, childValueRight, firstFired, notFired,
+                satisfaction
+            )
+        }
+    }
+}

@@ -1,0 +1,21 @@
+# IDEA folder
+.idea/
+
+# Project file
+*.iml
+
+# Production folder
+out/
+target/
+
+# Compiled bytecode, logs, archives, scripts
+*.class
+*.log
+*.jar
+*.war
+*.zip
+*.tar.gz
+*.rar
+*.sh
+*.bat
+*.py
