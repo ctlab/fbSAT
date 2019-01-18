@@ -1,6 +1,8 @@
 package ru.ifmo.fbsat
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.context
+import com.github.ajalt.clikt.output.PlaintextHelpFormatter
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.int
@@ -35,6 +37,10 @@ class Application : CliktCommand() {
         "-N",
         help = "Upper bound on total number of nodes in all guard-trees"
     ).int()
+
+    init {
+        context { helpFormatter = PlaintextHelpFormatter(maxWidth = 999) }
+    }
 
     override fun run() {
         val scenarios = Scenario.fromFile(filenameScenarios)
