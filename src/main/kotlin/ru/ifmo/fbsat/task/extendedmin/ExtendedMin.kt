@@ -8,13 +8,13 @@ import ru.ifmo.fbsat.task.basicmin.BasicMin
 import ru.ifmo.fbsat.task.extended.Extended
 
 class ExtendedMin(
-        val scenarioTree: ScenarioTree,
-        val counterExampleTree: CounterExampleTree?,
-        val numberOfStates: Int?, // C, search if null
-        val maxOutgoingTransitions: Int?, // K, =C if null
-        val maxGuardSize: Int, // P
-        val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
-        val solverProducer: () -> Solver
+    val scenarioTree: ScenarioTree,
+    val counterExampleTree: CounterExampleTree?,
+    val numberOfStates: Int?, // C, search if null
+    val maxOutgoingTransitions: Int?, // K, =C if null
+    val maxGuardSize: Int, // P
+    val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
+    val solverProducer: () -> Solver
 ) {
     init {
         require(!(numberOfStates == null && maxOutgoingTransitions == null)) {
