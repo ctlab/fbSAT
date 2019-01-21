@@ -11,6 +11,7 @@ target/
 # Compiled bytecode, logs, archives, scripts
 *.class
 *.log
+*.txt
 *.jar
 *.war
 *.zip
