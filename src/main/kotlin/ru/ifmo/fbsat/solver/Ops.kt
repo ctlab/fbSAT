@@ -3,7 +3,7 @@ package ru.ifmo.fbsat.solver
 import ru.ifmo.fbsat.utils.IntMultiArray
 
 fun Solver.declareAtLeastOne(range: IntRange, array: IntMultiArray, vararg index: Int) {
-    addClause(range.asSequence().map {
+    clause(range.asSequence().map {
         @Suppress("ReplaceGetOrSet")
         array.get(*index, it)
     })
@@ -13,7 +13,7 @@ fun Solver.declareAtMostOne(range: IntRange, array: IntMultiArray, vararg index:
     for (a in range) {
         for (b in (a + 1)..(range.last)) {
             @Suppress("ReplaceGetOrSet")
-            addClause(-array.get(*index, a), -array.get(*index, b))
+            clause(-array.get(*index, a), -array.get(*index, b))
         }
     }
 }
@@ -27,26 +27,26 @@ fun Solver.declareExactlyOne(range: IntRange, array: IntMultiArray, vararg index
  * [lhs] => [rhs]
  */
 fun Solver.declareImply(lhs: Int, rhs: Int) {
-    addClause(-lhs, rhs)
+    clause(-lhs, rhs)
 }
 
 /**
  * [base] => ([lhs] <=> [rhs])
  */
 fun Solver.declareImplyIff(base: Int, lhs: Int, rhs: Int) {
-    addClause(-base, -lhs, rhs)
-    addClause(-base, lhs, -rhs)
+    clause(-base, -lhs, rhs)
+    clause(-base, lhs, -rhs)
 }
 
 /**
  * [base] => ([lhs] <=> AND([rhs]))
  */
 fun Solver.declareImplyIffAnd(base: Int, lhs: Int, rhs: Sequence<Int>) {
-    addClause(sequence {
+    clause(sequence {
         yield(-base)
         yield(lhs)
         for (x in rhs) {
-            addClause(-base, -lhs, x)
+            clause(-base, -lhs, x)
             yield(-x)
         }
     })
@@ -61,11 +61,11 @@ fun Solver.declareImplyIffAnd(base: Int, lhs: Int, vararg rhs: Int) = declareImp
  * [base] => ([lhs] <=> OR([rhs]))
  */
 fun Solver.declareImplyIffOr(base: Int, lhs: Int, rhs: Sequence<Int>) {
-    addClause(sequence {
+    clause(sequence {
         yield(-base)
         yield(-lhs)
         for (x in rhs) {
-            addClause(-base, lhs, -x)
+            clause(-base, lhs, -x)
             yield(x)
         }
     })
@@ -89,8 +89,8 @@ fun Solver.declareIff(lhs: Int, rhs: Int) {
  */
 fun Solver.declareIffAnd(lhs: Int, rhs: Sequence<Int>) {
     for (x in rhs)
-        addClause(-lhs, x)
-    addClause(sequenceOf(lhs) + rhs.map { -it })
+        clause(-lhs, x)
+    clause(sequenceOf(lhs) + rhs.map { -it })
 }
 
 /**
@@ -103,8 +103,8 @@ fun Solver.declareIffAnd(lhs: Int, vararg rhs: Int) = declareIffAnd(lhs, rhs.asS
  */
 fun Solver.declareIffOr(lhs: Int, rhs: Sequence<Int>) {
     for (x in rhs)
-        addClause(lhs, -x)
-    addClause(sequenceOf(-lhs) + rhs)
+        clause(lhs, -x)
+    clause(sequenceOf(-lhs) + rhs)
 }
 
 /**

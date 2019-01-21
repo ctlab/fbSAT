@@ -6,6 +6,7 @@ import ru.ifmo.fbsat.scenario.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import kotlin.system.measureTimeMillis
 
+// FIXME: maybe rename to `AutomatonInferrerExtended` or `ExtendedAutomatonInferenceTask`
 class Extended(
     val scenarioTree: ScenarioTree,
     val counterExampleTree: CounterExampleTree?,
@@ -29,7 +30,7 @@ class Extended(
         declareCardinality(maxTotalGuardsSize)
         declareCE()
 
-        solver.addComment("Total variables: ${solver.numberOfVariables}, clauses: ${solver.numberOfClauses}")
+        solver.comment("Total variables: ${solver.numberOfVariables}, clauses: ${solver.numberOfClauses}")
 
         val rawAssignment = solver.solve()
         if (finalize) finalize()
@@ -51,8 +52,7 @@ class Extended(
     private fun declareBaseReduction() {
         if (baseReduction == null) {
             measureTimeMillis {
-                baseReduction = Reduction.declareBaseReduction(
-                    solver,
+                baseReduction = solver.declareBaseReductionExtended(
                     scenarioTree,
                     C = numberOfStates,
                     K = maxOutgoingTransitions ?: numberOfStates,
@@ -68,32 +68,32 @@ class Extended(
     }
 
     private fun declareCardinality(maxTotalGuardSize: Int?) {
-        require(baseReduction != null) { "Run declareBaseReduction first" }
+        require(baseReduction != null) { "Run declareBaseReductionExtended first" }
+
         if (maxTotalGuardSize != null) {
             if (totalizer == null) {
-                totalizer = Reduction.declareTotalizer(solver, baseReduction!!)
+                totalizer = solver.declareTotalizerExtended(baseReduction!!)
             }
-            Reduction.declareComparator(solver, totalizer!!, maxTotalGuardSize, declaredMaxTotalGuardSize)
+            solver.declareComparatorExtended(totalizer!!, maxTotalGuardSize, declaredMaxTotalGuardSize)
             declaredMaxTotalGuardSize = maxTotalGuardSize
         }
     }
 
     private fun declareCE() {
         if (counterExampleTree == null) return
+
         if (ceReduction == null) {
-            measureTimeMillis {
-                ceReduction = Reduction.declareCE(
-                    solver,
+            val runningTime = measureTimeMillis {
+                ceReduction = solver.declareCounterExampleExtended(
                     baseReduction!!,
                     scenarioTree,
                     counterExampleTree
                 )
-            }.also {
-                println(
-                    "[+] Done declaring CE reduction (${solver.numberOfVariables} variables, ${solver.numberOfClauses} clauses) in %.3f seconds"
-                        .format(it / 1000.0)
-                )
             }
+            println(
+                "[+] Done declaring CE reduction (${solver.numberOfVariables} variables, ${solver.numberOfClauses} clauses) in %.3f seconds"
+                    .format(runningTime / 1000.0)
+            )
         }
     }
 }

@@ -3,6 +3,7 @@ package ru.ifmo.fbsat.solver
 import ru.ifmo.fbsat.utils.IntMultiArray
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.util.concurrent.TimeUnit
 import kotlin.math.absoluteValue
 
 interface Solver {
@@ -10,33 +11,37 @@ interface Solver {
     val numberOfClauses: Int
 
     fun newVariable(): Int
-    fun addClause(literals: Sequence<Int>)
-    fun addComment(comment: String)
-    fun solve(): BooleanArray?
-
     fun newArray(vararg shape: Int) = IntMultiArray(shape) { newVariable() }
-    fun addClause(vararg literals: Int) = addClause(literals.asSequence())
-    fun finalize() {}
+
+    fun clause(literals: Sequence<Int>)
+    fun clause(vararg literals: Int) = clause(literals.asSequence())
+
+    fun comment(comment: String)
+
+    fun solve(): BooleanArray?
+    fun finalize()
 }
 
-class DefaultSolver(private val command: String) : Solver {
+abstract class AbstractSolver : Solver {
+    final override var numberOfVariables = 0
+        protected set
+    final override var numberOfClauses = 0
+        protected set
+
+    override fun newVariable(): Int = ++numberOfVariables
+}
+
+class DefaultSolver(private val command: String) : AbstractSolver() {
     private val buffer = ByteArrayOutputStream()
     private val writer = buffer.bufferedWriter()
 
-    override var numberOfVariables = 0
-        private set
-    override var numberOfClauses = 0
-        private set
-
-    override fun newVariable(): Int = ++numberOfVariables
-
-    override fun addClause(literals: Sequence<Int>) {
+    override fun clause(literals: Sequence<Int>) {
         ++numberOfClauses
         val s = literals.joinToString(" ", postfix = " 0\n")
         writer.write(s)
     }
 
-    override fun addComment(comment: String) {
+    override fun comment(comment: String) {
         println("// $comment")
         val s = "c $comment\n"
         writer.write(s)
@@ -62,9 +67,7 @@ class DefaultSolver(private val command: String) : Solver {
 
         process.inputStream.bufferedReader().useLines { lines ->
             label@ for (line in lines.map(String::trim)) {
-                // =========
                 // if (!line.startsWith("v ")) println(line)
-                // =========
                 when {
                     line == "s SATISFIABLE" -> {
                         println("[+] SAT in %.2f seconds".format((System.currentTimeMillis() - timeStartSolve) / 1000.0))
@@ -100,9 +103,11 @@ class DefaultSolver(private val command: String) : Solver {
             null -> throw IllegalStateException("Implicit UNSAT or ERROR")
         }
     }
+
+    override fun finalize() {}
 }
 
-class IncrementalSolver(command: String) : Solver {
+class IncrementalSolver(command: String) : AbstractSolver() {
     private val process = Runtime.getRuntime().exec(command)
     private val processInput = process.outputStream.bufferedWriter()
     private val processOutput = process.inputStream.bufferedReader()
@@ -110,14 +115,7 @@ class IncrementalSolver(command: String) : Solver {
     private val buffer = ByteArrayOutputStream()
     private val writer = buffer.bufferedWriter()
 
-    override var numberOfVariables = 0
-        private set
-    override var numberOfClauses = 0
-        private set
-
-    override fun newVariable(): Int = ++numberOfVariables
-
-    override fun addClause(literals: Sequence<Int>) {
+    override fun clause(literals: Sequence<Int>) {
         ++numberOfClauses
         val s = literals.joinToString(" ", postfix = " 0\n")
         processInput.write(s)
@@ -125,14 +123,12 @@ class IncrementalSolver(command: String) : Solver {
         writer.write(s)
     }
 
-    override fun addComment(comment: String) {
+    override fun comment(comment: String) {
         println("// $comment")
         val s = "c $comment\n"
         processInput.write(s)
         // ===
         writer.write(s)
-//        writer.flush()
-//        File("cnf").outputStream().use { buffer.writeTo(it) }
     }
 
     override fun solve(): BooleanArray? {
@@ -181,7 +177,7 @@ class IncrementalSolver(command: String) : Solver {
     override fun finalize() {
         processInput.write("halt\n")
         processInput.flush()
-        process.waitFor()
+        process.waitFor(1, TimeUnit.SECONDS)
         process.destroy()
     }
 }

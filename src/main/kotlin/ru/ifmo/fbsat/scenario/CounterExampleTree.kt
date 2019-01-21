@@ -77,7 +77,7 @@ class CounterExampleTree(
 
     init {
         println("[.] $this")
-        val n = 30
+        val n = 5
         println("[.] First $n nodes:")
         for (node in nodes.take(n))
             println("[.] $node")

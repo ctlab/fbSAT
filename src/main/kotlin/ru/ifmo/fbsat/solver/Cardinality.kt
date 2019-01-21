@@ -9,7 +9,7 @@ fun Solver.declareTotalizer(variables: Sequence<Int>): IntArray {
         queue.addLast(listOf(e))
     }
 
-    addComment("Totalizer(${queue.size})")
+    comment("Totalizer(${queue.size})")
 
     while (queue.size != 1) {
         val a = queue.removeFirst()
@@ -37,8 +37,8 @@ fun Solver.declareTotalizer(variables: Sequence<Int>): IntArray {
                     beta == m2 -> listOf(a[alpha], -r[sigma])
                     else -> listOf(a[alpha], b[beta], -r[sigma])
                 }
-                c1?.let { addClause(*it.toIntArray()) }
-                c2?.let { addClause(*it.toIntArray()) }
+                c1?.let { clause(*it.toIntArray()) }
+                c2?.let { clause(*it.toIntArray()) }
             }
         }
     }
@@ -52,8 +52,8 @@ fun Solver.declareTotalizer(variables: Sequence<Int>): IntArray {
  */
 fun Solver.declareComparatorLessThanOrEqual(totalizer: IntArray, x: Int, declared: Int? = null) {
     val max = declared ?: totalizer.size
-    addComment("Comparator(<=$x up to $max)")
+    comment("Comparator(<=$x up to $max)")
     for (i in max downTo x + 1) {
-        addClause(-totalizer[i - 1])  // Note: totalizer is zero-based
+        clause(-totalizer[i - 1])  // Note: totalizer is zero-based
     }
 }

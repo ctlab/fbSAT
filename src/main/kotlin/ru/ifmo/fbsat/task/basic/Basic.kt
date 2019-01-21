@@ -32,7 +32,7 @@ class Basic(
         // if (counterExampleTree != null)
         //     declareCE(counterExampleTree)
         // =============================================
-        solver.addComment("Total variables: ${solver.numberOfVariables}, clauses: ${solver.numberOfClauses}")
+        solver.comment("Total variables: ${solver.numberOfVariables}, clauses: ${solver.numberOfClauses}")
 
         val automaton = solver.solve()?.let { Assignment.fromRaw(baseReduction!!, it).toAutomaton() }
 

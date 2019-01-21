@@ -21,8 +21,8 @@ open class Scenario(elements: List<ScenarioElement>, preprocess: Boolean = true)
     }
 
     companion object {
-        fun fromFile(filename: String, preprocess: Boolean = true): List<Scenario> {
-            File(filename).bufferedReader().useLines { lines ->
+        fun fromFile(file: File, preprocess: Boolean = true): List<Scenario> {
+            file.bufferedReader().useLines { lines ->
                 val scenarios: MutableList<Scenario> = mutableListOf()
                 var numberOfScenarios = 0
 

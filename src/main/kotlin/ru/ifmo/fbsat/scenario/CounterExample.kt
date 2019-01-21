@@ -26,7 +26,7 @@ class CounterExample(
         }
 
         fun fromFile(
-            filename: String,
+            file:File,
             inputEvents: List<String>,
             outputEvents: List<String>,
             inputNames: List<String>,
@@ -37,7 +37,7 @@ class CounterExample(
             var state: State? = null
             var isLoop = false
 
-            File(filename).bufferedReader().useLines { lines ->
+            file.bufferedReader().useLines { lines ->
                 for (line in lines.map(String::trim)) {
                     when {
                         line == "Trace Description: LTL Counterexample" -> {

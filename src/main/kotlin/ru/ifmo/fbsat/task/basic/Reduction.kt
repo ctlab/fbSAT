@@ -50,28 +50,28 @@ internal class Reduction(
             val bfs_transition = solver.newArray(C, C)
             val bfs_parent = solver.newArray(C, C)
 
-            solver.addComment("1. Color constraints")
-            solver.addComment("1.0. ALO/AMO(color)")
+            solver.comment("1. Color constraints")
+            solver.comment("1.0. ALO/AMO(color)")
             for (v in 1..V)
                 solver.declareExactlyOne(1..C, color, v)
 
-            solver.addComment("1.1. Start vertex corresponds to start state")
-            solver.addClause(color[1, 1])
+            solver.comment("1.1. Start vertex corresponds to start state")
+            solver.clause(color[1, 1])
 
-            solver.addComment("1.2. Color definition")
+            solver.comment("1.2. Color definition")
             // color[v, c] => color[tp(v), c]
             for (c in 1..C)
                 for (v in scenarioTree.passiveVertices)
                     solver.declareIff(color[v, c], color[scenarioTree.parent(v), c])
 
-            solver.addComment("2. Transition constraints")
-            solver.addComment("2.0. ALO/AMO(transition)")
+            solver.comment("2. Transition constraints")
+            solver.comment("2.0. ALO/AMO(transition)")
             for (c in 1..C)
                 for (e in 1..E)
                     for (k in 1..K)
                         solver.declareExactlyOne(1..(C + 1), transition, c, e, k)
 
-            solver.addComment("2.1. (transition + first_fired definitions)")
+            solver.comment("2.1. (transition + first_fired definitions)")
             // (color[tp(v),i] & color[v,j]) => OR_k( transition[i,tie(v),k,j] & first_fired[i,tie(v),tin(v),k] )
             for (v in scenarioTree.activeVertices) {
                 val p = scenarioTree.parent(v)
@@ -88,25 +88,25 @@ internal class Reduction(
                         }
                         val right = solver.newVariable()
                         solver.declareIffOr(right, rhs)
-                        solver.addClause(-color[v, j], -color[p, i], right)
+                        solver.clause(-color[v, j], -color[p, i], right)
                     }
             }
 
-            solver.addComment("2.2. Null-transitions are last")
+            solver.comment("2.2. Null-transitions are last")
             // transition[k, 0] => transition[k+1, 0]
             for (c in 1..C)
                 for (e in 1..E)
                     for (k in 1..(K - 1))
                         solver.declareImply(transition[c, e, k, C + 1], transition[c, e, k + 1, C + 1])
 
-            solver.addComment("3. Firing constraints")
-            solver.addComment("3.0. only AMO(first_fired)")
+            solver.comment("3. Firing constraints")
+            solver.comment("3.0. only AMO(first_fired)")
             for (c in 1..C)
                 for (e in 1..E)
                     for (u in 1..U)
                         solver.declareAtMostOne(1..K, firstFired, c, e, u)
 
-            solver.addComment("3.1. (not_fired definition)")
+            solver.comment("3.1. (not_fired definition)")
             // not_fired[c,e,u,K] <=> OR_{v|passive,tie(v)=e,tin(v)=u}(color[v,c])
             for (c in 1..C)
                 for (e in 1..E)
@@ -119,7 +119,7 @@ internal class Reduction(
                         solver.declareIffOr(notFired[c, e, u, K], rhs)
                     }
 
-            solver.addComment("3.2. not_fired extension")
+            solver.comment("3.2. not_fired extension")
             for (c in 1..C)
                 for (e in 1..E)
                     for (u in 1..U) {
@@ -131,27 +131,27 @@ internal class Reduction(
                             solver.declareImply(-notFired[c, e, u, k], -notFired[c, e, u, k + 1])
                     }
 
-            solver.addComment("3.3. first_fired and not_fired interaction")
+            solver.comment("3.3. first_fired and not_fired interaction")
             for (c in 1..C)
                 for (e in 1..E)
                     for (u in 1..U) {
                         // ~(ff & nf)
                         for (k in 1..K)
-                            solver.addClause(-firstFired[c, e, u, k], -notFired[c, e, u, k])
+                            solver.clause(-firstFired[c, e, u, k], -notFired[c, e, u, k])
                         // ff_k => nf_{k-1}
                         for (k in 2..K)
                             solver.declareImply(firstFired[c, e, u, k], notFired[c, e, u, k - 1])
                     }
 
-            solver.addComment("4. Output event constraints")
-            solver.addComment("4.0. ALO/AMO(output_event)")
+            solver.comment("4. Output event constraints")
+            solver.comment("4.0. ALO/AMO(output_event)")
             for (c in 1..C)
                 solver.declareExactlyOne(1..O, outputEvent, c)
 
-            solver.addComment("4.1. Start state does INITO (root`s output event)")
-            solver.addClause(outputEvent[1, scenarioTree.outputEvent(1)])
+            solver.comment("4.1. Start state does INITO (root`s output event)")
+            solver.clause(outputEvent[1, scenarioTree.outputEvent(1)])
 
-            solver.addComment("4.2. Output event is the same as in the tree")
+            solver.comment("4.2. Output event is the same as in the tree")
             // OR_{e,k}(transition[i,e,k,j]) <=> ...
             // ... <=> OR_{v|active}( color[tp(v), i] & color[v, j] & output_event[j, toe(v)] )
             for (i in 1..C)
@@ -178,14 +178,14 @@ internal class Reduction(
                     solver.declareIffOr(leftright, rhs)
                 }
 
-            solver.addComment("5. Algorithm constraints")
-            solver.addComment("5.1. Start state does nothing")
+            solver.comment("5. Algorithm constraints")
+            solver.comment("5.1. Start state does nothing")
             for (z in 1..Z) {
-                solver.addClause(-algorithm0[1, z])
-                solver.addClause(algorithm1[1, z])
+                solver.clause(-algorithm0[1, z])
+                solver.clause(algorithm1[1, z])
             }
 
-            solver.addComment("5.2. Algorithms definition")
+            solver.comment("5.2. Algorithms definition")
             for (v in scenarioTree.activeVertices)
                 for (z in 1..Z) {
                     val oldValue = scenarioTree.outputValue(scenarioTree.parent(v), z)
@@ -203,8 +203,8 @@ internal class Reduction(
                         )
                 }
 
-            solver.addComment("6. BFS constraints")
-            solver.addComment("6.1. F_t")
+            solver.comment("6. BFS constraints")
+            solver.comment("6.1. F_t")
             // t[i, j] <=> OR_{e,k}( transition[i,e,k,j] )
             for (i in 1..C)
                 for (j in 1..C)
@@ -215,12 +215,12 @@ internal class Reduction(
                                     yield(transition[i, e, k, j])
                         })
 
-            solver.addComment("6.2. F_p")
+            solver.comment("6.2. F_p")
             // p[j, i] <=> t[i, j] & AND_{k<i}( ~t[k, j] )
             for (i in 1..C) {
                 // to avoid ambiguous unused variable:
                 for (j in 1..i)
-                    solver.addClause(-bfs_parent[j, i])
+                    solver.clause(-bfs_parent[j, i])
 
                 for (j in (i + 1)..C)
                     solver.declareIffAnd(bfs_parent[j, i],
@@ -231,22 +231,22 @@ internal class Reduction(
                         })
             }
 
-            solver.addComment("6.3. F_ALO(p)")
+            solver.comment("6.3. F_ALO(p)")
             for (j in 2..C)
-                solver.addClause(sequence {
+                solver.clause(sequence {
                     for (i in 1..(j - 1))
                         yield(bfs_parent[j, i])
                 })
 
-            solver.addComment("6.4. F_BFS(p)")
+            solver.comment("6.4. F_BFS(p)")
             // p[j, i] => ~p[j+1, k]
             for (k in 1..C)
                 for (i in (k + 1)..C)
                     for (j in (i + 1)..(C - 1))
                         solver.declareImply(bfs_parent[j, i], -bfs_parent[j + 1, k])
 
-            solver.addComment("A. AD-HOCs")
-            solver.addComment("A.1. Distinct transitions")
+            solver.comment("A. AD-HOCs")
+            solver.comment("A.1. Distinct transitions")
             // TODO: Distinct transitions
 
             return Reduction(
@@ -296,7 +296,7 @@ internal class Reduction(
             // Color propagation variable
             val prop = solver.newArray(V)
 
-            solver.addComment("[NEGATIVE] Color propagation on active vertices")
+            solver.comment("[NEGATIVE] Color propagation on active vertices")
             // color[v,j] & color[tp(v),i] & ...
             // ...OR_k( transition[i,tie(v),k,j] & first_fired[i,tie(v),tin(v),k & output_event[j,toe(v)] )...
             // ...& prop[tp(v)] => prop[v]
@@ -329,7 +329,7 @@ internal class Reduction(
                     }
             }
 
-            solver.addComment("[NEGATIVE] Color propagation on passive vertices")
+            solver.comment("[NEGATIVE] Color propagation on passive vertices")
             // color[v,c] & AND_k(transition[c,tie(v),k,0]) & prop[tp(v)] => prop[v]
             for (v in counterExampleTree.passiveVertices) {
                 val p = counterExampleTree.parent(v)
@@ -340,22 +340,22 @@ internal class Reduction(
                             yield(-transition[c, e, k, C + 1])
                         }
                     }.toList().toIntArray()
-                    solver.addClause(-color[v, c], *nts, -prop[p], prop[v])
+                    solver.clause(-color[v, c], *nts, -prop[p], prop[v])
                 }
             }
 
-            solver.addComment("[NEGATIVE] Color non-propagation")
+            solver.comment("[NEGATIVE] Color non-propagation")
             for (v in 2..V) {
                 val p = counterExampleTree.parent(v)
                 solver.declareImply(-prop[p], -prop[v])
             }
 
-            solver.addComment("[NEGATIVE] Forbid same color of loop start/end")
+            solver.comment("[NEGATIVE] Forbid same color of loop start/end")
             // prop[v] & prop[loop(v)] => AND_c( color[v,c] => ~color[loop(v),c] )
             for (v in counterExampleTree.verticesWithLoops) {
                 val l = counterExampleTree.loopBack(v)
                 for (c in 1..C) {
-                    solver.addClause(-prop[v], -prop[l], -color[v, c], -color[l, c])
+                    solver.clause(-prop[v], -prop[l], -color[v, c], -color[l, c])
                 }
             }
         }
