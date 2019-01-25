@@ -9,6 +9,7 @@ import ru.ifmo.fbsat.scenario.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.solver.atMostOne
 import ru.ifmo.fbsat.solver.declareComparatorLessThanOrEqual
+import ru.ifmo.fbsat.solver.declareTotalizer
 import ru.ifmo.fbsat.solver.exactlyOne
 import ru.ifmo.fbsat.solver.iff
 import ru.ifmo.fbsat.solver.iffAnd
@@ -17,7 +18,6 @@ import ru.ifmo.fbsat.solver.imply
 import ru.ifmo.fbsat.solver.implyIff
 import ru.ifmo.fbsat.solver.implyIffAnd
 import ru.ifmo.fbsat.solver.implyIffOr
-import ru.ifmo.fbsat.solver.declareTotalizer
 import ru.ifmo.fbsat.utils.IntMultiArray
 
 class Reduction(
@@ -558,30 +558,26 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 2))
-                for (u in 1..U) {
-                    val x1 = nodeType[c, k, p, NodeType.AND.value]
-                    val x2 = nodeValue[c, k, p, u]
-                    val x3 = childValueLeft[c, k, p, u]
-                    val x4 = childValueRight[c, k, p, u]
-                    clause(-x1, x2, -x3, -x4)
-                    clause(-x1, -x2, x3)
-                    clause(-x1, -x2, x4)
-                }
+                for (u in 1..U)
+                    implyIffAnd(
+                        nodeType[c, k, p, NodeType.AND.value],
+                        nodeValue[c, k, p, u],
+                        childValueLeft[c, k, p, u],
+                        childValueRight[c, k, p, u]
+                    )
 
     comment("11.5b. OR: value is calculated as a disjunction of children")
     // nodetype[p, OR] => AND_u( value[p, u] <=> (child_value_left[p, u] | child_value_right[p, u]) )
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 2))
-                for (u in 1..U) {
-                    val x1 = nodeType[c, k, p, NodeType.OR.value]
-                    val x2 = nodeValue[c, k, p, u]
-                    val x3 = childValueLeft[c, k, p, u]
-                    val x4 = childValueRight[c, k, p, u]
-                    clause(-x1, -x2, x3, x4)
-                    clause(-x1, x2, -x3)
-                    clause(-x1, x2, -x4)
-                }
+                for (u in 1..U)
+                    implyIffOr(
+                        nodeType[c, k, p, NodeType.OR.value],
+                        nodeValue[c, k, p, u],
+                        childValueLeft[c, k, p, u],
+                        childValueRight[c, k, p, u]
+                    )
 
 
     comment("12. NOT nodes constraints")
@@ -668,7 +664,10 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
     // t=0 <=> nodetype[1, NONE]
     for (c in 1..C)
         for (k in 1..K)
-            iff(transition[c, k, C + 1], nodeType[c, k, 1, NodeType.NONE.value])
+            iff(
+                transition[c, k, C + 1],
+                nodeType[c, k, 1, NodeType.NONE.value]
+            )
 
     comment("A.2. (comb)")
     for (c in 1..C)
@@ -1039,30 +1038,26 @@ fun Solver.declareCounterExampleExtended(
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 2))
-                for (u in 1..U) {
-                    val x1 = nodeType[c, k, p, NodeType.AND.value]
-                    val x2 = nodeValue[c, k, p, u]
-                    val x3 = childValueLeft[c, k, p, u]
-                    val x4 = childValueRight[c, k, p, u]
-                    clause(-x1, x2, -x3, -x4)
-                    clause(-x1, -x2, x3)
-                    clause(-x1, -x2, x4)
-                }
+                for (u in 1..U)
+                    implyIffAnd(
+                        nodeType[c, k, p, NodeType.AND.value],
+                        nodeValue[c, k, p, u],
+                        childValueLeft[c, k, p, u],
+                        childValueRight[c, k, p, u]
+                    )
 
     comment("CE.11.5b. OR: value is calculated as a disjunction of children")
     // nodetype[p, OR] => AND_u( value[p, u] <=> (child_value_left[p, u] | child_value_right[p, u]) )
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 2))
-                for (u in 1..U) {
-                    val x1 = nodeType[c, k, p, NodeType.OR.value]
-                    val x2 = nodeValue[c, k, p, u]
-                    val x3 = childValueLeft[c, k, p, u]
-                    val x4 = childValueRight[c, k, p, u]
-                    clause(-x1, -x2, x3, x4)
-                    clause(-x1, x2, -x3)
-                    clause(-x1, x2, -x4)
-                }
+                for (u in 1..U)
+                    implyIffOr(
+                        nodeType[c, k, p, NodeType.OR.value],
+                        nodeValue[c, k, p, u],
+                        childValueLeft[c, k, p, u],
+                        childValueRight[c, k, p, u]
+                    )
 
     comment("CE.12.4a. NOT: child_value_left is a value of left child")
     // nodetype[p, NOT] & child_left[p, ch] => AND_u( child_value_left[p, u] <=> value[ch, u] )
