@@ -46,7 +46,7 @@ fun Solver.implyIffAnd(lhs: Int, base: Int, rhs: Sequence<Int>) {
         yield(-lhs)
         yield(base)
         for (x in rhs) {
-            clause(-lhs, -x, x)
+            clause(-lhs, -base, x)
             yield(-x)
         }
     })
