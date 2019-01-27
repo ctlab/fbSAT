@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.context
 import com.github.ajalt.clikt.output.PlaintextHelpFormatter
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.defaultLazy
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
@@ -21,11 +22,11 @@ import ru.ifmo.fbsat.task.basic.Basic
 import ru.ifmo.fbsat.task.basicmin.BasicMin
 import ru.ifmo.fbsat.task.extended.Extended
 import ru.ifmo.fbsat.task.extendedmin.ExtendedMin
+import java.io.File
 import kotlin.system.measureTimeMillis
 
-@Suppress("MemberVisibilityCanBePrivate")
 class FbSAT : CliktCommand() {
-    val fileScenarios by option(
+    private val fileScenarios by option(
         "-i", "--scenarios",
         help = "File with scenarios",
         metavar = "<path>"
@@ -35,7 +36,7 @@ class FbSAT : CliktCommand() {
         readable = true
     ).required()
 
-    val fileCounterExamples by option(
+    private val fileCounterExamples by option(
         "-ce", "--counterexamples",
         help = "File with counter-examples",
         metavar = "<path>"
@@ -45,7 +46,13 @@ class FbSAT : CliktCommand() {
         readable = true
     )
 
-    val method by option(
+    private val outputDirectory by option(
+        "-o", "--outdir",
+        help = "Output directory",
+        metavar = "<path>"
+    ).file().defaultLazy { File("") }
+
+    private val method by option(
         "-m", "--method",
         help = "Method to use"
     ).choice(
@@ -53,32 +60,32 @@ class FbSAT : CliktCommand() {
         "extended", "extended-min", "extended-min-ub"
     ).required()
 
-    val numberOfStates by option(
+    private val numberOfStates by option(
         "-C",
         help = "Number of automaton states"
     ).int().required()
 
-    val maxOutgoingTransitions by option(
+    private val maxOutgoingTransitions by option(
         "-K",
         help = "Maximum number of transitions from each state"
     ).int()
 
-    val maxGuardSize by option(
+    private val maxGuardSize by option(
         "-P",
         help = "Maximum number of nodes in guard's boolean formula's parse tree"
     ).int().required()
 
-    val maxTransitions by option(
+    private val maxTransitions by option(
         "-T",
         help = "Upper bound on total number of transitions in automaton"
     ).int()
 
-    val maxTotalGuardsSize by option(
+    private val maxTotalGuardsSize by option(
         "-N",
         help = "Upper bound on total number of nodes in all guard-trees"
     ).int()
 
-    val solverCmd by option(
+    private val solverCmd by option(
         "--solver",
         help = "SAT-solver",
         metavar = "<cmd>"
@@ -87,7 +94,7 @@ class FbSAT : CliktCommand() {
         "incremental-cryptominisat"
     )
 
-    val isIncrementalSolver by option(
+    private val isIncrementalSolver by option(
         "--incremental",
         help = "Use IncrementalSolver backend"
     ).flag(
@@ -152,7 +159,7 @@ class FbSAT : CliktCommand() {
         }
         // =================
 
-        val solverProducer = if (isIncrementalSolver) {
+        val solverProvider = if (isIncrementalSolver) {
             { IncrementalSolver(solverCmd) }
         } else {
             { DefaultSolver(solverCmd) }
@@ -165,7 +172,7 @@ class FbSAT : CliktCommand() {
                     ceTree,
                     numberOfStates,
                     maxOutgoingTransitions,
-                    solverProducer
+                    solverProvider
                 )
                 task.infer(maxTransitions)
             }
@@ -176,7 +183,7 @@ class FbSAT : CliktCommand() {
                     numberOfStates,
                     maxOutgoingTransitions,
                     maxTransitions,
-                    solverProducer
+                    solverProvider
                 )
                 task.infer()
             }
@@ -187,7 +194,7 @@ class FbSAT : CliktCommand() {
                     numberOfStates,
                     maxOutgoingTransitions,
                     maxGuardSize,
-                    solverProducer
+                    solverProvider
                 )
                 task.infer(maxTotalGuardsSize)
             }
@@ -199,7 +206,7 @@ class FbSAT : CliktCommand() {
                     maxOutgoingTransitions,
                     maxGuardSize,
                     maxTotalGuardsSize,
-                    solverProducer
+                    solverProvider
                 )
                 task.infer()
             }
@@ -215,7 +222,8 @@ class FbSAT : CliktCommand() {
             automaton.verify(tree)
             ceTree?.let { automaton.verify(it) }
 
-            automaton.dump("automaton")
+            outputDirectory.mkdirs()
+            automaton.dump(outputDirectory,"automaton")
         }
     }
 }
