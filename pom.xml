@@ -44,13 +44,6 @@
             <version>5.4.0-M1</version>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>com.github.h0tk3y.betterParse</groupId>
-            <artifactId>better-parse-jvm</artifactId>
-            <version>0.4.0-alpha-3</version>
-            <!--<type>pom</type>-->
-        </dependency>
     </dependencies>
 
     <pluginRepositories>
