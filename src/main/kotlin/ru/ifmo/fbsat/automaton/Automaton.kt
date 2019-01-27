@@ -177,11 +177,11 @@ class Automaton(
 
         for ((i, counterExample) in counterExampleTree.counterExamples.withIndex()) {
             // ================
-//            if (i > 0) break
+            // if (i > 0) break
             // ================
             val satisfyingStates = MutableList<State?>(counterExample.elements.size + 1) { null }
             satisfyingStates[0] = this.initialState
-            println("[${i + 1}::0/${counterExample.elements.size}] ${counterExampleTree.rootElement} satisfied by ${this.initialState}")
+            // println("[${i + 1}::0/${counterExample.elements.size}] ${counterExampleTree.rootElement} satisfied by ${this.initialState}")
 
             var currentState = this.initialState
             var currentValues = counterExampleTree.rootElement!!.outputValues
@@ -194,10 +194,10 @@ class Automaton(
                 val (newState, outputEvent, newValues) = go(currentState, inputEvent, inputValues, currentValues)
 
                 if (outputEvent == element.outputEvent && newValues == element.outputValues) {
+                    // println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element satisfied by $newState")
                     satisfyingStates[j + 1] = newState
-                    println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element satisfied by $newState")
                 } else {
-                    println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element not satisfied (newState=$newState, newValues=$newValues)")
+                    // println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element not satisfied (newState=$newState, newValues=$newValues)")
                     break
                 }
 

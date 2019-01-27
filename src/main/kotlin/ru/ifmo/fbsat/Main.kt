@@ -223,7 +223,7 @@ class FbSAT : CliktCommand() {
             ceTree?.let { automaton.verify(it) }
 
             outputDirectory.mkdirs()
-            automaton.dump(outputDirectory,"automaton")
+            automaton.dump(outputDirectory, "automaton")
         }
     }
 }

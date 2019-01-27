@@ -166,13 +166,13 @@ internal class CEAssignment(
     val C: Int,
     val K: Int,
     val P: Int,
+    val satisfaction: IntMultiArray,
     val activeTransition: BooleanMultiArray,
     val nodeValue: BooleanMultiArray,
     val childValueLeft: BooleanMultiArray,
     val childValueRight: BooleanMultiArray,
     val firstFired: BooleanMultiArray,
-    val notFired: BooleanMultiArray,
-    val satisfaction: IntMultiArray
+    val notFired: BooleanMultiArray
 ) {
     companion object {
         @Suppress("LocalVariableName")
@@ -189,6 +189,11 @@ internal class CEAssignment(
             val U = ceTree.uniqueInputs.size
             val X = ceTree.uniqueInputs.first().length
             val Z = ceTree.uniqueOutputs.first().length
+            // Counterexample variables
+            val satisfaction = IntMultiArray.new(ceTree.size) { (v) ->
+                (1..C).firstOrNull { c -> raw[reduction.satisfaction[v, c] - 1] }
+                    ?: 0
+            }
             // Automaton variables
             val activeTransition = BooleanMultiArray.new(C, C, E, ceTree.uniqueInputs.size) { (i, j, e, u) ->
                 raw[reduction.activeTransition[i, j, e, u] - 1]
@@ -209,19 +214,13 @@ internal class CEAssignment(
             val notFired = BooleanMultiArray.new(C, U, K) { (c, u, k) ->
                 raw[reduction.notFired[c, u, k] - 1]
             }
-            // Counterexample variables
-            val satisfaction = IntMultiArray.new(ceTree.size) { (v) ->
-                (1..C).firstOrNull { c -> raw[reduction.satisfaction[v, c] - 1] }
-                    ?: 0
-            }
 
             println("[.] satisfaction: ${satisfaction.values.joinToString(" ", "[", "]") { it.toString() }}")
 
             return CEAssignment(
                 ceTree, C, K, P,
-                activeTransition,
-                nodeValue, childValueLeft, childValueRight, firstFired, notFired,
-                satisfaction
+                satisfaction, activeTransition,
+                nodeValue, childValueLeft, childValueRight, firstFired, notFired
             )
         }
     }

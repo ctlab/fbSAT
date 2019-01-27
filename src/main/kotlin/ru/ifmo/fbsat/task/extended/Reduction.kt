@@ -1172,8 +1172,7 @@ fun Solver.declareCounterExampleExtended(
 
     return CEReduction(
         counterExampleTree, C, K, P,
-        activeTransition,
-        nodeValue, childValueLeft, childValueRight, firstFired, notFired,
-        satisfaction
+        satisfaction, activeTransition,
+        nodeValue, childValueLeft, childValueRight, firstFired, notFired
     )
 }
