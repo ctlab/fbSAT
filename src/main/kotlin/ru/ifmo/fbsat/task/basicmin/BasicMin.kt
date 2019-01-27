@@ -10,7 +10,7 @@ class BasicMin(
     val numberOfStates: Int?, // C, search if null
     val maxOutgoingTransitions: Int?, // K, =C if null
     val initialMaxTransitions: Int?, // T_init, unconstrained if null
-    val solverProducer: () -> Solver
+    val solverProvider: () -> Solver
 ) {
     init {
         require(!(numberOfStates == null && maxOutgoingTransitions == null)) {
@@ -29,7 +29,7 @@ class BasicMin(
                     null,
                     C,
                     maxOutgoingTransitions,
-                    solverProducer
+                    solverProvider
                 )
                 val automaton = task.infer(initialMaxTransitions)
                 if (automaton != null) {
@@ -43,7 +43,7 @@ class BasicMin(
                 null,
                 numberOfStates,
                 maxOutgoingTransitions,
-                solverProducer
+                solverProvider
             )
             best = task.infer(initialMaxTransitions)
         }

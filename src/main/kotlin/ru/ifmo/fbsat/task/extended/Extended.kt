@@ -13,9 +13,9 @@ class Extended(
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int?, // K, K=C if null
     val maxGuardSize: Int, // P
-    val solverProducer: () -> Solver
+    val solverProvider: () -> Solver
 ) {
-    private val solver = solverProducer()
+    private val solver = solverProvider()
     private var baseReduction: Reduction? = null
     private var totalizer: IntArray? = null
     private var declaredMaxTotalGuardSize: Int? = null

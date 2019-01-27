@@ -26,7 +26,7 @@ class CounterExample(
         }
 
         fun fromFile(
-            file:File,
+            file: File,
             inputEvents: List<String>,
             outputEvents: List<String>,
             inputNames: List<String>,

@@ -49,13 +49,13 @@ class CEReduction(
     val C: Int,
     val K: Int,
     val P: Int,
+    val satisfaction: IntMultiArray,
     val activeTransition: IntMultiArray,
     val nodeValue: IntMultiArray,
     val childValueLeft: IntMultiArray,
     val childValueRight: IntMultiArray,
     val firstFired: IntMultiArray,
-    val notFired: IntMultiArray,
-    val satisfaction: IntMultiArray
+    val notFired: IntMultiArray
 )
 
 @Suppress("LocalVariableName")
@@ -67,8 +67,9 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
     val U = scenarioTree.uniqueInputs.size
     val X = scenarioTree.uniqueInputs.first().length
     val Z = scenarioTree.uniqueOutputs.first().length
-    // Automaton variables
+    // Scenario tree variables
     val color = newArray(V, C)
+    // Automaton variables
     val transition = newArray(C, K, C + 1)
     val activeTransition = newArray(C, C, E, U)
     val inputEvent = newArray(C, K, E + 1)
@@ -741,6 +742,8 @@ fun Solver.declareCounterExampleExtended(
     val U = counterExampleTree.uniqueInputs.size
     val X = counterExampleTree.uniqueInputs.first().length
     val Z = counterExampleTree.uniqueOutputs.first().length
+    // Counterexample variables
+    val satisfaction = newArray(V, C + 1)  // denotes the satisfying state (or its absence)
     // Automaton variables
     val transition = baseReduction.transition
     val activeTransition = newArray(C, C, E, U)
@@ -758,8 +761,6 @@ fun Solver.declareCounterExampleExtended(
     val childValueRight = newArray(C, K, P, U)
     val firstFired = newArray(C, U, K)
     val notFired = newArray(C, U, K)
-    // Counterexample variables
-    val satisfaction = newArray(V, C + 1)  // denotes the satisfying state (or its absence)
 
     comment("CE. Counterexample constraints")
     comment("CE.1. Satisfaction (color-like) constrains")

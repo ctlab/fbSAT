@@ -14,7 +14,7 @@ class ExtendedMin(
     val maxOutgoingTransitions: Int?, // K, =C if null
     val maxGuardSize: Int, // P
     val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
-    val solverProducer: () -> Solver
+    val solverProvider: () -> Solver
 ) {
     init {
         require(!(numberOfStates == null && maxOutgoingTransitions == null)) {
@@ -30,7 +30,7 @@ class ExtendedMin(
                 null,
                 null,
                 null,
-                solverProducer
+                solverProvider
             )
             val automaton = task.infer(isOnlyC = true) ?: return null
             automaton.numberOfStates
@@ -42,7 +42,7 @@ class ExtendedMin(
             C,
             maxOutgoingTransitions,
             maxGuardSize,
-            solverProducer
+            solverProvider
         )
         var best: Automaton? = task.infer(initialMaxTotalGuardsSize, finalize = false)
 

@@ -12,9 +12,9 @@ class Basic(
     val counterExampleTree: CounterExampleTree?,
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int?, // K, K=C if null
-    val solverProducer: () -> Solver
+    val solverProvider: () -> Solver
 ) {
-    private val solver = solverProducer()
+    private val solver = solverProvider()
     private var baseReduction: Reduction? = null
     private var totalizer: IntArray? = null
     private var declaredMaxTransitions: Int? = null
@@ -48,8 +48,7 @@ class Basic(
     private fun declareBaseReduction() {
         if (baseReduction == null) {
             measureTimeMillis {
-                baseReduction = Reduction.declareBaseReduction(
-                    solver,
+                baseReduction = solver.declareBaseReduction(
                     scenarioTree,
                     C = numberOfStates,
                     K = maxOutgoingTransitions ?: numberOfStates
@@ -66,21 +65,20 @@ class Basic(
     private fun declareCardinality(maxTransitions: Int?) {
         if (maxTransitions != null) {
             if (totalizer == null) {
-                totalizer = Reduction.declareTotalizer(solver, baseReduction!!)
+                totalizer = solver.declareTotalizer(baseReduction!!)
             }
-            Reduction.declareComparator(solver, totalizer!!, maxTransitions, declaredMaxTransitions)
+            solver.declareComparator(totalizer!!, maxTransitions, declaredMaxTransitions)
             declaredMaxTransitions = maxTransitions
         }
     }
 
-    private fun declareCE(counterExampleTree: CounterExampleTree) {
-        if (!ceReduction) {
-            Reduction.declareCE(
-                solver,
-                baseReduction!!,
-                counterExampleTree
-            )
-            ceReduction = true
-        }
-    }
+    // private fun declareCE(counterExampleTree: CounterExampleTree) {
+    //     if (!ceReduction) {
+    //         solver.declareCE(
+    //             baseReduction!!,
+    //             counterExampleTree
+    //         )
+    //         ceReduction = true
+    //     }
+    // }
 }

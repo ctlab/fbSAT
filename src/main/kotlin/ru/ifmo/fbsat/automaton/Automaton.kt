@@ -8,7 +8,13 @@ import ru.ifmo.fbsat.utils.toBooleanString
 import java.io.File
 
 class Automaton(
+    /**
+     * Zero-based list of input events.
+     */
     val inputEvents: List<String>,
+    /**
+     * Zero-based list of output events.
+     */
     val outputEvents: List<String>,
     val inputNames: List<String>,
     val outputNames: List<String>
@@ -16,8 +22,8 @@ class Automaton(
     private var _states: MutableMap<Int, State> = mutableMapOf()
     private val lazyCache = LazyCache()
 
-    val states: List<State> by lazyCache {
-        _states.values.toList()
+    val states: Set<State> by lazyCache {
+        _states.values.toSet()
     }
     val initialState: State
         get() = states.first()
@@ -36,6 +42,7 @@ class Automaton(
     )
 
     fun addState(id: Int, outputEvent: String, algorithm: Algorithm) {
+        require(id !in _states) { "Automaton already has state '$id'" }
         _states[id] = State(id, outputEvent, algorithm)
         lazyCache.invalidate()
     }
@@ -222,15 +229,17 @@ class Automaton(
             println("[-] Verify CE: FAILED")
     }
 
-    fun dump(prefix: String) {
-        File("$prefix.smv").printWriter().use {
+    fun dump(folder: File, name: String) {
+        val fileSmv = folder.resolve("$name.smv")
+        val fileGv = folder.resolve("$name.gv")
+        fileSmv.printWriter().use {
             it.println(this.toSmvString())
         }
-        File("$prefix.gv").printWriter().use {
+        fileGv.printWriter().use {
             it.println(this.toGraphvizString())
         }
-        Runtime.getRuntime().exec("dot -Tpdf -O $prefix.gv").waitFor()
-        Runtime.getRuntime().exec("dot -Tpng -O $prefix.gv").waitFor()
+        Runtime.getRuntime().exec("dot -Tpdf -O $fileGv").waitFor()
+        Runtime.getRuntime().exec("dot -Tpng -O $fileGv").waitFor()
     }
 
     fun pprint() {
