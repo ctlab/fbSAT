@@ -34,3 +34,7 @@ tasks.withType<Jar> {
     }
     from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 }
+
+tasks.wrapper {
+    distributionType = Wrapper.DistributionType.ALL
+}
