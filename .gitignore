@@ -1,14 +1,14 @@
-# IDEA folder
+# Hidden folders
 .idea/
+.gradle/
 
-# Project file
-*.iml
-
-# Production folder
+# Build folders
+build/
 out/
 target/
 
-# Compiled bytecode, logs, archives, scripts
+# Project file, compiled bytecode, logs, archives, scripts
+*.iml
 *.class
 *.log
 *.txt
