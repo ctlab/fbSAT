@@ -1,0 +1,7 @@
+#/usr/bin/env sh
+
+## `gradle jar`
+# java -jar build/libs/fbSAT-1.0.jar $*
+
+## Artifact from IDEA:
+java -jar out/artifacts/fbSAT.jar $*
