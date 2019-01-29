@@ -20,3 +20,7 @@ target/
 *.sh
 *.bat
 *.py
+
+# Gradle
+!gradle/wrapper/gradle-wrapper.jar
+!gradlew.bat
