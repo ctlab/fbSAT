@@ -1,7 +1,10 @@
 @echo off
 
+set DIRNAME=%~dp0
+if "%DIRNAME%" == "" set DIRNAME=.
+
 rem Jar from 'gradle jar'
-rem java -jar build/libs/fbSAT-1.0.jar %*
+java -jar "%~dp0/build/libs/fbSAT-1.0.jar" %*
 
 rem Artifact from IDEA
-java -jar out/artifacts/fbSAT.jar %*
+rem java -jar "%~dp0/out/artifacts/fbSAT.jar" %*

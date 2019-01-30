@@ -22,5 +22,7 @@ target/
 *.py
 
 # Gradle
-!gradle/wrapper/gradle-wrapper.jar
-!gradlew.bat
+!/gradle/wrapper/gradle-wrapper.jar
+!/gradlew.bat
+# Windows Batch runner
+!/fbsat.bat

@@ -1,7 +1,16 @@
-#/usr/bin/env sh
+#!/usr/bin/env sh
+
+case "$(uname)" in
+    CYGWIN*) DIRNAME=$(cygpath -d "$(dirname "$(readlink -f "$0")")");;
+    Darwin*) DIRNAME=$(dirname "$(readlink "$0")");;
+    *) DIRNAME=$(dirname "$(readlink -f "$0")");;
+esac
+if [ "$DIRNAME" = "." ]; then
+    DIRNAME="$(dirname "$0")"
+fi
 
 ## Jar from 'gradle jar'
-# java -jar build/libs/fbSAT-1.0.jar $*
+java -jar "${DIRNAME}/build/libs/fbSAT-1.0.jar" $*
 
 ## Artifact from IDEA
-java -jar out/artifacts/fbSAT.jar $*
+# java -jar "${DIRNAME}/out/artifacts/fbSAT.jar" $*
