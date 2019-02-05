@@ -81,6 +81,7 @@ class Extended(
 
     private fun declareCE() {
         if (counterExampleTree == null) return
+        if (counterExampleTree.counterExamples.isEmpty()) return
 
         if (ceReduction == null) {
             val runningTime = measureTimeMillis {
