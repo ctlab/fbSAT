@@ -1,0 +1,5 @@
+go
+check_ltlspec -o ltl
+show_traces -a -v -o counterexamples
+time
+quit

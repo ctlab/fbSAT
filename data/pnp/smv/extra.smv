@@ -1,0 +1,23 @@
+VAR
+    -- vac : boolean;
+    vs : boolean;
+ASSIGN
+    init(vac) := FALSE;
+    next(vac) := case
+        next(vp1) | next(vp2) | next(vp3) : TRUE;
+        !next(vs) : FALSE;
+        TRUE : vac;
+    esac;
+
+    init(vs) := FALSE;
+    next(vs) := case
+        next(CNF) & next(vacuum_on) : TRUE;
+        next(CNF) & next(vacuum_off) : FALSE;
+        next(CNF) & !next(vacuum_on) : FALSE;
+        TRUE : vs;
+    esac;
+DEFINE
+    vp1 := c1End & c2Home & vcEnd & vs & pp1;
+    vp2 := c1Home & c2End & vcEnd & vs & pp2;
+    vp3 := c1End & c2End & vcEnd & vs & pp3;
+--JUSTICE CNF
