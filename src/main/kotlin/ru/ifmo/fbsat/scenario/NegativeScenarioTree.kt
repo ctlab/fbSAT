@@ -147,13 +147,8 @@ class NegativeScenarioTree(
             if (i + 1 == negativeScenario.loopPosition)
                 loopBack = current
         }
-
-        // if (negativeScenario.loopPosition != null) {
-        //     current.loopBack = nodes[negativeScenario.loopPosition - 1]
-        // } else {
-        //     current.isTerminal = true
-        // }
-        current.loopBack = loopBack
+        val last = current
+        last.loopBack = loopBack
 
         _counterExamples.add(negativeScenario)
         lazyCache.invalidate()
