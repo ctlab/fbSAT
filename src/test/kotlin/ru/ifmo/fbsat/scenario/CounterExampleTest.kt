@@ -3,12 +3,15 @@ package ru.ifmo.fbsat.scenario
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CounterExampleTest {
     private val file = createTempFile()
 
     init {
+        println("[*] Writing to tempfile: $file...")
         file.writeText(
             """
             Trace Description: LTL Counterexample
