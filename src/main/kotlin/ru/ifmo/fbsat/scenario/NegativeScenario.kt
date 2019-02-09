@@ -63,7 +63,6 @@ fun CounterExample.toNegativeScenario(
             )
         )
         yieldAll(
-            // states.dropLast(1).zipWithNext { first, second ->
             states.zipWithNext { first, second ->
                 ScenarioElement(
                     first.getFirstTrue(inputEvents)!!,
