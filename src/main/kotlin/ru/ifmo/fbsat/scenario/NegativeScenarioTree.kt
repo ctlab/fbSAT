@@ -120,8 +120,8 @@ class NegativeScenarioTree(
             null
         )
 
-        if (negativeScenario.elements.first() != root.element) {
-            System.err.println("[!] First CE element must be equal to CETree root")
+        require(negativeScenario.elements.first() == root.element) {
+            "First element must be equal to the NST root"
         }
 
         var current = root
