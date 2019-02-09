@@ -126,11 +126,8 @@ class NegativeScenarioTree(
 
         var current = root
         var loopBack: Node? = null
-        meow@ for ((i, element) in negativeScenario.elements.withIndex()) {
-            // skip first element, because it is the same as root
-            if (i == 0)
-                continue
-
+        // skip first element, because it is the same as root
+        meow@ for ((i, element) in negativeScenario.elements.withIndex().drop(1)) {
             if (isTrie) {
                 for (child in current.children) {
                     if (child.element.inputEvent == element.inputEvent &&
