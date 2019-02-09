@@ -13,7 +13,7 @@ class CounterExample(
     init {
         if (loopPosition != null)
             require(states[loopPosition - 1].variables == states.last().variables) {
-                println("[DEBUG] loop = ${states[loopPosition-1]}")
+                println("[DEBUG] loop = ${states[loopPosition - 1]}")
                 println("[DEBUG] last = ${states.last()}")
                 "Loop-back state must be equal to last state in counter-example"
             }
