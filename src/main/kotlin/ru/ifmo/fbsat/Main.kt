@@ -12,8 +12,7 @@ import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
 import ru.ifmo.fbsat.automaton.Automaton
-import ru.ifmo.fbsat.scenario.CounterExample
-import ru.ifmo.fbsat.scenario.CounterExampleTree
+import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.Scenario
 import ru.ifmo.fbsat.scenario.ScenarioTree
 import ru.ifmo.fbsat.solver.DefaultSolver
@@ -21,6 +20,7 @@ import ru.ifmo.fbsat.solver.IncrementalSolver
 import ru.ifmo.fbsat.task.basic.Basic
 import ru.ifmo.fbsat.task.basicmin.BasicMin
 import ru.ifmo.fbsat.task.extended.Extended
+import ru.ifmo.fbsat.task.extendedce.ExtendedCE
 import ru.ifmo.fbsat.task.extendedmin.ExtendedMin
 import java.io.File
 import kotlin.system.measureTimeMillis
@@ -46,7 +46,16 @@ class FbSAT : CliktCommand() {
         readable = true
     )
 
-    private val outputDirectory by option(
+    private val smvDir by option(
+        "-smv", "--smvdir",
+        help = "Folder with SMV files/scripts for verification",
+        metavar = "<path>"
+    ).file(
+        exists = true,
+        fileOkay = false
+    )
+
+    private val outDir by option(
         "-o", "--outdir",
         help = "Output directory",
         metavar = "<path>"
@@ -54,16 +63,18 @@ class FbSAT : CliktCommand() {
 
     private val method by option(
         "-m", "--method",
-        help = "Method to use"
+        help = "Method to use",
+        metavar = "<method>"
     ).choice(
         "basic", "basic-min",
-        "extended", "extended-min", "extended-min-ub"
+        "extended", "extended-min", "extended-min-ub",
+        "extended-ce", "extended-ce-min", "extended-ce-min-ub"
     ).required()
 
     private val numberOfStates by option(
         "-C",
         help = "Number of automaton states"
-    ).int().required()
+    ).int()
 
     private val maxOutgoingTransitions by option(
         "-K",
@@ -73,7 +84,7 @@ class FbSAT : CliktCommand() {
     private val maxGuardSize by option(
         "-P",
         help = "Maximum number of nodes in guard's boolean formula's parse tree"
-    ).int().required()
+    ).int()
 
     private val maxTransitions by option(
         "-T",
@@ -100,6 +111,14 @@ class FbSAT : CliktCommand() {
     ).flag(
         "--no-incremental",
         // default = false
+        default = true
+    )
+
+    private val isForbidLoops by option(
+        "--forbid-loops",
+        help = "Forbid loops"
+    ).flag(
+        "--no-forbid-loops",
         default = true
     )
 
@@ -137,18 +156,14 @@ class FbSAT : CliktCommand() {
             )
         )
 
-        val ceTree = fileCounterExamples?.let { fileCounterExamples ->
-            val counterExamples = CounterExample.fromFile(
-                fileCounterExamples,
+        val ceTree = fileCounterExamples?.let {
+            NegativeScenarioTree.fromFile(
+                it,
                 tree.inputEvents,
                 tree.outputEvents,
                 tree.inputNames,
-                tree.outputNames
-            )
-            CounterExampleTree(
-                counterExamples,
-                inputNames = tree.inputNames,
-                outputNames = tree.outputNames,
+                tree.outputNames,
+                // FIXME: something breaks (heavily) when CETree is a trie... :(
                 isTrie = false
             )
         }
@@ -170,7 +185,7 @@ class FbSAT : CliktCommand() {
                 val task = Basic(
                     tree,
                     ceTree,
-                    numberOfStates,
+                    numberOfStates!!,
                     maxOutgoingTransitions,
                     solverProvider
                 )
@@ -191,10 +206,11 @@ class FbSAT : CliktCommand() {
                 val task = Extended(
                     tree,
                     ceTree,
-                    numberOfStates,
+                    numberOfStates!!,
                     maxOutgoingTransitions,
-                    maxGuardSize,
-                    solverProvider
+                    maxGuardSize!!,
+                    solverProvider,
+                    isForbidLoops = isForbidLoops
                 )
                 task.infer(maxTotalGuardsSize)
             }
@@ -204,13 +220,25 @@ class FbSAT : CliktCommand() {
                     ceTree,
                     numberOfStates,
                     maxOutgoingTransitions,
-                    maxGuardSize,
+                    maxGuardSize!!,
                     maxTotalGuardsSize,
-                    solverProvider
+                    solverProvider,
+                    isForbidLoops = isForbidLoops
                 )
                 task.infer()
             }
-            else -> throw UnsupportedOperationException("Unsupported method '$method'")
+            "extended-ce" -> {
+                val task = ExtendedCE(
+                    tree,
+                    numberOfStates!!,
+                    maxOutgoingTransitions,
+                    maxGuardSize!!,
+                    solverProvider,
+                    smvDir!!
+                )
+                task.infer(maxTotalGuardsSize)
+            }
+            else -> throw UnsupportedOperationException("Method '$method' is not supported yet.")
         }
 
         if (automaton == null) {
@@ -222,8 +250,8 @@ class FbSAT : CliktCommand() {
             automaton.verify(tree)
             ceTree?.let { automaton.verify(it) }
 
-            outputDirectory.mkdirs()
-            automaton.dump(outputDirectory, "automaton")
+            outDir.mkdirs()
+            automaton.dump(outDir, "automaton")
         }
     }
 }

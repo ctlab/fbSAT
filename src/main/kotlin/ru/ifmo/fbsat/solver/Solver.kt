@@ -12,6 +12,7 @@ interface Solver {
 
     fun newVariable(): Int
     fun newArray(vararg shape: Int) = IntMultiArray(shape) { newVariable() }
+    fun newArray(vararg shape: Int, init: (IntArray) -> (Int)) = IntMultiArray(shape, init)
 
     fun clause(literals: Sequence<Int>)
     fun clause(vararg literals: Int) = clause(literals.asSequence())

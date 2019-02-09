@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.task.basic
 
 import ru.ifmo.fbsat.automaton.Automaton
-import ru.ifmo.fbsat.scenario.CounterExampleTree
+import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import kotlin.system.measureTimeMillis
@@ -9,7 +9,7 @@ import kotlin.system.measureTimeMillis
 // BasicAutomatonInferenceTask
 class Basic(
     val scenarioTree: ScenarioTree,
-    val counterExampleTree: CounterExampleTree?,
+    val negativeScenarioTree: NegativeScenarioTree?,
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int?, // K, K=C if null
     val solverProvider: () -> Solver
@@ -29,8 +29,8 @@ class Basic(
         declareCardinality(maxTransitions)
 
         // =============================================
-        // if (counterExampleTree != null)
-        //     declareCE(counterExampleTree)
+        // if (negativeScenarioTree != null)
+        //     declareCE(negativeScenarioTree)
         // =============================================
         solver.comment("Total variables: ${solver.numberOfVariables}, clauses: ${solver.numberOfClauses}")
 
@@ -72,11 +72,11 @@ class Basic(
         }
     }
 
-    // private fun declareCE(counterExampleTree: CounterExampleTree) {
+    // private fun declareCE(negativeScenarioTree: NegativeScenarioTree) {
     //     if (!ceReduction) {
     //         solver.declareCE(
     //             baseReduction!!,
-    //             counterExampleTree
+    //             negativeScenarioTree
     //         )
     //         ceReduction = true
     //     }

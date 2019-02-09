@@ -4,29 +4,28 @@ group = "ru.ifmo.fbsat"
 version = "1.0"
 
 plugins {
-    kotlin("jvm") version "1.3.20"
-    // id("com.github.johnrengelman.shadow") version "4.0.4"
+    kotlin("jvm") version "1.3.21"
+}
+
+repositories {
+    jcenter()
+    mavenCentral()
 }
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("com.github.ajalt:clikt:1.6.0")
-}
 
-repositories {
-    mavenCentral()
+    testImplementation("org.junit.jupiter:junit-jupiter:5.4.0")
 }
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }
 
-// tasks.withType<ShadowJar> {
-//     baseName = "fbSAT"
-//     manifest.attributes.apply {
-//         put("Main-Class", "ru.ifmo.fbsat.MainKt")
-//     }
-// }
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
 
 tasks.withType<Jar> {
     manifest {
@@ -35,6 +34,7 @@ tasks.withType<Jar> {
     from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 }
 
-tasks.wrapper {
-    distributionType = Wrapper.DistributionType.ALL
+tasks.withType<Wrapper> {
+    gradleVersion = "5.2.1"
+    distributionType = Wrapper.DistributionType.BIN
 }

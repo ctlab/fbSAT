@@ -2,22 +2,18 @@ package ru.ifmo.fbsat.scenario
 
 import java.io.File
 
-open class Scenario(elements: List<ScenarioElement>, preprocess: Boolean = true) {
+class Scenario(elements: List<ScenarioElement>, preprocess: Boolean = true) {
     val elements: List<ScenarioElement>
 
     init {
-        if (preprocess && elements.isNotEmpty()) {
-            val preprocessed = elements
-                .asSequence()
-                .zipWithNext()
-                .filter { (prev, cur) ->
-                    cur.outputEvent != null || cur != prev
-                }
-                .map { it.second }
-            this.elements = (sequenceOf(elements.first()) + preprocessed).toList()
-        } else {
+        if (preprocess && elements.isNotEmpty())
+            this.elements = elements.preprocessed
+        else
             this.elements = elements
-        }
+    }
+
+    override fun toString(): String {
+        return "Scenario(elements=$elements)"
     }
 
     companion object {
@@ -81,8 +77,12 @@ open class Scenario(elements: List<ScenarioElement>, preprocess: Boolean = true)
             return Scenario(elements, preprocess = preprocess)
         }
     }
-
-    override fun toString(): String {
-        return "Scenario(elements=$elements)"
-    }
 }
+
+val List<ScenarioElement>.preprocessed: List<ScenarioElement>
+    get() = sequence {
+        yield(this@preprocessed.first())
+        for ((prev, cur) in this@preprocessed.asSequence().zipWithNext())
+            if (cur.outputEvent != null || cur != prev)
+                yield(cur)
+    }.toList()

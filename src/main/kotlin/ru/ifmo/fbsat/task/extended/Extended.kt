@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.task.extended
 
 import ru.ifmo.fbsat.automaton.Automaton
-import ru.ifmo.fbsat.scenario.CounterExampleTree
+import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import kotlin.system.measureTimeMillis
@@ -9,11 +9,12 @@ import kotlin.system.measureTimeMillis
 // FIXME: maybe rename to `AutomatonInferrerExtended` or `ExtendedAutomatonInferenceTask`
 class Extended(
     val scenarioTree: ScenarioTree,
-    val counterExampleTree: CounterExampleTree?,
+    val negativeScenarioTree: NegativeScenarioTree?,
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int?, // K, K=C if null
     val maxGuardSize: Int, // P
-    val solverProvider: () -> Solver
+    val solverProvider: () -> Solver,
+    private val isForbidLoops: Boolean = true
 ) {
     private val solver = solverProvider()
     private var baseReduction: Reduction? = null
@@ -38,6 +39,7 @@ class Extended(
         return if (rawAssignment != null) {
             val assignment = Assignment.fromRaw(rawAssignment, baseReduction!!)
             if (ceReduction != null) {
+                @Suppress("UNUSED_VARIABLE")
                 val ceAssignment = CEAssignment.fromRaw(rawAssignment, ceReduction!!)
             }
             val automaton = assignment.toAutomaton()
@@ -80,21 +82,24 @@ class Extended(
     }
 
     private fun declareCE() {
-        if (counterExampleTree == null) return
-        if (counterExampleTree.counterExamples.isEmpty()) return
+        if (negativeScenarioTree == null) return
+        if (negativeScenarioTree.counterExamples.isEmpty()) return
+        // FIXME: must do following:
+        if (negativeScenarioTree.counterExamples.first().elements.isEmpty()) return
+        if (ceReduction != null) return
 
-        if (ceReduction == null) {
-            val runningTime = measureTimeMillis {
-                ceReduction = solver.declareCounterExampleExtended(
-                    baseReduction!!,
-                    scenarioTree,
-                    counterExampleTree
-                )
-            }
-            println(
-                "[+] Done declaring CE reduction (${solver.numberOfVariables} variables, ${solver.numberOfClauses} clauses) in %.3f seconds"
-                    .format(runningTime / 1000.0)
+        val runningTime = measureTimeMillis {
+            ceReduction = solver.declareCounterExampleExtended(
+                baseReduction!!,
+                ceReduction,
+                scenarioTree,
+                negativeScenarioTree,
+                isForbidLoops = isForbidLoops
             )
         }
+        println(
+            "[+] Done declaring CE reduction (${solver.numberOfVariables} variables, ${solver.numberOfClauses} clauses) in %.3f seconds"
+                .format(runningTime / 1000.0)
+        )
     }
 }

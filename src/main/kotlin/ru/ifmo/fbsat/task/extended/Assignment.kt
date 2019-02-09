@@ -5,7 +5,7 @@ import ru.ifmo.fbsat.automaton.Automaton
 import ru.ifmo.fbsat.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.automaton.NodeType
 import ru.ifmo.fbsat.automaton.ParseTreeGuard
-import ru.ifmo.fbsat.scenario.CounterExampleTree
+import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.ScenarioTree
 import ru.ifmo.fbsat.utils.BooleanMultiArray
 import ru.ifmo.fbsat.utils.IntMultiArray
@@ -162,7 +162,7 @@ internal fun Assignment.toAutomaton(): Automaton {
 }
 
 internal class CEAssignment(
-    val ceTree: CounterExampleTree,
+    val ceTree: NegativeScenarioTree,
     val C: Int,
     val K: Int,
     val P: Int,

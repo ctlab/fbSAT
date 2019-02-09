@@ -1,6 +1,6 @@
 package ru.ifmo.fbsat.automaton
 
-import ru.ifmo.fbsat.scenario.CounterExampleTree
+import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.ScenarioTree
 import ru.ifmo.fbsat.utils.LazyCache
 import ru.ifmo.fbsat.utils.toBooleanArray
@@ -172,32 +172,31 @@ class Automaton(
             println("[-] Verify: FAILED")
     }
 
-    fun verify(counterExampleTree: CounterExampleTree) {
+    fun verify(negativeScenarioTree: NegativeScenarioTree) {
         var ok = true
 
-        for ((i, counterExample) in counterExampleTree.counterExamples.withIndex()) {
+        for ((i, counterExample) in negativeScenarioTree.counterExamples.withIndex()) {
             // ================
             // if (i > 0) break
             // ================
-            val satisfyingStates = MutableList<State?>(counterExample.elements.size + 1) { null }
+            val satisfyingStates = MutableList<State?>(counterExample.elements.size) { null }
             satisfyingStates[0] = this.initialState
-            // println("[${i + 1}::0/${counterExample.elements.size}] ${counterExampleTree.rootElement} satisfied by ${this.initialState}")
+            println("[${i + 1}::1/${counterExample.elements.size}] ${negativeScenarioTree.rootElement} satisfied by ${this.initialState}")
 
             var currentState = this.initialState
-            var currentValues = counterExampleTree.rootElement!!.outputValues
+            var currentValues = negativeScenarioTree.rootElement!!.outputValues
 
-            for ((j, element) in counterExample.elements.withIndex()) {
+            for ((j, element) in counterExample.elements.withIndex().drop(1)) {
                 // j -- 0-based index of CE-element (CE-state)
                 val inputEvent = element.inputEvent
                 val inputValues = element.inputValues
-
                 val (newState, outputEvent, newValues) = go(currentState, inputEvent, inputValues, currentValues)
 
                 if (outputEvent == element.outputEvent && newValues == element.outputValues) {
-                    // println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element satisfied by $newState")
-                    satisfyingStates[j + 1] = newState
+                    println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element satisfied by $newState")
+                    satisfyingStates[j] = newState
                 } else {
-                    // println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element not satisfied (newState=$newState, newValues=$newValues)")
+                    println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element not satisfied (newState=$newState, newValues=$newValues)")
                     break
                 }
 
@@ -205,21 +204,19 @@ class Automaton(
                 currentValues = newValues
             }
 
-            println("[CE::${i + 1}] Satisfying states: [${satisfyingStates.map { it?.id }.withIndex().joinToString(" ") { (j, x) -> if (j == counterExample.loopPosition) "<$x>" else "$x" }}] (loop = ${counterExample.loopPosition})")
+            println("[CE::${i + 1}] Satisfying states: [${satisfyingStates.map { it?.id }.withIndex().joinToString(" ") { (j, x) -> if (j + 1 == counterExample.loopPosition) "«$x»" else "$x" }}] (loop = ${counterExample.loopPosition})")
 
-            counterExample.loopPosition?.let { l ->
-                val loop = satisfyingStates[l]
+            if (counterExample.loopPosition != null) {
+                val loop = satisfyingStates[counterExample.loopPosition]
                 val last = satisfyingStates.last()
                 if (loop != null && last != null) {
                     if (last == loop) {
-                        println("[!] Counterexample #${i + 1} is satisfied (last==loop)\n>>> loopPosition = $l\n>>> loop = $loop\n>>> last = $last")
+                        println("[!] Counterexample #${i + 1} is satisfied (last==loop)\n>>> loopPosition = ${counterExample.loopPosition}\n>>> loop = $loop\n>>> last = $last")
                         ok = false
                     }
                 }
-            } ?: run {
-                if (satisfyingStates.last() != null) {
-                    println("[!] Terminal in counterexample #${i + 1} is satisfied")
-                }
+            } else if (satisfyingStates.last() != null) {
+                println("[!] Terminal in counterexample #${i + 1} is satisfied")
             }
         }
 
@@ -229,17 +226,25 @@ class Automaton(
             println("[-] Verify CE: FAILED")
     }
 
-    fun dump(folder: File, name: String) {
-        val fileSmv = folder.resolve("$name.smv")
-        val fileGv = folder.resolve("$name.gv")
-        fileSmv.printWriter().use {
-            it.println(this.toSmvString())
-        }
-        fileGv.printWriter().use {
+    fun dump(dir: File, name: String) {
+        _dumpGv(dir.resolve("$name.gv"))
+        _dumpSmv(dir.resolve("$name.smv"))
+    }
+
+    @Suppress("FunctionName")
+    fun _dumpGv(file: File) {
+        file.printWriter().use {
             it.println(this.toGraphvizString())
         }
-        Runtime.getRuntime().exec("dot -Tpdf -O $fileGv").waitFor()
-        Runtime.getRuntime().exec("dot -Tpng -O $fileGv").waitFor()
+        Runtime.getRuntime().exec("dot -Tpdf -O $file")
+        Runtime.getRuntime().exec("dot -Tpng -O $file")
+    }
+
+    @Suppress("FunctionName")
+    fun _dumpSmv(file: File) {
+        file.printWriter().use {
+            it.println(this.toSmvString())
+        }
     }
 
     fun pprint() {

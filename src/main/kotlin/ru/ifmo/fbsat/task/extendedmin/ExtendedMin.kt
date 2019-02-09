@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.task.extendedmin
 
 import ru.ifmo.fbsat.automaton.Automaton
-import ru.ifmo.fbsat.scenario.CounterExampleTree
+import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.task.basicmin.BasicMin
@@ -9,15 +9,16 @@ import ru.ifmo.fbsat.task.extended.Extended
 
 class ExtendedMin(
     val scenarioTree: ScenarioTree,
-    val counterExampleTree: CounterExampleTree?,
+    val negativeScenarioTree: NegativeScenarioTree?,
     val numberOfStates: Int?, // C, search if null
     val maxOutgoingTransitions: Int?, // K, =C if null
     val maxGuardSize: Int, // P
     val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
-    val solverProvider: () -> Solver
+    val solverProvider: () -> Solver,
+    private val isForbidLoops: Boolean = true
 ) {
     init {
-        require(!(numberOfStates == null && maxOutgoingTransitions == null)) {
+        require(!(numberOfStates == null && maxOutgoingTransitions != null)) {
             "do not specify only K"
         }
     }
@@ -38,7 +39,7 @@ class ExtendedMin(
 
         val task = Extended(
             scenarioTree,
-            counterExampleTree,
+            negativeScenarioTree,
             C,
             maxOutgoingTransitions,
             maxGuardSize,

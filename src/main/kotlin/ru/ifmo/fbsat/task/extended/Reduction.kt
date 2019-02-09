@@ -4,7 +4,7 @@
 package ru.ifmo.fbsat.task.extended
 
 import ru.ifmo.fbsat.automaton.NodeType
-import ru.ifmo.fbsat.scenario.CounterExampleTree
+import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.solver.atMostOne
@@ -45,7 +45,7 @@ class Reduction(
 )
 
 class CEReduction(
-    val ceTree: CounterExampleTree,
+    val ceTree: NegativeScenarioTree,
     val C: Int,
     val K: Int,
     val P: Int,
@@ -730,20 +730,28 @@ fun Solver.declareComparatorExtended(totalizer: IntArray, N: Int, declaredN: Int
 @Suppress("LocalVariableName")
 fun Solver.declareCounterExampleExtended(
     baseReduction: Reduction,
+    previousCEReduction: CEReduction?,
     scenarioTree: ScenarioTree,
-    counterExampleTree: CounterExampleTree
+    negativeScenarioTree: NegativeScenarioTree,
+    isForbidLoops: Boolean = true
 ): CEReduction {
     // Constants
     val C = baseReduction.C
     val K = baseReduction.K
     val P = baseReduction.P
-    val V = counterExampleTree.size
-    val E = counterExampleTree.inputEvents.size
-    val U = counterExampleTree.uniqueInputs.size
-    val X = counterExampleTree.uniqueInputs.first().length
-    val Z = counterExampleTree.uniqueOutputs.first().length
+    val oldV = previousCEReduction?.satisfaction?.shape?.get(0) ?: 0
+    val V = negativeScenarioTree.size
+    val E = negativeScenarioTree.inputEvents.size
+    val U = negativeScenarioTree.uniqueInputs.size
+    val X = negativeScenarioTree.uniqueInputs.first().length
+    val Z = negativeScenarioTree.uniqueOutputs.first().length
     // Counterexample variables
-    val satisfaction = newArray(V, C + 1)  // denotes the satisfying state (or its absence)
+    val satisfaction = newArray(V, C + 1) { (v, c) ->
+        if (v <= oldV)
+            previousCEReduction!!.satisfaction[v, c]
+        else
+            newVariable()
+    }
     // Automaton variables
     val transition = baseReduction.transition
     val activeTransition = newArray(C, C, E, U)
@@ -765,15 +773,18 @@ fun Solver.declareCounterExampleExtended(
     comment("CE. Counterexample constraints")
     comment("CE.1. Satisfaction (color-like) constrains")
     comment("CE.1.0. ONE(satisfaction)")
-    for (v in 1..V)
+    for (v in 1..V) {
+        if (v <= oldV) continue
         exactlyOne(1..(C + 1), satisfaction, v)
+    }
 
     comment("CE.1.1. Satisfaction of active vertex")
     // satisfaction[tp(v), i] => (satisfaction[v, j] <=> active_transition[i,j,tie(v),tin(v)])
-    for (v in counterExampleTree.activeVertices) {
-        val p = counterExampleTree.parent(v)
-        val e = counterExampleTree.inputEvent(v)
-        val u = counterExampleTree.inputNumber(v)
+    for (v in negativeScenarioTree.activeVertices) {
+        if (v <= oldV) continue
+        val p = negativeScenarioTree.parent(v)
+        val e = negativeScenarioTree.inputEvent(v)
+        val u = negativeScenarioTree.inputNumber(v)
         for (i in 1..C)
             for (j in 1..C)
                 implyIff(
@@ -785,10 +796,11 @@ fun Solver.declareCounterExampleExtended(
 
     comment("CE.1.1+. Non-satisfaction of active vertex")
     // satisfaction[tp(v), i] => (satisfaction[v, 0] <=> AND_j( ~active_transition[i,j,tie(v),tin(v)] ))
-    for (v in counterExampleTree.activeVertices) {
-        val p = counterExampleTree.parent(v)
-        val e = counterExampleTree.inputEvent(v)
-        val u = counterExampleTree.inputNumber(v)
+    for (v in negativeScenarioTree.activeVertices) {
+        if (v <= oldV) continue
+        val p = negativeScenarioTree.parent(v)
+        val e = negativeScenarioTree.inputEvent(v)
+        val u = negativeScenarioTree.inputNumber(v)
         for (i in 1..C)
             implyIffAnd(satisfaction[p, i], satisfaction[v, C + 1], sequence {
                 for (j in 1..C)
@@ -798,10 +810,11 @@ fun Solver.declareCounterExampleExtended(
 
     comment("CE.1.2. Satisfaction of passive vertex")
     // satisfaction[tp(v), c] => (satisfaction[v, c] <=> AND_j( ~active_transition[c,j,tie(v),tin(v)] ))
-    for (v in counterExampleTree.passiveVertices) {
-        val p = counterExampleTree.parent(v)
-        val e = counterExampleTree.inputEvent(v)
-        val u = counterExampleTree.inputNumber(v)
+    for (v in negativeScenarioTree.passiveVertices) {
+        if (v <= oldV) continue
+        val p = negativeScenarioTree.parent(v)
+        val e = negativeScenarioTree.inputEvent(v)
+        val u = negativeScenarioTree.inputNumber(v)
         for (c in 1..C)
             implyIffAnd(satisfaction[p, c], satisfaction[v, c], sequence {
                 for (j in 1..C)
@@ -811,10 +824,11 @@ fun Solver.declareCounterExampleExtended(
 
     comment("CE.1.2+. Non-satisfaction of passive vertex")
     // satisfaction[tp(v), c] => (satisfaction[v, 0] <=> OR_j( active_transition[c,j,tie(v),tin(v)] ))
-    for (v in counterExampleTree.passiveVertices) {
-        val p = counterExampleTree.parent(v)
-        val e = counterExampleTree.inputEvent(v)
-        val u = counterExampleTree.inputNumber(v)
+    for (v in negativeScenarioTree.passiveVertices) {
+        if (v <= oldV) continue
+        val p = negativeScenarioTree.parent(v)
+        val e = negativeScenarioTree.inputEvent(v)
+        val u = negativeScenarioTree.inputNumber(v)
         for (c in 1..C)
             implyIffOr(satisfaction[p, c], satisfaction[v, C + 1], sequence {
                 for (j in 1..C)
@@ -824,8 +838,9 @@ fun Solver.declareCounterExampleExtended(
 
     comment("CE.1.3. Propagation of satisfaction for passive vertices")
     // satisfaction[tp(v), c] => satisfaction[v, c] | satisfaction[v, 0]
-    for (v in counterExampleTree.passiveVertices) {
-        val p = counterExampleTree.parent(v)
+    for (v in negativeScenarioTree.passiveVertices) {
+        if (v <= oldV) continue
+        val p = negativeScenarioTree.parent(v)
         for (c in 1..C)
             clause(-satisfaction[p, c], satisfaction[v, c], satisfaction[v, C + 1])
     }
@@ -833,21 +848,26 @@ fun Solver.declareCounterExampleExtended(
     comment("CE.1.4. Propagation of non-satisfaction")
     // satisfaction[tp(v), 0] => satisfaction[v, 0]
     for (v in 2..V) {
-        val p = counterExampleTree.parent(v)
+        if (v <= oldV) continue
+        val p = negativeScenarioTree.parent(v)
         imply(satisfaction[p, C + 1], satisfaction[v, C + 1])
     }
 
     comment("CE.1.5. Forbid loops")
     // satisfaction[v, c] => ~satisfaction[loop(v), c]
-    for (v in counterExampleTree.verticesWithLoops) {
-        val l = counterExampleTree.loopBack(v)
-        println(">>> Forbid loop = $l for v = $v")
+    for (v in negativeScenarioTree.verticesWithLoops) {
+        if (!isForbidLoops)
+            break
+
+        if (v <= oldV) continue
+        val l = negativeScenarioTree.loopBack(v)
         for (c in 1..C)
             imply(satisfaction[v, c], -satisfaction[l, c])
     }
 
     comment("CE.1.6. Root is satisfied by start state")
-    clause(satisfaction[1, 1])
+    if (oldV == 0)
+        clause(satisfaction[1, 1])
 
 
     comment("CE.2. Transition constraints")
@@ -881,9 +901,10 @@ fun Solver.declareCounterExampleExtended(
 
     comment("CE.3.1. not_fired definition")
     // satisfaction[tp(v), c] => not_fired[c,tin(v),K]
-    for (v in counterExampleTree.passiveVertices) {
-        val p = counterExampleTree.parent(v)
-        val u = counterExampleTree.inputNumber(v)
+    for (v in negativeScenarioTree.passiveVertices) {
+        if (v <= oldV) continue
+        val p = negativeScenarioTree.parent(v)
+        val u = negativeScenarioTree.inputNumber(v)
         for (c in 1..C)
             imply(satisfaction[p, c], notFired[c, u, K])
     }
@@ -925,8 +946,9 @@ fun Solver.declareCounterExampleExtended(
     comment("CE.4. Output event constraints")
     comment("CE.4.1. output_event definition")
     // satisfaction[v, c] => output_event[c, toe(v)]
-    for (v in counterExampleTree.activeVertices) {
-        val o = counterExampleTree.outputEvent(v)
+    for (v in negativeScenarioTree.activeVertices) {
+        if (v <= oldV) continue
+        val o = negativeScenarioTree.outputEvent(v)
         for (c in 1..C)
             imply(satisfaction[v, c], outputEvent[c, o])
     }
@@ -934,10 +956,11 @@ fun Solver.declareCounterExampleExtended(
 
     comment("CE.5. Algorithm constraints")
     comment("CE.5.2. Algorithms definition")
-    for (v in counterExampleTree.activeVertices)
+    for (v in negativeScenarioTree.activeVertices) {
+        if (v <= oldV) continue
         for (z in 1..Z) {
-            val oldValue = counterExampleTree.outputValue(counterExampleTree.parent(v), z)
-            val newValue = counterExampleTree.outputValue(v, z)
+            val oldValue = negativeScenarioTree.outputValue(negativeScenarioTree.parent(v), z)
+            val newValue = negativeScenarioTree.outputValue(v, z)
             for (c in 1..C)
                 imply(
                     satisfaction[v, c],
@@ -950,6 +973,7 @@ fun Solver.declareCounterExampleExtended(
                     }
                 )
         }
+    }
 
 
     comment("CE. Guard constraints re-definition for CE unique inputs")
@@ -996,7 +1020,7 @@ fun Solver.declareCounterExampleExtended(
             for (p in 1..P)
                 for (x in 1..X)
                     for (u in 1..U)
-                        when (val char = counterExampleTree.uniqueInputs[u - 1][x - 1]) {
+                        when (val char = negativeScenarioTree.uniqueInputs[u - 1][x - 1]) {
                             '1' -> imply(terminal[c, k, p, x], nodeValue[c, k, p, u])
                             '0' -> imply(terminal[c, k, p, x], -nodeValue[c, k, p, u])
                             else -> throw IllegalStateException("Character $char is neither '1' nor '0'")
@@ -1118,8 +1142,8 @@ fun Solver.declareCounterExampleExtended(
 
 
     comment("CE.+. Equal variables for same inputs in both trees")
-    for (input in counterExampleTree.uniqueInputs.intersect(scenarioTree.uniqueInputs)) {
-        val uCE = counterExampleTree.uniqueInputs.indexOf(input) + 1
+    for (input in negativeScenarioTree.uniqueInputs.intersect(scenarioTree.uniqueInputs)) {
+        val uCE = negativeScenarioTree.uniqueInputs.indexOf(input) + 1
         val uST = scenarioTree.uniqueInputs.indexOf(input) + 1
 
         for (c in 1..C) {
@@ -1160,8 +1184,8 @@ fun Solver.declareCounterExampleExtended(
     comment("CE. Ad-hoc: reverse-implication (even iff)")
     // ff[k] <=> root_value[k] & AND_{k'<k}( ~ff[k'] )
     for (c in 1..C)
-        for (input in counterExampleTree.uniqueInputs - scenarioTree.uniqueInputs) {
-            val u = counterExampleTree.uniqueInputs.indexOf(input) + 1
+        for (input in negativeScenarioTree.uniqueInputs - scenarioTree.uniqueInputs) {
+            val u = negativeScenarioTree.uniqueInputs.indexOf(input) + 1
             for (k in 1..K)
                 iffAnd(firstFired[c, u, k], sequence {
                     yield(nodeValue[c, k, 1, u])
@@ -1171,7 +1195,7 @@ fun Solver.declareCounterExampleExtended(
         }
 
     return CEReduction(
-        counterExampleTree, C, K, P,
+        negativeScenarioTree, C, K, P,
         satisfaction, activeTransition,
         nodeValue, childValueLeft, childValueRight, firstFired, notFired
     )
