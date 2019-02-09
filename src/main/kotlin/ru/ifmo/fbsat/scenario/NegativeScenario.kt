@@ -8,20 +8,20 @@ class NegativeScenario(
 ) {
     init {
         if (loopPosition != null) {
-            // require(elements[loopPosition - 1] == elements.last()) {
-            //     println("[DEBUG] loop = ${elements[loopPosition-1]}")
-            //     println("[DEBUG] last = ${elements.last()}")
-            //     "Loop-back element must be equal to last element in negative scenario"
-            // }
             val loop = elements[loopPosition - 1]
             val last = elements.last()
-            require(loop.outputEvent == last.outputEvent)
-            require(loop.outputValues == last.outputValues)
+            require(loop.outputEvent == last.outputEvent) {
+                "Mismatch of output event (loopBack: ${loop.outputEvent}, last: ${last.outputEvent})"
+            }
+            require(loop.outputValues == last.outputValues) {
+                "Mismatch of output values (loopBack: ${loop.outputValues}, last: ${last.outputValues})"
+            }
         }
 
-        println("[*] NegativeScenario with loopPoisition = $loopPosition:")
-        for (elem in elements)
-            println(" >  $elem")
+        println("[*] NegativeScenario with loop at $loopPosition:")
+        elements.forEachIndexed { index, elem ->
+            println("[${index + 1}/${elements.size}] $elem")
+        }
     }
 
     override fun toString(): String {

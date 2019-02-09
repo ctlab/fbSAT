@@ -11,12 +11,13 @@ class CounterExample(
     val loopPosition: Int? = states.indexOfFirst { it.isLoop }.let { if (it == -1) null else it + 1 }
 
     init {
-        if (loopPosition != null)
-            require(states[loopPosition - 1].variables == states.last().variables) {
-                println("[DEBUG] loop = ${states[loopPosition - 1]}")
-                println("[DEBUG] last = ${states.last()}")
-                "Loop-back state must be equal to last state in counter-example"
+        if (loopPosition != null) {
+            val loop = states[loopPosition - 1]
+            val last = states.last()
+            require(loop.variables == last.variables) {
+                "Mismatch of variables in loopBack ($loop) and last ($last) states"
             }
+        }
 
         println("[*] CounterExample:")
         states.forEachIndexed { index, state ->
