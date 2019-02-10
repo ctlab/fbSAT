@@ -43,7 +43,8 @@ class ExtendedMin(
             C,
             maxOutgoingTransitions,
             maxGuardSize,
-            solverProvider
+            solverProvider,
+            isForbidLoops = isForbidLoops
         )
         var best: Automaton? = task.infer(initialMaxTotalGuardsSize, finalize = false)
 

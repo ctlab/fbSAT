@@ -735,6 +735,15 @@ fun Solver.declareCounterExampleExtended(
     negativeScenarioTree: NegativeScenarioTree,
     isForbidLoops: Boolean = true
 ): CEReduction {
+    if (previousCEReduction != null)
+        throw NotImplementedError("Incremental CE reduction is not implemented yet")
+
+    fun isomorphicInputNumber(u: Int): Int? =
+        when (val u_ = scenarioTree.uniqueInputs.indexOf(negativeScenarioTree.uniqueInputs[u - 1])) {
+            -1 -> null
+            else -> u_ + 1
+        }
+
     // Constants
     val C = baseReduction.C
     val K = baseReduction.K
@@ -745,6 +754,18 @@ fun Solver.declareCounterExampleExtended(
     val U = negativeScenarioTree.uniqueInputs.size
     val X = negativeScenarioTree.uniqueInputs.first().length
     val Z = negativeScenarioTree.uniqueOutputs.first().length
+    val newU = (1..U).filter { u -> negativeScenarioTree.uniqueInputs[u - 1] !in scenarioTree.uniqueInputs }
+    require(newU.size == (negativeScenarioTree.uniqueInputs - scenarioTree.uniqueInputs).size)
+    println("[.] C = $C")
+    println("[.] K = $K")
+    println("[.] P = $P")
+    println("[.] oldV = $oldV")
+    println("[.] V = $V")
+    println("[.] E = $E")
+    println("[.] U = $U")
+    println("[.] X = $X")
+    println("[.] Z = $Z")
+    println("[.] newU = $newU")
     // Counterexample variables
     val satisfaction = newArray(V, C + 1) { (v, c) ->
         if (v <= oldV)
@@ -754,7 +775,9 @@ fun Solver.declareCounterExampleExtended(
     }
     // Automaton variables
     val transition = baseReduction.transition
-    val activeTransition = newArray(C, C, E, U)
+    val activeTransition = IntMultiArray.new(C, C, E, U) { (i, j, e, u) ->
+        isomorphicInputNumber(u)?.let { u_ -> baseReduction.activeTransition[i, j, e, u_] } ?: newVariable()
+    }
     val inputEvent = baseReduction.inputEvent
     val outputEvent = baseReduction.outputEvent
     val algorithm0 = baseReduction.algorithm0
@@ -764,11 +787,21 @@ fun Solver.declareCounterExampleExtended(
     val terminal = baseReduction.terminal
     val childLeft = baseReduction.childLeft
     val childRight = baseReduction.childRight
-    val nodeValue = newArray(C, K, P, U)
-    val childValueLeft = newArray(C, K, P, U)
-    val childValueRight = newArray(C, K, P, U)
-    val firstFired = newArray(C, U, K)
-    val notFired = newArray(C, U, K)
+    val nodeValue = IntMultiArray.new(C, K, P, U) { (c, k, p, u) ->
+        isomorphicInputNumber(u)?.let { u_ -> baseReduction.nodeValue[c, k, p, u_] } ?: newVariable()
+    }
+    val childValueLeft = IntMultiArray.new(C, K, P, U) { (c, k, p, u) ->
+        isomorphicInputNumber(u)?.let { u_ -> baseReduction.childValueLeft[c, k, p, u_] } ?: newVariable()
+    }
+    val childValueRight = IntMultiArray.new(C, K, P, U) { (c, k, p, u) ->
+        isomorphicInputNumber(u)?.let { u_ -> baseReduction.childValueRight[c, k, p, u_] } ?: newVariable()
+    }
+    val firstFired = IntMultiArray.new(C, U, K) { (c, u, k) ->
+        isomorphicInputNumber(u)?.let { u_ -> baseReduction.firstFired[c, u_, k] } ?: newVariable()
+    }
+    val notFired = IntMultiArray.new(C, U, K) { (c, u, k) ->
+        isomorphicInputNumber(u)?.let { u_ -> baseReduction.notFired[c, u_, k] } ?: newVariable()
+    }
 
     comment("CE. Counterexample constraints")
     comment("CE.1. Satisfaction (color-like) constrains")
@@ -855,15 +888,16 @@ fun Solver.declareCounterExampleExtended(
 
     comment("CE.1.5. Forbid loops")
     // satisfaction[v, c] => ~satisfaction[loop(v), c]
-    for (v in negativeScenarioTree.verticesWithLoops) {
-        if (!isForbidLoops)
-            break
-
-        if (v <= oldV) continue
-        val l = negativeScenarioTree.loopBack(v)
-        for (c in 1..C)
-            imply(satisfaction[v, c], -satisfaction[l, c])
-    }
+    if (isForbidLoops)
+        for (v in negativeScenarioTree.verticesWithLoops) {
+            if (v <= oldV) continue
+            val l = negativeScenarioTree.loopBack(v)
+            println("[.] Forbid loop (v = $v, l = $l)")
+            for (c in 1..C)
+                imply(satisfaction[v, c], -satisfaction[l, c])
+        }
+    else
+        comment("===== NOT FORBIDDING LOOPS =====")
 
     comment("CE.1.6. Root is satisfied by start state")
     if (oldV == 0)
@@ -876,7 +910,7 @@ fun Solver.declareCounterExampleExtended(
     for (i in 1..C)
         for (j in 1..C)
             for (e in 1..E)
-                for (u in 1..U)
+                for (u in newU)
                     iffOr(activeTransition[i, j, e, u], sequence {
                         for (k in 1..K) {
                             // aux <=> transition[i,k,j] & input_event[i,k,e] & first_fired[i,u,k]
@@ -895,7 +929,7 @@ fun Solver.declareCounterExampleExtended(
     comment("CE.3. Firing constraints")
     comment("CE.3.0. AMO(first_fired)")
     for (c in 1..C)
-        for (u in 1..U)
+        for (u in newU)
             atMostOne(1..K, firstFired, c, u)
 
 
@@ -911,7 +945,7 @@ fun Solver.declareCounterExampleExtended(
 
     comment("CE.3.2. not_fired propagation")
     for (c in 1..C)
-        for (u in 1..U) {
+        for (u in newU) {
             // nf[k] => nf[k-1]
             for (k in 2..K)
                 imply(notFired[c, u, k], notFired[c, u, k - 1])
@@ -922,7 +956,7 @@ fun Solver.declareCounterExampleExtended(
 
     comment("CE.3.3. first_fired and not_fired interaction")
     for (c in 1..C)
-        for (u in 1..U) {
+        for (u in newU) {
             // ~(ff & nf)
             for (k in 1..K)
                 clause(-firstFired[c, u, k], -notFired[c, u, k])
@@ -933,7 +967,7 @@ fun Solver.declareCounterExampleExtended(
 
     comment("CE.3.4. Value from not/first fired")
     for (c in 1..C)
-        for (u in 1..U)
+        for (u in newU)
             for (k in 1..K) {
                 // nf => ~root_value
                 imply(notFired[c, u, k], -nodeValue[c, k, 1, u])
@@ -982,7 +1016,7 @@ fun Solver.declareCounterExampleExtended(
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
-                for (u in 1..U) {
+                for (u in newU) {
                     imply(
                         nodeType[c, k, p, NodeType.NONE.value],
                         -nodeValue[c, k, p, u]
@@ -1002,7 +1036,7 @@ fun Solver.declareCounterExampleExtended(
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
-                for (u in 1..U) {
+                for (u in newU) {
                     imply(
                         nodeType[c, k, p, NodeType.TERMINAL.value],
                         -childValueLeft[c, k, p, u]
@@ -1019,7 +1053,7 @@ fun Solver.declareCounterExampleExtended(
         for (k in 1..K)
             for (p in 1..P)
                 for (x in 1..X)
-                    for (u in 1..U)
+                    for (u in newU)
                         when (val char = negativeScenarioTree.uniqueInputs[u - 1][x - 1]) {
                             '1' -> imply(terminal[c, k, p, x], nodeValue[c, k, p, u])
                             '0' -> imply(terminal[c, k, p, x], -nodeValue[c, k, p, u])
@@ -1032,7 +1066,7 @@ fun Solver.declareCounterExampleExtended(
         for (k in 1..K)
             for (p in 1..(P - 2))
                 for (ch in (p + 1)..(P - 1))
-                    for (u in 1..U)
+                    for (u in newU)
                         for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
                             val x1 = nodeType[c, k, p, nt.value]
                             val x2 = childLeft[c, k, p, ch]
@@ -1048,7 +1082,7 @@ fun Solver.declareCounterExampleExtended(
         for (k in 1..K)
             for (p in 1..(P - 2))
                 for (ch in (p + 2)..P)
-                    for (u in 1..U)
+                    for (u in newU)
                         for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
                             val x1 = nodeType[c, k, p, nt.value]
                             val x2 = childRight[c, k, p, ch]
@@ -1063,7 +1097,7 @@ fun Solver.declareCounterExampleExtended(
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 2))
-                for (u in 1..U)
+                for (u in newU)
                     implyIffAnd(
                         nodeType[c, k, p, NodeType.AND.value],
                         nodeValue[c, k, p, u],
@@ -1076,7 +1110,7 @@ fun Solver.declareCounterExampleExtended(
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 2))
-                for (u in 1..U)
+                for (u in newU)
                     implyIffOr(
                         nodeType[c, k, p, NodeType.OR.value],
                         nodeValue[c, k, p, u],
@@ -1090,7 +1124,7 @@ fun Solver.declareCounterExampleExtended(
         for (k in 1..K)
             for (p in 1..(P - 1))
                 for (ch in (p + 1)..P)
-                    for (u in 1..U) {
+                    for (u in newU) {
                         val x1 = nodeType[c, k, p, NodeType.NOT.value]
                         val x2 = childLeft[c, k, p, ch]
                         val x3 = childValueLeft[c, k, p, u]
@@ -1104,7 +1138,7 @@ fun Solver.declareCounterExampleExtended(
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 1))
-                for (u in 1..U)
+                for (u in newU)
                     imply(
                         nodeType[c, k, p, NodeType.NOT.value],
                         -childValueRight[c, k, p, u]
@@ -1115,7 +1149,7 @@ fun Solver.declareCounterExampleExtended(
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 1))
-                for (u in 1..U) {
+                for (u in newU) {
                     val x1 = nodeType[c, k, p, NodeType.NOT.value]
                     val x2 = nodeValue[c, k, p, u]
                     val x3 = -childValueLeft[c, k, p, u]
@@ -1126,7 +1160,7 @@ fun Solver.declareCounterExampleExtended(
     comment("CE.A.2. (comb)")
     for (c in 1..C)
         for (k in 1..K)
-            for (u in 1..U) {
+            for (u in newU) {
                 // (t!=0 & nf) => ~nodetype[1, NONE]
                 clause(
                     transition[c, k, C + 1],
@@ -1141,58 +1175,28 @@ fun Solver.declareCounterExampleExtended(
             }
 
 
-    comment("CE.+. Equal variables for same inputs in both trees")
-    for (input in negativeScenarioTree.uniqueInputs.intersect(scenarioTree.uniqueInputs)) {
-        val uCE = negativeScenarioTree.uniqueInputs.indexOf(input) + 1
-        val uST = scenarioTree.uniqueInputs.indexOf(input) + 1
-
-        for (c in 1..C) {
-            for (j in 1..C) {
-                for (e in 1..E)
-                    iff(
-                        activeTransition[c, j, e, uCE],
-                        baseReduction.activeTransition[c, j, e, uST]
-                    )
-            }
-            for (k in 1..K) {
-                for (p in 1..P) {
-                    iff(
-                        nodeValue[c, k, p, uCE],
-                        baseReduction.nodeValue[c, k, p, uST]
-                    )
-                    iff(
-                        childValueLeft[c, k, p, uCE],
-                        baseReduction.childValueLeft[c, k, p, uST]
-                    )
-                    iff(
-                        childValueRight[c, k, p, uCE],
-                        baseReduction.childValueRight[c, k, p, uST]
-                    )
-                }
-                iff(
-                    firstFired[c, uCE, k],
-                    baseReduction.firstFired[c, uST, k]
-                )
-                iff(
-                    notFired[c, uCE, k],
-                    baseReduction.notFired[c, uST, k]
-                )
-            }
-        }
-    }
-
-    comment("CE. Ad-hoc: reverse-implication (even iff)")
+    comment("CE. Ad-hoc: reverse-implication (iff)")
     // ff[k] <=> root_value[k] & AND_{k'<k}( ~ff[k'] )
     for (c in 1..C)
-        for (input in negativeScenarioTree.uniqueInputs - scenarioTree.uniqueInputs) {
-            val u = negativeScenarioTree.uniqueInputs.indexOf(input) + 1
+        for (u in newU)
             for (k in 1..K)
                 iffAnd(firstFired[c, u, k], sequence {
                     yield(nodeValue[c, k, 1, u])
                     for (k_ in 1 until k)
                         yield(-firstFired[c, u, k_])
                 })
-        }
+
+    // comment("CE. Ad-hoc: reverse-implication")
+    // // ff[k] <= root_value[k] & AND_{k'<k}( ~ff[k'] )
+    // for (c in 1..C)
+    //     for (u in newU)
+    //         for (k in 1..K)
+    //             clause(sequence {
+    //                 yield(firstFired[c, u, k])
+    //                 yield(-nodeValue[c, k, 1, u])
+    //                 for (k_ in 1 until k)
+    //                     yield(firstFired[c, u, k_])
+    //             })
 
     return CEReduction(
         negativeScenarioTree, C, K, P,
