@@ -40,29 +40,29 @@ class NegativeScenarioTree(
         nodes.asSequence().map { it.element.outputValues }.filter { it != "" }.distinct().sorted().toList()
     }
     val inputNames: List<String> by lazyCache {
-        _inputNames ?: uniqueInputs.first().indices.map { i -> "x${i + 1}" }
+        _inputNames ?: uniqueInputs.first().indices.map { "x${it + 1}" }
     }
     val outputNames: List<String> by lazyCache {
-        _outputNames ?: uniqueOutputs.first().indices.map { i -> "z${i + 1}" }
+        _outputNames ?: uniqueOutputs.first().indices.map { "z${it + 1}" }
     }
     val activeVertices: List<Int> by lazyCache {
         nodes.asSequence()
             .drop(1) // without root
             .filter { it.element.outputEvent != null }
-            .map { it.id + 1 }
+            .map { it.id }
             .toList()
     }
     val passiveVertices: List<Int> by lazyCache {
         nodes.asSequence()
             .drop(1) // without root
             .filter { it.element.outputEvent == null }
-            .map { it.id + 1 }
+            .map { it.id }
             .toList()
     }
     val verticesWithLoops: List<Int> by lazyCache {
         nodes.asSequence()
             .filter { it.loopBack != null }
-            .map { it.id + 1 }
+            .map { it.id }
             .toList()
     }
     val activeVerticesEU: Map<Pair<Int, Int>, List<Int>> by lazyCache {
@@ -78,7 +78,7 @@ class NegativeScenarioTree(
 
     init {
         println("[.] $this")
-        val n = 5
+        val n = 100
         println("[.] First $n nodes:")
         for (node in nodes.take(n))
             println("[.] $node")
@@ -92,7 +92,7 @@ class NegativeScenarioTree(
     ) {
         private val _children: MutableList<Node> = mutableListOf()
 
-        val id: Int = this@NegativeScenarioTree.size  // Note: zero-based
+        val id: Int = this@NegativeScenarioTree.size + 1  // Note: one-based
         val children: List<Node> = _children
         val previousActive: Node? = if (parent?.element?.outputEvent != null) parent else parent?.previousActive
 
@@ -132,6 +132,7 @@ class NegativeScenarioTree(
         meow@ for ((i, element) in negativeScenario.elements.withIndex().drop(1)) {
             if (isTrie) {
                 for (child in current.children) {
+                    // FIXME: maybe just `child.element == element`? Why comparing only input action?
                     if (child.element.inputEvent == element.inputEvent &&
                         child.element.inputValues == element.inputValues
                     ) {
@@ -147,6 +148,7 @@ class NegativeScenarioTree(
                 loopBack = current
         }
         val last = current
+        require(last.loopBack == null)
         last.loopBack = loopBack
 
         _counterExamples.add(negativeScenario)
@@ -166,8 +168,8 @@ class NegativeScenarioTree(
 
     // Note: all property-like functions are one-based and one-valued
 
-    fun parent(v: Int) = nodes[v - 1].parent?.run { id + 1 } ?: 0
-    fun previousActive(v: Int) = nodes[v - 1].previousActive?.run { id + 1 } ?: 0
+    fun parent(v: Int) = nodes[v - 1].parent?.id ?: 0
+    fun previousActive(v: Int) = nodes[v - 1].previousActive?.id ?: 0
     fun inputEvent(v: Int) = inputEvents.indexOf(nodes[v - 1].element.inputEvent) + 1
     fun outputEvent(v: Int) = outputEvents.indexOf(nodes[v - 1].element.outputEvent) + 1
     fun inputNumber(v: Int) = uniqueInputs.indexOf(nodes[v - 1].element.inputValues) + 1
@@ -187,7 +189,7 @@ class NegativeScenarioTree(
             else -> throw IllegalStateException("Character $c is neither '1' nor '0'")
         }
 
-    fun loopBack(v: Int): Int = nodes[v - 1].loopBack?.run { id + 1 } ?: 0
+    fun loopBack(v: Int): Int = nodes[v - 1].loopBack?.id ?: 0
 
     override fun toString(): String {
         return "NegativeScenarioTree(size=$size, counterexamples=${counterExamples.size}, inputEvents=$inputEvents, outputEvents=$outputEvents, inputNames=$inputNames, outputNames=$outputNames, uniqueInputs=$uniqueInputs, uniqueOutputs=$uniqueOutputs)"

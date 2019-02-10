@@ -18,7 +18,7 @@ class ScenarioTree(
     private val root: Node?
         get() = nodes.firstOrNull()
     private val leaves: List<Node> by lazyCache {
-        nodes.filter(Node::isLeaf)
+        nodes.filter { it.isLeaf }
     }
     private val pathsToLeaves: List<List<Node>> by lazyCache {
         leaves.map { it.pathFromRoot }
@@ -46,10 +46,10 @@ class ScenarioTree(
         nodes.asSequence().map { it.element.outputValues }.filter { it != "" }.distinct().sorted().toList()
     }
     val inputNames: List<String> by lazyCache {
-        _inputNames ?: uniqueInputs.first().indices.map { i -> "x${i + 1}" }
+        _inputNames ?: uniqueInputs.first().indices.map { "x${it + 1}" }
     }
     val outputNames: List<String> by lazyCache {
-        _outputNames ?: uniqueOutputs.first().indices.map { i -> "z${i + 1}" }
+        _outputNames ?: uniqueOutputs.first().indices.map { "z${it + 1}" }
     }
     /**
      * List of **active** vertices, i.e. vertices with **non-null** output event.
@@ -59,7 +59,7 @@ class ScenarioTree(
         nodes.asSequence()
             .drop(1)  // without root
             .filter { it.element.outputEvent != null }
-            .map { it.id + 1 }
+            .map { it.id }
             .toList()
     }
     /**
@@ -70,7 +70,7 @@ class ScenarioTree(
         nodes.asSequence()
             .drop(1)  // without root
             .filter { it.element.outputEvent == null }
-            .map { it.id + 1 }
+            .map { it.id }
             .toList()
     }
     val activeVerticesEU: Map<Pair<Int, Int>, List<Int>> by lazyCache {
@@ -88,7 +88,7 @@ class ScenarioTree(
 
     init {
         println("[.] $this")
-        val n = 5
+        val n = 50
         println("[.] First $n nodes:")
         for (node in nodes.take(n))
             println("[.] $node")
@@ -100,7 +100,7 @@ class ScenarioTree(
     ) {
         private val _children: MutableList<Node> = mutableListOf()
 
-        val id: Int = this@ScenarioTree.size
+        val id: Int = this@ScenarioTree.size + 1  // Note: one-based
         val children: List<Node> = _children
         val previousActive: Node? = if (parent?.element?.outputEvent != null) parent else parent?.previousActive
         val isLeaf: Boolean
@@ -164,8 +164,8 @@ class ScenarioTree(
 
     // Note: all property-like functions are one-based and one-valued
 
-    fun parent(v: Int) = nodes[v - 1].parent?.run { id + 1 } ?: 0
-    fun previousActive(v: Int) = nodes[v - 1].previousActive?.run { id + 1 } ?: 0
+    fun parent(v: Int) = nodes[v - 1].parent?.id ?: 0
+    fun previousActive(v: Int) = nodes[v - 1].previousActive?.id ?: 0
     fun inputEvent(v: Int) = inputEvents.indexOf(nodes[v - 1].element.inputEvent) + 1
     fun outputEvent(v: Int) = outputEvents.indexOf(nodes[v - 1].element.outputEvent) + 1
     fun inputNumber(v: Int) = uniqueInputs.indexOf(nodes[v - 1].element.inputValues) + 1
