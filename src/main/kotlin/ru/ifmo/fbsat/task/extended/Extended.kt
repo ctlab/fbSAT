@@ -52,20 +52,20 @@ class Extended(
     }
 
     private fun declareBaseReduction() {
-        if (baseReduction == null) {
-            measureTimeMillis {
-                baseReduction = solver.declareBaseReductionExtended(
-                    scenarioTree,
-                    C = numberOfStates,
-                    K = maxOutgoingTransitions ?: numberOfStates,
-                    P = maxGuardSize
-                )
-            }.also {
-                println(
-                    "[+] Done declaring base reduction (${solver.numberOfVariables} variables, ${solver.numberOfClauses} clauses) in %.3f seconds"
-                        .format(it / 1000.0)
-                )
-            }
+        if (baseReduction != null) return
+
+        measureTimeMillis {
+            baseReduction = solver.declareBaseReductionExtended(
+                scenarioTree,
+                C = numberOfStates,
+                K = maxOutgoingTransitions ?: numberOfStates,
+                P = maxGuardSize
+            )
+        }.also {
+            println(
+                "[+] Done declaring base reduction (${solver.numberOfVariables} variables, ${solver.numberOfClauses} clauses) in %.3f seconds"
+                    .format(it / 1000.0)
+            )
         }
     }
 
@@ -88,6 +88,8 @@ class Extended(
         if (negativeScenarioTree.counterExamples.first().elements.isEmpty()) return
         if (ceReduction != null) return
 
+        val nov = solver.numberOfVariables
+        val noc = solver.numberOfClauses
         val runningTime = measureTimeMillis {
             ceReduction = solver.declareCounterExampleExtended(
                 baseReduction!!,
@@ -98,7 +100,7 @@ class Extended(
             )
         }
         println(
-            "[+] Done declaring CE reduction (${solver.numberOfVariables} variables, ${solver.numberOfClauses} clauses) in %.3f seconds"
+            "[+] Done declaring CE reduction (${solver.numberOfVariables - nov} variables, ${solver.numberOfClauses - noc} clauses) in %.3f seconds"
                 .format(runningTime / 1000.0)
         )
     }
