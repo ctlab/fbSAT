@@ -169,16 +169,18 @@ class IncrementalSolver(command: String) : AbstractSolver() {
                 return null
             }
             else -> {
-                println("[-] Implicit UNSAT or ERROR (\"$answer\")")
+                println("[!] Implicit UNSAT or ERROR (\"$answer\")")
                 return null
             }
         }
     }
 
     override fun finalize() {
-        processInput.write("halt\n")
-        processInput.flush()
-        process.waitFor(1, TimeUnit.SECONDS)
-        process.destroy()
+        Thread {
+            processInput.write("halt\n")
+            processInput.flush()
+            process.waitFor(100, TimeUnit.MILLISECONDS)
+            process.destroy()
+        }.run()
     }
 }
