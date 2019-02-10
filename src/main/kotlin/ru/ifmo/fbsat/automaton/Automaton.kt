@@ -176,9 +176,6 @@ class Automaton(
         var ok = true
 
         for ((i, counterExample) in negativeScenarioTree.counterExamples.withIndex()) {
-            // ================
-            // if (i > 0) break
-            // ================
             val satisfyingStates = MutableList<State?>(counterExample.elements.size) { null }
             satisfyingStates[0] = this.initialState
             println("[${i + 1}::1/${counterExample.elements.size}] ${negativeScenarioTree.rootElement} satisfied by ${this.initialState}")
