@@ -120,9 +120,11 @@ class NegativeScenarioTree(
             null
         )
 
-        require(negativeScenario.elements.first() == root.element) {
-            "First element must be equal to the NST root"
-        }
+        val firstElement = negativeScenario.elements.first()
+        require(firstElement.inputEvent == "")
+        require(firstElement.inputValues == "")
+        require(firstElement.outputEvent == null)
+        require(firstElement.outputValues == root.element.outputValues)
 
         var current = root
         var loopBack: Node? = null
