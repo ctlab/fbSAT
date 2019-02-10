@@ -23,6 +23,7 @@ fun Solver.exactlyOne(range: IntRange, array: IntMultiArray, vararg index: Int) 
     atMostOne(range, array, *index)
 }
 
+
 /**
  * [lhs] => [rhs]
  */
@@ -37,6 +38,7 @@ fun Solver.implyIff(lhs: Int, base: Int, rhs: Int) {
     clause(-lhs, -base, rhs)
     clause(-lhs, base, -rhs)
 }
+
 
 /**
  * [lhs] => ([base] <=> AND([rhs]))
@@ -57,6 +59,7 @@ fun Solver.implyIffAnd(lhs: Int, base: Int, rhs: Sequence<Int>) {
  */
 fun Solver.implyIffAnd(lhs: Int, base: Int, vararg rhs: Int) = implyIffAnd(lhs, base, rhs.asSequence())
 
+
 /**
  * [lhs] => ([base] <=> OR([rhs]))
  */
@@ -76,6 +79,7 @@ fun Solver.implyIffOr(lhs: Int, base: Int, rhs: Sequence<Int>) {
  */
 fun Solver.implyIffOr(lhs: Int, base: Int, vararg rhs: Int) = implyIffOr(lhs, base, rhs.asSequence())
 
+
 /**
  * [lhs] <=> [rhs]
  */
@@ -83,6 +87,7 @@ fun Solver.iff(lhs: Int, rhs: Int) {
     imply(lhs, rhs)
     imply(rhs, lhs)
 }
+
 
 /**
  * [lhs] <=> AND([rhs])
@@ -97,6 +102,7 @@ fun Solver.iffAnd(lhs: Int, rhs: Sequence<Int>) {
  * [lhs] <=> AND([rhs])
  */
 fun Solver.iffAnd(lhs: Int, vararg rhs: Int) = iffAnd(lhs, rhs.asSequence())
+
 
 /**
  * [lhs] <=> OR([rhs])
