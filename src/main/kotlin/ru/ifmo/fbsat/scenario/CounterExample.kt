@@ -53,7 +53,7 @@ class CounterExample(
             file.bufferedReader().useLines { lines ->
                 for (line in lines.map(String::trim)) {
                     when {
-                        line == "Trace Description: LTL Counterexample" -> {
+                        line.startsWith("Trace Description") -> {
                             // Add last state
                             if (hasState)
                                 states.add(State(stateName, isLoop, variables))
@@ -64,7 +64,7 @@ class CounterExample(
                             // Reset states
                             states = mutableListOf()
                         }
-                        line == "Trace Type: Counterexample" -> {
+                        line.startsWith("Trace Type") -> {
                             // Do nothing
                         }
                         line == "-- Loop starts here" -> {
