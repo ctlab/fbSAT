@@ -60,16 +60,27 @@ class CounterExampleTest {
     }
 
     @Test
-    fun `negative scenario from counter-example`() {
+    fun `negative scenario from file`() {
+        val inputEvents = listOf("REQ")
+        val outputEvents = listOf("CNF")
+        val inputNames = listOf("pp1")
+        val outputNames = listOf("vcExtend")
+        val nss = NegativeScenario.fromFile(file, inputEvents, outputEvents, inputNames, outputNames)
+        assertEquals(1, nss.size)
+
+        val ns = nss.first()
+        assertEquals(4, ns.elements.size)
+        assertEquals(2, ns.loopPosition)
+    }
+
+    @Test
+    fun `negative scenario tree from file`() {
         val inputEvents = listOf("REQ")
         val outputEvents = listOf("CNF")
         val inputNames = listOf("pp1")
         val outputNames = listOf("vcExtend")
 
-        val ce = CounterExample.fromFile(file).first()
-        val ns = ce.toNegativeScenario(inputEvents, outputEvents, inputNames, outputNames)
-
-        assertEquals(4, ns.elements.size)
-        assertEquals(2, ns.loopPosition)
+        val nst = NegativeScenarioTree.fromFile(file, inputEvents, outputEvents, inputNames, outputNames)
+        assertEquals(4, nst.size)
     }
 }
