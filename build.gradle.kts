@@ -16,25 +16,28 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("com.github.ajalt:clikt:1.6.0")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.4.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.0")
 }
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }
 
-tasks.withType<Test> {
+tasks.test {
     useJUnitPlatform()
 }
 
-tasks.withType<Jar> {
+tasks.jar {
     manifest {
-        attributes["Main-Class"] = "ru.ifmo.fbsat.MainKt"
+        attributes(
+            "Main-Class" to "ru.ifmo.fbsat.MainKt"
+        )
     }
     from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 }
 
-tasks.withType<Wrapper> {
+tasks.wrapper {
     gradleVersion = "5.2.1"
     distributionType = Wrapper.DistributionType.BIN
 }
