@@ -892,7 +892,7 @@ fun Solver.declareCounterExampleExtended(
         for (v in negativeScenarioTree.verticesWithLoops) {
             if (v <= oldV) continue
             val l = negativeScenarioTree.loopBack(v)
-            println("[.] Forbid loop (v = $v, l = $l)")
+            // println("[.] Forbid loop (v = $v, l = $l)")
             for (c in 1..C)
                 imply(satisfaction[v, c], -satisfaction[l, c])
         }

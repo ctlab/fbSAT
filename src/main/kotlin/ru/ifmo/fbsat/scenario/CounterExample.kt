@@ -19,10 +19,10 @@ class CounterExample(
             }
         }
 
-        println("[*] CounterExample:")
-        states.forEachIndexed { index, state ->
-            println("[${index + 1}/${states.size}] $state")
-        }
+        // println("[*] CounterExample:")
+        // states.forEachIndexed { index, state ->
+        //     println("[${index + 1}/${states.size}] $state")
+        // }
     }
 
     data class State(val name: String, val isLoop: Boolean, val variables: Map<String, String>) {

@@ -18,10 +18,10 @@ class NegativeScenario(
             }
         }
 
-        println("[*] NegativeScenario with loop at $loopPosition:")
-        elements.forEachIndexed { index, elem ->
-            println("[${index + 1}/${elements.size}] $elem")
-        }
+        // println("[*] NegativeScenario with loop at $loopPosition:")
+        // elements.forEachIndexed { index, elem ->
+        //     println("[${index + 1}/${elements.size}] $elem")
+        // }
     }
 
     override fun toString(): String {

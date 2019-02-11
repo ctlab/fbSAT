@@ -78,7 +78,7 @@ class NegativeScenarioTree(
 
     init {
         println("[.] $this")
-        val n = 100
+        val n = 5
         println("[.] First $n nodes:")
         for (node in nodes.take(n))
             println("[.] $node")

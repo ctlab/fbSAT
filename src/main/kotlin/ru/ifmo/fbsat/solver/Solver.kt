@@ -51,13 +51,23 @@ class DefaultSolver(private val command: String) : AbstractSolver() {
     override fun solve(): BooleanArray? {
         // println("[*] Flushing writer...")
         writer.flush()
-//        println("[*] Closing writer...")
-//        writer.close()
+        // println("[*] Closing writer...")
+        // writer.close()
+
+        // Thread {
+        //     synchronized(writer) {
         println("[*] Dumping cnf to file...")
-        buffer.writeTo(File("cnf").outputStream())
+        File("cnf").outputStream().use {
+            it.write("p cnf $numberOfVariables $numberOfClauses\n".toByteArray())
+            buffer.writeTo(it)
+        }
+        //     }
+        // }.start()
 
         val process = Runtime.getRuntime().exec(command)
-        // println("[*] Redirecting buffer to process.outputStream...")
+        println("[*] Writing DIMACS header to process.outputStream...")
+        process.outputStream.write("p cnf $numberOfVariables $numberOfClauses\n".toByteArray())
+        println("[*] Redirecting buffer to process.outputStream...")
         buffer.writeTo(process.outputStream)
         println("[*] Solving...")
         val timeStartSolve = System.currentTimeMillis()
@@ -133,11 +143,16 @@ class IncrementalSolver(command: String) : AbstractSolver() {
     }
 
     override fun solve(): BooleanArray? {
-        // ===
-        println("[*] Dumping cnf to file...")
         writer.flush()
-        File("cnf").outputStream().use { buffer.writeTo(it) }
-        // ===
+        // Thread {
+        //     synchronized(writer) {
+        println("[*] Dumping cnf to file...")
+        File("cnf").outputStream().use {
+            it.write("p cnf $numberOfVariables $numberOfClauses\n".toByteArray())
+            buffer.writeTo(it)
+        }
+        //     }
+        // }.start()
 
         println("[*] Solving...")
         val timeStartSolve = System.currentTimeMillis()
@@ -145,7 +160,7 @@ class IncrementalSolver(command: String) : AbstractSolver() {
         processInput.flush()
 
         val answer = processOutput.readLine() ?: run {
-            println("[!] Solver returned null")
+            println("[!] Solver process returned nothing")
             return null
         }
 

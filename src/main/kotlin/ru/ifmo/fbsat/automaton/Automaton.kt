@@ -149,6 +149,7 @@ class Automaton(
                 val inputEvent = element.inputEvent
                 val inputValues = element.inputValues
                 val (newState, outputEvent, newValues) = go(currentState, inputEvent, inputValues, currentValues)
+                // println("[${i+1}::${j+1}] ${currentState.id} -> ${newState.id} / $outputEvent [$newValues]")
 
                 if (outputEvent != element.outputEvent) {
                     println("[${i + 1}::${j + 1}] Incorrect outputEvent($outputEvent) != element.outputEvent(${element.outputEvent})  [currentState = ${currentState.id}, inputEvent = $inputEvent, inputValues = $inputValues, currentValues = $currentValues]")
@@ -178,7 +179,7 @@ class Automaton(
         for ((i, counterExample) in negativeScenarioTree.counterExamples.withIndex()) {
             val satisfyingStates = MutableList<State?>(counterExample.elements.size) { null }
             satisfyingStates[0] = this.initialState
-            println("[${i + 1}::1/${counterExample.elements.size}] ${negativeScenarioTree.rootElement} satisfied by ${this.initialState}")
+            // println("[${i + 1}::1/${counterExample.elements.size}] ${negativeScenarioTree.rootElement} satisfied by ${this.initialState}")
 
             var currentState = this.initialState
             var currentValues = negativeScenarioTree.rootElement!!.outputValues
@@ -190,10 +191,10 @@ class Automaton(
                 val (newState, outputEvent, newValues) = go(currentState, inputEvent, inputValues, currentValues)
 
                 if (outputEvent == element.outputEvent && newValues == element.outputValues) {
-                    println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element satisfied by $newState")
+                    // println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element satisfied by $newState")
                     satisfyingStates[j] = newState
                 } else {
-                    println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element not satisfied (newState=$newState, newValues=$newValues)")
+                    // println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element not satisfied (newState=$newState, newValues=$newValues)")
                     break
                 }
 
