@@ -665,13 +665,12 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 1))
-                for (u in 1..U) {
-                    val x1 = nodeType[c, k, p, NodeType.NOT.value]
-                    val x2 = nodeValue[c, k, p, u]
-                    val x3 = -childValueLeft[c, k, p, u]
-                    clause(-x1, -x2, x3)
-                    clause(-x1, x2, -x3)
-                }
+                for (u in 1..U)
+                    implyIff(
+                        nodeType[c, k, p, NodeType.NOT.value],
+                        nodeValue[c, k, p, u],
+                        -childValueLeft[c, k, p, u]
+                    )
 
 
     comment("A. AD-HOCs")
@@ -1163,13 +1162,12 @@ fun Solver.declareCounterExampleExtended(
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 1))
-                for (u in newU) {
-                    val x1 = nodeType[c, k, p, NodeType.NOT.value]
-                    val x2 = nodeValue[c, k, p, u]
-                    val x3 = -childValueLeft[c, k, p, u]
-                    clause(-x1, -x2, x3)
-                    clause(-x1, x2, -x3)
-                }
+                for (u in newU)
+                    implyIff(
+                        nodeType[c, k, p, NodeType.NOT.value],
+                        nodeValue[c, k, p, u],
+                        -childValueLeft[c, k, p, u]
+                    )
 
     comment("CE.A.2. (comb)")
     for (c in 1..C)
