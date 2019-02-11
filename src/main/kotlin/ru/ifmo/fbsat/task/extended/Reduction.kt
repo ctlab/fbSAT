@@ -949,6 +949,7 @@ fun Solver.declareCounterExampleExtended(
     comment("CE.3.1. not_fired definition")
     // satisfaction[tp(v), c] => not_fired[c,tin(v),K]
     for (v in negativeScenarioTree.passiveVertices) {
+        break
         if (v <= oldV) continue
         val p = negativeScenarioTree.parent(v)
         val u = negativeScenarioTree.inputNumber(v)
