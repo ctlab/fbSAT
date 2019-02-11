@@ -148,7 +148,9 @@ class NegativeScenarioTree(
                 loopBack = current
         }
         val last = current
-        require(last.loopBack == null)
+        require(last.loopBack == null) {
+            "Attempted to override loopBack? No way!"
+        }
         last.loopBack = loopBack
 
         _counterExamples.add(negativeScenario)
