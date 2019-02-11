@@ -121,19 +121,33 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
             exactlyOne(1..(E + 1), inputEvent, c, k)
 
     comment("2.1. Active transition existence")
-    // color[tp(v), i] & color[v, j] => active_transition[i,j,tie(v),tin(v)]
+    // // color[tp(v), i] & color[v, j] => active_transition[i,j,tie(v),tin(v)]
+    // for (v in scenarioTree.activeVertices) {
+    //     val p = scenarioTree.parent(v)
+    //     val e = scenarioTree.inputEvent(v)
+    //     val u = scenarioTree.inputNumber(v)
+    //     for (i in 1..C)
+    //         for (j in 1..C)
+    //             clause(
+    //                 -color[p, i],
+    //                 -color[v, j],
+    //                 activeTransition[i, j, e, u]
+    //             )
+    // }
+    // color[tp(v), i] => (color[v, j] <=> active_transition[i,j,tie(v),tin(v)])
     for (v in scenarioTree.activeVertices) {
         val p = scenarioTree.parent(v)
         val e = scenarioTree.inputEvent(v)
         val u = scenarioTree.inputNumber(v)
         for (i in 1..C)
             for (j in 1..C)
-                clause(
-                    -color[p, i],
-                    -color[v, j],
+                implyIff(
+                    color[p, i],
+                    color[v, j],
                     activeTransition[i, j, e, u]
                 )
     }
+
 
     comment("2.2. Active transition definition")
     // active_transition[i,j,e,u] <=> OR_k( transition[i,k,j] & input_event[i,k,e] & first_fired[i,u,k] )
