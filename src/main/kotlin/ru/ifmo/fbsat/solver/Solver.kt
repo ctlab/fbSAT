@@ -16,6 +16,7 @@ interface Solver {
 
     fun clause(literals: Sequence<Int>)
     fun clause(vararg literals: Int) = clause(literals.asSequence())
+    fun clause(block: suspend SequenceScope<Int>.() -> Unit) = clause(sequence(block))
 
     fun comment(comment: String)
 
