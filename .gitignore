@@ -26,3 +26,5 @@ target/
 !/gradlew.bat
 # Windows Batch runner
 !/fbsat.bat
+# Specific scripts
+!/scripts/runner.py
