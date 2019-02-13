@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.solver
 
 import ru.ifmo.fbsat.utils.IntMultiArray
+import ru.ifmo.fbsat.utils.MultiDomainArray
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -16,6 +17,11 @@ interface Solver {
         vararg shape: Int,
         init: (IntArray) -> (Int) = { newVariable() }
     ) = IntMultiArray(shape, init)  // MultiArray.new(*shape, init=init)
+
+    fun <R : Any> newDomainArray(
+        vararg domains: Iterable<R>,
+        init: (List<R>) -> (Int) = { newVariable() }
+    ) = MultiDomainArray.new(*domains, init = init)
 
     fun clause(literals: Sequence<Int>)
     fun clause(vararg literals: Int) = clause(literals.asSequence())
