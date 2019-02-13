@@ -122,6 +122,22 @@ class FbSAT : CliktCommand() {
         default = true
     )
 
+    private val failIfSTVerifyFailed by option(
+        "--fail-verify-st",
+        help = "Halt if verification of scenario tree has failed"
+    ).flag(
+        "--no-fail-verify-st",
+        default = true
+    )
+
+    private val failIfCEVerifyFailed by option(
+        "--fail-verify-ce",
+        help = "Halt if verification of counterexamples has failed"
+    ).flag(
+        "--no-fail-verify-ce",
+        default = false
+    )
+
     init {
         context { helpFormatter = PlaintextHelpFormatter(maxWidth = 999) }
     }
@@ -246,9 +262,30 @@ class FbSAT : CliktCommand() {
         } else {
             println("[+] Automaton:")
             automaton.pprint()
+
             println("[+] Automaton has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes")
-            automaton.verify(tree)
-            ceTree?.let { automaton.verify(it) }
+
+            if (automaton.verify(tree))
+                println("[+] Verify: OK")
+            else {
+                println("==================")
+                println("[-] Verify: FAILED")
+                println("==================")
+                if (failIfSTVerifyFailed)
+                    throw RuntimeException("ST verification failed")
+            }
+
+            ceTree?.let {
+                if (automaton.verify(it))
+                    println("[+] Verify CE: OK")
+                else {
+                    println("=====================")
+                    println("[-] Verify CE: FAILED")
+                    println("=====================")
+                    if (failIfCEVerifyFailed)
+                        throw RuntimeException("CE verification failed")
+                }
+            }
 
             outDir.mkdirs()
             automaton.dump(outDir, "automaton")

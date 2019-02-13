@@ -138,7 +138,7 @@ class Automaton(
         return source.go(inputEvent, inputValues, outputValues)
     }
 
-    fun verify(scenarioTree: ScenarioTree) {
+    fun verify(scenarioTree: ScenarioTree): Boolean {
         var ok = true
 
         outer@ for ((i, scenario) in scenarioTree.scenarios.withIndex()) {
@@ -167,13 +167,10 @@ class Automaton(
             }
         }
 
-        if (ok)
-            println("[+] Verify: OK")
-        else
-            println("[-] Verify: FAILED")
+        return ok
     }
 
-    fun verify(negativeScenarioTree: NegativeScenarioTree) {
+    fun verify(negativeScenarioTree: NegativeScenarioTree): Boolean {
         var ok = true
 
         for ((i, counterExample) in negativeScenarioTree.counterExamples.withIndex()) {
@@ -218,10 +215,7 @@ class Automaton(
             }
         }
 
-        if (ok)
-            println("[+] Verify CE: OK")
-        else
-            println("[-] Verify CE: FAILED")
+        return ok
     }
 
     fun dump(dir: File, name: String) {
