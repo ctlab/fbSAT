@@ -5,6 +5,7 @@ version = "1.0"
 
 plugins {
     kotlin("jvm") version "1.3.21"
+    application
 }
 
 repositories {
@@ -18,6 +19,14 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.0")
+}
+
+application {
+    mainClassName = "ru.ifmo.fbsat.MainKt"
+}
+
+tasks.named<JavaExec>("run") {
+    args("--help")
 }
 
 tasks.withType<KotlinCompile> {
