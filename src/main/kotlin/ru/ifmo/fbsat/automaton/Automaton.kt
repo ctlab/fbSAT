@@ -202,7 +202,7 @@ class Automaton(
             println("[CE::${i + 1}] Satisfying states: [${satisfyingStates.map { it?.id }.withIndex().joinToString(" ") { (j, x) -> if (j + 1 == counterExample.loopPosition) "«$x»" else "$x" }}] (loop = ${counterExample.loopPosition})")
 
             if (counterExample.loopPosition != null) {
-                val loop = satisfyingStates[counterExample.loopPosition]
+                val loop = satisfyingStates[counterExample.loopPosition - 1]
                 val last = satisfyingStates.last()
                 if (loop != null && last != null) {
                     if (last == loop) {
