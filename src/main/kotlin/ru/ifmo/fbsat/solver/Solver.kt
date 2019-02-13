@@ -11,8 +11,11 @@ interface Solver {
     val numberOfClauses: Int
 
     fun newVariable(): Int
-    fun newArray(vararg shape: Int) = IntMultiArray(shape) { newVariable() }
-    fun newArray(vararg shape: Int, init: (IntArray) -> (Int)) = IntMultiArray(shape, init)
+
+    fun newArray(
+        vararg shape: Int,
+        init: (IntArray) -> (Int) = { newVariable() }
+    ) = IntMultiArray(shape, init)  // MultiArray.new(*shape, init=init)
 
     fun clause(literals: Sequence<Int>)
     fun clause(vararg literals: Int) = clause(literals.asSequence())

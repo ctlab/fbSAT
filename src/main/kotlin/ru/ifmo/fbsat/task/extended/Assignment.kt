@@ -80,7 +80,7 @@ internal class Assignment(
                 )
             }
             // Guards variables
-            val nodeType = MultiArray.new(C, K, P) { (c, k, p) ->
+            val nodeType = MultiArray.new<NodeType>(C, K, P) { (c, k, p) ->
                 NodeType.values().firstOrNull { nt -> raw[reduction.nodeType[c, k, p, nt.value] - 1] }
                     ?: throw IllegalStateException("nodeType[c,k,p = $c,$k,$p] is undefined")
             }
@@ -149,7 +149,7 @@ internal fun Assignment.toAutomaton(): Automaton {
                     destinationId = transition[c, k],
                     inputEvent = scenarioTree.inputEvents[inputEvent[c, k] - 1],
                     guard = ParseTreeGuard(
-                        nodeType = MultiArray.new(P) { (p) -> nodeType[c, k, p] },
+                        nodeType = MultiArray.new<NodeType>(P) { (p) -> nodeType[c, k, p] },
                         terminal = IntMultiArray.new(P) { (p) -> terminal[c, k, p] },
                         parent = IntMultiArray.new(P) { (p) -> parent[c, k, p] },
                         childLeft = IntMultiArray.new(P) { (p) -> childLeft[c, k, p] },
