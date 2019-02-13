@@ -4,7 +4,10 @@ import java.io.File
 
 class NegativeScenario(
     val elements: List<ScenarioElement>,
-    val loopPosition: Int?  // Note: 1-based
+    /**
+     * One-based index of loop-back state
+     */
+    val loopPosition: Int?
 ) {
     init {
         if (loopPosition != null) {
