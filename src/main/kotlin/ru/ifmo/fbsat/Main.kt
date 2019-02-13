@@ -20,7 +20,6 @@ import ru.ifmo.fbsat.solver.IncrementalSolver
 import ru.ifmo.fbsat.task.basic.Basic
 import ru.ifmo.fbsat.task.basicmin.BasicMin
 import ru.ifmo.fbsat.task.extended.Extended
-import ru.ifmo.fbsat.task.extendedce.ExtendedCE
 import ru.ifmo.fbsat.task.extendedmin.ExtendedMin
 import java.io.File
 import kotlin.system.measureTimeMillis
@@ -243,17 +242,17 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "extended-ce" -> {
-                val task = ExtendedCE(
-                    tree,
-                    numberOfStates!!,
-                    maxOutgoingTransitions,
-                    maxGuardSize!!,
-                    solverProvider,
-                    smvDir!!
-                )
-                task.infer(maxTotalGuardsSize)
-            }
+            // "extended-ce" -> {
+            //     val task = ExtendedCE(
+            //         tree,
+            //         numberOfStates!!,
+            //         maxOutgoingTransitions,
+            //         maxGuardSize!!,
+            //         solverProvider,
+            //         smvDir!!
+            //     )
+            //     task.infer(maxTotalGuardsSize)
+            // }
             else -> throw UnsupportedOperationException("Method '$method' is not supported yet.")
         }
 
