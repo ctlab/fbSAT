@@ -61,10 +61,6 @@ private class DefaultMultiDomainArray<T : Any, R : Any>(
 }
 
 
-enum class MyType {
-    A, B, C, D
-}
-
 fun main() {
     val x = MultiDomainArray.new(
         1..5,
@@ -95,9 +91,13 @@ fun main() {
     println("safe[c, c] = ${safe[c, c]}")  // throws
 }
 
-sealed class Variable {
+private enum class MyType {
+    A, B, C, D
+}
+
+private sealed class Variable {
     abstract val v: Int
 }
 
-data class Color(override val v: Int) : Variable()
-data class TransitionIndex(override val v: Int) : Variable()
+private data class Color(override val v: Int) : Variable()
+private data class TransitionIndex(override val v: Int) : Variable()
