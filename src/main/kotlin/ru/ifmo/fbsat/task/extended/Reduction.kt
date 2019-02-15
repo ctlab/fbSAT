@@ -885,7 +885,11 @@ fun Solver.declareCounterExampleExtended(
         if (v <= oldV) continue
         val p = negativeScenarioTree.parent(v)
         for (c in 1..C)
-            clause(-satisfaction[p, c], satisfaction[v, c], satisfaction[v, C + 1])
+            clause(
+                -satisfaction[p, c],
+                satisfaction[v, c],
+                satisfaction[v, C + 1]
+            )
     }
 
     comment("CE.1.4. Propagation of non-satisfaction")
