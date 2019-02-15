@@ -64,24 +64,22 @@ class DefaultSolver(private val command: String) : AbstractSolver() {
         // println("[*] Closing writer...")
         // writer.close()
 
-        // Thread {
-        //     synchronized(writer) {
         println("[*] Dumping cnf to file...")
         File("cnf").outputStream().use {
             it.write("p cnf $numberOfVariables $numberOfClauses\n".toByteArray())
             buffer.writeTo(it)
         }
-        //     }
-        // }.start()
 
         val process = Runtime.getRuntime().exec(command)
-        println("[*] Writing DIMACS header to process.outputStream...")
+        // println("[*] Writing DIMACS header to process.outputStream...")
         process.outputStream.write("p cnf $numberOfVariables $numberOfClauses\n".toByteArray())
-        println("[*] Redirecting buffer to process.outputStream...")
+        // println("[*] Redirecting buffer to process.outputStream...")
         buffer.writeTo(process.outputStream)
+
         println("[*] Solving...")
-        val timeStartSolve = System.currentTimeMillis()
+        val timeSolveStart = System.currentTimeMillis()
         process.outputStream.close()
+        val timeSolve = (System.currentTimeMillis() - timeSolveStart) / 1000.0
 
         var isSat: Boolean? = null
         val rawAssignment: MutableList<Boolean> = mutableListOf()
@@ -91,11 +89,11 @@ class DefaultSolver(private val command: String) : AbstractSolver() {
                 // if (!line.startsWith("v ")) println(line)
                 when {
                     line == "s SATISFIABLE" -> {
-                        println("[+] SAT in %.2f seconds".format((System.currentTimeMillis() - timeStartSolve) / 1000.0))
+                        println("[+] SAT in %.2f seconds".format(timeSolve))
                         isSat = true
                     }
                     line == "s UNSATISFIABLE" -> {
-                        println("[-] UNSAT in %.2f seconds".format((System.currentTimeMillis() - timeStartSolve) / 1000.0))
+                        println("[-] UNSAT in %.2f seconds".format(timeSolve))
                         isSat = false
                         continue@label
                     }
@@ -154,35 +152,35 @@ class IncrementalSolver(command: String) : AbstractSolver() {
 
     override fun solve(): BooleanArray? {
         writer.flush()
-        // Thread {
-        //     synchronized(writer) {
         println("[*] Dumping cnf to file...")
         File("cnf").outputStream().use {
             it.write("p cnf $numberOfVariables $numberOfClauses\n".toByteArray())
             buffer.writeTo(it)
         }
-        //     }
-        // }.start()
 
-        println("[*] Solving...")
-        val timeStartSolve = System.currentTimeMillis()
         processInput.write("solve 0\n")
         processInput.flush()
 
-        val answer = processOutput.readLine() ?: run {
-            println("[!] Solver process returned nothing")
+        println("[*] Solving...")
+        val timeSolveStart = System.currentTimeMillis()
+        val answer: String? = processOutput.readLine()
+        val timeSolve = (System.currentTimeMillis() - timeSolveStart) / 1000.0
+
+        if (answer == null) {
+            println("[!] Solver returned nothing")
             return null
         }
 
-        when (answer) {
+        return when (answer) {
             "SAT" -> {
-                println("[+] SAT in %.2f s".format((System.currentTimeMillis() - timeStartSolve) / 1000.0))
+                println("[+] SAT in %.2f s".format(timeSolve))
+
                 val line = processOutput.readLine() ?: run {
                     println("[!] Solver returned no assignment")
                     return null
                 }
-                return line
-                    .trim()
+
+                line.trim()
                     .splitToSequence(" ")
                     .drop(1) // drop "v"
                     .map { it.toInt() > 0 }
@@ -190,12 +188,12 @@ class IncrementalSolver(command: String) : AbstractSolver() {
                     .toBooleanArray()
             }
             "UNSAT" -> {
-                println("[-] UNSAT in %.2f s".format((System.currentTimeMillis() - timeStartSolve) / 1000.0))
-                return null
+                println("[-] UNSAT in %.2f s".format(timeSolve))
+                null
             }
             else -> {
-                println("[!] Implicit UNSAT or ERROR (\"$answer\")")
-                return null
+                println("[!] Implicit UNSAT or ERROR (\"$answer\") in %.2f s.".format(timeSolve))
+                null
             }
         }
     }
