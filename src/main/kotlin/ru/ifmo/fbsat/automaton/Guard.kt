@@ -229,7 +229,8 @@ enum class NodeType(val value: Int) {
     NONE(5);
 
     companion object {
-        private val lookup = NodeType.values().associateBy(NodeType::value)
+        private val lookup: Map<Int, NodeType> = NodeType.values().associateBy(NodeType::value)
+
         fun from(value: Int) = lookup[value]
     }
 }
