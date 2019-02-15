@@ -218,7 +218,7 @@ class Automaton(
         return ok
     }
 
-    fun dump(dir: File, name: String) {
+    fun dump(dir: File, name: String = "automaton") {
         _dumpGv(dir.resolve("$name.gv"))
         _dumpSmv(dir.resolve("$name.smv"))
     }
