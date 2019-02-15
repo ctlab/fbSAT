@@ -199,7 +199,7 @@ class Automaton(
                 currentValues = newValues
             }
 
-            println("[CE::${i + 1}] Satisfying states: [${satisfyingStates.map { it?.id }.withIndex().joinToString(" ") { (j, x) -> if (j + 1 == counterExample.loopPosition) "«$x»" else "$x" }}] (loop = ${counterExample.loopPosition})")
+            println("[CE::${i + 1}] Satisfying states: [${satisfyingStates.map { it?.id ?: 0 }.withIndex().joinToString(" ") { (j, x) -> if (j + 1 == counterExample.loopPosition) "«$x»" else "$x" }}] (loop = ${counterExample.loopPosition})")
 
             if (counterExample.loopPosition != null) {
                 val loop = satisfyingStates[counterExample.loopPosition - 1]
