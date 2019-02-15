@@ -260,29 +260,39 @@ class Automaton(
     }
 
     fun toGraphvizString(): String {
-        val setupBlock = sequenceOf("graph", "node", "edge")
-            .map { "    $it [fontname=\"Source Code Pro,monospace\" fontsize=\"12\"]" }
-            .joinToString("\n")
-
-        // TODO: fix multiline string
-        val nodesBlock = """
-        |    // States
-        |    { node [margin="0.05,0.01"]
-        |    ${states.joinToString("\n", prefix = "  ") { it.toGraphvizString() }}
-        |    }
-        """.trimMargin()
-
-        val transitionsBlock = states
-            .flatMap { it.transitions }
-            .joinToString("\n", prefix = "    ") { it.toGraphvizString() }
-
-        return """
-            digraph {
-            $setupBlock
-            $nodesBlock
-            $transitionsBlock
-            }
+        val fontSettings = """fontname="Source Code Pro,monospace" fontsize="12""""
+        val setupBlock = """
+            graph [$fontSettings]
+            node  [$fontSettings]
+            edge  [$fontSettings]
         """.trimIndent()
+
+        val nodesBlock = """
+            // States
+            { node [margin="0.05,0.01"]
+            %s
+            }
+        """.trimIndent().format(
+            states
+                .joinToString("\n") { it.toGraphvizString() }
+                .prependIndent("  ")
+        )
+
+        val transitionsBlock = """
+            // Transitions
+            %s
+        """.trimIndent().format(
+            states
+                .flatMap { it.transitions }
+                .joinToString("\n") { it.toGraphvizString() }
+        )
+
+        val body = "%s\n\n%s\n\n%s".format(
+            setupBlock,
+            nodesBlock,
+            transitionsBlock
+        )
+        return "digraph {\n${body.prependIndent()}\n}"
     }
 
     fun toSmvString(): String {
