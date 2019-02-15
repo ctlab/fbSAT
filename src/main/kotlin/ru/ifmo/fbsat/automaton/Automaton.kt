@@ -351,14 +351,26 @@ class Automaton(
         val varBlock = definitions
             .map { (name, def) -> "$name : $def;" }
             .joinToString("\n")
-            .prependIndent()
 
         val assignBlock = declarations
-            .map { (name, declaration) -> "init($name) := ${declaration.first};\nnext($name) := ${declaration.second};" }
+            .map { (name, declaration) ->
+                """
+                    init($name) := %s;
+                    next($name) := %s;
+                """.trimIndent().format(declaration.first, declaration.second)
+            }
             .joinToString("\n\n")
-            .prependIndent()
 
-        return "MODULE $module\nVAR\n$varBlock\nASSIGN\n$assignBlock"
+        return """
+            MODULE $module
+            VAR
+            %s
+            ASSIGN
+            %s
+        """.trimIndent().format(
+            varBlock.prependIndent(),
+            assignBlock.prependIndent()
+        )
     }
 
     override fun toString(): String {
