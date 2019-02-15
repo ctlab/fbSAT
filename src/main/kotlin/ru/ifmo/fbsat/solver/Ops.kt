@@ -9,6 +9,12 @@ fun Solver.atLeastOne(range: IntRange, array: IntMultiArray, vararg index: Int) 
     })
 }
 
+fun Solver.atMostOne(literals: List<Int>) {
+    for (a in literals.indices)
+        for (b in (a + 1) until literals.size)
+            clause(-literals[a], -literals[b])
+}
+
 fun Solver.atMostOne(range: IntRange, array: IntMultiArray, vararg index: Int) {
     for (a in range) {
         for (b in (a + 1)..(range.last)) {
