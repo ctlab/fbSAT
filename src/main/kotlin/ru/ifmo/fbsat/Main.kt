@@ -27,7 +27,7 @@ import kotlin.system.measureTimeMillis
 class FbSAT : CliktCommand() {
     private val fileScenarios by option(
         "-i", "--scenarios",
-        help = "File with scenarios",
+        help = "File with scenarios [required]",
         metavar = "<path>"
     ).file(
         exists = true,
@@ -56,13 +56,13 @@ class FbSAT : CliktCommand() {
 
     private val outDir by option(
         "-o", "--outdir",
-        help = "Output directory",
+        help = "Output directory [default: current directory]",
         metavar = "<path>"
     ).file().defaultLazy { File("") }
 
     private val method by option(
         "-m", "--method",
-        help = "Method to use",
+        help = "Method to use [required]",
         metavar = "<method>"
     ).choice(
         "basic", "basic-min",
@@ -97,25 +97,21 @@ class FbSAT : CliktCommand() {
 
     private val solverCmd by option(
         "--solver",
-        help = "SAT-solver",
+        help = "SAT-solver [default: $SAT_SOLVER_DEFAULT]",
         metavar = "<cmd>"
-    ).default(
-        // "cryptominisat5"
-        "incremental-cryptominisat"
-    )
+    ).default(SAT_SOLVER_DEFAULT)
 
     private val isIncrementalSolver by option(
         "--incremental",
-        help = "Use IncrementalSolver backend"
+        help = "Use IncrementalSolver backend [default: true]"
     ).flag(
         "--no-incremental",
-        // default = false
         default = true
     )
 
     private val isForbidLoops by option(
         "--forbid-loops",
-        help = "Forbid loops"
+        help = "Forbid loops [default: true]"
     ).flag(
         "--no-forbid-loops",
         default = true
@@ -123,7 +119,7 @@ class FbSAT : CliktCommand() {
 
     private val failIfSTVerifyFailed by option(
         "--fail-verify-st",
-        help = "Halt if verification of scenario tree has failed"
+        help = "Halt if verification of scenario tree has failed [default: true]"
     ).flag(
         "--no-fail-verify-st",
         default = true
@@ -131,10 +127,10 @@ class FbSAT : CliktCommand() {
 
     private val failIfCEVerifyFailed by option(
         "--fail-verify-ce",
-        help = "Halt if verification of counterexamples has failed"
+        help = "Halt if verification of counterexamples has failed [default: true]"
     ).flag(
         "--no-fail-verify-ce",
-        default = false
+        default = true
     )
 
     init {
@@ -179,7 +175,7 @@ class FbSAT : CliktCommand() {
                 tree.inputNames,
                 tree.outputNames,
                 // FIXME: something breaks (heavily) when CETree is a trie... :(
-                isTrie = false
+                isTrie = true
             )
         }
         // =================
@@ -289,6 +285,10 @@ class FbSAT : CliktCommand() {
             outDir.mkdirs()
             automaton.dump(outDir, "automaton")
         }
+    }
+
+    companion object {
+        private const val SAT_SOLVER_DEFAULT = "incremental-cryptominisat"
     }
 }
 
