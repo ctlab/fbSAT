@@ -60,7 +60,7 @@ fun main() {
     println("lists = ${lists.toList()}")
     val cp = lists.cartesianProduct.toList()
     println("cartesianProduct(lists) = ${cp.map { it.joinToString("") }.toList()}")
-    require(cp.size == 16) { "cp.size should be 16"}
+    require(cp.size == 16) { "cp.size should be 16" }
 
     for ((a, b, c) in product("AB".asIterable(), 1..3, "!?".asIterable())) {
         println("abc = $a$b$c")

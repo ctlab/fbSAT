@@ -20,6 +20,9 @@ class NegativeScenario(
                 "Mismatch of output values (loopBack: ${loop.outputValues}, last: ${last.outputValues})"
             }
         }
+        require(loopPosition != null) {
+            "Loopless counter-examples are not supported yet"
+        }
 
         // println("[*] NegativeScenario with loop at $loopPosition:")
         // elements.forEachIndexed { index, elem ->

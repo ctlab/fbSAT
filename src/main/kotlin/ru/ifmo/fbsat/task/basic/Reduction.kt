@@ -195,7 +195,7 @@ fun Solver.declareBaseReduction(scenarioTree: ScenarioTree, C: Int, K: Int): Red
                         false to true -> algorithm0[c, z]
                         true to false -> -algorithm1[c, z]
                         true to true -> algorithm1[c, z]
-                        else -> throw Exception("Weird combination of values: $values")
+                        else -> error("Weird combination of values: $values")
                     }
                 )
         }

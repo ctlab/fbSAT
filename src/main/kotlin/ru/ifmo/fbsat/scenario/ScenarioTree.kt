@@ -149,6 +149,7 @@ class ScenarioTree(
                     if (child.element.inputEvent == element.inputEvent &&
                         child.element.inputValues == element.inputValues
                     ) {
+                        check(child.element == element) { "ScenarioTree is not deterministic!" }
                         current = child
                         continue@meow
                     }
@@ -159,7 +160,8 @@ class ScenarioTree(
 
         _scenarios.add(scenario)
         lazyCache.invalidate()
-        require(activeVertices.size + passiveVertices.size + 1 == size) // TODO: remove
+
+        check(activeVertices.size + passiveVertices.size + 1 == size) // TODO: remove
     }
 
     // Note: all property-like functions are one-based and one-valued
@@ -175,14 +177,14 @@ class ScenarioTree(
         when (val c = nodes[v - 1].element.inputValues[x - 1]) {
             '1' -> true
             '0' -> false
-            else -> throw IllegalStateException("Character $c for x = $x is neither '1' nor '0'")
+            else -> error("Character $c for v = $v, x = $x is neither '1' nor '0'")
         }
 
     fun outputValue(v: Int, z: Int): Boolean =
         when (val c = nodes[v - 1].element.outputValues[z - 1]) {
             '1' -> true
             '0' -> false
-            else -> throw IllegalStateException("Character $c is neither '1' nor '0'")
+            else -> error("Character $c for v = $v, z = $z is neither '1' nor '0'")
         }
 
     override fun toString(): String {

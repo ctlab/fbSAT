@@ -22,7 +22,7 @@ fun String.toBooleanArray(): BooleanArray {
         when (it) {
             '1' -> true
             '0' -> false
-            else -> throw Exception("All characters in string must be '1' or '0'")
+            else -> error("All characters in string '$it' must be '1' or '0'")
         }
     }.toBooleanArray()
 }

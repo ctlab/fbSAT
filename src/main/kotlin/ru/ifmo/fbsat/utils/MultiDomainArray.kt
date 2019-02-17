@@ -35,8 +35,9 @@ private class DefaultMultiDomainArray<T : Any, R : Any>(
 
     private fun Array<out R>.checkTypes() {
         val indexTypes = this.map { it.javaClass }
-        if (indexTypes != types)
-            throw IllegalArgumentException("Types mismatch (index: ${indexTypes.map { it.simpleName }}, multi-array: ${types.map { it.simpleName }})")
+        require(indexTypes == types) {
+            "Types mismatch (index: ${indexTypes.map { it.simpleName }}, multi-array: ${types.map { it.simpleName }})"
+        }
     }
 
     override operator fun get(vararg index: R): T {

@@ -36,7 +36,7 @@ internal class Assignment(
             // Automaton variables
             val color = IntMultiArray.new(V) { (v) ->
                 (1..C).firstOrNull { c -> raw[baseReduction.color[v, c] - 1] }
-                    ?: throw IllegalStateException("color[v = $v] is undefined")
+                    ?: error("color[v = $v] is undefined")
             }
             val transition = IntMultiArray.new(C, E, K) { (i, e, k) ->
                 (1..C).firstOrNull { j -> raw[baseReduction.transition[i, e, k, j] - 1] }
@@ -44,7 +44,7 @@ internal class Assignment(
             }
             val outputEvent = IntMultiArray.new(C) { (c) ->
                 (1..O).firstOrNull { o -> raw[baseReduction.outputEvent[c, o] - 1] }
-                    ?: throw IllegalStateException("outputEvent[c = $c] is undefined")
+                    ?: error("outputEvent[c = $c] is undefined")
             }
             val algorithm = MultiArray.new<Algorithm>(C) { (c) ->
                 BinaryAlgorithm(

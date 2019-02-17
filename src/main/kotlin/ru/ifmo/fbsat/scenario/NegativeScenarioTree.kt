@@ -117,7 +117,7 @@ class NegativeScenarioTree(
                 outputEvent = "INITO",
                 outputValues = "0".repeat(negativeScenario.elements.first().outputValues.length)
             ),
-            null
+            parent = null
         )
 
         val firstElement = negativeScenario.elements.first()
@@ -155,7 +155,8 @@ class NegativeScenarioTree(
 
         _counterExamples.add(negativeScenario)
         lazyCache.invalidate()
-        require(activeVertices.size + passiveVertices.size + 1 == size) // TODO: remove
+
+        check(activeVertices.size + passiveVertices.size + 1 == size) // TODO: remove
     }
 
     fun addFromFile(fileNegativeScenarios: File, scenarioTree: ScenarioTree) {
@@ -181,14 +182,14 @@ class NegativeScenarioTree(
         when (val c = nodes[v - 1].element.inputValues[x - 1]) {
             '1' -> true
             '0' -> false
-            else -> throw IllegalStateException("Character $c for x = $x is neither '1' nor '0'")
+            else -> error("Character $c for v = $v, x = $x is neither '1' nor '0'")
         }
 
     fun outputValue(v: Int, z: Int): Boolean =
         when (val c = nodes[v - 1].element.outputValues[z - 1]) {
             '1' -> true
             '0' -> false
-            else -> throw IllegalStateException("Character $c is neither '1' nor '0'")
+            else -> error("Character $c for v = $v, z = $z is neither '1' nor '0'")
         }
 
     fun loopBack(v: Int): Int = nodes[v - 1].loopBack?.id ?: 0
@@ -205,13 +206,8 @@ class NegativeScenarioTree(
             inputNames: List<String>,
             outputNames: List<String>,
             // FIXME: something breaks (heavily) when CETree is a trie... :(
-            isTrie: Boolean = false
+            isTrie: Boolean = true
         ): NegativeScenarioTree {
-            if (isTrie) {
-                println("==========================================================================================")
-                println("[!] WARNING: When CETree is a trie, something heavily breaks, so expect incorrect results!")
-                println("==========================================================================================")
-            }
             val counterExamples = NegativeScenario.fromFile(
                 file,
                 inputEvents,

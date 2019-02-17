@@ -10,7 +10,7 @@ data class Some<out T>(override val value: T) : Maybe<T>() {
 
 object None : Maybe<Nothing>() {
     override val value: Nothing
-        get() = throw Exception("Can't get from None")
+        get() = throw RuntimeException("Can't get from None")
 
     override fun toString(): String = "None"
 }

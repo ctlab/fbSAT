@@ -267,7 +267,7 @@ class FbSAT : CliktCommand() {
                 println("[-] Verify: FAILED")
                 println("==================")
                 if (failIfSTVerifyFailed)
-                    throw RuntimeException("ST verification failed")
+                    error("ST verification failed")
             }
 
             ceTree?.let {
@@ -278,7 +278,7 @@ class FbSAT : CliktCommand() {
                     println("[-] Verify CE: FAILED")
                     println("=====================")
                     if (failIfCEVerifyFailed)
-                        throw RuntimeException("CE verification failed")
+                        error("CE verification failed")
                 }
             }
 

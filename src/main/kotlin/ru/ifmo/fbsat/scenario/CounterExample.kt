@@ -32,7 +32,7 @@ class CounterExample(
             when (variables[it]) {
                 "TRUE" -> "1"
                 "FALSE" -> "0"
-                else -> throw IllegalStateException("Value of variable '$it' must be 'TRUE' or 'FALSE'")
+                else -> error("Value of variable '$it' must be 'TRUE' or 'FALSE'")
             }
         }
     }

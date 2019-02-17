@@ -70,7 +70,7 @@ class Scenario(elements: List<ScenarioElement>, preprocess: Boolean = true) {
                         elements.add(ScenarioElement(first.event, first.values, second.event, second.values))
                         lastOutputValues = second.values
                     }
-                    else -> throw Exception("Unsupported action type ${second.type}")
+                    else -> throw UnsupportedOperationException("Unsupported action type ${second.type}")
                 }
             }
 

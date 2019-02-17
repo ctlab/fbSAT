@@ -70,7 +70,7 @@ internal class Assignment(
             }
             val outputEvent = IntMultiArray.new(C) { (c) ->
                 (1..O).firstOrNull { o -> raw[reduction.outputEvent[c, o] - 1] }
-                    ?: throw IllegalStateException("outputEvent[c = $c] is undefined")
+                    ?: error("outputEvent[c = $c] is undefined")
             }
             val algorithm = MultiArray.new<Algorithm>(C) { (c) ->
                 BinaryAlgorithm(
@@ -82,7 +82,7 @@ internal class Assignment(
             // Guards variables
             val nodeType = MultiArray.new<NodeType>(C, K, P) { (c, k, p) ->
                 NodeType.values().firstOrNull { nt -> raw[reduction.nodeType[c, k, p, nt.value] - 1] }
-                    ?: throw IllegalStateException("nodeType[c,k,p = $c,$k,$p] is undefined")
+                    ?: error("nodeType[c,k,p = $c,$k,$p] is undefined")
             }
             val terminal = IntMultiArray.new(C, K, P) { (c, k, p) ->
                 (1..X).firstOrNull { x -> raw[reduction.terminal[c, k, p, x] - 1] }

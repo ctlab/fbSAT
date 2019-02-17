@@ -121,7 +121,7 @@ class ParseTreeGuard(
                 NodeType.AND -> childLeft!!.eval(inputValues) && childRight!!.eval(inputValues)
                 NodeType.OR -> childLeft!!.eval(inputValues) || childRight!!.eval(inputValues)
                 NodeType.NOT -> !childLeft!!.eval(inputValues)
-                NodeType.NONE -> throw UnsupportedOperationException("Can't eval none-typed node")
+                NodeType.NONE -> error("Can't eval none-typed node")
             }
         }
 
@@ -154,7 +154,7 @@ class ParseTreeGuard(
                         left = "($left)"
                     "~$left"
                 }
-                NodeType.NONE -> throw Exception("Why are you trying to display none-typed node?")
+                NodeType.NONE -> error("Why are you trying to display none-typed node?")
             }
         }
 
@@ -189,7 +189,7 @@ class ParseTreeGuard(
                         left = "($left)"
                     "!$left"
                 }
-                NodeType.NONE -> throw Exception("Why are you trying to display none-typed node?")
+                NodeType.NONE -> error("Why are you trying to display none-typed node?")
             }
         }
 

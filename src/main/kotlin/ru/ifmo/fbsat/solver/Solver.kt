@@ -119,7 +119,7 @@ class DefaultSolver(private val command: String) : AbstractSolver() {
         return when (isSat) {
             true -> rawAssignment.toBooleanArray()
             false -> null
-            null -> throw IllegalStateException("Implicit UNSAT or ERROR")
+            null -> error("Implicit UNSAT or ERROR")
         }
     }
 
