@@ -90,7 +90,7 @@ class Automaton(
             }
 
             fun toSmvString(): String {
-                TODO()
+                return "_state=${source.toSmvString()} & $inputEvent & (${guard.toSmvString()})"
             }
 
             override fun toString(): String {
@@ -120,7 +120,10 @@ class Automaton(
 
         fun toGraphvizString(): String {
             algorithm as BinaryAlgorithm
-            return "$id [label=\"<p>$id|$outputEvent|{0:${algorithm.algorithm0.toBooleanString()}|1:${algorithm.algorithm1.toBooleanString()}}\" shape=Mrecord]"
+            val algo0 = algorithm.algorithm0.toBooleanString()
+            val algo1 = algorithm.algorithm1.toBooleanString()
+            val label = "<p>$id|$outputEvent|{0:$algo0|1:$algo1}"
+            return """$id [label="$label" shape=Mrecord]"""
         }
 
         fun toSmvString(): String {
@@ -199,14 +202,24 @@ class Automaton(
                 currentValues = newValues
             }
 
-            println("[CE::${i + 1}] Satisfying states: [${satisfyingStates.map { it?.id ?: 0 }.withIndex().joinToString(" ") { (j, x) -> if (j + 1 == counterExample.loopPosition) "«$x»" else "$x" }}] (loop = ${counterExample.loopPosition})")
+            println(
+                "[CE::${i + 1}] Satisfying states: [${satisfyingStates.map {
+                    it?.id ?: 0
+                }.withIndex().joinToString(" ") { (j, x) ->
+                    if (j + 1 == counterExample.loopPosition) "<$x>" else "$x"
+                }}] (loop = ${counterExample.loopPosition})"
+            )
 
             if (counterExample.loopPosition != null) {
                 val loop = satisfyingStates[counterExample.loopPosition - 1]
                 val last = satisfyingStates.last()
                 if (loop != null && last != null) {
                     if (last == loop) {
-                        println("[!] Counterexample #${i + 1} is satisfied (last==loop)\n>>> loopPosition = ${counterExample.loopPosition}\n>>> loop = $loop\n>>> last = $last")
+                        println("[!] Counterexample #${i + 1} is satisfied (last==loop)")
+                        println(">>> loopPosition = ${counterExample.loopPosition}")
+                        println(">>> loop = $loop")
+                        println(">>> last = $last")
+                        println(">>> counterExample = $counterExample")
                         ok = false
                     }
                 }
@@ -219,12 +232,11 @@ class Automaton(
     }
 
     fun dump(dir: File, name: String = "automaton") {
-        _dumpGv(dir.resolve("$name.gv"))
-        _dumpSmv(dir.resolve("$name.smv"))
+        dumpGv(dir.resolve("$name.gv"))
+        dumpSmv(dir.resolve("$name.smv"))
     }
 
-    @Suppress("FunctionName")
-    fun _dumpGv(file: File) {
+    fun dumpGv(file: File) {
         file.printWriter().use {
             it.println(this.toGraphvizString())
         }
@@ -232,8 +244,7 @@ class Automaton(
         Runtime.getRuntime().exec("dot -Tpng -O $file")
     }
 
-    @Suppress("FunctionName")
-    fun _dumpSmv(file: File) {
+    fun dumpSmv(file: File) {
         file.printWriter().use {
             it.println(this.toSmvString())
         }
@@ -319,7 +330,7 @@ class Automaton(
         // State declarations
         val stateNextCases = states
             .flatMap { it.transitions }
-            .map { "_state=${it.source.toSmvString()} & ${it.inputEvent} & (${it.guard.toSmvString()})" to it.destination.toSmvString() }
+            .map { it.toSmvString() to it.destination.toSmvString() }
         declarations["_state"] = initialState.toSmvString() to buildCase(stateNextCases, default = "_state")
 
         // Output events declarations
@@ -327,7 +338,7 @@ class Automaton(
             val outputEventNextCases = states
                 .flatMap { it.transitions }
                 .filter { it.destination.outputEvent == outputEvent }
-                .map { "_state=${it.source.toSmvString()} & ${it.inputEvent} & (${it.guard.toSmvString()})" to "TRUE" }
+                .map { it.toSmvString() to "TRUE" }
 
             declarations[outputEvent] = "FALSE" to buildCase(outputEventNextCases, default = "FALSE")
         }
