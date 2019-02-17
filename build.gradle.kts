@@ -4,8 +4,18 @@ group = "ru.ifmo.fbsat"
 version = "1.0"
 
 plugins {
-    kotlin("jvm") version "1.3.21"
     application
+    kotlin("jvm") version Versions.kotlin
+    id("com.github.johnrengelman.shadow") version Versions.shadow
+    id("me.champeau.gradle.jmh") version Versions.jmh
+}
+
+dependencies {
+    implementation(kotlin("stdlib"))
+    implementation(Libs.clikt)
+
+    testImplementation(Libs.junit_jupiter_api)
+    testRuntimeOnly(Libs.junit_jupiter_engine)
 }
 
 repositories {
@@ -13,19 +23,11 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("com.github.ajalt:clikt:1.6.0")
-
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.0")
-}
-
 application {
     mainClassName = "ru.ifmo.fbsat.MainKt"
 }
 
-tasks.named<JavaExec>("run") {
+tasks.withType<JavaExec> {
     args("--help")
 }
 
@@ -34,7 +36,7 @@ tasks.withType<KotlinCompile> {
 }
 
 tasks.test {
-    useJUnitPlatform()
+    useJUnit()
 }
 
 tasks.jar {
@@ -43,7 +45,7 @@ tasks.jar {
             "Main-Class" to "ru.ifmo.fbsat.MainKt"
         )
     }
-    from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 }
 
 tasks.wrapper {
