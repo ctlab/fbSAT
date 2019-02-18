@@ -185,6 +185,22 @@ class FbSAT : CliktCommand() {
         }
         // =================
 
+        // ===
+        if (File("ce").exists()) {
+            File("ce.gv").writeText(
+                NegativeScenarioTree.fromFile(
+                    File("ce"),
+                    tree.inputEvents,
+                    tree.outputEvents,
+                    tree.inputNames,
+                    tree.outputNames
+                ).toGraphvizString()
+            )
+            Runtime.getRuntime().exec("dot -Tpdf -O ce.gv")
+            // Runtime.getRuntime().exec("dot -Tpng -O ce.gv")
+        }
+        // ===
+
         val solverProvider = if (isIncrementalSolver) {
             { IncrementalSolver(solverCmd) }
         } else {
