@@ -134,6 +134,14 @@ class FbSAT : CliktCommand() {
         default = true
     )
 
+    private val fileCE by option(
+        "--vis",
+        help = "[DEBUG] Visualize given counterexamples via graphviz"
+    ).file(
+        folderOkay = false,
+        readable = true
+    ).default(File("ce"))
+
     init {
         context { helpFormatter = PlaintextHelpFormatter(maxWidth = 999) }
     }
@@ -185,18 +193,42 @@ class FbSAT : CliktCommand() {
         // =================
 
         // ===
-        if (File("ce").exists()) {
-            File("ce.gv").writeText(
-                NegativeScenarioTree.fromFile(
-                    File("ce"),
-                    tree.inputEvents,
-                    tree.outputEvents,
-                    tree.inputNames,
-                    tree.outputNames
-                ).toGraphvizString()
+        if (fileCE.exists()) {
+            println("======================================")
+            println("[*] Visualizing <$fileCE>...")
+            val negST = NegativeScenarioTree.fromFile(
+                fileCE,
+                tree.inputEvents,
+                tree.outputEvents,
+                tree.inputNames,
+                tree.outputNames
             )
-            Runtime.getRuntime().exec("dot -Tpdf -O ce.gv")
+            File("$fileCE.gv").writeText(negST.toGraphvizString())
+            Runtime.getRuntime().exec("dot -Tpdf -O $fileCE.gv")
             // Runtime.getRuntime().exec("dot -Tpng -O ce.gv")
+
+            println("======================================")
+            println("[*] Searching for multi-loops...")
+            for (v in negST.verticesWithLoops) {
+                val loopBacks = negST.loopBacks(v)
+                if (loopBacks.size >= 2) {
+                    println("[*] Node v = $v has ${loopBacks.size} loop-backs: $loopBacks")
+                    for ((i, ns) in negST.counterExamples.withIndex()) {
+                        // if (ns.elements.last().nodeId == v) {
+                        //     println(" >> NegativeScenario #${i + 1} with loop position ${ns.loopPosition} (id = ${ns.elements[ns.loopPosition!! - 1].nodeId})")
+                        // }
+                        if (ns.loopPosition != null &&
+                            ns.elements[ns.loopPosition - 1].nodeId in loopBacks
+                        ) {
+                            println(" >> NegativeScenario #${i + 1} with loop position ${ns.loopPosition} (id = ${ns.elements[ns.loopPosition - 1].nodeId})")
+                        }
+                    }
+                }
+            }
+            println("======================================")
+            return
+        } else {
+            println("[-] File <$fileCE> does not exist")
         }
         // ===
 
