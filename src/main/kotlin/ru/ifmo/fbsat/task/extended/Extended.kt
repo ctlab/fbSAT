@@ -4,6 +4,7 @@ import ru.ifmo.fbsat.automaton.Automaton
 import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
+import ru.ifmo.fbsat.solver.declareComparatorLessThanOrEqual
 import kotlin.system.measureTimeMillis
 
 // FIXME: maybe rename to `AutomatonInferrerExtended` or `ExtendedAutomatonInferenceTask`
@@ -13,14 +14,14 @@ class Extended(
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int?, // K, K=C if null
     val maxGuardSize: Int, // P
-    val solverProvider: () -> Solver,
+    solverProvider: () -> Solver,
     private val isForbidLoops: Boolean = true
 ) {
     private val solver = solverProvider()
-    private var baseReduction: Reduction? = null
+    private var baseReduction: BaseReduction? = null
     private var totalizer: IntArray? = null
     private var declaredMaxTotalGuardSize: Int? = null
-    private var ceReduction: CEReduction? = null
+    private var negativeReduction: NegativeReduction? = null
 
     /**
      * @param[maxTotalGuardsSize] maximum total guard size *N*, unconstrained if `null`
@@ -37,10 +38,10 @@ class Extended(
         if (finalize) finalize()
 
         return if (rawAssignment != null) {
-            val assignment = Assignment.fromRaw(rawAssignment, baseReduction!!)
-            if (ceReduction != null) {
+            val assignment = BaseAssignment.fromRaw(rawAssignment, baseReduction!!)
+            if (negativeReduction != null) {
                 @Suppress("UNUSED_VARIABLE")
-                val ceAssignment = CEAssignment.fromRaw(rawAssignment, ceReduction!!)
+                val ceAssignment = NegativeAssignment.fromRaw(rawAssignment, negativeReduction!!)
             }
             val automaton = assignment.toAutomaton()
             automaton
@@ -55,11 +56,12 @@ class Extended(
         if (baseReduction != null) return
 
         measureTimeMillis {
-            baseReduction = solver.declareBaseReductionExtended(
+            baseReduction = BaseReduction(
                 scenarioTree,
                 C = numberOfStates,
                 K = maxOutgoingTransitions ?: numberOfStates,
-                P = maxGuardSize
+                P = maxGuardSize,
+                solver = solver
             )
         }.also {
             println(
@@ -76,7 +78,7 @@ class Extended(
             if (totalizer == null) {
                 totalizer = solver.declareTotalizerExtended(baseReduction!!)
             }
-            solver.declareComparatorExtended(totalizer!!, maxTotalGuardSize, declaredMaxTotalGuardSize)
+            solver.declareComparatorLessThanOrEqual(totalizer!!, maxTotalGuardSize, declaredMaxTotalGuardSize)
             declaredMaxTotalGuardSize = maxTotalGuardSize
         }
     }
@@ -86,16 +88,17 @@ class Extended(
         if (negativeScenarioTree.counterExamples.isEmpty()) return
         // FIXME: must do following:
         if (negativeScenarioTree.counterExamples.first().elements.isEmpty()) return
-        if (ceReduction != null) return
+        if (negativeReduction != null) return
 
         val nov = solver.numberOfVariables
         val noc = solver.numberOfClauses
         val runningTime = measureTimeMillis {
-            ceReduction = solver.declareCounterExampleExtended(
-                baseReduction!!,
-                ceReduction,
+            negativeReduction = NegativeReduction(
                 scenarioTree,
+                baseReduction!!,
                 negativeScenarioTree,
+                negativeReduction,
+                solver,
                 isForbidLoops = isForbidLoops
             )
         }
