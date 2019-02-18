@@ -17,6 +17,7 @@ import ru.ifmo.fbsat.scenario.Scenario
 import ru.ifmo.fbsat.scenario.ScenarioTree
 import ru.ifmo.fbsat.solver.DefaultSolver
 import ru.ifmo.fbsat.solver.IncrementalSolver
+import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.task.basic.Basic
 import ru.ifmo.fbsat.task.basicmin.BasicMin
 import ru.ifmo.fbsat.task.extended.Extended
@@ -201,7 +202,7 @@ class FbSAT : CliktCommand() {
         }
         // ===
 
-        val solverProvider = if (isIncrementalSolver) {
+        val solverProvider: () -> Solver = if (isIncrementalSolver) {
             { IncrementalSolver(solverCmd) }
         } else {
             { DefaultSolver(solverCmd) }
