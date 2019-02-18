@@ -46,6 +46,9 @@ fun Solver.declareTotalizer(variables: Sequence<Int>): IntArray {
     return queue.removeFirst().toIntArray()
 }
 
+fun Solver.declareTotalizer(block: suspend SequenceScope<Int>.() -> Unit): IntArray =
+    declareTotalizer(sequence(block))
+
 /**
  * Declares cardinality constraint `sum(totalizer) <= x`
  * @param[declared] previously declared upper bound.
