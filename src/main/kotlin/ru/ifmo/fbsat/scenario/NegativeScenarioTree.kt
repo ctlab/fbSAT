@@ -61,7 +61,7 @@ class NegativeScenarioTree(
     }
     val verticesWithLoops: List<Int> by lazyCache {
         nodes.asSequence()
-            .filter { it.loopBack != null }
+            .filter { it.loopBacks.isNotEmpty() }
             .map { it.id }
             .toList()
     }
@@ -87,7 +87,6 @@ class NegativeScenarioTree(
     private inner class Node(
         val element: ScenarioElement,
         val parent: Node?,
-        var loopBack: Node? = null,
         var isTerminal: Boolean = false
     ) {
         private val _children: MutableList<Node> = mutableListOf()
@@ -95,17 +94,65 @@ class NegativeScenarioTree(
         val id: Int = this@NegativeScenarioTree.size + 1  // Note: one-based
         val children: List<Node> = _children
         val previousActive: Node? = if (parent?.element?.outputEvent != null) parent else parent?.previousActive
+        val loopBacks: MutableSet<Node> = mutableSetOf()
+        var isLoopBack: Boolean = false
 
         init {
-            require(!(loopBack != null && isTerminal)) {
-                "Node can't have a back-edge and be a terminal at the same time"
-            }
+            require(!isTerminal) { "Terminal nodes are not supported yet" }
+
             this@NegativeScenarioTree._nodes.add(this)
             parent?._children?.add(this)
         }
 
+        fun toGraphvizString(): String {
+            val idStr = if (isLoopBack) "&laquo;$id&raquo;" else "$id"
+
+            val vs = outputNames.indices.joinToString("\n") { i ->
+                val name = outputNames[i]
+                val oldValue = parent?.element?.outputValues?.get(i) ?: '0'
+                val newValue = this.element.outputValues[i]
+
+                if (oldValue != newValue)
+                    """<TR color='red'><TD align="LEFT">$name</TD><TD>$newValue</TD></TR>"""
+                else
+                    """<TR><TD align="LEFT">$name</TD><TD>$newValue</TD></TR>"""
+            }
+
+            val tableBody = """
+                <TR><TD align="CENTER" colspan="2">$idStr / ${element.outputEvent}</TD></TR>
+                <HR/>
+                %s
+            """.trimIndent().format(vs)
+
+            val html = """
+                <TABLE style="ROUNDED" cellborder="0" cellspacing="1">
+                %s
+                </TABLE>
+            """.trimIndent().format(tableBody.prependIndent())
+
+            return "$id [label=<\n${html.prependIndent()}> shape=plaintext]"
+        }
+
+        fun getIncomingEdgeGraphvizString(): String {
+            return if (parent != null) {
+                val label = inputNames
+                    .zip(element.inputValues.asIterable())
+                    .joinToString("") { (name, value) ->
+                        """${if (value == '0') "~" else ""}$name\l"""
+                    }
+                """${parent.id} -> $id [label="$label"]"""
+            } else {
+                val label = "init"
+                """start -> $id [label="$label"]"""
+            }
+        }
+
+        fun getLoopBackGraphvizStrings(): List<String> {
+            return loopBacks.map { l -> """$id -> ${l.id} [label=" " style=dashed]""" }
+        }
+
         override fun toString(): String {
-            return "Node(id=$id, parent=${parent?.id}, previousActive=${previousActive?.id}, loopBack=${loopBack?.id}, isTerminal=$isTerminal, children=${children.map { it.id }}, element=$element)"
+            return "Node(id=$id, parent=${parent?.id}, previousActive=${previousActive?.id}, loopBacks=${loopBacks.map { it.id }}, isTerminal=$isTerminal, children=${children.map { it.id }}, element=$element)"
         }
     }
 
@@ -125,6 +172,7 @@ class NegativeScenarioTree(
         require(firstElement.inputValues == "")
         require(firstElement.outputEvent == null)
         require(firstElement.outputValues == root.element.outputValues)
+        firstElement.nodeId = root.id
 
         var current = root
         var loopBack: Node? = null
@@ -132,11 +180,9 @@ class NegativeScenarioTree(
         meow@ for ((i, element) in negativeScenario.elements.withIndex().drop(1)) {
             if (isTrie) {
                 for (child in current.children) {
-                    // FIXME: maybe just `child.element == element`? Why comparing only input action?
-                    if (child.element.inputEvent == element.inputEvent &&
-                        child.element.inputValues == element.inputValues
-                    ) {
+                    if (child.element == element) {
                         current = child
+                        element.nodeId = current.id
                         if (i + 1 == negativeScenario.loopPosition)
                             loopBack = current
                         continue@meow
@@ -144,14 +190,16 @@ class NegativeScenarioTree(
                 }
             }
             current = Node(element, current)
+            element.nodeId = current.id
             if (i + 1 == negativeScenario.loopPosition)
                 loopBack = current
         }
+        check(loopBack != null) { "Weird, but loopBack is null." }
+
+        loopBack.isLoopBack = true
         val last = current
-        require(last.loopBack == null) {
-            "Attempted to override loopBack? No way!"
-        }
-        last.loopBack = loopBack
+        check(!(loopBack.id in last.loopBacks.map { it.id } && loopBack !in last.loopBacks))
+        last.loopBacks.add(loopBack)
 
         _counterExamples.add(negativeScenario)
         lazyCache.invalidate()
@@ -192,7 +240,43 @@ class NegativeScenarioTree(
             else -> error("Character $c for v = $v, z = $z is neither '1' nor '0'")
         }
 
-    fun loopBack(v: Int): Int = nodes[v - 1].loopBack?.id ?: 0
+    fun loopBacks(v: Int): List<Int> = nodes[v - 1].loopBacks.map { it.id }
+
+    fun toGraphvizString(): String {
+        val fontSettings = """fontname="Source Code Pro,monospace" fontsize="12""""
+        val setupBlock = """
+            rankdir = LR
+            graph [$fontSettings]
+            node  [$fontSettings]
+            edge  [$fontSettings]
+        """.trimIndent()
+
+        val nodesBlock = """
+            // States
+            start [style=invis]
+            %s
+        """.trimIndent().format(
+            nodes.joinToString("\n") { it.toGraphvizString() }
+        )
+
+        val transitionsBlock = """
+            // Transitions
+            %s
+
+            // Loop-backs
+            %s
+        """.trimIndent().format(
+            nodes.joinToString("\n") { it.getIncomingEdgeGraphvizString() },
+            nodes.flatMap { it.getLoopBackGraphvizStrings() }.joinToString("\n")
+        )
+
+        val body = "%s\n\n%s\n\n%s".format(
+            setupBlock,
+            nodesBlock,
+            transitionsBlock
+        )
+        return "digraph {\n${body.prependIndent()}\n}"
+    }
 
     override fun toString(): String {
         return "NegativeScenarioTree(size=$size, counterexamples=${counterExamples.size}, inputEvents=$inputEvents, outputEvents=$outputEvents, inputNames=$inputNames, outputNames=$outputNames, uniqueInputs=$uniqueInputs, uniqueOutputs=$uniqueOutputs)"
