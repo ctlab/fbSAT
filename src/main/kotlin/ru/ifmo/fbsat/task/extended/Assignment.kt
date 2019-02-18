@@ -20,7 +20,7 @@ internal class Assignment(
     // val N: Int,
     val color: IntMultiArray,
     val transition: IntMultiArray,
-    val activeTransition: BooleanMultiArray,
+    val actualTransition: IntMultiArray,
     val inputEvent: IntMultiArray,
     val outputEvent: IntMultiArray,
     val algorithm: MultiArray<Algorithm>,
@@ -55,14 +55,15 @@ internal class Assignment(
             // Automaton variables
             val color = IntMultiArray.new(V) { (v) ->
                 (1..C).firstOrNull { c -> raw[reduction.color[v, c] - 1] }
-                    ?: throw IllegalStateException("color[v = $v] is undefined")
+                    ?: error("color[v = $v] is undefined")
             }
             val transition = IntMultiArray.new(C, K) { (i, k) ->
                 (1..C).firstOrNull { j -> raw[reduction.transition[i, k, j] - 1] }
                     ?: 0
             }
-            val activeTransition = BooleanMultiArray.new(C, C, E, U) { (i, j, e, u) ->
-                raw[reduction.activeTransition[i, j, e, u] - 1]
+            val actualTransition = IntMultiArray.new(C, E, U) { (i, e, u) ->
+                (1..C).firstOrNull { j -> raw[reduction.actualTransition[i, e, u, j] - 1] }
+                    ?: 0
             }
             val inputEvent = IntMultiArray.new(C, K) { (c, k) ->
                 (1..E).firstOrNull { e -> raw[reduction.inputEvent[c, k, e] - 1] }
@@ -122,7 +123,7 @@ internal class Assignment(
 
             return Assignment(
                 scenarioTree, C, K, P,
-                color, transition, activeTransition, inputEvent, outputEvent, algorithm,
+                color, transition, actualTransition, inputEvent, outputEvent, algorithm,
                 nodeType, terminal, parent, childLeft, childRight,
                 nodeValue, childValueLeft, childValueRight, firstFired, notFired
             )
@@ -167,7 +168,7 @@ internal class CEAssignment(
     val K: Int,
     val P: Int,
     val satisfaction: IntMultiArray,
-    val activeTransition: BooleanMultiArray,
+    val actualTransition: IntMultiArray,
     val nodeValue: BooleanMultiArray,
     val childValueLeft: BooleanMultiArray,
     val childValueRight: BooleanMultiArray,
@@ -195,8 +196,9 @@ internal class CEAssignment(
                     ?: 0
             }
             // Automaton variables
-            val activeTransition = BooleanMultiArray.new(C, C, E, ceTree.uniqueInputs.size) { (i, j, e, u) ->
-                raw[reduction.activeTransition[i, j, e, u] - 1]
+            val actualTransition = IntMultiArray.new(C, E, U) { (i, e, u) ->
+                (1..C).firstOrNull { j -> raw[reduction.actualTransition[i, e, u, j] - 1] }
+                    ?: 0
             }
             // Guards variables
             val nodeValue = BooleanMultiArray.new(C, K, P, U) { (c, k, p, u) ->
@@ -217,9 +219,16 @@ internal class CEAssignment(
 
             println("[.] satisfaction: ${satisfaction.values.joinToString(" ", "[", "]") { it.toString() }}")
 
+            println("[*] Satisfaction for negative scenarios:")
+            for ((j, scenario) in ceTree.counterExamples.withIndex()) {
+                println("[${j + 1}/${ceTree.counterExamples.size}] satisfaction = [${scenario.elements.joinToString(" ") { elem ->
+                    elem.nodeId?.let { id -> satisfaction[id].toString() } ?: "?"
+                }}]")
+            }
+
             return CEAssignment(
                 ceTree, C, K, P,
-                satisfaction, activeTransition,
+                satisfaction, actualTransition,
                 nodeValue, childValueLeft, childValueRight, firstFired, notFired
             )
         }

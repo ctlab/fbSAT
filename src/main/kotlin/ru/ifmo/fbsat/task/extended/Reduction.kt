@@ -4,7 +4,6 @@ import ru.ifmo.fbsat.automaton.NodeType
 import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
-import ru.ifmo.fbsat.solver.atMostOne
 import ru.ifmo.fbsat.solver.declareComparatorLessThanOrEqual
 import ru.ifmo.fbsat.solver.declareTotalizer
 import ru.ifmo.fbsat.solver.exactlyOne
@@ -24,7 +23,7 @@ class Reduction(
     val P: Int,
     val color: IntMultiArray,
     val transition: IntMultiArray,
-    val activeTransition: IntMultiArray,
+    val actualTransition: IntMultiArray,
     val inputEvent: IntMultiArray,
     val outputEvent: IntMultiArray,
     val algorithm0: IntMultiArray,
@@ -47,7 +46,7 @@ class CEReduction(
     val K: Int,
     val P: Int,
     val satisfaction: IntMultiArray,
-    val activeTransition: IntMultiArray,
+    val actualTransition: IntMultiArray,
     val nodeValue: IntMultiArray,
     val childValueLeft: IntMultiArray,
     val childValueRight: IntMultiArray,
@@ -68,7 +67,7 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
     val color = newArray(V, C)
     // Automaton variables
     val transition = newArray(C, K, C + 1)
-    val activeTransition = newArray(C, C, E, U)
+    val actualTransition = newArray(C, E, U, C + 1)
     val inputEvent = newArray(C, K, E + 1)
     val outputEvent = newArray(C, O)
     val algorithm0 = newArray(C, Z)
@@ -80,9 +79,10 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
     val childLeft = newArray(C, K, P, P + 1)
     val childRight = newArray(C, K, P, P + 1)
     val nodeValue = newArray(C, K, P, U)
+    val rootValue = IntMultiArray.new(C, K, U) { (c, k, u) -> nodeValue[c, k, 1, u] }
     val childValueLeft = newArray(C, K, P, U)
     val childValueRight = newArray(C, K, P, U)
-    val firstFired = newArray(C, U, K)
+    val firstFired = newArray(C, U, K + 1)
     val notFired = newArray(C, U, K)
     // BFS variables
     val bfs_transition = newArray(C, C)
@@ -90,11 +90,41 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
 
 
     comment("1. Color constraints")
-    comment("1.0. ONE(color)")
+    comment("1.0. ONE(color)_{1..C}")
     for (v in 1..V)
         exactlyOne(1..C, color, v)
 
-    comment("1.1. Color propagation for passive vertices")
+    comment("1.1. Color of active vertices")
+    // color[tp(v), i] & color[v, j] => actual_transition[i,tie(v),tin(v),j]
+    for (v in scenarioTree.activeVertices) {
+        val p = scenarioTree.parent(v)
+        val e = scenarioTree.inputEvent(v)
+        val u = scenarioTree.inputNumber(v)
+        for (i in 1..C)
+            for (j in 1..C)
+                clause(
+                    -color[p, i],
+                    -color[v, j],
+                    actualTransition[i, e, u, j]
+                )
+        //     implyIff(  // ADHOC
+        //         color[p, i],
+        //         color[v, j],
+        //         actualTransition[i, e, u, j]
+        //     )
+    }
+
+    comment("1.2. Color of passive vertices")
+    // color[tp(v), c] => actual_transition[c,tie(v),tin(v),0]
+    for (v in scenarioTree.passiveVertices) {
+        val p = scenarioTree.parent(v)
+        val e = scenarioTree.inputEvent(v)
+        val u = scenarioTree.inputNumber(v)
+        for (c in 1..C)
+            imply(color[p, c], actualTransition[c, e, u, C + 1])
+    }
+
+    comment("1.3. Color propagation for passive vertices")
     // color[tp(v), c] => color[v, c]
     for (v in scenarioTree.passiveVertices) {
         val p = scenarioTree.parent(v)
@@ -102,57 +132,34 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
             imply(color[p, c], color[v, c])
     }
 
-    comment("1.2. Root corresponds to start state")
+    comment("1.4. Root corresponds to start state")
     clause(color[1, 1])
 
 
     comment("2. Transition constraints")
-    comment("2.0a. ONE(transition)")
+    comment("2.0a. ONE(transition)_{0..C}")
     for (c in 1..C)
         for (k in 1..K)
             exactlyOne(1..(C + 1), transition, c, k)
 
-    comment("2.0b. ONE(input_event)")
+    comment("2.0b. ONE(actual_transition)_{0..C}")
+    for (c in 1..C)
+        for (e in 1..E)
+            for (u in 1..U)
+                exactlyOne(1..(C + 1), actualTransition, c, e, u)
+
+    comment("2.0c. ONE(input_event)_{0..E}")
     for (c in 1..C)
         for (k in 1..K)
             exactlyOne(1..(E + 1), inputEvent, c, k)
 
-    comment("2.1. Active transition existence")
-    // // color[tp(v), i] & color[v, j] => active_transition[i,j,tie(v),tin(v)]
-    // for (v in scenarioTree.activeVertices) {
-    //     val p = scenarioTree.parent(v)
-    //     val e = scenarioTree.inputEvent(v)
-    //     val u = scenarioTree.inputNumber(v)
-    //     for (i in 1..C)
-    //         for (j in 1..C)
-    //             clause(
-    //                 -color[p, i],
-    //                 -color[v, j],
-    //                 activeTransition[i, j, e, u]
-    //             )
-    // }
-    // color[tp(v), i] => (color[v, j] <=> active_transition[i,j,tie(v),tin(v)])
-    for (v in scenarioTree.activeVertices) {
-        val p = scenarioTree.parent(v)
-        val e = scenarioTree.inputEvent(v)
-        val u = scenarioTree.inputNumber(v)
-        for (i in 1..C)
-            for (j in 1..C)
-                implyIff(
-                    color[p, i],
-                    color[v, j],
-                    activeTransition[i, j, e, u]
-                )
-    }
-
-
-    comment("2.2. Active transition definition")
-    // active_transition[i,j,e,u] <=> OR_k( transition[i,k,j] & input_event[i,k,e] & first_fired[i,u,k] )
+    comment("2.1. Active transition definition")
+    // actual_transition[i,e,u,j] <=> OR_k( transition[i,k,j] & input_event[i,k,e] & first_fired[i,u,k] )
     for (i in 1..C)
-        for (j in 1..C)
-            for (e in 1..E)
-                for (u in 1..U)
-                    iffOr(activeTransition[i, j, e, u], sequence {
+        for (e in 1..E)
+            for (u in 1..U)
+                for (j in 1..C)
+                    iffOr(actualTransition[i, e, u, j], sequence {
                         for (k in 1..K) {
                             // aux <=> transition[i,k,j] & input_event[i,k,e] & first_fired[i,u,k]
                             val aux = newVariable()
@@ -166,70 +173,63 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
                         }
                     })
 
-    comment("2.3. Null-transitions are last")
+    comment("2.2. Null-transitions are last")
     // transition[k, 0] => transition[k+1, 0]
     for (c in 1..C)
         for (k in 1..(K - 1))
             imply(transition[c, k, C + 1], transition[c, k + 1, C + 1])
 
-    comment("2.4. Only null-transitions have no input event")
+    comment("2.3. Only null-transitions have no input event")
     // transition[k, 0] <=> input_event[k, 0]
     for (c in 1..C)
         for (k in 1..K)
             iff(transition[c, k, C + 1], inputEvent[c, k, E + 1])
 
+    comment("+2.4. Ad-hoc: no transition to the first state")
+    for (c in 1..C)
+        clause(-transition[c, 1])
+
 
     comment("3. Firing constraints")
-    comment("3.0. AMO(first_fired)")
+    comment("3.0. ONE(first_fired)_{0..K}")
     for (c in 1..C)
         for (u in 1..U)
-            atMostOne(1..K, firstFired, c, u)
+            exactlyOne(1..(K + 1), firstFired, c, u)
 
-    comment("3.1. not_fired definition")
-    // color[tp(v), c] => not_fired[c, tin(v), K]
-    for (v in scenarioTree.passiveVertices) {
-        val p = scenarioTree.parent(v)
-        val u = scenarioTree.inputNumber(v)
-        for (c in 1..C)
-            imply(color[p, c], notFired[c, u, K])
-    }
-
-    comment("3.2. not_fired propagation")
+    comment("3.1. first_fired definition")
+    // first_fired[k] <=> root_value[k] & not_fired[k-1]
     for (c in 1..C)
         for (u in 1..U) {
-            // nf[k] => nf[k-1]
+            iff(firstFired[c, u, 1], rootValue[c, 1, u])
             for (k in 2..K)
-                imply(notFired[c, u, k], notFired[c, u, k - 1])
-            // ~nf[k] => ~nf[k+1]
+                iffAnd(firstFired[c, u, k], rootValue[c, k, u], notFired[c, u, k - 1])
+        }
+
+    comment("3.2. not_fired definition")
+    // not_fired[k] <=> ~root_value[k] & not_fired[k-1]
+    for (c in 1..C)
+        for (u in 1..U) {
+            iff(notFired[c, u, 1], -rootValue[c, 1, u])
+            for (k in 2..K)
+                iffAnd(notFired[c, u, k], -rootValue[c, k, u], notFired[c, u, k - 1])
+        }
+
+    comment("3.3. Propagation of not-not_fired (maybe redundant)")
+    // ~not_fired[k] => ~not_fired[k+1]
+    for (c in 1..C)
+        for (u in 1..U)
             for (k in 1..(K - 1))
                 imply(-notFired[c, u, k], -notFired[c, u, k + 1])
-        }
 
-    comment("3.3. first_fired and not_fired interaction")
-    for (c in 1..C)
-        for (u in 1..U) {
-            // ~(ff & nf)
-            for (k in 1..K)
-                clause(-firstFired[c, u, k], -notFired[c, u, k])
-            // ff[k] => nf[k-1]
-            for (k in 2..K)
-                imply(firstFired[c, u, k], notFired[c, u, k - 1])
-        }
-
-    comment("3.4. Value from not/first fired")
+    comment("3.4. first_fired[0] <=> not_fired[K] (shortcut)")
+    // first_fired[0] <=> not_fired[K]
     for (c in 1..C)
         for (u in 1..U)
-            for (k in 1..K) {
-                // nf => ~root_value
-                imply(notFired[c, u, k], -nodeValue[c, k, 1, u])
-                // ff => root_value
-                imply(firstFired[c, u, k], nodeValue[c, k, 1, u])
-                // else => unconstrained
-            }
+            iff(firstFired[c, u, K + 1], notFired[c, u, K])
 
 
     comment("4. Output event constraints")
-    comment("4.0. ONE(output_event)")
+    comment("4.0. ONE(output_event)_{1..O}")
     for (c in 1..C)
         exactlyOne(1..O, outputEvent, c)
 
@@ -265,7 +265,7 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
                         false to true -> algorithm0[c, z]
                         true to false -> -algorithm1[c, z]
                         true to true -> algorithm1[c, z]
-                        else -> throw IllegalStateException("Weird combination of values: $values")
+                        else -> error("Weird combination of values: $values")
                     }
                 )
         }
@@ -313,27 +313,33 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
 
 
     comment("7. Nodetype constraints")
-    comment("7.0. ONE(nodetype)")
+    comment("7.0. ONE(nodetype)_{1..5}")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
                 exactlyOne(1..5, nodeType, c, k, p)
 
+    comment("7.1. Only null-transitions have no guard")
+    // transition[0] <=> nodetype[1, NONE]
+    for (c in 1..C)
+        for (k in 1..K)
+            iff(transition[c, k, C + 1], nodeType[c, k, 1, NodeType.NONE.value])
+
 
     comment("8. Parent and children constraints")
-    comment("8.0a. ONE(parent)")
+    comment("8.0a. ONE(parent)_{0..P}")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
                 exactlyOne(1..(P + 1), parent, c, k, p)
 
-    comment("8.0b. ONE(child_left)")
+    comment("8.0b. ONE(child_left)_{0..P}")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
                 exactlyOne(1..(P + 1), childLeft, c, k, p)
 
-    comment("8.0c. ONE(child_right)")
+    comment("8.0c. ONE(child_right)_{0..P}")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
@@ -418,7 +424,7 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
 
 
     comment("10. Terminals constraints")
-    comment("10.0. ONE(terminal)")
+    comment("10.0. ONE(terminal)_{0..X}")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
@@ -475,7 +481,7 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
                         when (val char = scenarioTree.uniqueInputs[u - 1][x - 1]) {
                             '1' -> imply(terminal[c, k, p, x], nodeValue[c, k, p, u])
                             '0' -> imply(terminal[c, k, p, x], -nodeValue[c, k, p, u])
-                            else -> throw IllegalStateException("Character $char is neither '1' nor '0'")
+                            else -> error("Character $char for u = $u, x = $x is neither '1' nor '0'")
                         }
 
 
@@ -671,31 +677,31 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
 
 
     comment("A. AD-HOCs")
-    comment("A.1. (comb)")
-    // t=0 <=> nodetype[1, NONE]
-    for (c in 1..C)
-        for (k in 1..K)
-            iff(
-                transition[c, k, C + 1],
-                nodeType[c, k, 1, NodeType.NONE.value]
-            )
+    // comment("A.1. (comb)")
+    // // t=0 <=> nodetype[1, NONE]
+    // for (c in 1..C)
+    //     for (k in 1..K)
+    //         iff(
+    //             transition[c, k, C + 1],
+    //             nodeType[c, k, 1, NodeType.NONE.value]
+    //         )
 
-    comment("A.2. (comb)")
-    for (c in 1..C)
-        for (k in 1..K)
-            for (u in 1..U) {
-                // (t!=0 & nf) => ~nodetype[1, NONE]
-                clause(
-                    transition[c, k, C + 1],
-                    -notFired[c, u, k],
-                    -nodeType[c, k, 1, NodeType.NONE.value]
-                )
-                // ff => ~nodetype[1, NONE]
-                imply(
-                    firstFired[c, u, k],
-                    -nodeType[c, k, 1, NodeType.NONE.value]
-                )
-            }
+    // comment("A.2. (comb)")
+    // for (c in 1..C)
+    //     for (k in 1..K)
+    //         for (u in 1..U) {
+    //             // (t!=0 & nf) => ~nodetype[1, NONE]
+    //             clause(
+    //                 transition[c, k, C + 1],
+    //                 -notFired[c, u, k],
+    //                 -nodeType[c, k, 1, NodeType.NONE.value]
+    //             )
+    //             // ff => ~nodetype[1, NONE]
+    //             imply(
+    //                 firstFired[c, u, k],
+    //                 -nodeType[c, k, 1, NodeType.NONE.value]
+    //             )
+    //         }
 
     comment("A.3. Distinct transitions")
     // TODO: Distinct transitions
@@ -714,7 +720,7 @@ fun Solver.declareBaseReductionExtended(scenarioTree: ScenarioTree, C: Int, K: I
 
     return Reduction(
         scenarioTree, C, K, P,
-        color, transition, activeTransition, inputEvent, outputEvent, algorithm0, algorithm1,
+        color, transition, actualTransition, inputEvent, outputEvent, algorithm0, algorithm1,
         nodeType, terminal, parent, childLeft, childRight,
         nodeValue, childValueLeft, childValueRight, firstFired, notFired
     )
@@ -785,8 +791,8 @@ fun Solver.declareCounterExampleExtended(
     }
     // Automaton variables
     val transition = baseReduction.transition
-    val activeTransition = IntMultiArray.new(C, C, E, U) { (i, j, e, u) ->
-        isomorphicInputNumber(u)?.let { u_ -> baseReduction.activeTransition[i, j, e, u_] } ?: newVariable()
+    val actualTransition = IntMultiArray.new(C, E, U, C + 1) { (i, e, u, j) ->
+        isomorphicInputNumber(u)?.let { u_ -> baseReduction.actualTransition[i, e, u_, j] } ?: newVariable()
     }
     val inputEvent = baseReduction.inputEvent
     val outputEvent = baseReduction.outputEvent
@@ -800,13 +806,14 @@ fun Solver.declareCounterExampleExtended(
     val nodeValue = IntMultiArray.new(C, K, P, U) { (c, k, p, u) ->
         isomorphicInputNumber(u)?.let { u_ -> baseReduction.nodeValue[c, k, p, u_] } ?: newVariable()
     }
+    val rootValue = IntMultiArray.new(C, K, U) { (c, k, u) -> nodeValue[c, k, 1, u] }
     val childValueLeft = IntMultiArray.new(C, K, P, U) { (c, k, p, u) ->
         isomorphicInputNumber(u)?.let { u_ -> baseReduction.childValueLeft[c, k, p, u_] } ?: newVariable()
     }
     val childValueRight = IntMultiArray.new(C, K, P, U) { (c, k, p, u) ->
         isomorphicInputNumber(u)?.let { u_ -> baseReduction.childValueRight[c, k, p, u_] } ?: newVariable()
     }
-    val firstFired = IntMultiArray.new(C, U, K) { (c, u, k) ->
+    val firstFired = IntMultiArray.new(C, U, K + 1) { (c, u, k) ->
         isomorphicInputNumber(u)?.let { u_ -> baseReduction.firstFired[c, u_, k] } ?: newVariable()
     }
     val notFired = IntMultiArray.new(C, U, K) { (c, u, k) ->
@@ -815,14 +822,14 @@ fun Solver.declareCounterExampleExtended(
 
     comment("CE. Counterexample constraints")
     comment("CE.1. Satisfaction (color-like) constrains")
-    comment("CE.1.0. ONE(satisfaction)")
+    comment("CE.1.0. ONE(satisfaction)_{0..C}")
     for (v in 1..V) {
         if (v <= oldV) continue
         exactlyOne(1..(C + 1), satisfaction, v)
     }
 
-    comment("CE.1.1. Satisfaction of active vertex")
-    // satisfaction[tp(v), i] => (satisfaction[v, j] <=> active_transition[i,j,tie(v),tin(v)])
+    comment("CE.1.1. Satisfaction of active vertices")
+    // satisfaction[tp(v), i] & actual_transition[i,tie(v),tin(v),j] => satisfaction[v, j]
     for (v in negativeScenarioTree.activeVertices) {
         if (v <= oldV) continue
         val p = negativeScenarioTree.parent(v)
@@ -830,53 +837,60 @@ fun Solver.declareCounterExampleExtended(
         val u = negativeScenarioTree.inputNumber(v)
         for (i in 1..C)
             for (j in 1..C)
-                implyIff(
-                    satisfaction[p, i],
-                    satisfaction[v, j],
-                    activeTransition[i, j, e, u]
+                clause(
+                    -satisfaction[p, i],
+                    -actualTransition[i, e, u, j],
+                    satisfaction[v, j]
                 )
     }
 
-    comment("CE.1.1+. Non-satisfaction of active vertex")
-    // satisfaction[tp(v), i] => (satisfaction[v, 0] <=> AND_j( ~active_transition[i,j,tie(v),tin(v)] ))
+    comment("CE.1.1+. Non-satisfaction of active vertices (redundant)")
+    // satisfaction[tp(v), c] & actual_transition[c,tie(v),tin(v),0] => satisfaction[v, 0]
     for (v in negativeScenarioTree.activeVertices) {
+        continue
+        if (v <= oldV) continue
+        val p = negativeScenarioTree.parent(v)
+        val e = negativeScenarioTree.inputEvent(v)
+        val u = negativeScenarioTree.inputNumber(v)
+        for (c in 1..C)
+            clause(
+                -satisfaction[p, c],
+                -actualTransition[c, e, u, C + 1],
+                satisfaction[v, C + 1]
+            )
+    }
+
+
+    comment("CE.1.2. Satisfaction of passive vertices")
+    // satisfaction[tp(v), c] & actual_transition[c,tie(v),tin(v),0] => satisfaction[v, c]
+    for (v in negativeScenarioTree.passiveVertices) {
+        if (v <= oldV) continue
+        val p = negativeScenarioTree.parent(v)
+        val e = negativeScenarioTree.inputEvent(v)
+        val u = negativeScenarioTree.inputNumber(v)
+        for (c in 1..C)
+            clause(
+                -satisfaction[p, c],
+                -actualTransition[c, e, u, C + 1],
+                satisfaction[v, c]
+            )
+    }
+
+    comment("CE.1.2+. Non-satisfaction of passive vertices (redundant)")
+    // satisfaction[tp(v), c] & ~actual_transition[c,tie(v),tin(v),0] => satisfaction[v, 0]
+    for (v in negativeScenarioTree.passiveVertices) {
+        continue
         if (v <= oldV) continue
         val p = negativeScenarioTree.parent(v)
         val e = negativeScenarioTree.inputEvent(v)
         val u = negativeScenarioTree.inputNumber(v)
         for (i in 1..C)
-            implyIffAnd(satisfaction[p, i], satisfaction[v, C + 1], sequence {
-                for (j in 1..C)
-                    yield(-activeTransition[i, j, e, u])
-            })
-    }
-
-    comment("CE.1.2. Satisfaction of passive vertex")
-    // satisfaction[tp(v), c] => (satisfaction[v, c] <=> AND_j( ~active_transition[c,j,tie(v),tin(v)] ))
-    for (v in negativeScenarioTree.passiveVertices) {
-        if (v <= oldV) continue
-        val p = negativeScenarioTree.parent(v)
-        val e = negativeScenarioTree.inputEvent(v)
-        val u = negativeScenarioTree.inputNumber(v)
-        for (c in 1..C)
-            implyIffAnd(satisfaction[p, c], satisfaction[v, c], sequence {
-                for (j in 1..C)
-                    yield(-activeTransition[c, j, e, u])
-            })
-    }
-
-    comment("CE.1.2+. Non-satisfaction of passive vertex")
-    // satisfaction[tp(v), c] => (satisfaction[v, 0] <=> OR_j( active_transition[c,j,tie(v),tin(v)] ))
-    for (v in negativeScenarioTree.passiveVertices) {
-        if (v <= oldV) continue
-        val p = negativeScenarioTree.parent(v)
-        val e = negativeScenarioTree.inputEvent(v)
-        val u = negativeScenarioTree.inputNumber(v)
-        for (c in 1..C)
-            implyIffOr(satisfaction[p, c], satisfaction[v, C + 1], sequence {
-                for (j in 1..C)
-                    yield(activeTransition[c, j, e, u])
-            })
+            for (j in 1..C)
+                clause(
+                    -satisfaction[p, i],
+                    actualTransition[i, e, u, C + 1],
+                    satisfaction[v, C + 1]
+                )
     }
 
     comment("CE.1.3. Propagation of satisfaction for passive vertices")
@@ -905,10 +919,9 @@ fun Solver.declareCounterExampleExtended(
     if (isForbidLoops)
         for (v in negativeScenarioTree.verticesWithLoops) {
             if (v <= oldV) continue
-            val l = negativeScenarioTree.loopBack(v)
-            // println("[.] Forbid loop (v = $v, l = $l)")
-            for (c in 1..C)
-                imply(satisfaction[v, c], -satisfaction[l, c])
+            for (l in negativeScenarioTree.loopBacks(v))
+                for (c in 1..C)
+                    imply(satisfaction[v, c], -satisfaction[l, c])
         }
     else
         comment("===== NOT FORBIDDING LOOPS =====")
@@ -919,13 +932,19 @@ fun Solver.declareCounterExampleExtended(
 
 
     comment("CE.2. Transition constraints")
+    comment("CE.2.0b. ONE(actual_transition)_{0..C}")
+    for (c in 1..C)
+        for (e in 1..E)
+            for (u in newU)
+                exactlyOne(1..(C + 1), actualTransition, c, e, u)
+
     comment("CE.2.1. Active transition definition")
-    // active_transition[i,j,e,u] <=> OR_k( transition[i,k,j] & input_event[i,k,e] & first_fired[i,u,k] )
+    // actual_transition[i,e,u,j] <=> OR_k( transition[i,k,j] & input_event[i,k,e] & first_fired[i,u,k] )
     for (i in 1..C)
-        for (j in 1..C)
-            for (e in 1..E)
-                for (u in newU)
-                    iffOr(activeTransition[i, j, e, u], sequence {
+        for (e in 1..E)
+            for (u in newU)
+                for (j in 1..C)
+                    iffOr(actualTransition[i, e, u, j], sequence {
                         for (k in 1..K) {
                             // aux <=> transition[i,k,j] & input_event[i,k,e] & first_fired[i,u,k]
                             val aux = newVariable()
@@ -941,55 +960,41 @@ fun Solver.declareCounterExampleExtended(
 
 
     comment("CE.3. Firing constraints")
-    comment("CE.3.0. AMO(first_fired)")
+    comment("CE.3.0. ONE(first_fired)_{0..K}")
     for (c in 1..C)
         for (u in newU)
-            atMostOne(1..K, firstFired, c, u)
+            exactlyOne(1..(K + 1), firstFired, c, u)
 
-
-    comment("CE.3.1. not_fired definition")
-    // satisfaction[tp(v), c] => not_fired[c,tin(v),K]
-    for (v in negativeScenarioTree.passiveVertices) {
-        break
-        if (v <= oldV) continue
-        val p = negativeScenarioTree.parent(v)
-        val u = negativeScenarioTree.inputNumber(v)
-        for (c in 1..C)
-            imply(satisfaction[p, c], notFired[c, u, K])
-    }
-
-    comment("CE.3.2. not_fired propagation")
+    comment("CE.3.1. first_fired definition")
+    // first_fired[k] <=> root_value[k] & not_fired[k-1]
     for (c in 1..C)
         for (u in newU) {
-            // nf[k] => nf[k-1]
+            iff(firstFired[c, u, 1], rootValue[c, 1, u])
             for (k in 2..K)
-                imply(notFired[c, u, k], notFired[c, u, k - 1])
-            // ~nf[k] => ~nf[k+1]
+                iffAnd(firstFired[c, u, k], rootValue[c, k, u], notFired[c, u, k - 1])
+        }
+
+    comment("CE.3.2. not_fired definition")
+    // not_fired[k] <=> ~root_value[k] & not_fired[k-1]
+    for (c in 1..C)
+        for (u in newU) {
+            iff(notFired[c, u, 1], -rootValue[c, 1, u])
+            for (k in 2..K)
+                iffAnd(notFired[c, u, k], -rootValue[c, k, u], notFired[c, u, k - 1])
+        }
+
+    comment("CE.3.3. Propagation of not-not_fired (maybe redundant)")
+    // ~not_fired[k] => ~not_fired[k+1]
+    for (c in 1..C)
+        for (u in newU)
             for (k in 1..(K - 1))
                 imply(-notFired[c, u, k], -notFired[c, u, k + 1])
-        }
 
-    comment("CE.3.3. first_fired and not_fired interaction")
-    for (c in 1..C)
-        for (u in newU) {
-            // ~(ff & nf)
-            for (k in 1..K)
-                clause(-firstFired[c, u, k], -notFired[c, u, k])
-            // ff[k] => nf[k-1]
-            for (k in 2..K)
-                imply(firstFired[c, u, k], notFired[c, u, k - 1])
-        }
-
-    comment("CE.3.4. Value from not/first fired")
+    comment("CE.3.4. first_fired[0] <=> not_fired[K] (shortcut)")
+    // first_fired[0] <=> not_fired[K]
     for (c in 1..C)
         for (u in newU)
-            for (k in 1..K) {
-                // nf => ~root_value
-                imply(notFired[c, u, k], -nodeValue[c, k, 1, u])
-                // ff => root_value
-                imply(firstFired[c, u, k], nodeValue[c, k, 1, u])
-                // else => unconstrained
-            }
+            iff(firstFired[c, u, K + 1], notFired[c, u, K])
 
 
     comment("CE.4. Output event constraints")
@@ -1018,7 +1023,7 @@ fun Solver.declareCounterExampleExtended(
                         false to true -> algorithm0[c, z]
                         true to false -> -algorithm1[c, z]
                         true to true -> algorithm1[c, z]
-                        else -> throw IllegalStateException("Weird combination of values: $values")
+                        else -> error("Weird combination of values: $values")
                     }
                 )
         }
@@ -1026,7 +1031,6 @@ fun Solver.declareCounterExampleExtended(
 
 
     comment("CE. Guard constraints re-definition for CE unique inputs")
-
     comment("CE.9.3. None-type nodes have False value and child_values")
     for (c in 1..C)
         for (k in 1..K)
@@ -1072,7 +1076,7 @@ fun Solver.declareCounterExampleExtended(
                         when (val char = negativeScenarioTree.uniqueInputs[u - 1][x - 1]) {
                             '1' -> imply(terminal[c, k, p, x], nodeValue[c, k, p, u])
                             '0' -> imply(terminal[c, k, p, x], -nodeValue[c, k, p, u])
-                            else -> throw IllegalStateException("Character $char is neither '1' nor '0'")
+                            else -> error("Character $char for u = $u, x = $x is neither '1' nor '0'")
                         }
 
     comment("CE.11.4a. AND/OR: child_value_left is a value of left child")
@@ -1171,50 +1175,26 @@ fun Solver.declareCounterExampleExtended(
                         -childValueLeft[c, k, p, u]
                     )
 
-    comment("CE.A.2. (comb)")
-    for (c in 1..C)
-        for (k in 1..K)
-            for (u in newU) {
-                // (t!=0 & nf) => ~nodetype[1, NONE]
-                clause(
-                    transition[c, k, C + 1],
-                    -notFired[c, u, k],
-                    -nodeType[c, k, 1, NodeType.NONE.value]
-                )
-                // ff => ~nodetype[1, NONE]
-                imply(
-                    firstFired[c, u, k],
-                    -nodeType[c, k, 1, NodeType.NONE.value]
-                )
-            }
-
-
-    comment("CE. Ad-hoc: reverse-implication (iff)")
-    // ff[k] <=> root_value[k] & AND_{k'<k}( ~ff[k'] )
-    for (c in 1..C)
-        for (u in newU)
-            for (k in 1..K)
-                iffAnd(firstFired[c, u, k], sequence {
-                    yield(nodeValue[c, k, 1, u])
-                    for (k_ in 1 until k)
-                        yield(-firstFired[c, u, k_])
-                })
-
-    // comment("CE. Ad-hoc: reverse-implication")
-    // // ff[k] <= root_value[k] & AND_{k'<k}( ~ff[k'] )
+    // comment("CE.A.2. (comb)")
     // for (c in 1..C)
-    //     for (u in newU)
-    //         for (k in 1..K)
-    //             clause(sequence {
-    //                 yield(firstFired[c, u, k])
-    //                 yield(-nodeValue[c, k, 1, u])
-    //                 for (k_ in 1 until k)
-    //                     yield(firstFired[c, u, k_])
-    //             })
+    //     for (k in 1..K)
+    //         for (u in newU) {
+    //             // (t!=0 & nf) => ~nodetype[1, NONE]
+    //             clause(
+    //                 transition[c, k, C + 1],
+    //                 -notFired[c, u, k],
+    //                 -nodeType[c, k, 1, NodeType.NONE.value]
+    //             )
+    //             // ff => ~nodetype[1, NONE]
+    //             imply(
+    //                 firstFired[c, u, k],
+    //                 -nodeType[c, k, 1, NodeType.NONE.value]
+    //             )
+    //         }
 
     return CEReduction(
         negativeScenarioTree, C, K, P,
-        satisfaction, activeTransition,
+        satisfaction, actualTransition,
         nodeValue, childValueLeft, childValueRight, firstFired, notFired
     )
 }
