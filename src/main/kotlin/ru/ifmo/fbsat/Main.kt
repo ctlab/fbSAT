@@ -174,9 +174,7 @@ class FbSAT : CliktCommand() {
                 tree.inputEvents,
                 tree.outputEvents,
                 tree.inputNames,
-                tree.outputNames,
-                // FIXME: something breaks (heavily) when CETree is a trie... :(
-                isTrie = true
+                tree.outputNames
             )
         }
         // =================
