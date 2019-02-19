@@ -23,6 +23,8 @@ import ru.ifmo.fbsat.task.basicmin.BasicMin
 import ru.ifmo.fbsat.task.extended.Extended
 import ru.ifmo.fbsat.task.extendedmin.ExtendedMin
 import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.system.measureTimeMillis
 
 class FbSAT : CliktCommand() {
@@ -339,6 +341,8 @@ class FbSAT : CliktCommand() {
 }
 
 fun main(args: Array<String>) {
+    println("=== ${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))}")
     val runningTime = measureTimeMillis { FbSAT().main(args) }
     println("[+] All done in %.3f seconds".format(runningTime / 1000.0))
+    println("=== ${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))}")
 }
