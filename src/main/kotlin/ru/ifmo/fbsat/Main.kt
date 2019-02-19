@@ -179,7 +179,7 @@ class FbSAT : CliktCommand() {
             )
         )
 
-        val ceTree = fileCounterExamples?.let {
+        val negTree = fileCounterExamples?.let {
             NegativeScenarioTree.fromFile(
                 it,
                 tree.inputEvents,
@@ -189,9 +189,9 @@ class FbSAT : CliktCommand() {
             )
         }
         // =================
-        if (ceTree != null) {
-            println("ceTree.uniqueInputs: ${ceTree.uniqueInputs}")
-            println("Inputs only in ceTree: ${ceTree.uniqueInputs - tree.uniqueInputs}")
+        if (negTree != null) {
+            println("negTree.uniqueInputs: ${negTree.uniqueInputs}")
+            println("Inputs only in negTree: ${negTree.uniqueInputs - tree.uniqueInputs}")
         }
         // =================
 
@@ -243,7 +243,7 @@ class FbSAT : CliktCommand() {
             "basic" -> {
                 val task = Basic(
                     tree,
-                    ceTree,
+                    negTree,
                     numberOfStates!!,
                     maxOutgoingTransitions,
                     solverProvider
@@ -264,7 +264,7 @@ class FbSAT : CliktCommand() {
             "extended" -> {
                 val task = Extended(
                     tree,
-                    ceTree,
+                    negTree,
                     numberOfStates!!,
                     maxOutgoingTransitions,
                     maxGuardSize!!,
@@ -276,7 +276,7 @@ class FbSAT : CliktCommand() {
             "extended-min" -> {
                 val task = ExtendedMin(
                     tree,
-                    ceTree,
+                    negTree,
                     numberOfStates,
                     maxOutgoingTransitions,
                     maxGuardSize!!,
@@ -297,7 +297,7 @@ class FbSAT : CliktCommand() {
             //     )
             //     task.infer(maxTotalGuardsSize)
             // }
-            else -> throw UnsupportedOperationException("Method '$method' is not supported yet.")
+            else -> TODO("Method '$method' is not implemented yet.")
         }
 
         if (automaton == null) {
@@ -318,7 +318,7 @@ class FbSAT : CliktCommand() {
                     error("ST verification failed")
             }
 
-            ceTree?.let {
+            negTree?.let {
                 if (automaton.verify(it))
                     println("[+] Verify CE: OK")
                 else {
