@@ -138,9 +138,10 @@ class FbSAT : CliktCommand() {
         "--vis",
         help = "[DEBUG] Visualize given counterexamples via graphviz"
     ).file(
+        exists = true,
         folderOkay = false,
         readable = true
-    ).default(File("ce"))
+    )
 
     init {
         context { helpFormatter = PlaintextHelpFormatter(maxWidth = 999) }
@@ -193,18 +194,18 @@ class FbSAT : CliktCommand() {
         // =================
 
         // ===
-        if (fileCE.exists()) {
+        fileCE?.let { file ->
             println("======================================")
-            println("[*] Visualizing <$fileCE>...")
+            println("[*] Visualizing <$file>...")
             val negST = NegativeScenarioTree.fromFile(
-                fileCE,
+                file,
                 tree.inputEvents,
                 tree.outputEvents,
                 tree.inputNames,
                 tree.outputNames
             )
-            File("$fileCE.gv").writeText(negST.toGraphvizString())
-            Runtime.getRuntime().exec("dot -Tpdf -O $fileCE.gv")
+            File("$file.gv").writeText(negST.toGraphvizString())
+            Runtime.getRuntime().exec("dot -Tpdf -O $file.gv")
             // Runtime.getRuntime().exec("dot -Tpng -O ce.gv")
 
             println("======================================")
@@ -227,8 +228,6 @@ class FbSAT : CliktCommand() {
             }
             println("======================================")
             return
-        } else {
-            println("[-] File <$fileCE> does not exist")
         }
         // ===
 
