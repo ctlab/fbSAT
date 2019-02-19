@@ -2,7 +2,6 @@ object Versions {
     const val kotlin = "1.3.21"
     const val clikt = "1.6.0"
     const val junit = "5.4.0"
-    const val shadow = "4.0.4"
     const val jmh = "0.4.8"
 }
 

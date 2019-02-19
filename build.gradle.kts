@@ -6,7 +6,6 @@ version = "1.0"
 plugins {
     application
     kotlin("jvm") version Versions.kotlin
-    id("com.github.johnrengelman.shadow") version Versions.shadow
     id("me.champeau.gradle.jmh") version Versions.jmh
 }
 
