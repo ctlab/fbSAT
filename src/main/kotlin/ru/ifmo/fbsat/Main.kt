@@ -27,6 +27,8 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.system.measureTimeMillis
 
+private const val SAT_SOLVER_DEFAULT = "incremental-cryptominisat"
+
 class FbSAT : CliktCommand() {
     private val fileScenarios by option(
         "-i", "--scenarios",
@@ -333,10 +335,6 @@ class FbSAT : CliktCommand() {
             outDir.mkdirs()
             automaton.dump(outDir, "automaton")
         }
-    }
-
-    companion object {
-        private const val SAT_SOLVER_DEFAULT = "incremental-cryptominisat"
     }
 }
 
