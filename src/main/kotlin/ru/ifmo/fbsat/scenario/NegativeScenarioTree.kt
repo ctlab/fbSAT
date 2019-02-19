@@ -113,19 +113,19 @@ class NegativeScenarioTree(
                 val newValue = this.element.outputValues[i]
 
                 if (oldValue != newValue)
-                    """<TR color='red'><TD align="LEFT">$name</TD><TD>$newValue</TD></TR>"""
+                    """<TR><TD align="left"><FONT color="red">$name</FONT></TD><TD><FONT color="red">$newValue</FONT></TD></TR>"""
                 else
-                    """<TR><TD align="LEFT">$name</TD><TD>$newValue</TD></TR>"""
+                    """<TR><TD align="left">$name</TD><TD>$newValue</TD></TR>"""
             }
 
             val tableBody = """
-                <TR><TD align="CENTER" colspan="2">$idStr / ${element.outputEvent}</TD></TR>
+                <TR><TD align="center" colspan="2">$idStr / ${element.outputEvent}</TD></TR>
                 <HR/>
                 %s
             """.trimIndent().format(vs)
 
             val html = """
-                <TABLE style="ROUNDED" cellborder="0" cellspacing="1">
+                <TABLE style="rounded" cellborder="0" cellspacing="1">
                 %s
                 </TABLE>
             """.trimIndent().format(tableBody.prependIndent())
