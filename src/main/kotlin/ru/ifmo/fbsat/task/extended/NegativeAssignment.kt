@@ -6,9 +6,9 @@ import ru.ifmo.fbsat.utils.IntMultiArray
 
 class NegativeAssignment(
     val negativeScenarioTree: NegativeScenarioTree,
-    val C:Int,
-    val K:Int,
-    val P:Int,
+    val C: Int,
+    val K: Int,
+    val P: Int,
     val satisfaction: IntMultiArray,
     val actualTransition: IntMultiArray,
     val nodeValue: BooleanMultiArray,
@@ -54,9 +54,13 @@ class NegativeAssignment(
 
             println("[*] Satisfaction for negative scenarios:")
             for ((j, scenario) in negTree.counterExamples.withIndex()) {
-                println("[${j + 1}/${negTree.counterExamples.size}] satisfaction = [${scenario.elements.joinToString(" ") { elem ->
-                    elem.nodeId?.let { id -> satisfaction[id].toString() } ?: "?"
-                }}]")
+                val sat = scenario.elements.joinToString(" ") { elem ->
+                    elem.nodeId?.let { id ->
+                        val v = satisfaction[id]
+                        if (negTree.isLoopBack(v)) "<$v>" else "$v"
+                    } ?: "?"
+                }
+                println("[${j + 1}/${negTree.counterExamples.size}] satisfaction = [$sat]")
             }
 
             return NegativeAssignment(

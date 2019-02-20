@@ -240,6 +240,8 @@ class NegativeScenarioTree(
             else -> error("Character $c for v = $v, z = $z is neither '1' nor '0'")
         }
 
+    fun isLoopBack(v: Int): Boolean = nodes[v - 1].isLoopBack
+    fun isTerminal(v: Int): Boolean = nodes[v - 1].isTerminal
     fun loopBacks(v: Int): List<Int> = nodes[v - 1].loopBacks.map { it.id }
 
     fun toGraphvizString(): String {
