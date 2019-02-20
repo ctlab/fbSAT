@@ -6,7 +6,7 @@ version = "1.0"
 plugins {
     application
     kotlin("jvm") version Versions.kotlin
-    id("me.champeau.gradle.jmh") version Versions.jmh
+    id("org.jlleitschuh.gradle.ktlint") version Versions.ktlint
 }
 
 dependencies {
@@ -15,11 +15,12 @@ dependencies {
 
     testImplementation(Libs.junit_jupiter_api)
     testRuntimeOnly(Libs.junit_jupiter_engine)
+    testImplementation(Libs.junit_jupiter_params)
+    testImplementation(Libs.kluent)
 }
 
 repositories {
     jcenter()
-    mavenCentral()
 }
 
 application {
@@ -45,6 +46,10 @@ tasks.jar {
         )
     }
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+}
+
+ktlint {
+    ignoreFailures.set(true)
 }
 
 tasks.wrapper {

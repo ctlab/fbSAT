@@ -4,7 +4,7 @@ import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.utils.BooleanMultiArray
 import ru.ifmo.fbsat.utils.IntMultiArray
 
-class NegativeAssignment(
+internal class NegativeAssignment(
     val negativeScenarioTree: NegativeScenarioTree,
     val C: Int,
     val K: Int,

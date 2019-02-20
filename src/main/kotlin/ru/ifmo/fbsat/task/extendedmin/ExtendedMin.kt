@@ -5,7 +5,7 @@ import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.task.basicmin.BasicMin
-import ru.ifmo.fbsat.task.extended.Extended
+import ru.ifmo.fbsat.task.extended.ExtendedAutomatonInferenceTask
 
 class ExtendedMin(
     val scenarioTree: ScenarioTree,
@@ -37,7 +37,7 @@ class ExtendedMin(
             automaton.numberOfStates
         }
 
-        val task = Extended(
+        val task = ExtendedAutomatonInferenceTask(
             scenarioTree,
             negativeScenarioTree,
             C,

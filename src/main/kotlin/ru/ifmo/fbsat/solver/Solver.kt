@@ -16,12 +16,12 @@ interface Solver {
     fun newArray(
         vararg shape: Int,
         init: (IntArray) -> (Int) = { newVariable() }
-    ) = IntMultiArray(shape, init)  // MultiArray.new(*shape, init=init)
+    ) = IntMultiArray(shape, init)
 
     fun <R : Any> newDomainArray(
         vararg domains: Iterable<R>,
         init: (List<R>) -> (Int) = { newVariable() }
-    ) = MultiDomainArray.new(*domains, init = init)
+    ) = MultiDomainArray.new(domains.asIterable(), init = init)
 
     fun clause(literals: Sequence<Int>)
     fun clause(vararg literals: Int) = clause(literals.asSequence())

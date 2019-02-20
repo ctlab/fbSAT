@@ -14,7 +14,7 @@ import ru.ifmo.fbsat.solver.implyIffAnd
 import ru.ifmo.fbsat.solver.implyIffOr
 import ru.ifmo.fbsat.utils.IntMultiArray
 
-class NegativeReduction(
+internal class NegativeReduction(
     val scenarioTree: ScenarioTree,
     val baseReduction: BaseReduction,
     val negativeScenarioTree: NegativeScenarioTree,
@@ -171,7 +171,6 @@ class NegativeReduction(
                     satisfaction[v, C + 1]
                 )
         }
-
 
         comment("CE.1.2. Satisfaction of passive vertices")
         // satisfaction[tp(v), c] & actual_transition[c,tie(v),tin(v),0] => satisfaction[v, c]

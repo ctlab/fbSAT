@@ -13,7 +13,7 @@ import ru.ifmo.fbsat.solver.implyIffAnd
 import ru.ifmo.fbsat.solver.implyIffOr
 import ru.ifmo.fbsat.utils.IntMultiArray
 
-class BaseReduction(
+internal class BaseReduction(
     val scenarioTree: ScenarioTree,
     val C: Int,
     val K: Int,

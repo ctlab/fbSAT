@@ -75,7 +75,7 @@ class Automaton(
             val guard: Guard
         ) {
             val source: State = this@State
-            val k: Int = this@State.transitions.size + 1  // Note: 1-based
+            val k: Int = this@State.transitions.size + 1 // Note: 1-based
 
             fun eval(inputValues: String): Boolean {
                 return guard.eval(inputValues.toBooleanArray())
@@ -320,12 +320,12 @@ class Automaton(
             var s = "case\n"
             for ((lhs, rhs) in cases)
                 s += "    $lhs : $rhs;\n"
-            //if (default != null)
+            // if (default != null)
             s += "    TRUE : $default;\n"
             return s + "esac"
         }
 
-        val declarations: MutableMap<String, Pair<String, String>> = mutableMapOf()  // {name: (init, next)}
+        val declarations: MutableMap<String, Pair<String, String>> = mutableMapOf() // {name: (init, next)}
 
         // State declarations
         val stateNextCases = states

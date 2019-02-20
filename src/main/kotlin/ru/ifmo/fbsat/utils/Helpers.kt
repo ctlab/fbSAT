@@ -11,11 +11,11 @@ fun <T, R> Iterable<T>.reductions(
     }
 }
 
-//fun <T> Array<T>.mapInPlace(transform: (T) -> T) {
+// fun <T> Array<T>.mapInPlace(transform: (T) -> T) {
 //    for (i in this.indices) {
 //        this[i] = transform(this[i])
 //    }
-//}
+// }
 
 fun String.toBooleanArray(): BooleanArray {
     return this.map {

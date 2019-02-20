@@ -10,11 +10,11 @@ import ru.ifmo.fbsat.utils.BooleanMultiArray
 import ru.ifmo.fbsat.utils.IntMultiArray
 import ru.ifmo.fbsat.utils.MultiArray
 
-class BaseAssignment(
+internal class BaseAssignment(
     val scenarioTree: ScenarioTree,
-    val C:Int,
-    val K:Int,
-    val P:Int,
+    val C: Int,
+    val K: Int,
+    val P: Int,
     val T: Int,
     val N: Int,
     val color: IntMultiArray,
@@ -130,9 +130,8 @@ class BaseAssignment(
     }
 }
 
-
 @Suppress("LocalVariableName")
-fun BaseAssignment.toAutomaton(): Automaton {
+internal fun BaseAssignment.toAutomaton(): Automaton {
     val automaton = Automaton(scenarioTree)
 
     for (c in 1..C)

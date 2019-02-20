@@ -7,8 +7,7 @@ import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.solver.declareComparatorLessThanOrEqual
 import kotlin.system.measureTimeMillis
 
-// FIXME: maybe rename to `AutomatonInferrerExtended` or `ExtendedAutomatonInferenceTask`
-class Extended(
+class ExtendedAutomatonInferenceTask(
     val scenarioTree: ScenarioTree,
     val negativeScenarioTree: NegativeScenarioTree?,
     val numberOfStates: Int, // C

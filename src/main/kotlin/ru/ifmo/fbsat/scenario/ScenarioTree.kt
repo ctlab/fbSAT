@@ -1,7 +1,8 @@
 package ru.ifmo.fbsat.scenario
 
 import ru.ifmo.fbsat.utils.LazyCache
-import java.util.*
+import java.util.Deque
+import java.util.LinkedList
 
 class ScenarioTree(
     scenarios: List<Scenario>,
@@ -57,7 +58,7 @@ class ScenarioTree(
      */
     val activeVertices: List<Int> by lazyCache {
         nodes.asSequence()
-            .drop(1)  // without root
+            .drop(1) // without root
             .filter { it.element.outputEvent != null }
             .map { it.id }
             .toList()
@@ -68,7 +69,7 @@ class ScenarioTree(
      */
     val passiveVertices: List<Int> by lazyCache {
         nodes.asSequence()
-            .drop(1)  // without root
+            .drop(1) // without root
             .filter { it.element.outputEvent == null }
             .map { it.id }
             .toList()
@@ -100,7 +101,7 @@ class ScenarioTree(
     ) {
         private val _children: MutableList<Node> = mutableListOf()
 
-        val id: Int = this@ScenarioTree.size + 1  // Note: one-based
+        val id: Int = this@ScenarioTree.size + 1 // Note: one-based
         val children: List<Node> = _children
         val previousActive: Node? = if (parent?.element?.outputEvent != null) parent else parent?.previousActive
         val isLeaf: Boolean

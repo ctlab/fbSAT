@@ -12,9 +12,14 @@ interface MultiDomainArray<T : Any, R : Any> {
 
     companion object {
         fun <T : Any, R : Any> new(
+            domains: Iterable<Iterable<R>>,
+            init: (List<R>) -> T
+        ): MultiDomainArray<T, R> = DefaultMultiDomainArray(domains, init)
+
+        fun <T : Any, R : Any> new(
             vararg domains: Iterable<R>,
             init: (List<R>) -> T
-        ): MultiDomainArray<T, R> = DefaultMultiDomainArray(domains.asIterable(), init)
+        ): MultiDomainArray<T, R> = new(domains.asIterable(), init)
     }
 }
 
@@ -61,7 +66,6 @@ private class DefaultMultiDomainArray<T : Any, R : Any>(
     }
 }
 
-
 fun main() {
     val x = MultiDomainArray.new(
         1..5,
@@ -89,7 +93,7 @@ fun main() {
     val c = Color(5)
     val t = TransitionIndex(3)
     println("safe[c, t] = ${safe[c, t]}")
-    println("safe[c, c] = ${safe[c, c]}")  // throws
+    println("safe[c, c] = ${safe[c, c]}") // throws
 }
 
 private enum class MyType {

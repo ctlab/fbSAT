@@ -1,5 +1,10 @@
 package ru.ifmo.fbsat.utils
 
+/**
+ * Multi-dimensional array inspired by [kmath][https://github.com/altavir/kmath].
+ *
+ * @param[T] element type.
+ */
 interface MultiArray<T> {
     val shape: IntArray
     val values: Collection<T>
@@ -16,14 +21,19 @@ interface MultiArray<T> {
 }
 
 /**
- * Multi-dimensional *one-based* array inspired by [kmath][https://github.com/altavir/kmath] library.
+ * One-based multi-dimensional array.
+ *
+ * @param[T] element type.
  */
-private class DefaultMultiArray<T> (
+private class DefaultMultiArray<T>(
     override val shape: IntArray,
     init: (IntArray) -> T
 ) : MultiArray<T> {
     private val strides = Strides(shape)
-    private val buffer = MutableList(shape.reduce(Int::times)) { init(strides.index1(it)) }
+    private val buffer =
+        MutableList(if (shape.isNotEmpty()) shape.reduce(Int::times) else 0) {
+            init(strides.index1(it))
+        }
 
     override val values: Collection<T> = buffer
 
@@ -47,18 +57,19 @@ class IntMultiArray(
     init: (IntArray) -> Int
 ) : MultiArray<Int> {
     private val strides = Strides(shape)
-    private val buffer = IntArray(shape.reduce(Int::times)) { init(strides.index1(it)) }
+    private val buffer =
+        IntArray(if (shape.isNotEmpty()) shape.reduce(Int::times) else 0) {
+            init(strides.index1(it))
+        }
 
     override val values: Collection<Int>
         get() = buffer.toList()
 
     override operator fun get(vararg index: Int): Int {
-        // return buffer[strides.offset(index)]
         return buffer[strides.offset1(index)]
     }
 
     override operator fun set(vararg index: Int, value: Int) {
-        // buffer[strides.offset(index)] = value
         buffer[strides.offset1(index)] = value
     }
 
@@ -72,7 +83,10 @@ class BooleanMultiArray(
     init: (IntArray) -> Boolean
 ) : MultiArray<Boolean> {
     private val strides = Strides(shape)
-    private val buffer = BooleanArray(shape.reduce(Int::times)) { init(strides.index1(it)) }
+    private val buffer =
+        BooleanArray(if (shape.isNotEmpty()) shape.reduce(Int::times) else 0) {
+            init(strides.index1(it))
+        }
 
     override val values: Collection<Boolean>
         get() = buffer.toList()
@@ -92,7 +106,6 @@ class BooleanMultiArray(
 
 private class Strides(val shape: IntArray) {
     private val strides: List<Int> by lazy {
-        // shape.asIterable().reductions(1, Int::times).toList()
         sequence {
             yield(1)
             var cur = 1

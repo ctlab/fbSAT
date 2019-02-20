@@ -4,7 +4,7 @@ import ru.ifmo.fbsat.automaton.NodeType
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.solver.declareTotalizer
 
-fun Solver.declareTotalizerExtended(baseReduction: BaseReduction): IntArray =
+internal fun Solver.declareTotalizerExtended(baseReduction: BaseReduction): IntArray =
     declareTotalizer {
         for (c in 1..baseReduction.C)
             for (k in 1..baseReduction.K)

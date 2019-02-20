@@ -11,7 +11,6 @@ val <T> Sequence<Iterable<T>>.cartesianProduct: Sequence<List<T>>
 val <T> Iterable<Iterable<T>>.cartesianProduct: Sequence<List<T>>
     get() = this.asSequence().cartesianProduct
 
-
 fun <A, B> product(
     xs1: Iterable<A>,
     xs2: Iterable<B>
@@ -49,7 +48,6 @@ fun <A, B, C, D, E> product(
     for (x1 in xs1) for (x2 in xs2) for (x3 in xs3) for (x4 in xs4) for (x5 in xs5)
         yield(Tuple(x1, x2, x3, x4, x5))
 }
-
 
 fun main() {
     val lists: Sequence<List<Any>> = sequenceOf(

@@ -99,7 +99,7 @@ class ParseTreeGuard(
 
     inner class Node(
         val nodeType: NodeType,
-        val terminalNumber: Int  // 1..X, or 0 if non-terminal
+        val terminalNumber: Int // 1..X, or 0 if non-terminal
     ) {
         var parent: Node? = null
             internal set
@@ -113,7 +113,7 @@ class ParseTreeGuard(
         //    when(nodeType) {
         //    NodeType.TERMINAL-> 1
         //    NodeType.AND ->1 + childLeft!!.size + childRight!!.size
-        //}
+        // }
 
         fun eval(inputValues: BooleanArray): Boolean {
             return when (nodeType) {

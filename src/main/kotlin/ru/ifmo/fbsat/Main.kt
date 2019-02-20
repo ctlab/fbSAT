@@ -20,7 +20,7 @@ import ru.ifmo.fbsat.solver.IncrementalSolver
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.task.basic.Basic
 import ru.ifmo.fbsat.task.basicmin.BasicMin
-import ru.ifmo.fbsat.task.extended.Extended
+import ru.ifmo.fbsat.task.extended.ExtendedAutomatonInferenceTask
 import ru.ifmo.fbsat.task.extendedmin.ExtendedMin
 import java.io.File
 import java.time.LocalDateTime
@@ -264,7 +264,7 @@ class FbSAT : CliktCommand() {
                 task.infer()
             }
             "extended" -> {
-                val task = Extended(
+                val task = ExtendedAutomatonInferenceTask(
                     tree,
                     negTree,
                     numberOfStates!!,

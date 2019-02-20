@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.solver
 
-import java.util.*
+import java.util.Deque
+import java.util.LinkedList
 
 fun Solver.declareTotalizer(variables: Sequence<Int>): IntArray {
     val queue: Deque<List<Int>> = LinkedList()
@@ -57,6 +58,6 @@ fun Solver.declareComparatorLessThanOrEqual(totalizer: IntArray, x: Int, declare
     val max = declared ?: totalizer.size
     comment("Comparator(<=$x up to $max)")
     for (i in max downTo x + 1) {
-        clause(-totalizer[i - 1])  // Note: totalizer is zero-based
+        clause(-totalizer[i - 1]) // Note: totalizer is zero-based
     }
 }

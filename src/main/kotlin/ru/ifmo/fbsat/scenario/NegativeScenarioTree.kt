@@ -91,7 +91,7 @@ class NegativeScenarioTree(
     ) {
         private val _children: MutableList<Node> = mutableListOf()
 
-        val id: Int = this@NegativeScenarioTree.size + 1  // Note: one-based
+        val id: Int = this@NegativeScenarioTree.size + 1 // Note: one-based
         val children: List<Node> = _children
         val previousActive: Node? = if (parent?.element?.outputEvent != null) parent else parent?.previousActive
         val loopBacks: MutableSet<Node> = mutableSetOf()
