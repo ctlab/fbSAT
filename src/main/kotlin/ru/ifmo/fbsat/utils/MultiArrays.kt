@@ -18,7 +18,7 @@ interface MultiArray<T> {
 /**
  * Multi-dimensional *one-based* array inspired by [kmath][https://github.com/altavir/kmath] library.
  */
-private class DefaultMultiArray<T> internal constructor(
+private class DefaultMultiArray<T> (
     override val shape: IntArray,
     init: (IntArray) -> T
 ) : MultiArray<T> {
@@ -90,7 +90,7 @@ class BooleanMultiArray(
     }
 }
 
-internal class Strides(val shape: IntArray) {
+private class Strides(val shape: IntArray) {
     private val strides: List<Int> by lazy {
         // shape.asIterable().reductions(1, Int::times).toList()
         sequence {
