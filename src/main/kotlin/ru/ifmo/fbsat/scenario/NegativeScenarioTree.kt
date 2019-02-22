@@ -7,7 +7,7 @@ class NegativeScenarioTree(
     negativeScenarios: List<NegativeScenario>,
     inputNames: List<String>? = null,
     outputNames: List<String>? = null,
-    private val isTrie: Boolean = true
+    private val isTrie: Boolean = false
 ) {
     private val lazyCache = LazyCache()
     private val _counterExamples: MutableList<NegativeScenario> = mutableListOf()
@@ -119,7 +119,7 @@ class NegativeScenarioTree(
             }
 
             val tableBody = """
-                <TR><TD align="center" colspan="2">$idStr / ${element.outputEvent}</TD></TR>
+                <TR><TD align="center" colspan="2">$idStr ${element.outputEvent ?: "ε"} @${element.ceState}</TD></TR>
                 <HR/>
                 %s
             """.trimIndent().format(vs)
@@ -162,7 +162,8 @@ class NegativeScenarioTree(
                 inputEvent = "",
                 inputValues = "",
                 outputEvent = "INITO",
-                outputValues = "0".repeat(negativeScenario.elements.first().outputValues.length)
+                outputValues = "0".repeat(negativeScenario.elements.first().outputValues.length),
+                ceState = negativeScenario.elements.first().ceState
             ),
             parent = null
         )
@@ -176,6 +177,7 @@ class NegativeScenarioTree(
 
         var current = root
         var loopBack: Node? = null
+        var isAnyoneCreated = false
         // skip first element, because it is the same as root
         meow@ for ((i, element) in negativeScenario.elements.withIndex().drop(1)) {
             if (isTrie) {
@@ -190,6 +192,7 @@ class NegativeScenarioTree(
                 }
             }
             current = Node(element, current)
+            isAnyoneCreated = true
             element.nodeId = current.id
             if (i + 1 == negativeScenario.loopPosition)
                 loopBack = current
@@ -201,8 +204,13 @@ class NegativeScenarioTree(
         check(!(loopBack.id in last.loopBacks.map { it.id } && loopBack !in last.loopBacks))
         last.loopBacks.add(loopBack)
 
-        _counterExamples.add(negativeScenario)
-        lazyCache.invalidate()
+        // if (isAnyoneCreated) {
+            _counterExamples.add(negativeScenario)
+            lazyCache.invalidate()
+        // } else {
+        //     check(isTrie)
+        //     // println("[!] No new nodes were inserted into the NegativeScenarioTree")
+        // }
 
         check(activeVertices.size + passiveVertices.size + 1 == size) // TODO: remove
     }
@@ -225,6 +233,7 @@ class NegativeScenarioTree(
     fun outputEvent(v: Int) = outputEvents.indexOf(nodes[v - 1].element.outputEvent) + 1
     fun inputNumber(v: Int) = uniqueInputs.indexOf(nodes[v - 1].element.inputValues) + 1
     fun outputNumber(v: Int) = uniqueOutputs.indexOf(nodes[v - 1].element.outputValues) + 1
+    fun uniqueInputNumber(input: String) = uniqueInputs.indexOf(input) + 1
 
     fun inputValue(v: Int, x: Int): Boolean =
         when (val c = nodes[v - 1].element.inputValues[x - 1]) {
@@ -281,7 +290,7 @@ class NegativeScenarioTree(
     }
 
     override fun toString(): String {
-        return "NegativeScenarioTree(size=$size, counterexamples=${counterExamples.size}, inputEvents=$inputEvents, outputEvents=$outputEvents, inputNames=$inputNames, outputNames=$outputNames, uniqueInputs=$uniqueInputs, uniqueOutputs=$uniqueOutputs)"
+        return "NegativeScenarioTree(size=$size, counterexamples=${counterExamples.size}, inputEvents=$inputEvents, outputEvents=$outputEvents, inputNames=$inputNames, outputNames=$outputNames)"
     }
 
     companion object {
@@ -291,7 +300,6 @@ class NegativeScenarioTree(
             outputEvents: List<String>,
             inputNames: List<String>,
             outputNames: List<String>,
-            // FIXME: something breaks (heavily) when CETree is a trie... :(
             isTrie: Boolean = true
         ): NegativeScenarioTree {
             val counterExamples = NegativeScenario.fromFile(

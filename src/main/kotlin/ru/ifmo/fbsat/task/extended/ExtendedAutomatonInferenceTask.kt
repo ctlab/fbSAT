@@ -16,20 +16,24 @@ class ExtendedAutomatonInferenceTask(
     solverProvider: () -> Solver,
     private val isForbidLoops: Boolean = true
 ) {
-    private val solver = solverProvider()
+    private val solver: Solver = solverProvider()
     private var baseReduction: BaseReduction? = null
     private var totalizer: IntArray? = null
     private var declaredMaxTotalGuardSize: Int? = null
     private var negativeReduction: NegativeReduction? = null
 
     /**
-     * @param[maxTotalGuardsSize] maximum total guard size *N*, unconstrained if `null`
+     * Infer automaton.
+     *
+     * @param[maxTotalGuardsSize] maximum total guard size *N*, unconstrained if `null`.
+     * @param[finalize] call `finalize` method after inference?
+     *
      * @return automaton if *SAT*, or `null` if *UNSAT*
      */
     fun infer(maxTotalGuardsSize: Int? = null, finalize: Boolean = true): Automaton? {
         declareBaseReduction()
         declareCardinality(maxTotalGuardsSize)
-        declareCE()
+        declareNegativeReduction()
 
         solver.comment("Total variables: ${solver.numberOfVariables}, clauses: ${solver.numberOfClauses}")
 
@@ -71,23 +75,25 @@ class ExtendedAutomatonInferenceTask(
     }
 
     private fun declareCardinality(maxTotalGuardSize: Int?) {
-        require(baseReduction != null) { "Run declareBaseReductionExtended first" }
+        check(baseReduction != null) { "Run declareBaseReductionExtended first" }
 
         if (maxTotalGuardSize != null) {
             if (totalizer == null) {
                 totalizer = solver.declareTotalizerExtended(baseReduction!!)
             }
+
             solver.declareComparatorLessThanOrEqual(totalizer!!, maxTotalGuardSize, declaredMaxTotalGuardSize)
             declaredMaxTotalGuardSize = maxTotalGuardSize
         }
     }
 
-    private fun declareCE() {
+    private fun declareNegativeReduction() {
         if (negativeScenarioTree == null) return
         if (negativeScenarioTree.counterExamples.isEmpty()) return
         // FIXME: must do following:
         if (negativeScenarioTree.counterExamples.first().elements.isEmpty()) return
-        if (negativeReduction != null) return
+
+        // if (negativeReduction != null) return
 
         val nov = solver.numberOfVariables
         val noc = solver.numberOfClauses
@@ -102,7 +108,7 @@ class ExtendedAutomatonInferenceTask(
             )
         }
         println(
-            "[+] Done declaring CE reduction (${solver.numberOfVariables - nov} variables, ${solver.numberOfClauses - noc} clauses) in %.3f seconds"
+            "[+] Done declaring negative reduction (${solver.numberOfVariables - nov} variables, ${solver.numberOfClauses - noc} clauses) in %.3f seconds"
                 .format(runningTime / 1000.0)
         )
     }

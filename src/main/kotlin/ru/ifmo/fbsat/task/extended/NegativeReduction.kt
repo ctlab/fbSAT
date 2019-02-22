@@ -26,73 +26,73 @@ internal class NegativeReduction(
     val C = baseReduction.C
     val K = baseReduction.K
     val P = baseReduction.P
-    private val oldV = previousNegativeReduction?.V ?: 0
     private val V = negativeScenarioTree.size
+    private val oldV = previousNegativeReduction?.V ?: 0
+    private val Vs = (oldV + 1)..V
+    private val VsWithoutRoot = Vs.filter { it != 1 }
+    private val VsWithLoops = Vs.filter { it in negativeScenarioTree.verticesWithLoops }
+    private val activeVs = Vs.filter { it in negativeScenarioTree.activeVertices }
+    private val passiveVs = Vs.filter { it in negativeScenarioTree.passiveVertices }
     private val E = negativeScenarioTree.inputEvents.size
-    private val U = negativeScenarioTree.uniqueInputs.size
+    private val UIs = negativeScenarioTree.uniqueInputs
+    private val oldUIs = previousNegativeReduction?.UIs ?: emptyList()
+    private val posUIs = scenarioTree.uniqueInputs
+    private val negUIs = UIs - posUIs
+    private val oldNegUIs = previousNegativeReduction?.negUIs ?: emptyList()
+    private val newNegUIs = negUIs - oldNegUIs
+    private val U = UIs.size
+    private val newU = newNegUIs.map { negativeScenarioTree.uniqueInputNumber(it) }
     private val X = negativeScenarioTree.uniqueInputs.first().length
     private val Z = negativeScenarioTree.uniqueOutputs.first().length
-    private val newU = (1..U).filter { u ->
-        negativeScenarioTree.uniqueInputs[u - 1] !in scenarioTree.uniqueInputs
-    }
     // Negative scenario tree variables
-    val satisfaction: IntMultiArray
+    val satisfaction: IntMultiArray // [V, C+1]
     // Automaton variables
-    val transition: IntMultiArray
-    val actualTransition: IntMultiArray
-    val inputEvent: IntMultiArray
-    val outputEvent: IntMultiArray
-    val algorithm0: IntMultiArray
-    val algorithm1: IntMultiArray
+    val transition: IntMultiArray // [C, K, C+1]
+    val actualTransition: IntMultiArray // [C, E, U, C+1]
+    val inputEvent: IntMultiArray // [C, K, E]
+    val outputEvent: IntMultiArray // [C, O]
+    val algorithm0: IntMultiArray // [C, Z]
+    val algorithm1: IntMultiArray // [C, Z]
     // Guards variables
-    val nodeType: IntMultiArray
-    val terminal: IntMultiArray
-    val childLeft: IntMultiArray
-    val childRight: IntMultiArray
-    val nodeValue: IntMultiArray
-    val rootValue: IntMultiArray
-    val childValueLeft: IntMultiArray
-    val childValueRight: IntMultiArray
-    val firstFired: IntMultiArray
-    val notFired: IntMultiArray
+    val nodeType: IntMultiArray // [C, K, P, 5]
+    val terminal: IntMultiArray // [C, K, P, X+1]
+    val childLeft: IntMultiArray // [C, K, P, P+1]
+    val childRight: IntMultiArray // [C, K, P, P+1]
+    val nodeValue: IntMultiArray // [C, K, P, U]
+    val rootValue: IntMultiArray // [C, K, U]
+    val childValueLeft: IntMultiArray // [C, K, P, U]
+    val childValueRight: IntMultiArray // [C, K, P, U]
+    val firstFired: IntMultiArray // [C, U, K+1]
+    val notFired: IntMultiArray // [C, U, K]
 
     init {
-        println("[.] C = $C")
-        println("[.] K = $K")
-        println("[.] P = $P")
-        println("[.] oldV = $oldV")
-        println("[.] V = $V")
-        println("[.] E = $E")
-        println("[.] U = $U")
-        println("[.] X = $X")
-        println("[.] Z = $Z")
-        println("[.] newU = $newU")
-        check(newU.size == (negativeScenarioTree.uniqueInputs - scenarioTree.uniqueInputs).size)
+        println("[.] C = $C, K = $K, P = $P, V = $V, oldV = $oldV, Vs = $Vs, E = $E, U = $U, newU = $newU, X = $X, Z = $Z")
     }
 
     init {
-        if (previousNegativeReduction != null)
-            TODO("Incremental negative reduction is not implemented yet")
-
-        fun isomorphicInputNumber(u: Int): Int? =
-            when (val uuu = scenarioTree.uniqueInputs.indexOf(negativeScenarioTree.uniqueInputs[u - 1])) {
-                -1 -> null
-                else -> uuu + 1
-            }
+        fun getPosU(input: String): Int = posUIs.indexOf(input) + 1
+        fun getOldNegU(input: String): Int = oldUIs.indexOf(input) + 1
 
         with(solver) {
             // Negative scenario tree variables
-            satisfaction = newArray(V, C + 1) { (v, c) ->
-                if (v <= oldV)
-                    previousNegativeReduction!!.satisfaction[v, c]
-                else
-                    newVariable()
-            }
+            satisfaction =
+                IntMultiArray.new(V, C + 1) { (v, c) ->
+                    if (v in Vs)
+                        newVariable()
+                    else
+                        previousNegativeReduction!!.satisfaction[v, c]
+                }
             // Automaton variables
             transition = baseReduction.transition
-            actualTransition = newArray(C, E, U, C + 1) { (i, e, u, j) ->
-                isomorphicInputNumber(u)?.let { u_ -> baseReduction.actualTransition[i, e, u_, j] } ?: newVariable()
+            actualTransition = IntMultiArray.new(C, E, U, C + 1) { (i, e, u, j) ->
+                when (val input = UIs[u - 1]) {
+                    in newNegUIs -> newVariable()
+                    in oldNegUIs -> previousNegativeReduction!!.actualTransition[i, e, getOldNegU(input), j]
+                    else -> baseReduction.actualTransition[i, e, getPosU(input), j]
+                }
             }
+            //     isomorphicInputNumber(u)?.let { u_ -> baseReduction.actualTransition[i, e, u_, j] } ?: newVariable()
+            // }
             inputEvent = baseReduction.inputEvent
             outputEvent = baseReduction.outputEvent
             algorithm0 = baseReduction.algorithm0
@@ -102,23 +102,43 @@ internal class NegativeReduction(
             terminal = baseReduction.terminal
             childLeft = baseReduction.childLeft
             childRight = baseReduction.childRight
-            nodeValue = newArray(C, K, P, U) { (c, k, p, u) ->
-                isomorphicInputNumber(u)?.let { u_ -> baseReduction.nodeValue[c, k, p, u_] } ?: newVariable()
+            nodeValue = IntMultiArray.new(C, K, P, U) { (c, k, p, u) ->
+                when (val input = UIs[u - 1]) {
+                    in newNegUIs -> newVariable()
+                    in oldNegUIs -> previousNegativeReduction!!.nodeValue[c, k, p, getOldNegU(input)]
+                    else -> baseReduction.nodeValue[c, k, p, getPosU(input)]
+                }
             }
-            rootValue = newArray(C, K, U) { (c, k, u) ->
+            rootValue = IntMultiArray.new(C, K, U) { (c, k, u) ->
                 nodeValue[c, k, 1, u]
             }
-            childValueLeft = newArray(C, K, P, U) { (c, k, p, u) ->
-                isomorphicInputNumber(u)?.let { u_ -> baseReduction.childValueLeft[c, k, p, u_] } ?: newVariable()
+            childValueLeft = IntMultiArray.new(C, K, P, U) { (c, k, p, u) ->
+                when (val input = UIs[u - 1]) {
+                    in newNegUIs -> newVariable()
+                    in oldNegUIs -> previousNegativeReduction!!.childValueLeft[c, k, p, getOldNegU(input)]
+                    else -> baseReduction.childValueLeft[c, k, p, getPosU(input)]
+                }
             }
-            childValueRight = newArray(C, K, P, U) { (c, k, p, u) ->
-                isomorphicInputNumber(u)?.let { u_ -> baseReduction.childValueRight[c, k, p, u_] } ?: newVariable()
+            childValueRight = IntMultiArray.new(C, K, P, U) { (c, k, p, u) ->
+                when (val input = UIs[u - 1]) {
+                    in newNegUIs -> newVariable()
+                    in oldNegUIs -> previousNegativeReduction!!.childValueRight[c, k, p, getOldNegU(input)]
+                    else -> baseReduction.childValueRight[c, k, p, getPosU(input)]
+                }
             }
-            firstFired = newArray(C, U, K + 1) { (c, u, k) ->
-                isomorphicInputNumber(u)?.let { u_ -> baseReduction.firstFired[c, u_, k] } ?: newVariable()
+            firstFired = IntMultiArray.new(C, U, K + 1) { (c, u, k) ->
+                when (val input = UIs[u - 1]) {
+                    in newNegUIs -> newVariable()
+                    in oldNegUIs -> previousNegativeReduction!!.firstFired[c, getOldNegU(input), k]
+                    else -> baseReduction.firstFired[c, getPosU(input), k]
+                }
             }
-            notFired = newArray(C, U, K) { (c, u, k) ->
-                isomorphicInputNumber(u)?.let { u_ -> baseReduction.notFired[c, u_, k] } ?: newVariable()
+            notFired = IntMultiArray.new(C, U, K) { (c, u, k) ->
+                when (val input = UIs[u - 1]) {
+                    in newNegUIs -> newVariable()
+                    in oldNegUIs -> previousNegativeReduction!!.notFired[c, getOldNegU(input), k]
+                    else -> baseReduction.notFired[c, getPosU(input), k]
+                }
             }
 
             // Constraints
@@ -135,15 +155,12 @@ internal class NegativeReduction(
         comment("CE.1. Satisfaction (color-like) constrains")
 
         comment("CE.1.0. ONE(satisfaction)_{0..C}")
-        for (v in 1..V) {
-            if (v <= oldV) continue
+        for (v in Vs)
             exactlyOne(1..(C + 1), satisfaction, v)
-        }
 
         comment("CE.1.1. Satisfaction of active vertices")
         // satisfaction[tp(v), i] & actual_transition[i,tie(v),tin(v),j] => satisfaction[v, j]
-        for (v in negativeScenarioTree.activeVertices) {
-            if (v <= oldV) continue
+        for (v in activeVs) {
             val p = negativeScenarioTree.parent(v)
             val e = negativeScenarioTree.inputEvent(v)
             val u = negativeScenarioTree.inputNumber(v)
@@ -158,9 +175,8 @@ internal class NegativeReduction(
 
         comment("CE.1.1+. Non-satisfaction of active vertices (redundant)")
         // satisfaction[tp(v), c] & actual_transition[c,tie(v),tin(v),0] => satisfaction[v, 0]
-        for (v in negativeScenarioTree.activeVertices) {
+        for (v in activeVs) {
             continue
-            if (v <= oldV) continue
             val p = negativeScenarioTree.parent(v)
             val e = negativeScenarioTree.inputEvent(v)
             val u = negativeScenarioTree.inputNumber(v)
@@ -174,8 +190,7 @@ internal class NegativeReduction(
 
         comment("CE.1.2. Satisfaction of passive vertices")
         // satisfaction[tp(v), c] & actual_transition[c,tie(v),tin(v),0] => satisfaction[v, c]
-        for (v in negativeScenarioTree.passiveVertices) {
-            if (v <= oldV) continue
+        for (v in passiveVs) {
             val p = negativeScenarioTree.parent(v)
             val e = negativeScenarioTree.inputEvent(v)
             val u = negativeScenarioTree.inputNumber(v)
@@ -189,9 +204,8 @@ internal class NegativeReduction(
 
         comment("CE.1.2+. Non-satisfaction of passive vertices (redundant)")
         // satisfaction[tp(v), c] & ~actual_transition[c,tie(v),tin(v),0] => satisfaction[v, 0]
-        for (v in negativeScenarioTree.passiveVertices) {
+        for (v in passiveVs) {
             continue
-            if (v <= oldV) continue
             val p = negativeScenarioTree.parent(v)
             val e = negativeScenarioTree.inputEvent(v)
             val u = negativeScenarioTree.inputNumber(v)
@@ -206,8 +220,7 @@ internal class NegativeReduction(
 
         comment("CE.1.3. Propagation of satisfaction for passive vertices")
         // satisfaction[tp(v), c] => satisfaction[v, c] | satisfaction[v, 0]
-        for (v in negativeScenarioTree.passiveVertices) {
-            if (v <= oldV) continue
+        for (v in passiveVs) {
             val p = negativeScenarioTree.parent(v)
             for (c in 1..C)
                 clause(
@@ -219,8 +232,7 @@ internal class NegativeReduction(
 
         comment("CE.1.4. Propagation of non-satisfaction")
         // satisfaction[tp(v), 0] => satisfaction[v, 0]
-        for (v in 2..V) {
-            if (v <= oldV) continue
+        for (v in VsWithoutRoot) {
             val p = negativeScenarioTree.parent(v)
             imply(satisfaction[p, C + 1], satisfaction[v, C + 1])
         }
@@ -228,8 +240,7 @@ internal class NegativeReduction(
         comment("CE.1.5. Forbid loops")
         // satisfaction[v, c] => ~satisfaction[loop(v), c]
         if (isForbidLoops)
-            for (v in negativeScenarioTree.verticesWithLoops) {
-                if (v <= oldV) continue
+            for (v in VsWithLoops) {
                 for (l in negativeScenarioTree.loopBacks(v))
                     for (c in 1..C)
                         imply(satisfaction[v, c], -satisfaction[l, c])
@@ -238,7 +249,7 @@ internal class NegativeReduction(
             comment("===== NOT FORBIDDING LOOPS =====")
 
         comment("CE.1.6. Root is satisfied by start state")
-        if (oldV == 0)
+        if (1 in Vs)
             clause(satisfaction[1, 1])
     }
 
@@ -317,8 +328,7 @@ internal class NegativeReduction(
 
         comment("CE.4.1. output_event definition")
         // satisfaction[v, c] => output_event[c, toe(v)]
-        for (v in negativeScenarioTree.activeVertices) {
-            if (v <= oldV) continue
+        for (v in activeVs) {
             val o = negativeScenarioTree.outputEvent(v)
             for (c in 1..C)
                 imply(satisfaction[v, c], outputEvent[c, o])
@@ -329,8 +339,7 @@ internal class NegativeReduction(
         comment("CE.5. Algorithm constraints")
 
         comment("CE.5.2. Algorithms definition")
-        for (v in negativeScenarioTree.activeVertices) {
-            if (v <= oldV) continue
+        for (v in activeVs)
             for (z in 1..Z) {
                 val oldValue = negativeScenarioTree.outputValue(negativeScenarioTree.parent(v), z)
                 val newValue = negativeScenarioTree.outputValue(v, z)
@@ -346,7 +355,6 @@ internal class NegativeReduction(
                         }
                     )
             }
-        }
     }
 
     private fun Solver.declareGuardConstraints() {
@@ -394,7 +402,7 @@ internal class NegativeReduction(
                 for (p in 1..P)
                     for (x in 1..X)
                         for (u in newU)
-                            when (val char = negativeScenarioTree.uniqueInputs[u - 1][x - 1]) {
+                            when (val char = UIs[u - 1][x - 1]) {
                                 '1' -> imply(terminal[c, k, p, x], nodeValue[c, k, p, u])
                                 '0' -> imply(terminal[c, k, p, x], -nodeValue[c, k, p, u])
                                 else -> error("Character $char for u = $u, x = $x is neither '1' nor '0'")

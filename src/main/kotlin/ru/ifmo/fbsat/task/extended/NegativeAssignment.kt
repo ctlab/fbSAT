@@ -50,18 +50,21 @@ internal class NegativeAssignment(
                 raw[reduction.notFired[c, u, k] - 1]
             }
 
-            println("[.] satisfaction: ${satisfaction.values.joinToString(" ", "[", "]") { it.toString() }}")
-
-            println("[*] Satisfaction for negative scenarios:")
-            for ((j, scenario) in negTree.counterExamples.withIndex()) {
-                val sat = scenario.elements.joinToString(" ") { elem ->
-                    elem.nodeId?.let { id ->
-                        val v = satisfaction[id]
-                        if (negTree.isLoopBack(v)) "<$v>" else "$v"
-                    } ?: "?"
-                }
-                println("[${j + 1}/${negTree.counterExamples.size}] satisfaction = [$sat]")
-            }
+            // val satisfactionStr = satisfaction.values.mapIndexed { i, c ->
+            //     if (negTree.isLoopBack(i + 1)) "<$c>" else "$c"
+            // }.joinToString(" ", "[", "]")
+            // println("[.] satisfaction: $satisfactionStr")
+            //
+            // println("[*] Satisfaction for negative scenarios:")
+            // for ((j, scenario) in negTree.counterExamples.withIndex()) {
+            //     val sat = scenario.elements.joinToString(" ") { elem ->
+            //         elem.nodeId?.let { id ->
+            //             val c = satisfaction[id]
+            //             if (negTree.isLoopBack(id)) "<$c>" else "$c"
+            //         } ?: "?"
+            //     }
+            //     println("[${j + 1}/${negTree.counterExamples.size}] satisfaction = [$sat]")
+            // }
 
             return NegativeAssignment(
                 negTree, C, K, P,

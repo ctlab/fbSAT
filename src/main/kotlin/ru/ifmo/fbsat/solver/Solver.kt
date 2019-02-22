@@ -4,7 +4,6 @@ import ru.ifmo.fbsat.utils.IntMultiArray
 import ru.ifmo.fbsat.utils.MultiDomainArray
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.util.concurrent.TimeUnit
 import kotlin.math.absoluteValue
 
 interface Solver {
@@ -13,10 +12,7 @@ interface Solver {
 
     fun newVariable(): Int
 
-    fun newArray(
-        vararg shape: Int,
-        init: (IntArray) -> (Int) = { newVariable() }
-    ) = IntMultiArray(shape, init)
+    fun newArray(vararg shape: Int) = IntMultiArray(shape) { newVariable() }
 
     fun <R : Any> newDomainArray(
         vararg domains: Iterable<R>,
@@ -143,7 +139,7 @@ class IncrementalSolver(command: String) : AbstractSolver() {
     }
 
     override fun comment(comment: String) {
-        println("// $comment")
+        // println("// $comment")
         val s = "c $comment\n"
         processInput.write(s)
         // ===
@@ -199,11 +195,11 @@ class IncrementalSolver(command: String) : AbstractSolver() {
     }
 
     override fun finalize() {
-        Thread {
-            processInput.write("halt\n")
-            processInput.flush()
-            process.waitFor(100, TimeUnit.MILLISECONDS)
-            process.destroy()
-        }.run()
+        // Thread {
+        //     processInput.write("halt\n")
+        //     processInput.flush()
+        //     process.waitFor(100, TimeUnit.MILLISECONDS)
+        process.destroy()
+        // }.start()
     }
 }

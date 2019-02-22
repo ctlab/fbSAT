@@ -144,6 +144,7 @@ class ScenarioTree(
         )
 
         var current = root
+        var isAnyoneCreated = false
         meow@ for (element in scenario.elements) {
             if (isTrie) {
                 for (child in current.children) {
@@ -157,10 +158,16 @@ class ScenarioTree(
                 }
             }
             current = Node(element, current)
+            isAnyoneCreated = true
         }
 
-        _scenarios.add(scenario)
-        lazyCache.invalidate()
+        // if (isAnyoneCreated) {
+            _scenarios.add(scenario)
+            lazyCache.invalidate()
+        // } else {
+        //     check(isTrie)
+        //     // println("[!] No new nodes were inserted into the NegativeScenarioTree")
+        // }
 
         check(activeVertices.size + passiveVertices.size + 1 == size) // TODO: remove
     }
@@ -189,6 +196,6 @@ class ScenarioTree(
         }
 
     override fun toString(): String {
-        return "ScenarioTree(size=$size, scenarios=${scenarios.size}, inputEvents=$inputEvents, outputEvents=$outputEvents, inputNames=$inputNames, outputNames=$outputNames, uniqueInputs=$uniqueInputs, uniqueOutputs=$uniqueOutputs)"
+        return "ScenarioTree(size=$size, scenarios=${scenarios.size}, inputEvents=$inputEvents, outputEvents=$outputEvents, inputNames=$inputNames, outputNames=$outputNames)"
     }
 }

@@ -11,7 +11,10 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
+import ru.ifmo.fbsat.automaton.Algorithm
 import ru.ifmo.fbsat.automaton.Automaton
+import ru.ifmo.fbsat.automaton.BinaryAlgorithm
+import ru.ifmo.fbsat.automaton.StringGuard
 import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.Scenario
 import ru.ifmo.fbsat.scenario.ScenarioTree
@@ -21,6 +24,7 @@ import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.task.basic.Basic
 import ru.ifmo.fbsat.task.basicmin.BasicMin
 import ru.ifmo.fbsat.task.extended.ExtendedAutomatonInferenceTask
+import ru.ifmo.fbsat.task.extended.ExtendedVerifiedAutomatonInferenceTask
 import ru.ifmo.fbsat.task.extendedmin.ExtendedMin
 import java.io.File
 import java.time.LocalDateTime
@@ -138,7 +142,7 @@ class FbSAT : CliktCommand() {
         default = true
     )
 
-    private val fileCE by option(
+    private val fileVis by option(
         "--vis",
         help = "[DEBUG] Visualize given counterexamples via graphviz"
     ).file(
@@ -146,6 +150,14 @@ class FbSAT : CliktCommand() {
         folderOkay = false,
         readable = true
     )
+
+    private val isOnlyAutomaton2 by option(
+        "--only-automaton2"
+    ).flag()
+
+    private val isVerifyAllCE by option(
+        "--verify-all-ce"
+    ).flag()
 
     init {
         context { helpFormatter = PlaintextHelpFormatter(maxWidth = 999) }
@@ -190,15 +202,9 @@ class FbSAT : CliktCommand() {
                 tree.outputNames
             )
         }
-        // =================
-        if (negTree != null) {
-            println("negTree.uniqueInputs: ${negTree.uniqueInputs}")
-            println("Inputs only in negTree: ${negTree.uniqueInputs - tree.uniqueInputs}")
-        }
-        // =================
 
         // ===
-        fileCE?.let { file ->
+        fileVis?.let { file ->
             println("======================================")
             println("[*] Visualizing <$file>...")
             val negST = NegativeScenarioTree.fromFile(
@@ -239,6 +245,121 @@ class FbSAT : CliktCommand() {
             { IncrementalSolver(solverCmd) }
         } else {
             { DefaultSolver(solverCmd) }
+        }
+
+        if (isOnlyAutomaton2) {
+            val scenarios4 = Scenario.fromFile(File("data/tests-4"))
+            val tree4 = ScenarioTree(scenarios4, tree.inputNames, tree.outputNames)
+
+            val automaton2 = Automaton(tree4)
+            fun magic(algo: String): Algorithm {
+                return BinaryAlgorithm(
+                    algorithm0 = algo.map {
+                        when (it) {
+                            '0', 'x' -> '0'
+                            '1' -> '1'
+                            else -> error("Bad char '$it'")
+                        }
+                    }.joinToString(""),
+                    algorithm1 = algo.map {
+                        when (it) {
+                            '0' -> '0'
+                            '1', 'x' -> '1'
+                            else -> error("Bad char '$it'")
+                        }
+                    }.joinToString("")
+                )
+            }
+            automaton2.addState(1, "INITO", magic("0000000"))
+            automaton2.addState(2, "CNF", magic("1x1xxxx"))
+            automaton2.addState(3, "CNF", magic("xx1x0xx"))
+            automaton2.addState(4, "CNF", magic("10x00x0"))
+            automaton2.addState(5, "CNF", magic("xxxx1xx"))
+            automaton2.addState(6, "CNF", magic("01010xx"))
+            automaton2.addState(7, "CNF", magic("xxxxx1x"))
+            automaton2.addState(8, "CNF", magic("xxxxx01"))
+
+            automaton2.addTransition(
+                1, 2, "REQ",
+                StringGuard("pp3", tree.inputNames)
+            )
+            automaton2.addTransition(
+                1, 3, "REQ",
+                StringGuard("pp2", tree.inputNames)
+            )
+            automaton2.addTransition(
+                1, 4, "REQ",
+                StringGuard("pp1", tree.inputNames)
+            )
+            automaton2.addTransition(
+                2, 5, "REQ",
+                StringGuard("c2End", tree.inputNames)
+            )
+            automaton2.addTransition(
+                3, 5, "REQ",
+                StringGuard("c2End & !vac", tree.inputNames)
+            )
+            automaton2.addTransition(
+                3, 6, "REQ",
+                StringGuard("vcHome & !pp2", tree.inputNames)
+            )
+            automaton2.addTransition(
+                4, 5, "REQ",
+                StringGuard("c1End & !vac", tree.inputNames)
+            )
+            automaton2.addTransition(
+                4, 6, "REQ",
+                StringGuard("vcHome & vac", tree.inputNames)
+            )
+            automaton2.addTransition(
+                5, 7, "REQ",
+                StringGuard("vcEnd & !vac", tree.inputNames)
+            )
+            automaton2.addTransition(
+                5, 8, "REQ",
+                StringGuard("vcEnd", tree.inputNames)
+            )
+            automaton2.addTransition(
+                6, 4, "REQ",
+                StringGuard("!vcEnd & pp1 & !vac", tree.inputNames)
+            )
+            automaton2.addTransition(
+                6, 5, "REQ",
+                StringGuard("c1Home & c2Home & vac", tree.inputNames)
+            )
+            automaton2.addTransition(
+                7, 3, "REQ",
+                StringGuard("!pp1", tree.inputNames)
+            )
+            automaton2.addTransition(
+                7, 4, "REQ",
+                StringGuard("!pp3", tree.inputNames)
+            )
+            automaton2.addTransition(
+                8, 6, "REQ",
+                StringGuard("!vac", tree.inputNames)
+            )
+
+            println("[+] Automaton2:")
+            automaton2.pprint()
+            println("[+] Automaton2 has ${automaton2.numberOfStates} states, ${automaton2.numberOfTransitions} transitions and ${automaton2.totalGuardsSize} nodes")
+
+            if (automaton2.verify(tree4))
+                println("[+] Verify automaton2 on tests-4: OK")
+            else
+                println("[-] Verify automaton2 on tests-4: FAILED")
+
+            if (automaton2.verify(tree))
+                println("[+] Verify automaton2 on $fileScenarios: OK")
+            else
+                println("[-] Verify automaton2 on $fileScenarios: FAILED")
+
+            if (negTree != null)
+                if (automaton2.verify(negTree))
+                    println("[+] Verify(CE) automaton2 on $fileCounterExamples: OK")
+                else
+                    println("[-] Verify(CE) automaton2 on $fileCounterExamples: FAILED")
+            return
         }
 
         val automaton: Automaton? = when (method) {
@@ -288,17 +409,18 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            // "extended-ce" -> {
-            //     val task = ExtendedCE(
-            //         tree,
-            //         numberOfStates!!,
-            //         maxOutgoingTransitions,
-            //         maxGuardSize!!,
-            //         solverProvider,
-            //         smvDir!!
-            //     )
-            //     task.infer(maxTotalGuardsSize)
-            // }
+            "extended-ce" -> {
+                val task = ExtendedVerifiedAutomatonInferenceTask(
+                    tree,
+                    negTree,
+                    numberOfStates!!,
+                    maxOutgoingTransitions,
+                    maxGuardSize!!,
+                    solverProvider,
+                    smvDir!!
+                )
+                task.infer(maxTotalGuardsSize)
+            }
             else -> TODO("Method '$method' is not implemented yet.")
         }
 
@@ -310,12 +432,17 @@ class FbSAT : CliktCommand() {
 
             println("[+] Automaton has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes")
 
+            val scenarios4 = Scenario.fromFile(File("data/tests-4"))
+            val tree4 = ScenarioTree(scenarios4, tree.inputNames, tree.outputNames)
+            if (automaton.verify(tree4))
+                println("[+] Verify tests-4: OK")
+            else
+                println("[-] Verify tests-4: FAILED")
+
             if (automaton.verify(tree))
                 println("[+] Verify: OK")
             else {
-                println("==================")
                 println("[-] Verify: FAILED")
-                println("==================")
                 if (failIfSTVerifyFailed)
                     error("ST verification failed")
             }
@@ -324,11 +451,25 @@ class FbSAT : CliktCommand() {
                 if (automaton.verify(it))
                     println("[+] Verify CE: OK")
                 else {
-                    println("=====================")
                     println("[-] Verify CE: FAILED")
-                    println("=====================")
                     if (failIfCEVerifyFailed)
                         error("CE verification failed")
+                }
+            }
+
+            if (isVerifyAllCE) {
+                NegativeScenarioTree.fromFile(
+                    File("ce-all"),
+                    tree.inputEvents,
+                    tree.outputEvents,
+                    tree.inputNames,
+                    tree.outputNames
+                ).let {
+                    if (automaton.verify(it))
+                        println("[+] Verify ce-all: OK")
+                    else {
+                        println("[-] Verify ce-all: FAILED")
+                    }
                 }
             }
 

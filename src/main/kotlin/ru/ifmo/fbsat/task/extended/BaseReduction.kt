@@ -28,29 +28,29 @@ internal class BaseReduction(
     private val X = scenarioTree.uniqueInputs.first().length
     private val Z = scenarioTree.uniqueOutputs.first().length
     // Scenario tree variables
-    val color: IntMultiArray
+    val color: IntMultiArray // [V, C]
     // Automaton variables
-    val transition: IntMultiArray
-    val actualTransition: IntMultiArray
-    val inputEvent: IntMultiArray
-    val outputEvent: IntMultiArray
-    val algorithm0: IntMultiArray
-    val algorithm1: IntMultiArray
+    val transition: IntMultiArray // [C, K, C+1]
+    val actualTransition: IntMultiArray // [C, E, U, C+1]
+    val inputEvent: IntMultiArray // [C, K, E]
+    val outputEvent: IntMultiArray // [C, O]
+    val algorithm0: IntMultiArray // [C, Z]
+    val algorithm1: IntMultiArray // [C, Z]
     // Guards variables
-    val nodeType: IntMultiArray
-    val terminal: IntMultiArray
-    val parent: IntMultiArray
-    val childLeft: IntMultiArray
-    val childRight: IntMultiArray
-    val nodeValue: IntMultiArray
-    val rootValue: IntMultiArray
-    val childValueLeft: IntMultiArray
-    val childValueRight: IntMultiArray
-    val firstFired: IntMultiArray
-    val notFired: IntMultiArray
+    val nodeType: IntMultiArray // [C, K, P, 5]
+    val terminal: IntMultiArray // [C, K, P, X+1]
+    val parent: IntMultiArray // [C, K, P, P+1]
+    val childLeft: IntMultiArray // [C, K, P, P+1]
+    val childRight: IntMultiArray // [C, K, P, P+1]
+    val nodeValue: IntMultiArray // [C, K, P, U]
+    val rootValue: IntMultiArray // [C, K, U]
+    val childValueLeft: IntMultiArray // [C, K, P, U]
+    val childValueRight: IntMultiArray // [C, K, P, U]
+    val firstFired: IntMultiArray // [C, U, K+1]
+    val notFired: IntMultiArray // [C, U, K]
     // BFS variables
-    val bfsTransition: IntMultiArray
-    val bfsParent: IntMultiArray
+    val bfsTransition: IntMultiArray // [C, C]
+    val bfsParent: IntMultiArray // [C, C]
 
     init {
         with(solver) {
@@ -70,7 +70,7 @@ internal class BaseReduction(
             childLeft = newArray(C, K, P, P + 1)
             childRight = newArray(C, K, P, P + 1)
             nodeValue = newArray(C, K, P, U)
-            rootValue = newArray(C, K, U) { (c, k, u) -> nodeValue[c, k, 1, u] }
+            rootValue = IntMultiArray.new(C, K, U) { (c, k, u) -> nodeValue[c, k, 1, u] }
             childValueLeft = newArray(C, K, P, U)
             childValueRight = newArray(C, K, P, U)
             firstFired = newArray(C, U, K + 1)
@@ -93,6 +93,7 @@ internal class BaseReduction(
             declareAndOrNodesConstraints()
             declareNotNodesConstraints()
             declareAdhocConstraints()
+            // declareSuperAdhocConstraints()
         }
     }
 
@@ -718,5 +719,123 @@ internal class BaseReduction(
 
         comment("A.2. Distinct transitions")
         // TODO: Distinct transitions
+    }
+
+    private fun Solver.declareSuperAdhocConstraints() {
+        comment("SA. SUPER AD-HOCs")
+
+        clause(transition[1, 1, 2])
+        clause(transition[1, 2, 3])
+        clause(transition[1, 3, 4])
+        if (K > 3) clause(transition[1, 4, C + 1])
+        clause(transition[2, 1, 5])
+        clause(transition[2, 2, C + 1])
+        clause(transition[3, 1, 5])
+        clause(transition[3, 2, 6])
+        clause(transition[3, 3, C + 1])
+        clause(transition[4, 1, 5])
+        clause(transition[4, 2, 6])
+        clause(transition[4, 3, C + 1])
+        clause(transition[5, 1, 7])
+        clause(transition[5, 2, 8])
+        clause(transition[5, 3, C + 1])
+        clause(transition[6, 1, 4])
+        clause(transition[6, 2, 5])
+        clause(transition[6, 3, C + 1])
+        clause(transition[7, 1, 3])
+        clause(transition[7, 2, 4])
+        clause(transition[7, 3, C + 1])
+        clause(transition[8, 1, 6])
+        clause(transition[8, 2, C + 1])
+
+        val c1Home = 1
+        val c1End = 2
+        val c2Home = 3
+        val c2End = 4
+        val vcHome = 5
+        val vcEnd = 6
+        val pp1 = 7
+        val pp2 = 8
+        val pp3 = 9
+        val vac = 10
+
+        clause(terminal[1, 1, 1, pp3])
+        clause(terminal[1, 2, 1, pp2])
+        clause(terminal[1, 3, 1, pp1])
+
+        clause(terminal[2, 1, 1, c2End])
+
+        clause(nodeType[3, 1, 1, NodeType.AND.value])
+        clause(terminal[3, 1, 2, c2End])
+        clause(nodeType[3, 1, 3, NodeType.NOT.value])
+        clause(terminal[3, 1, 4, vac])
+        clause(nodeType[3, 2, 1, NodeType.AND.value])
+        clause(terminal[3, 2, 2, vcHome])
+        clause(nodeType[3, 2, 3, NodeType.NOT.value])
+        clause(terminal[3, 2, 4, pp2])
+
+        clause(nodeType[4, 1, 1, NodeType.AND.value])
+        clause(terminal[4, 1, 2, c1End])
+        clause(nodeType[4, 1, 3, NodeType.NOT.value])
+        clause(terminal[4, 1, 4, vac])
+        clause(nodeType[4, 2, 1, NodeType.AND.value])
+        clause(terminal[4, 2, 2, vcHome])
+        clause(terminal[4, 2, 3, vac])
+
+        clause(nodeType[5, 1, 1, NodeType.AND.value])
+        clause(terminal[5, 1, 2, vcEnd])
+        clause(nodeType[5, 1, 3, NodeType.NOT.value])
+        clause(terminal[5, 1, 4, vac])
+        clause(terminal[5, 2, 1, vcEnd])
+
+        clause(nodeType[6, 1, 1, NodeType.AND.value])
+        clause(nodeType[6, 1, 2, NodeType.NOT.value])
+        clause(nodeType[6, 1, 3, NodeType.AND.value])
+        clause(terminal[6, 1, 4, vcEnd])
+        clause(terminal[6, 1, 5, pp1])
+        clause(nodeType[6, 1, 6, NodeType.NOT.value])
+        clause(terminal[6, 1, 7, vac])
+        clause(nodeType[6, 2, 1, NodeType.AND.value])
+        clause(terminal[6, 2, 2, c1Home])
+        clause(nodeType[6, 2, 3, NodeType.AND.value])
+        clause(terminal[6, 2, 4, c2Home])
+        clause(terminal[6, 2, 5, vac])
+
+        clause(nodeType[7, 1, 1, NodeType.NOT.value])
+        clause(terminal[7, 1, 2, pp1])
+        clause(nodeType[7, 2, 1, NodeType.NOT.value])
+        clause(terminal[7, 2, 2, pp3])
+
+        clause(nodeType[8, 1, 1, NodeType.NOT.value])
+        clause(terminal[8, 1, 2, vac])
+
+        fun magic(state: Int, algo: String) {
+            for ((z, a) in algo.withIndex()) {
+                // Note: z is 0-based!
+                when (a) {
+                    '0' -> {
+                        clause(-algorithm0[state, z + 1])
+                        clause(-algorithm1[state, z + 1])
+                    }
+                    '1' -> {
+                        clause(algorithm0[state, z + 1])
+                        clause(algorithm1[state, z + 1])
+                    }
+                    'x' -> {
+                        clause(-algorithm0[state, z + 1])
+                        clause(algorithm1[state, z + 1])
+                    }
+                    else -> error("Bad char '$a'")
+                }
+            }
+        }
+        magic(1, "0000000")
+        magic(2, "1x1xxxx")
+        magic(3, "xx1x0xx")
+        magic(4, "10x00x0")
+        magic(5, "xxxx1xx")
+        magic(6, "01010xx")
+        magic(7, "xxxxx1x")
+        magic(8, "xxxxx01")
     }
 }

@@ -65,7 +65,8 @@ fun CounterExample.toNegativeScenario(
                 "",
                 "",
                 states.first().getFirstTrue(outputEvents),
-                states.first().getBooleanString(outputNames)
+                states.first().getBooleanString(outputNames),
+                states.first().variables["_state"]
             )
         )
         yieldAll(
@@ -74,7 +75,8 @@ fun CounterExample.toNegativeScenario(
                     first.getFirstTrue(inputEvents)!!,
                     first.getBooleanString(inputNames),
                     second.getFirstTrue(outputEvents),
-                    second.getBooleanString(outputNames)
+                    second.getBooleanString(outputNames),
+                    second.variables["_state"]
                 )
             }
         )

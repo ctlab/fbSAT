@@ -16,7 +16,13 @@ class Automaton(
      * Zero-based list of output events.
      */
     val outputEvents: List<String>,
+    /**
+     * List of input variables names.
+     */
     val inputNames: List<String>,
+    /**
+     * List of output variables names.
+     */
     val outputNames: List<String>
 ) {
     private var _states: MutableMap<Int, State> = mutableMapOf()
