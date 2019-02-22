@@ -126,10 +126,34 @@ class Automaton(
 
         fun toGraphvizString(): String {
             algorithm as BinaryAlgorithm
-            val algo0 = algorithm.algorithm0.toBooleanString()
-            val algo1 = algorithm.algorithm1.toBooleanString()
-            val label = "<p>$id|$outputEvent|{0:$algo0|1:$algo1}"
-            return """$id [label="$label" shape=Mrecord]"""
+            val X = outputNames.size
+
+            val vs = (1..X).mapNotNull { x ->
+                val name = outputNames[x - 1]
+                val d0 = algorithm.algorithm0[x - 1]
+                val d1 = algorithm.algorithm1[x - 1]
+                when (d0 to d1) {
+                    true to true -> """<TR><TD align="left">$name &rarr; 1</TD></TR>"""
+                    false to false -> """<TR><TD align="left">$name &rarr; 0</TD></TR>"""
+                    true to false -> """<TR><TD align="left">$name flip</TD></TR>"""
+                    false to true -> null
+                    else -> error("Bad combination of algorithms ${d0 to d1}")
+                }
+            }.joinToString("\n")
+
+            val tableBody = """
+                <TR><TD align="center">$id / $outputEvent</TD></TR>
+                <HR/>
+                %s
+            """.trimIndent().format(vs)
+
+            val html = """
+                <TABLE style="rounded" cellborder="0" cellspacing="0">
+                %s
+                </TABLE>
+            """.trimIndent().format(tableBody.prependIndent())
+
+            return "$id [label=<\n${html.prependIndent()}> shape=plaintext]"
         }
 
         fun toSmvString(): String {
