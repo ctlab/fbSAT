@@ -14,3 +14,4 @@ counterexamples:
 	# touch counterexamples
 
 	NuSMV -source commands model.smv
+	@echo "Found $(shell ag --silent LTL counterexamples | wc -l) counterexample(s)"
