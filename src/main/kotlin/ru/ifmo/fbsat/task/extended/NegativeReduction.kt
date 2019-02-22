@@ -35,7 +35,6 @@ internal class NegativeReduction(
     private val passiveVs = Vs.filter { it in negativeScenarioTree.passiveVertices }
     private val E = negativeScenarioTree.inputEvents.size
     private val UIs = negativeScenarioTree.uniqueInputs
-    private val oldUIs = previousNegativeReduction?.UIs ?: emptyList()
     private val posUIs = scenarioTree.uniqueInputs
     private val negUIs = UIs - posUIs
     private val oldNegUIs = previousNegativeReduction?.negUIs ?: emptyList()
@@ -71,7 +70,7 @@ internal class NegativeReduction(
 
     init {
         fun getPosU(input: String): Int = posUIs.indexOf(input) + 1
-        fun getOldNegU(input: String): Int = oldUIs.indexOf(input) + 1
+        fun getOldNegU(input: String): Int = oldNegUIs.indexOf(input) + 1
 
         with(solver) {
             // Negative scenario tree variables
