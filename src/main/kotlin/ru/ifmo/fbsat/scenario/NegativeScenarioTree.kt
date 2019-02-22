@@ -7,7 +7,7 @@ class NegativeScenarioTree(
     negativeScenarios: List<NegativeScenario>,
     inputNames: List<String>? = null,
     outputNames: List<String>? = null,
-    private val isTrie: Boolean = false
+    private val isTrie: Boolean = true
 ) {
     private val lazyCache = LazyCache()
     private val _counterExamples: MutableList<NegativeScenario> = mutableListOf()
