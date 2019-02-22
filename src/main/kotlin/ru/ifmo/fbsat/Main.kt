@@ -61,7 +61,7 @@ class FbSAT : CliktCommand() {
     ).file(
         exists = true,
         fileOkay = false
-    )
+    ).defaultLazy { File("data/pnp/smv") }
 
     private val outDir by option(
         "-o", "--outdir",
