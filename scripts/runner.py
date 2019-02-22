@@ -6,10 +6,10 @@ from pathlib import Path
 time_start = time.time()
 iterations = 1000
 
-tests_name = 'tests-1'
+tests_name = 'tests-4'
 C = 8  # 6 / 8
-P = 5  # 3 / 5
-extra_args = '-N 30'
+P = 7  # 3 / 5
+extra_args = ''
 
 path_fbsat = Path('~/dev/kt/fbSAT').expanduser()
 path_scenarios = path_fbsat / 'data' / tests_name
