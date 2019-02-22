@@ -105,7 +105,7 @@ class NegativeScenarioTree(
         }
 
         fun toGraphvizString(): String {
-            val idStr = if (isLoopBack) "&laquo;$id&raquo;" else "$id"
+            val idStr = if (isLoopBack) "&lsaquo;$id&rsaquo;" else "$id"
 
             val vs = outputNames.indices.joinToString("\n") { i ->
                 val name = outputNames[i]
