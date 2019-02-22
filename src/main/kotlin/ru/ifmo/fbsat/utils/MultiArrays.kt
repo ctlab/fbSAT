@@ -118,14 +118,14 @@ private class Strides(val shape: IntArray) {
 
     fun offset0(index: IntArray): Int {
         return index.asSequence().mapIndexed { i, value ->
-            require(value in 0 until shape[i]) { "Index $value is out of shape bounds (0, ${shape[i] - 1})" }
+            if (value !in 1..shape[i]) throw IndexOutOfBoundsException("Index $value for dimension ${i + 1} is out of shape bounds (${1..shape[i]})")
             value * strides[i]
         }.sum()
     }
 
     fun offset1(index: IntArray): Int {
         return index.asSequence().mapIndexed { i, value ->
-            require(value in 1..shape[i]) { "Index $value is out of shape bounds (1, ${shape[i]})" }
+            if (value !in 1..shape[i]) throw IndexOutOfBoundsException("Index $value for dimension ${i + 1} is out of shape bounds (${1..shape[i]})")
             (value - 1) * strides[i]
         }.sum()
     }
