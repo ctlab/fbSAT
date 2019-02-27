@@ -1,19 +1,25 @@
 package ru.ifmo.fbsat.task.extended
 
+import ru.ifmo.fbsat.automaton.NodeType
 import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.utils.BooleanMultiArray
 import ru.ifmo.fbsat.utils.IntMultiArray
+import ru.ifmo.fbsat.utils.MultiArray
 
 internal class NegativeAssignment(
     val negativeScenarioTree: NegativeScenarioTree,
     val C: Int,
     val K: Int,
     val P: Int,
-    val satisfaction: IntMultiArray,
-    val actualTransition: IntMultiArray,
-    val nodeValue: BooleanMultiArray,
-    val firstFired: BooleanMultiArray,
-    val notFired: BooleanMultiArray
+    // ===
+    val nodeType: MultiArray<NodeType>, // [C, K, P] : NodeType
+    val terminal: IntMultiArray, // [C, K, P] : 0..X
+    // ===
+    val satisfaction: IntMultiArray, // [V] : 0..C
+    val actualTransition: IntMultiArray, // [C, E, U] : 0..C
+    val nodeValue: BooleanMultiArray, // [C, K, P, U] : Boolean
+    val firstFired: IntMultiArray, // [C, U] : 0..K
+    val notFired: BooleanMultiArray // [C, U, K] : Boolean
 ) {
     companion object {
         @Suppress("LocalVariableName")
@@ -43,31 +49,58 @@ internal class NegativeAssignment(
             val nodeValue = BooleanMultiArray.new(C, K, P, U) { (c, k, p, u) ->
                 raw[reduction.nodeValue[c, k, p, u] - 1]
             }
-            val firstFired = BooleanMultiArray.new(C, U, K) { (c, u, k) ->
-                raw[reduction.firstFired[c, u, k] - 1]
+            val firstFired = IntMultiArray.new(C, U) { (c, u) ->
+                (1..K).firstOrNull { k -> raw[reduction.firstFired[c, u, k] - 1] }
+                    ?: 0
             }
             val notFired = BooleanMultiArray.new(C, U, K) { (c, u, k) ->
                 raw[reduction.notFired[c, u, k] - 1]
             }
 
-            // val satisfactionStr = satisfaction.values.mapIndexed { i, c ->
-            //     if (negTree.isLoopBack(i + 1)) "<$c>" else "$c"
-            // }.joinToString(" ", "[", "]")
-            // println("[.] satisfaction: $satisfactionStr")
-            //
-            // println("[*] Satisfaction for negative scenarios:")
+            // ===
+            val nodeType = MultiArray.new<NodeType>(C, K, P) { (c, k, p) ->
+                NodeType.values().firstOrNull { nt -> raw[reduction.nodeType[c, k, p, nt.value] - 1] }
+                    ?: error("nodeType[c,k,p = $c,$k,$p] is undefined")
+            }
+            val terminal = IntMultiArray.new(C, K, P) { (c, k, p) ->
+                (1..negTree.uniqueInputs.first().length).firstOrNull { x -> raw[reduction.terminal[c, k, p, x] - 1] }
+                    ?: 0
+            }
+            // ===
+
+            // println("[*] terminal:")
+            // for (c in 1..C)
+            //     for (k in 1..K)
+            //         println("[.] terminal[c = $c, k = $k, p = ${1..P}] = ${(1..P).map { p -> if (terminal[c, k, p] != 0) reduction.terminal[c, k, p, terminal[c, k, p]] else 0 }} = ${(1..P).map { p -> terminal[c, k, p] }}")
+
+            // println("[*] elem.nodeId`s for counterexamples:")
             // for ((j, scenario) in negTree.counterExamples.withIndex()) {
-            //     val sat = scenario.elements.joinToString(" ") { elem ->
+            //     val nodeIds = scenario.elements.mapIndexed { i, elem ->
             //         elem.nodeId?.let { id ->
-            //             val c = satisfaction[id]
-            //             if (negTree.isLoopBack(id)) "<$c>" else "$c"
+            //             if (i + 1 == scenario.loopPosition) "<$id>" else "$id"
             //         } ?: "?"
-            //     }
-            //     println("[${j + 1}/${negTree.counterExamples.size}] satisfaction = [$sat]")
+            //     }.joinToString(" ")
+            //     println(
+            //         "[${j + 1}/${negTree.counterExamples.size}] nodeIds = [$nodeIds] (loopPosition = ${scenario.loopPosition}, loopBacks = ${negTree.loopBacks(
+            //             scenario.elements.last().nodeId!!
+            //         )})"
+            //     )
             // }
+
+            println("[*] Satisfaction for negative scenarios:")
+            for ((j, scenario) in negTree.counterExamples.withIndex()) {
+                val sat = scenario.elements.mapIndexed { i, elem ->
+                    elem.nodeId?.let { id ->
+                        val c = satisfaction[id]
+                        if (i + 1 == scenario.loopPosition) "<$c>" else "$c"
+                    } ?: "?"
+                }.joinToString(" ")
+                println("[${j + 1}/${negTree.counterExamples.size}] satisfaction = [$sat]")
+            }
 
             return NegativeAssignment(
                 negTree, C, K, P,
+                nodeType, terminal,
                 satisfaction, actualTransition,
                 nodeValue, firstFired, notFired
             )

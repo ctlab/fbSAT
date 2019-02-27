@@ -17,22 +17,22 @@ internal class BaseAssignment(
     val P: Int,
     val T: Int,
     val N: Int,
-    val color: IntMultiArray,
-    val transition: IntMultiArray,
-    val actualTransition: IntMultiArray,
-    val inputEvent: IntMultiArray,
-    val outputEvent: IntMultiArray,
-    val algorithm: MultiArray<Algorithm>,
-    val nodeType: MultiArray<NodeType>,
-    val terminal: IntMultiArray,
-    val parent: IntMultiArray,
-    val childLeft: IntMultiArray,
-    val childRight: IntMultiArray,
-    val value: BooleanMultiArray,
-    val childValueLeft: BooleanMultiArray,
-    val childValueRight: BooleanMultiArray,
-    val firstFired: BooleanMultiArray,
-    val notFired: BooleanMultiArray
+    val color: IntMultiArray, // [V] : 1..C
+    val transition: IntMultiArray, // [C, K] : 0..C
+    val actualTransition: IntMultiArray, // [C, E, U] : 0..C
+    val inputEvent: IntMultiArray, // [C, K] : 0..E
+    val outputEvent: IntMultiArray, // [C] : 1..O
+    val algorithm: MultiArray<Algorithm>, // [C]: Algorithm
+    val nodeType: MultiArray<NodeType>, // [C, K, P] : NodeType
+    val terminal: IntMultiArray, // [C, K, P] : 0..X
+    val parent: IntMultiArray, // [C, K, P] : 0..P
+    val childLeft: IntMultiArray, // [C, K, P] : 0..P
+    val childRight: IntMultiArray, // [C, K, P] : 0..P
+    val nodeValue: BooleanMultiArray, // [C, K, P, U]
+    val childValueLeft: BooleanMultiArray, // [C, K, P, U]
+    val childValueRight: BooleanMultiArray, // [C, K, P, U]
+    val firstFired: IntMultiArray, // [C, U] : 0..K
+    val notFired: BooleanMultiArray // [C, U, K]
 ) {
     companion object {
         @Suppress("LocalVariableName")
@@ -109,8 +109,9 @@ internal class BaseAssignment(
             val childValueRight = BooleanMultiArray.new(C, K, P, U) { (c, k, p, u) ->
                 raw[reduction.childValueRight[c, k, p, u] - 1]
             }
-            val firstFired = BooleanMultiArray.new(C, U, K) { (c, u, k) ->
-                raw[reduction.firstFired[c, u, k] - 1]
+            val firstFired = IntMultiArray.new(C, U) { (c, u) ->
+                (1..K).firstOrNull { k -> raw[reduction.firstFired[c, u, k] - 1] }
+                    ?: 0
             }
             val notFired = BooleanMultiArray.new(C, U, K) { (c, u, k) ->
                 raw[reduction.notFired[c, u, k] - 1]
