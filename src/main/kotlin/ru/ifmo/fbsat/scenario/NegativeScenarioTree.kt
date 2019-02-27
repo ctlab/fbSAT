@@ -45,6 +45,14 @@ class NegativeScenarioTree(
     val outputNames: List<String> by lazyCache {
         _outputNames ?: uniqueOutputs.first().indices.map { "z${it + 1}" }
     }
+    /**
+     * List of **all** vertices (including root).
+     */
+    val allVertices: List<Int> by lazyCache {
+        nodes.asSequence()
+            .map { it.id }
+            .toList()
+    }
     val activeVertices: List<Int> by lazyCache {
         nodes.asSequence()
             .drop(1) // without root
@@ -175,7 +183,7 @@ class NegativeScenarioTree(
         require(firstElement.outputValues == root.element.outputValues)
         firstElement.nodeId = root.id
 
-        var current = root
+        var current: Node = root
         var loopBack: Node? = null
         var isAnyoneCreated = false
         // skip first element, because it is the same as root
@@ -185,8 +193,13 @@ class NegativeScenarioTree(
                     if (child.element == element) {
                         current = child
                         element.nodeId = current.id
-                        if (i + 1 == negativeScenario.loopPosition)
+                        if (i + 1 == negativeScenario.loopPosition) {
+                            check(loopBack == null) {
+                                "loopBack already = $loopBack, but you are trying to override it with current = $current"
+                            }
                             loopBack = current
+                            // println("[${i + 1}/${negativeScenario.elements.size}] loopBack now(1) = $loopBack")
+                        }
                         continue@meow
                     }
                 }
@@ -194,19 +207,24 @@ class NegativeScenarioTree(
             current = Node(element, current)
             isAnyoneCreated = true
             element.nodeId = current.id
-            if (i + 1 == negativeScenario.loopPosition)
+            if (i + 1 == negativeScenario.loopPosition) {
+                check(loopBack == null) {
+                    "loopBack already = $loopBack, but you are trying to override it with current = $current"
+                }
                 loopBack = current
+                // println("[${i + 1}/${negativeScenario.elements.size}] loopBack now(2) = $loopBack")
+            }
         }
         check(loopBack != null) { "Weird, but loopBack is null." }
 
         loopBack.isLoopBack = true
-        val last = current
+        val last: Node = current
         check(!(loopBack.id in last.loopBacks.map { it.id } && loopBack !in last.loopBacks))
         last.loopBacks.add(loopBack)
 
         // if (isAnyoneCreated) {
-            _counterExamples.add(negativeScenario)
-            lazyCache.invalidate()
+        _counterExamples.add(negativeScenario)
+        lazyCache.invalidate()
         // } else {
         //     check(isTrie)
         //     // println("[!] No new nodes were inserted into the NegativeScenarioTree")

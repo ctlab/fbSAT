@@ -1,8 +1,6 @@
 package ru.ifmo.fbsat.scenario
 
 import ru.ifmo.fbsat.utils.LazyCache
-import java.util.Deque
-import java.util.LinkedList
 
 class ScenarioTree(
     scenarios: List<Scenario>,
@@ -53,6 +51,23 @@ class ScenarioTree(
         _outputNames ?: uniqueOutputs.first().indices.map { "z${it + 1}" }
     }
     /**
+     * List of **all** vertices (including root).
+     */
+    val allVertices: List<Int> by lazyCache {
+        nodes.asSequence()
+            .map(Node::id)
+            .toList()
+    }
+    /**
+     * List of all vertices **excluding root**.
+     */
+    val verticesWithoutRoot: List<Int> by lazyCache {
+        nodes.asSequence()
+            .drop(1)
+            .map(Node::id)
+            .toList()
+    }
+    /**
      * List of **active** vertices, i.e. vertices with **non-null** output event.
      * The root is excluded explicitly.
      */
@@ -60,7 +75,7 @@ class ScenarioTree(
         nodes.asSequence()
             .drop(1) // without root
             .filter { it.element.outputEvent != null }
-            .map { it.id }
+            .map(Node::id)
             .toList()
     }
     /**
@@ -71,14 +86,8 @@ class ScenarioTree(
         nodes.asSequence()
             .drop(1) // without root
             .filter { it.element.outputEvent == null }
-            .map { it.id }
+            .map(Node::id)
             .toList()
-    }
-    val activeVerticesEU: Map<Pair<Int, Int>, List<Int>> by lazyCache {
-        activeVertices.groupBy { this.inputEvent(it) to this.inputNumber(it) }
-    }
-    val passiveVerticesEU: Map<Pair<Int, Int>, List<Int>> by lazyCache {
-        passiveVertices.groupBy { this.inputEvent(it) to this.inputNumber(it) }
     }
 
     init {
@@ -104,27 +113,10 @@ class ScenarioTree(
         val id: Int = this@ScenarioTree.size + 1 // Note: one-based
         val children: List<Node> = _children
         val previousActive: Node? = if (parent?.element?.outputEvent != null) parent else parent?.previousActive
-        val isLeaf: Boolean
-            get() = children.isEmpty()
-        val pathFromRoot: List<Node> = if (parent == null) listOf(this) else parent.pathFromRoot + this
 
         init {
             this@ScenarioTree._nodes.add(this)
             parent?._children?.add(this)
-        }
-
-        fun dfs(f: Node.() -> Unit) {
-            f()
-            children.forEach { it.dfs(f) }
-        }
-
-        fun bfs(f: Node.() -> Unit) {
-            val queue: Deque<Node> = LinkedList(listOf(this))
-            while (queue.isNotEmpty()) {
-                val node = queue.pop()
-                node.f()
-                queue.addAll(node.children)
-            }
         }
 
         override fun toString(): String {
@@ -162,8 +154,8 @@ class ScenarioTree(
         }
 
         // if (isAnyoneCreated) {
-            _scenarios.add(scenario)
-            lazyCache.invalidate()
+        _scenarios.add(scenario)
+        lazyCache.invalidate()
         // } else {
         //     check(isTrie)
         //     // println("[!] No new nodes were inserted into the NegativeScenarioTree")
