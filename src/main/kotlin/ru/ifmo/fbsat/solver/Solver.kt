@@ -1,7 +1,6 @@
 package ru.ifmo.fbsat.solver
 
 import ru.ifmo.fbsat.utils.IntMultiArray
-import ru.ifmo.fbsat.utils.MultiDomainArray
 import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlin.math.absoluteValue
@@ -11,15 +10,10 @@ interface Solver {
     val numberOfClauses: Int
 
     fun newVariable(): Int
-
     fun newArray(vararg shape: Int) = IntMultiArray(shape) { newVariable() }
 
-    fun <R : Any> newDomainArray(
-        vararg domains: Iterable<R>,
-        init: (List<R>) -> (Int) = { newVariable() }
-    ) = MultiDomainArray.new(domains.asIterable(), init = init)
-
     fun clause(literals: Sequence<Int>)
+    fun clause(literals: Iterable<Int>) = clause(literals.asSequence())
     fun clause(vararg literals: Int) = clause(literals.asSequence())
     fun clause(block: suspend SequenceScope<Int>.() -> Unit) = clause(sequence(block))
 
