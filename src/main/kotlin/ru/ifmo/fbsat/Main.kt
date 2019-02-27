@@ -155,9 +155,9 @@ class FbSAT : CliktCommand() {
         "--only-automaton2"
     ).flag()
 
-    private val isVerifyAllCE by option(
-        "--verify-all-ce"
-    ).flag()
+    private val fileVerifyCE by option(
+        "--verify-ce"
+    ).file()
 
     init {
         context { helpFormatter = PlaintextHelpFormatter(maxWidth = 999) }
@@ -457,20 +457,18 @@ class FbSAT : CliktCommand() {
                 }
             }
 
-            if (isVerifyAllCE) {
-                NegativeScenarioTree.fromFile(
-                    File("ce-all"),
+            fileVerifyCE?.let {
+                val nst = NegativeScenarioTree.fromFile(
+                    it,
                     tree.inputEvents,
                     tree.outputEvents,
                     tree.inputNames,
                     tree.outputNames
-                ).let {
-                    if (automaton.verify(it))
-                        println("[+] Verify ce-all: OK")
-                    else {
-                        println("[-] Verify ce-all: FAILED")
-                    }
-                }
+                )
+                if (automaton.verify(nst))
+                    println("[+] Verify CE from '$fileVerifyCE': OK")
+                else
+                    println("[-] Verify CE from '$fileVerifyCE': FAILED")
             }
 
             outDir.mkdirs()
