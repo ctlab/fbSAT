@@ -35,16 +35,16 @@ class ScenarioTree(
 
     // Note: all public lists are zero-based
     val inputEvents: List<String> by lazyCache {
-        nodes.asSequence().map { it.element.inputEvent }.filter { it != "" }.distinct().sorted().toList()
+        nodes.asSequence().map { it.element.inputEvent }.filter { it != "" }.toSet().sorted()
     }
     val outputEvents: List<String> by lazyCache {
-        nodes.asSequence().mapNotNull { it.element.outputEvent }.distinct().sorted().toList()
+        nodes.asSequence().mapNotNull { it.element.outputEvent }.toSet().sorted()
     }
     val uniqueInputs: List<String> by lazyCache {
-        nodes.asSequence().map { it.element.inputValues }.filter { it != "" }.distinct().sorted().toList()
+        nodes.asSequence().map { it.element.inputValues }.filter { it != "" }.toSet().sorted()
     }
     val uniqueOutputs: List<String> by lazyCache {
-        nodes.asSequence().map { it.element.outputValues }.filter { it != "" }.distinct().sorted().toList()
+        nodes.asSequence().map { it.element.outputValues }.filter { it != "" }.toSet().sorted()
     }
     val inputNames: List<String> by lazyCache {
         _inputNames ?: uniqueInputs.first().indices.map { "x${it + 1}" }
