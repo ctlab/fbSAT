@@ -16,12 +16,6 @@ class ScenarioTree(
     private val nodes: List<Node> = _nodes
     private val root: Node?
         get() = nodes.firstOrNull()
-    private val leaves: List<Node> by lazyCache {
-        nodes.filter { it.isLeaf }
-    }
-    private val pathsToLeaves: List<List<Node>> by lazyCache {
-        leaves.map { it.pathFromRoot }
-    }
 
     val scenarios: List<Scenario> = _scenarios
 
@@ -88,6 +82,12 @@ class ScenarioTree(
             .filter { it.element.outputEvent == null }
             .map(Node::id)
             .toList()
+    }
+    val activeVerticesEU: Map<Pair<Int, Int>, List<Int>> by lazyCache {
+        activeVertices.groupBy { this.inputEvent(it) to this.inputNumber(it) }
+    }
+    val passiveVerticesEU: Map<Pair<Int, Int>, List<Int>> by lazyCache {
+        passiveVertices.groupBy { this.inputEvent(it) to this.inputNumber(it) }
     }
 
     init {
