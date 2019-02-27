@@ -251,7 +251,6 @@ class NegativeScenarioTree(
     fun outputEvent(v: Int) = outputEvents.indexOf(nodes[v - 1].element.outputEvent) + 1
     fun inputNumber(v: Int) = uniqueInputs.indexOf(nodes[v - 1].element.inputValues) + 1
     fun outputNumber(v: Int) = uniqueOutputs.indexOf(nodes[v - 1].element.outputValues) + 1
-    fun uniqueInputNumber(input: String) = uniqueInputs.indexOf(input) + 1
 
     fun inputValue(v: Int, x: Int): Boolean =
         when (val c = nodes[v - 1].element.inputValues[x - 1]) {

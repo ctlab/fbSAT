@@ -13,7 +13,7 @@ internal fun Automaton.checkNegativeAssignment(negAssignment: NegativeAssignment
     var isOk = true
 
     for (input in negTree.uniqueInputs) {
-        val u = negTree.uniqueInputNumber(input)
+        val u = negTree.uniqueInputs.indexOf(input) + 1
 
         for (i in 1..C) {
             val (newState, outputEvent, newValues) = go(getState(i), "REQ", input, someOutputValues)
