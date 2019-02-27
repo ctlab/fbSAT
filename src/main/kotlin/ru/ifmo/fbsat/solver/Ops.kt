@@ -9,10 +9,8 @@ fun Solver.atLeastOne(range: IntRange, array: IntMultiArray, vararg index: Int) 
     })
 }
 
-fun Solver.atMostOne(literals: List<Int>) {
-    for (a in literals.indices)
-        for (b in (a + 1) until literals.size)
-            clause(-literals[a], -literals[b])
+fun Solver.atLeastOne(literals: List<Int>) {
+    clause(literals)
 }
 
 fun Solver.atMostOne(range: IntRange, array: IntMultiArray, vararg index: Int) {
@@ -24,9 +22,20 @@ fun Solver.atMostOne(range: IntRange, array: IntMultiArray, vararg index: Int) {
     }
 }
 
+fun Solver.atMostOne(literals: List<Int>) {
+    for (a in literals.indices)
+        for (b in (a + 1) until literals.size)
+            clause(-literals[a], -literals[b])
+}
+
 fun Solver.exactlyOne(range: IntRange, array: IntMultiArray, vararg index: Int) {
     atLeastOne(range, array, *index)
     atMostOne(range, array, *index)
+}
+
+fun Solver.exactlyOne(literals: List<Int>) {
+    atLeastOne(literals)
+    atMostOne(literals)
 }
 
 /**
