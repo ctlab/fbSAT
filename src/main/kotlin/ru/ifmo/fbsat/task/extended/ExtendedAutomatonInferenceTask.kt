@@ -42,11 +42,11 @@ class ExtendedAutomatonInferenceTask(
 
         return if (rawAssignment != null) {
             val assignment = BaseAssignment.fromRaw(rawAssignment, baseReduction!!)
-            if (negativeReduction != null) {
-                @Suppress("UNUSED_VARIABLE")
-                val ceAssignment = NegativeAssignment.fromRaw(rawAssignment, negativeReduction!!)
-            }
             val automaton = assignment.toAutomaton()
+            if (negativeReduction != null) {
+                val negativeAssignment = NegativeAssignment.fromRaw(rawAssignment, negativeReduction!!)
+                automaton.checkNegativeAssignment(negativeAssignment, scenarioTree)
+            }
             automaton
         } else null
     }
