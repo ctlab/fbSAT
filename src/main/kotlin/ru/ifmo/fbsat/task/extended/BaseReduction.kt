@@ -194,7 +194,8 @@ internal class BaseReduction(
 
         comment("+2.4. Ad-hoc: no transition to the first state")
         for (c in 1..C)
-            clause(-transition[c, 1])
+            for (k in 1..K)
+                clause(-transition[c, k, 1])
     }
 
     private fun Solver.declareFiringConstraints() {
