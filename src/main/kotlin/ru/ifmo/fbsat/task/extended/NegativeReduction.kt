@@ -35,12 +35,13 @@ internal class NegativeReduction(
     private val passiveVs = Vs.filter { it in negativeScenarioTree.passiveVertices }
     private val E = negativeScenarioTree.inputEvents.size
     private val UIs = negativeScenarioTree.uniqueInputs
+    private val oldUIs = previousNegativeReduction?.UIs ?: emptyList()
     private val posUIs = scenarioTree.uniqueInputs
     private val negUIs = UIs - posUIs
     private val oldNegUIs = previousNegativeReduction?.negUIs ?: emptyList()
     private val newNegUIs = negUIs - oldNegUIs
     private val U = UIs.size
-    private val newU = newNegUIs.map { negativeScenarioTree.uniqueInputNumber(it) }
+    private val newU = newNegUIs.map { getU(it) }
     private val X = negativeScenarioTree.uniqueInputs.first().length
     private val Z = negativeScenarioTree.uniqueOutputs.first().length
     // Negative scenario tree variables
@@ -68,30 +69,31 @@ internal class NegativeReduction(
         println("[.] C = $C, K = $K, P = $P, V = $V, oldV = $oldV, Vs = $Vs, E = $E, U = $U, newU = $newU, X = $X, Z = $Z")
     }
 
+    private fun getU(input: String): Int = UIs.indexOf(input) + 1
+    private fun getOldU(input: String): Int = oldUIs.indexOf(input) + 1
+    private fun getPosU(input: String): Int = posUIs.indexOf(input) + 1
+
     init {
-        fun getPosU(input: String): Int = posUIs.indexOf(input) + 1
-        fun getOldNegU(input: String): Int = oldNegUIs.indexOf(input) + 1
+        for (input in newNegUIs)
+            check(input == UIs[getU(input) - 1])
+        for (u in 1..U)
+            check(u == getU(UIs[u - 1]))
 
         with(solver) {
             // Negative scenario tree variables
-            satisfaction =
-                IntMultiArray.new(V, C + 1) { (v, c) ->
-                    if (v in Vs)
-                        newVariable()
-                    else
-                        previousNegativeReduction!!.satisfaction[v, c]
-                }
+            satisfaction = IntMultiArray.new(V, C + 1) { (v, c) ->
+                if (v in Vs) newVariable()
+                else previousNegativeReduction!!.satisfaction[v, c]
+            }
             // Automaton variables
             transition = baseReduction.transition
             actualTransition = IntMultiArray.new(C, E, U, C + 1) { (i, e, u, j) ->
                 when (val input = UIs[u - 1]) {
                     in newNegUIs -> newVariable()
-                    in oldNegUIs -> previousNegativeReduction!!.actualTransition[i, e, getOldNegU(input), j]
+                    in oldNegUIs -> previousNegativeReduction!!.actualTransition[i, e, getOldU(input), j]
                     else -> baseReduction.actualTransition[i, e, getPosU(input), j]
                 }
             }
-            //     isomorphicInputNumber(u)?.let { u_ -> baseReduction.actualTransition[i, e, u_, j] } ?: newVariable()
-            // }
             inputEvent = baseReduction.inputEvent
             outputEvent = baseReduction.outputEvent
             algorithm0 = baseReduction.algorithm0
@@ -104,7 +106,7 @@ internal class NegativeReduction(
             nodeValue = IntMultiArray.new(C, K, P, U) { (c, k, p, u) ->
                 when (val input = UIs[u - 1]) {
                     in newNegUIs -> newVariable()
-                    in oldNegUIs -> previousNegativeReduction!!.nodeValue[c, k, p, getOldNegU(input)]
+                    in oldNegUIs -> previousNegativeReduction!!.nodeValue[c, k, p, getOldU(input)]
                     else -> baseReduction.nodeValue[c, k, p, getPosU(input)]
                 }
             }
@@ -114,28 +116,28 @@ internal class NegativeReduction(
             childValueLeft = IntMultiArray.new(C, K, P, U) { (c, k, p, u) ->
                 when (val input = UIs[u - 1]) {
                     in newNegUIs -> newVariable()
-                    in oldNegUIs -> previousNegativeReduction!!.childValueLeft[c, k, p, getOldNegU(input)]
+                    in oldNegUIs -> previousNegativeReduction!!.childValueLeft[c, k, p, getOldU(input)]
                     else -> baseReduction.childValueLeft[c, k, p, getPosU(input)]
                 }
             }
             childValueRight = IntMultiArray.new(C, K, P, U) { (c, k, p, u) ->
                 when (val input = UIs[u - 1]) {
                     in newNegUIs -> newVariable()
-                    in oldNegUIs -> previousNegativeReduction!!.childValueRight[c, k, p, getOldNegU(input)]
+                    in oldNegUIs -> previousNegativeReduction!!.childValueRight[c, k, p, getOldU(input)]
                     else -> baseReduction.childValueRight[c, k, p, getPosU(input)]
                 }
             }
             firstFired = IntMultiArray.new(C, U, K + 1) { (c, u, k) ->
                 when (val input = UIs[u - 1]) {
                     in newNegUIs -> newVariable()
-                    in oldNegUIs -> previousNegativeReduction!!.firstFired[c, getOldNegU(input), k]
+                    in oldNegUIs -> previousNegativeReduction!!.firstFired[c, getOldU(input), k]
                     else -> baseReduction.firstFired[c, getPosU(input), k]
                 }
             }
             notFired = IntMultiArray.new(C, U, K) { (c, u, k) ->
                 when (val input = UIs[u - 1]) {
                     in newNegUIs -> newVariable()
-                    in oldNegUIs -> previousNegativeReduction!!.notFired[c, getOldNegU(input), k]
+                    in oldNegUIs -> previousNegativeReduction!!.notFired[c, getOldU(input), k]
                     else -> baseReduction.notFired[c, getPosU(input), k]
                 }
             }
@@ -338,9 +340,10 @@ internal class NegativeReduction(
         comment("CE.5. Algorithm constraints")
 
         comment("CE.5.2. Algorithms definition")
-        for (v in activeVs)
+        for (v in activeVs) {
+            val p = negativeScenarioTree.parent(v)
             for (z in 1..Z) {
-                val oldValue = negativeScenarioTree.outputValue(negativeScenarioTree.parent(v), z)
+                val oldValue = negativeScenarioTree.outputValue(p, z)
                 val newValue = negativeScenarioTree.outputValue(v, z)
                 for (c in 1..C)
                     imply(
@@ -354,6 +357,7 @@ internal class NegativeReduction(
                         }
                     )
             }
+        }
     }
 
     private fun Solver.declareGuardConstraints() {
@@ -399,8 +403,8 @@ internal class NegativeReduction(
         for (c in 1..C)
             for (k in 1..K)
                 for (p in 1..P)
-                    for (x in 1..X)
-                        for (u in newU)
+                    for (u in newU)
+                        for (x in 1..X)
                             when (val char = UIs[u - 1][x - 1]) {
                                 '1' -> imply(terminal[c, k, p, x], nodeValue[c, k, p, u])
                                 '0' -> imply(terminal[c, k, p, x], -nodeValue[c, k, p, u])

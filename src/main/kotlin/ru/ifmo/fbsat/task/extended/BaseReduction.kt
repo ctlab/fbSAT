@@ -267,9 +267,10 @@ internal class BaseReduction(
         }
 
         comment("5.2. Algorithms definition")
-        for (v in scenarioTree.activeVertices)
+        for (v in scenarioTree.activeVertices) {
+            val p = scenarioTree.parent(v)
             for (z in 1..Z) {
-                val oldValue = scenarioTree.outputValue(scenarioTree.parent(v), z)
+                val oldValue = scenarioTree.outputValue(p, z)
                 val newValue = scenarioTree.outputValue(v, z)
                 for (c in 1..C)
                     imply(
@@ -283,6 +284,7 @@ internal class BaseReduction(
                         }
                     )
             }
+        }
     }
 
     private fun Solver.declareBfsConstraints() {
@@ -499,8 +501,8 @@ internal class BaseReduction(
         for (c in 1..C)
             for (k in 1..K)
                 for (p in 1..P)
-                    for (x in 1..X)
-                        for (u in 1..U)
+                    for (u in 1..U)
+                        for (x in 1..X)
                             when (val char = scenarioTree.uniqueInputs[u - 1][x - 1]) {
                                 '1' -> imply(terminal[c, k, p, x], nodeValue[c, k, p, u])
                                 '0' -> imply(terminal[c, k, p, x], -nodeValue[c, k, p, u])
