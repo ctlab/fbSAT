@@ -237,7 +237,7 @@ class Automaton(
                     it?.id ?: 0
                 }.withIndex().joinToString(" ") { (j, x) ->
                     if (j + 1 == counterExample.loopPosition) "<$x>" else "$x"
-                }}] (loop = ${counterExample.loopPosition})"
+                }}] (loop = ${counterExample.loopPosition} / ${counterExample.elements.size})"
             )
 
             if (counterExample.loopPosition != null) {
