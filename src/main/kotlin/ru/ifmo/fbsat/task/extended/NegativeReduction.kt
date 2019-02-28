@@ -14,6 +14,7 @@ import ru.ifmo.fbsat.solver.implyIffAnd
 import ru.ifmo.fbsat.solver.implyIffOr
 import ru.ifmo.fbsat.utils.IntMultiArray
 
+@Suppress("PropertyName", "PrivatePropertyName", "MemberVisibilityCanBePrivate")
 internal class NegativeReduction(
     val scenarioTree: ScenarioTree,
     val baseReduction: BaseReduction,
@@ -157,27 +158,42 @@ internal class NegativeReduction(
 
         comment("CE.1.0. ONE(satisfaction)_{0..C}")
         for (v in Vs)
-            exactlyOne(1..(C + 1), satisfaction, v)
+            exactlyOne((1..(C + 1)).map { c -> satisfaction[v, c] })
 
         comment("CE.1.1. Satisfaction of active vertices")
-        // satisfaction[tp(v), i] & actual_transition[i,tie(v),tin(v),j] => satisfaction[v, j]
+        // // satisfaction[tp(v), i] & actual_transition[i,tie(v),tin(v),j] => satisfaction[v, j]
+        // for (v in activeVs) {
+        //     break
+        //     val p = negativeScenarioTree.parent(v)
+        //     val e = negativeScenarioTree.inputEvent(v)
+        //     val u = negativeScenarioTree.inputNumber(v)
+        //     for (i in 1..C)
+        //         for (j in 1..C)
+        //             clause(
+        //                 -satisfaction[p, i],
+        //                 -actualTransition[i, e, u, j],
+        //                 satisfaction[v, j]
+        //             )
+        // }
+        // satisfaction[tp(v), i] => (satisfaction[v, j] <=> actual_transition[i,tie(v),tin(v),j])
         for (v in activeVs) {
             val p = negativeScenarioTree.parent(v)
             val e = negativeScenarioTree.inputEvent(v)
             val u = negativeScenarioTree.inputNumber(v)
             for (i in 1..C)
                 for (j in 1..C)
-                    clause(
-                        -satisfaction[p, i],
-                        -actualTransition[i, e, u, j],
-                        satisfaction[v, j]
+                    implyIff(
+                        satisfaction[p, i],
+                        satisfaction[v, j],
+                        actualTransition[i, e, u, j]
                     )
         }
 
         comment("CE.1.1+. Non-satisfaction of active vertices (redundant)")
         // satisfaction[tp(v), c] & actual_transition[c,tie(v),tin(v),0] => satisfaction[v, 0]
+        @Suppress("UNREACHABLE_CODE")
         for (v in activeVs) {
-            continue
+            break
             val p = negativeScenarioTree.parent(v)
             val e = negativeScenarioTree.inputEvent(v)
             val u = negativeScenarioTree.inputNumber(v)
@@ -203,10 +219,9 @@ internal class NegativeReduction(
                 )
         }
 
-        comment("CE.1.2+. Non-satisfaction of passive vertices (redundant)")
+        comment("CE.1.2+. Non-satisfaction of passive vertices")
         // satisfaction[tp(v), c] & ~actual_transition[c,tie(v),tin(v),0] => satisfaction[v, 0]
         for (v in passiveVs) {
-            continue
             val p = negativeScenarioTree.parent(v)
             val e = negativeScenarioTree.inputEvent(v)
             val u = negativeScenarioTree.inputNumber(v)
@@ -219,17 +234,17 @@ internal class NegativeReduction(
                     )
         }
 
-        comment("CE.1.3. Propagation of satisfaction for passive vertices")
-        // satisfaction[tp(v), c] => satisfaction[v, c] | satisfaction[v, 0]
-        for (v in passiveVs) {
-            val p = negativeScenarioTree.parent(v)
-            for (c in 1..C)
-                clause(
-                    -satisfaction[p, c],
-                    satisfaction[v, c],
-                    satisfaction[v, C + 1]
-                )
-        }
+        // comment("CE.1.3. Propagation of satisfaction for passive vertices")
+        // // satisfaction[tp(v), c] => satisfaction[v, c] | satisfaction[v, 0]
+        // for (v in passiveVs) {
+        //     val p = negativeScenarioTree.parent(v)
+        //     for (c in 1..C)
+        //         clause(
+        //             -satisfaction[p, c],
+        //             satisfaction[v, c],
+        //             satisfaction[v, C + 1]
+        //         )
+        // }
 
         comment("CE.1.4. Propagation of non-satisfaction")
         // satisfaction[tp(v), 0] => satisfaction[v, 0]
@@ -258,10 +273,10 @@ internal class NegativeReduction(
         comment("CE.2. Transition constraints")
 
         comment("CE.2.0b. ONE(actual_transition)_{0..C}")
-        for (c in 1..C)
+        for (i in 1..C)
             for (e in 1..E)
                 for (u in newU)
-                    exactlyOne(1..(C + 1), actualTransition, c, e, u)
+                    exactlyOne((1..(C + 1)).map { j -> actualTransition[i, e, u, j] })
 
         comment("CE.2.1. Active transition definition")
         // actual_transition[i,e,u,j] <=> OR_k( transition[i,k,j] & input_event[i,k,e] & first_fired[i,u,k] )
@@ -290,7 +305,7 @@ internal class NegativeReduction(
         comment("CE.3.0. ONE(first_fired)_{0..K}")
         for (c in 1..C)
             for (u in newU)
-                exactlyOne(1..(K + 1), firstFired, c, u)
+                exactlyOne((1..(K + 1)).map { k -> firstFired[c, u, k] })
 
         comment("CE.3.1. first_fired definition")
         // first_fired[k] <=> root_value[k] & not_fired[k-1]
