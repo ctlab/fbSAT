@@ -13,6 +13,7 @@ import ru.ifmo.fbsat.solver.implyIffAnd
 import ru.ifmo.fbsat.solver.implyIffOr
 import ru.ifmo.fbsat.utils.IntMultiArray
 
+@Suppress("PropertyName", "PrivatePropertyName", "MemberVisibilityCanBePrivate")
 internal class BaseReduction(
     val scenarioTree: ScenarioTree,
     val C: Int,
@@ -89,7 +90,7 @@ internal class BaseReduction(
             declareNodeTypeConstraints()
             declareParentAndChildrenConstraints()
             declareNoneTypeNodesConstraints()
-            declareTerminalsConstraits()
+            declareTerminalsConstraints()
             declareAndOrNodesConstraints()
             declareNotNodesConstraints()
             declareAdhocConstraints()
@@ -446,7 +447,7 @@ internal class BaseReduction(
                     }
     }
 
-    private fun Solver.declareTerminalsConstraits() {
+    private fun Solver.declareTerminalsConstraints() {
         comment("10. Terminals constraints")
 
         comment("10.0. ONE(terminal)_{0..X}")
