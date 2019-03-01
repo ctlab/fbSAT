@@ -10,7 +10,6 @@ interface MultiArray<T> {
     val values: Collection<T>
 
     operator fun get(vararg index: Int): T
-
     operator fun set(vararg index: Int, value: T)
 
     companion object {
@@ -37,18 +36,18 @@ private class DefaultMultiArray<T>(
 
     override val values: Collection<T> = buffer
 
-    // Note: one-based
     override fun get(vararg index: Int): T {
+        validate(index)
         return buffer[strides.offset1(index)]
     }
 
-    // Note: one-based
     override fun set(vararg index: Int, value: T) {
+        validate(index)
         buffer[strides.offset1(index)] = value
     }
 
     override fun toString(): String {
-        return "MultiArray(values = $values)"
+        return "MultiArray(shape = ${shape.asList()})"
     }
 }
 
@@ -66,11 +65,17 @@ class IntMultiArray(
         get() = buffer.toList()
 
     override operator fun get(vararg index: Int): Int {
+        validate(index)
         return buffer[strides.offset1(index)]
     }
 
     override operator fun set(vararg index: Int, value: Int) {
+        validate(index)
         buffer[strides.offset1(index)] = value
+    }
+
+    override fun toString(): String {
+        return "IntMultiArray(shape = ${shape.asList()})"
     }
 
     companion object {
@@ -92,11 +97,17 @@ class BooleanMultiArray(
         get() = buffer.toList()
 
     override operator fun get(vararg index: Int): Boolean {
+        validate(index)
         return buffer[strides.offset1(index)]
     }
 
     override operator fun set(vararg index: Int, value: Boolean) {
+        validate(index)
         buffer[strides.offset1(index)] = value
+    }
+
+    override fun toString(): String {
+        return "BooleanMultiArray(shape = ${shape.asList()})"
     }
 
     companion object {
@@ -109,48 +120,50 @@ private class Strides(val shape: IntArray) {
         sequence {
             yield(1)
             var cur = 1
-            for (dim in shape) {
-                cur *= dim
+            for (i in (shape.size - 1) downTo 1) {
+                cur *= shape[i]
                 yield(cur)
             }
-        }.toList()
+        }.toList().reversed()
     }
 
-    fun offset0(index: IntArray): Int {
-        return index.asSequence().mapIndexed { i, value ->
-            if (value !in 1..shape[i]) throw IndexOutOfBoundsException("Index $value for dimension ${i + 1} is out of shape bounds (${1..shape[i]})")
-            value * strides[i]
-        }.sum()
-    }
+    fun offset0(index0: IntArray): Int =
+        index0.asSequence().zip(strides.asSequence()) { i, s -> i * s }.sum()
 
-    fun offset1(index: IntArray): Int {
-        return index.asSequence().mapIndexed { i, value ->
-            if (value !in 1..shape[i]) throw IndexOutOfBoundsException("Index $value for dimension ${i + 1} is out of shape bounds (${1..shape[i]})")
-            (value - 1) * strides[i]
-        }.sum()
-    }
+    fun offset1(index1: IntArray): Int =
+        index1.asSequence().zip(strides.asSequence()) { i, s -> (i - 1) * s }.sum()
 
     fun index0(offset: Int): IntArray {
-        val res = IntArray(shape.size)
+        val result = IntArray(shape.size)
         var current = offset
-        var strideIndex = strides.size - 2
-        while (strideIndex >= 0) {
-            res[strideIndex] = (current / strides[strideIndex])
-            current %= strides[strideIndex]
-            strideIndex--
+        for ((i, s) in strides.withIndex()) {
+            result[i] = current / s // 0-based
+            current %= s
+            if (current == 0) break
         }
-        return res
+        return result
     }
 
     fun index1(offset: Int): IntArray {
-        val res = IntArray(shape.size)
+        val result = IntArray(shape.size) { 1 }
         var current = offset
-        var strideIndex = strides.size - 2
-        while (strideIndex >= 0) {
-            res[strideIndex] = (current / strides[strideIndex]) + 1
-            current %= strides[strideIndex]
-            strideIndex--
+        for ((i, s) in strides.withIndex()) {
+            result[i] = current / s + 1 // 1-based
+            current %= s
+            if (current == 0) break
         }
-        return res
+        return result
+    }
+}
+
+private fun <T> MultiArray<T>.validate(index: IntArray) {
+    require(index.size == shape.size) {
+        "Invalid number of dimensions passed: index.size = ${index.size}, shape.size = ${shape.size}"
+    }
+    for (i in index.indices) {
+        val ix = index[i]
+        val domain = 1..shape[i]
+        if (ix !in domain)
+            throw IndexOutOfBoundsException("Index $ix (${i + 1}-th) out of bounds ($domain)")
     }
 }
