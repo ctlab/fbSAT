@@ -4,6 +4,7 @@ group = "ru.ifmo.fbsat"
 version = "1.0"
 
 plugins {
+    `build-scan`
     application
     kotlin("jvm") version Versions.kotlin
     id("org.jlleitschuh.gradle.ktlint") version Versions.ktlint
@@ -21,6 +22,11 @@ dependencies {
     testRuntimeOnly(Libs.junit_jupiter_engine)
     testImplementation(Libs.junit_jupiter_params)
     testImplementation(Libs.kluent)
+}
+
+buildScan {
+    termsOfServiceUrl = "https://gradle.com/terms-of-service"
+    termsOfServiceAgree = "yes"
 }
 
 application {
