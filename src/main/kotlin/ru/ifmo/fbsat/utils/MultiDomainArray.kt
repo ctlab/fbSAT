@@ -1,51 +1,43 @@
 package ru.ifmo.fbsat.utils
 
-import ru.ifmo.fbsat.solver.DefaultSolver
+interface MultiDomainArray<K : Any, V : Any> {
+    val domains: Iterable<Iterable<K>>
+    val values: Collection<V>
 
-interface MultiDomainArray<T : Any, R : Any> {
-    val domains: Iterable<Iterable<R>>
-    val values: Collection<T>
+    operator fun get(vararg index: K): V
 
-    operator fun get(vararg index: R): T
-
-    operator fun set(vararg index: R, value: T)
+    operator fun set(vararg index: K, value: V)
 
     companion object {
-        fun <T : Any, R : Any> new(
-            domains: Iterable<Iterable<R>>,
-            init: (List<R>) -> T
-        ): MultiDomainArray<T, R> = DefaultMultiDomainArray(domains, init)
+        fun <K : Any, V : Any> new(
+            domains: Iterable<Iterable<K>>,
+            init: (List<K>) -> V
+        ): MultiDomainArray<K, V> = DefaultMultiDomainArray(domains, init)
 
-        fun <T : Any, R : Any> new(
-            vararg domains: Iterable<R>,
-            init: (List<R>) -> T
-        ): MultiDomainArray<T, R> = new(domains.asIterable(), init)
+        fun <K : Any, V : Any> new(
+            vararg domains: Iterable<K>,
+            init: (List<K>) -> V
+        ): MultiDomainArray<K, V> = new(domains.asIterable(), init)
     }
 }
 
-private class DefaultMultiDomainArray<T : Any, R : Any>(
-    override val domains: Iterable<Iterable<R>>,
-    init: (List<R>) -> T
-) : MultiDomainArray<T, R> {
-    private val storage: MutableMap<List<R>, T>
-    private val types: List<Class<*>>
+private class DefaultMultiDomainArray<K : Any, V : Any>(
+    override val domains: Iterable<Iterable<K>>,
+    init: (List<K>) -> V
+) : MultiDomainArray<K, V> {
+    private val storage: MutableMap<List<K>, V> = domains.cartesianProduct.associateWith(init).toMutableMap()
+    private val types: List<Class<*>> = domains.map { it.first().javaClass }
 
-    override val values: Collection<T>
+    override val values: Collection<V> = storage.values
 
-    init {
-        storage = domains.cartesianProduct.map { index -> index to init(index) }.toMap().toMutableMap()
-        types = domains.map { it.first().javaClass }
-        values = storage.values
-    }
-
-    private fun Array<out R>.checkTypes() {
+    private fun Array<out K>.checkTypes() {
         val indexTypes = this.map { it.javaClass }
         require(indexTypes == types) {
             "Types mismatch (index: ${indexTypes.map { it.simpleName }}, multi-array: ${types.map { it.simpleName }})"
         }
     }
 
-    override operator fun get(vararg index: R): T {
+    override operator fun get(vararg index: K): V {
         return storage[index.asList()]
             ?: run {
                 index.checkTypes()
@@ -53,7 +45,7 @@ private class DefaultMultiDomainArray<T : Any, R : Any>(
             }
     }
 
-    override operator fun set(vararg index: R, value: T) {
+    override operator fun set(vararg index: K, value: V) {
         storage.replace(index.asList(), value)
             ?: run {
                 index.checkTypes()
@@ -79,30 +71,18 @@ fun main() {
     println("x[3, D] = ${x[3, MyType.D]}")
     // println("x[3, lol] = ${x[3, "lol"]}")
 
-    val solver = DefaultSolver("")
+    // val solver = DefaultSolver("")
 
-    val colors = (1..10).map { Color(it) }
-    val transitions = (1..5).map { TransitionIndex(it) }
-    val safe = solver.newDomainArray(colors, transitions)
-    // val safe = SolverVariableMultiArray.new(
-    //     solver,
-    //     colors,
-    //     (1..5).map { TransitionIndex(it) }
-    // )
-    println("safe = $safe")
-    val c = Color(5)
-    val t = TransitionIndex(3)
-    println("safe[c, t] = ${safe[c, t]}")
-    println("safe[c, c] = ${safe[c, c]}") // throws
+    // val colors = (1..10).map { Color(it) }
+    // val transitions = (1..5).map { TransitionNumber(it) }
+    // val safe: SatArray = solver.newArray(colors, transitions)
+    // println("safe = $safe")
+    // val c = Color(5)
+    // val t = TransitionNumber(3)
+    // println("safe[c, t] = ${safe[c, t]}")
+    // println("safe[c, c] = ${safe[c, c]}") // throws
 }
 
 private enum class MyType {
     A, B, C, D
 }
-
-private sealed class Variable {
-    abstract val v: Int
-}
-
-private data class Color(override val v: Int) : Variable()
-private data class TransitionIndex(override val v: Int) : Variable()
