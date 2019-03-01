@@ -9,6 +9,10 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version Versions.ktlint
 }
 
+repositories {
+    jcenter()
+}
+
 dependencies {
     implementation(kotlin("stdlib"))
     implementation(Libs.clikt)
@@ -19,40 +23,38 @@ dependencies {
     testImplementation(Libs.kluent)
 }
 
-repositories {
-    jcenter()
-}
-
 application {
     mainClassName = "ru.ifmo.fbsat.MainKt"
-}
-
-tasks.withType<JavaExec> {
-    args("--help")
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
-}
-
-tasks.test {
-    useJUnit()
-}
-
-tasks.jar {
-    manifest {
-        attributes(
-            "Main-Class" to "ru.ifmo.fbsat.MainKt"
-        )
-    }
-    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 }
 
 ktlint {
     ignoreFailures.set(true)
 }
 
-tasks.wrapper {
-    gradleVersion = "5.2.1"
-    distributionType = Wrapper.DistributionType.ALL
+tasks {
+    withType<JavaExec> {
+        args("--help")
+    }
+
+    withType<KotlinCompile> {
+        kotlinOptions.jvmTarget = "1.8"
+    }
+
+    test {
+        useJUnit()
+    }
+
+    jar {
+        manifest {
+            attributes(
+                "Main-Class" to "ru.ifmo.fbsat.MainKt"
+            )
+        }
+        from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    }
+
+    wrapper {
+        gradleVersion = "5.2.1"
+        distributionType = Wrapper.DistributionType.ALL
+    }
 }
