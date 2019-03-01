@@ -19,7 +19,8 @@ internal class BaseReduction(
     val C: Int,
     val K: Int,
     val P: Int,
-    solver: Solver
+    solver: Solver,
+    isEncodeAutomaton: Boolean = false
 ) {
     // Constants
     private val V = scenarioTree.size
@@ -94,7 +95,7 @@ internal class BaseReduction(
             declareAndOrNodesConstraints()
             declareNotNodesConstraints()
             declareAdhocConstraints()
-            // declareSuperAdhocConstraints()
+            if (isEncodeAutomaton) declareSuperAdhocConstraints()
         }
     }
 

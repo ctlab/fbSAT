@@ -14,7 +14,8 @@ class ExtendedAutomatonInferenceTask(
     val maxOutgoingTransitions: Int?, // K, K=C if null
     val maxGuardSize: Int, // P
     solverProvider: () -> Solver,
-    private val isForbidLoops: Boolean = true
+    private val isForbidLoops: Boolean = true,
+    private val isEncodeAutomaton: Boolean = false
 ) {
     private val solver: Solver = solverProvider()
     private var baseReduction: BaseReduction? = null
@@ -64,7 +65,8 @@ class ExtendedAutomatonInferenceTask(
                 C = numberOfStates,
                 K = maxOutgoingTransitions ?: numberOfStates,
                 P = maxGuardSize,
-                solver = solver
+                solver = solver,
+                isEncodeAutomaton = isEncodeAutomaton
             )
         }.also {
             println(

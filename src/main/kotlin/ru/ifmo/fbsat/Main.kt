@@ -151,6 +151,13 @@ class FbSAT : CliktCommand() {
         readable = true
     )
 
+    private val isEncodeAutomaton by option(
+        "--encode-automaton",
+        help = "[DEBUG] Encode Daniil's automaton"
+    ).flag(
+        default = false
+    )
+
     private val isOnlyAutomaton2 by option(
         "--only-automaton2"
     ).flag()
@@ -392,7 +399,8 @@ class FbSAT : CliktCommand() {
                     maxOutgoingTransitions,
                     maxGuardSize!!,
                     solverProvider,
-                    isForbidLoops = isForbidLoops
+                    isForbidLoops = isForbidLoops,
+                    isEncodeAutomaton = isEncodeAutomaton
                 )
                 task.infer(maxTotalGuardsSize)
             }
