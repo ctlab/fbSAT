@@ -15,7 +15,8 @@ class ExtendedMin(
     val maxGuardSize: Int, // P
     val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
     val solverProvider: () -> Solver,
-    private val isForbidLoops: Boolean = true
+    private val isForbidLoops: Boolean = true,
+    private val isEncodeAutomaton: Boolean = false
 ) {
     init {
         require(!(numberOfStates == null && maxOutgoingTransitions != null)) {
@@ -44,7 +45,8 @@ class ExtendedMin(
             maxOutgoingTransitions,
             maxGuardSize,
             solverProvider,
-            isForbidLoops = isForbidLoops
+            isForbidLoops = isForbidLoops,
+            isEncodeAutomaton = isEncodeAutomaton
         )
         var best: Automaton? = task.infer(initialMaxTotalGuardsSize, finalize = false)
 

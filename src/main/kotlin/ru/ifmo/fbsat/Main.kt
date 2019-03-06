@@ -24,7 +24,7 @@ import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.task.basic.Basic
 import ru.ifmo.fbsat.task.basicmin.BasicMin
 import ru.ifmo.fbsat.task.extended.ExtendedAutomatonInferenceTask
-import ru.ifmo.fbsat.task.extended.ExtendedVerifiedAutomatonInferenceTask
+import ru.ifmo.fbsat.task.extendedce.ExtendedVerifiedAutomatonInferenceTask
 import ru.ifmo.fbsat.task.extendedmin.ExtendedMin
 import java.io.File
 import java.time.LocalDateTime
@@ -413,7 +413,8 @@ class FbSAT : CliktCommand() {
                     maxGuardSize!!,
                     maxTotalGuardsSize,
                     solverProvider,
-                    isForbidLoops = isForbidLoops
+                    isForbidLoops = isForbidLoops,
+                    isEncodeAutomaton = isEncodeAutomaton
                 )
                 task.infer()
             }
@@ -425,7 +426,8 @@ class FbSAT : CliktCommand() {
                     maxOutgoingTransitions,
                     maxGuardSize!!,
                     solverProvider,
-                    smvDir
+                    smvDir,
+                    isEncodeAutomaton = isEncodeAutomaton
                 )
                 task.infer(maxTotalGuardsSize)
             }
@@ -439,13 +441,6 @@ class FbSAT : CliktCommand() {
             automaton.pprint()
 
             println("[+] Automaton has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes")
-
-            val scenarios4 = Scenario.fromFile(File("data/tests-4"))
-            val tree4 = ScenarioTree(scenarios4, tree.inputNames, tree.outputNames)
-            if (automaton.verify(tree4))
-                println("[+] Verify tests-4: OK")
-            else
-                println("[-] Verify tests-4: FAILED")
 
             if (automaton.verify(tree))
                 println("[+] Verify: OK")

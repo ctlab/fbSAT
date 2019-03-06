@@ -1,9 +1,10 @@
-package ru.ifmo.fbsat.task.extended
+package ru.ifmo.fbsat.task.extendedce
 
 import ru.ifmo.fbsat.automaton.Automaton
 import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
+import ru.ifmo.fbsat.task.extended.ExtendedAutomatonInferenceTask
 import java.io.File
 
 class ExtendedVerifiedAutomatonInferenceTask(
@@ -13,7 +14,8 @@ class ExtendedVerifiedAutomatonInferenceTask(
     val maxOutgoingTransitions: Int?, // K, K=C if null
     val maxGuardSize: Int, // P
     val solverProvider: () -> Solver,
-    val smvDir: File
+    val smvDir: File,
+    private val isEncodeAutomaton: Boolean = false
 ) {
     fun infer(maxTotalGuardsSize: Int? = null, finalize: Boolean = true): Automaton? {
         val negativeScenarioTree = initialNegativeScenarioTree
@@ -29,7 +31,8 @@ class ExtendedVerifiedAutomatonInferenceTask(
             numberOfStates,
             maxOutgoingTransitions,
             maxGuardSize,
-            solverProvider
+            solverProvider,
+            isEncodeAutomaton = isEncodeAutomaton
         )
         var automaton: Automaton? = null
 

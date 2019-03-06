@@ -727,6 +727,7 @@ internal class BaseReduction(
     }
 
     private fun Solver.declareSuperAdhocConstraints() {
+        println("=== ENCODING ADHOC AUTOMATON ===")
         comment("SA. SUPER AD-HOCs")
 
         clause(transition[1, 1, 2])
