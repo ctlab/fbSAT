@@ -1,6 +1,6 @@
 package ru.ifmo.fbsat.solver
 
-import ru.ifmo.fbsat.utils.IntMultiArray
+import ru.ifmo.multiarray.IntMultiArray
 
 fun Solver.atLeastOne(range: IntRange, array: IntMultiArray, vararg index: Int) {
     clause(range.asSequence().map {
@@ -11,6 +11,14 @@ fun Solver.atLeastOne(range: IntRange, array: IntMultiArray, vararg index: Int) 
 
 fun Solver.atLeastOne(literals: List<Int>) {
     clause(literals)
+}
+
+fun Solver.atLeastOne(literals: Sequence<Int>) {
+    clause(literals)
+}
+
+fun Solver.atLeastOne(block: suspend SequenceScope<Int>.() -> Unit) {
+    atLeastOne(sequence(block))
 }
 
 fun Solver.atMostOne(range: IntRange, array: IntMultiArray, vararg index: Int) {
@@ -28,6 +36,14 @@ fun Solver.atMostOne(literals: List<Int>) {
             clause(-literals[a], -literals[b])
 }
 
+fun Solver.atMostOne(literals: Sequence<Int>) {
+    atMostOne(literals.toList())
+}
+
+fun Solver.atMostOne(block: suspend SequenceScope<Int>.() -> Unit) {
+    atMostOne(sequence(block))
+}
+
 fun Solver.exactlyOne(range: IntRange, array: IntMultiArray, vararg index: Int) {
     atLeastOne(range, array, *index)
     atMostOne(range, array, *index)
@@ -36,6 +52,10 @@ fun Solver.exactlyOne(range: IntRange, array: IntMultiArray, vararg index: Int) 
 fun Solver.exactlyOne(literals: List<Int>) {
     atLeastOne(literals)
     atMostOne(literals)
+}
+
+fun Solver.exactlyOne(block: suspend SequenceScope<Int>.() -> Unit) {
+    exactlyOne(sequence(block).toList())
 }
 
 /**

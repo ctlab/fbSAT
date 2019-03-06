@@ -1,8 +1,8 @@
 package ru.ifmo.fbsat.automaton
 
-import ru.ifmo.fbsat.utils.IntMultiArray
-import ru.ifmo.fbsat.utils.MultiArray
 import ru.ifmo.fbsat.utils.toBooleanString
+import ru.ifmo.multiarray.IntMultiArray
+import ru.ifmo.multiarray.MultiArray
 
 interface Guard {
     val size: Int

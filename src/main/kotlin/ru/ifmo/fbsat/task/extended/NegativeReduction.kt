@@ -12,7 +12,7 @@ import ru.ifmo.fbsat.solver.imply
 import ru.ifmo.fbsat.solver.implyIff
 import ru.ifmo.fbsat.solver.implyIffAnd
 import ru.ifmo.fbsat.solver.implyIffOr
-import ru.ifmo.fbsat.utils.IntMultiArray
+import ru.ifmo.multiarray.IntMultiArray
 
 @Suppress("PropertyName", "PrivatePropertyName", "MemberVisibilityCanBePrivate")
 internal class NegativeReduction(
@@ -147,8 +147,6 @@ internal class NegativeReduction(
             declareSatisfactionConstraints()
             declareTransitionConstraints()
             declareFiringConstraints()
-            declareOutputEventConstraints()
-            declareAlgorithmConstraints()
             declareGuardConstraints()
         }
     }
@@ -161,32 +159,44 @@ internal class NegativeReduction(
             exactlyOne((1..(C + 1)).map { c -> satisfaction[v, c] })
 
         comment("CE.1.1. Satisfaction of active vertices")
-        // // satisfaction[tp(v), i] & actual_transition[i,tie(v),tin(v),j] => satisfaction[v, j]
-        // for (v in activeVs) {
-        //     break
-        //     val p = negativeScenarioTree.parent(v)
-        //     val e = negativeScenarioTree.inputEvent(v)
-        //     val u = negativeScenarioTree.inputNumber(v)
-        //     for (i in 1..C)
-        //         for (j in 1..C)
-        //             clause(
-        //                 -satisfaction[p, i],
-        //                 -actualTransition[i, e, u, j],
-        //                 satisfaction[v, j]
-        //             )
-        // }
-        // satisfaction[tp(v), i] => (satisfaction[v, j] <=> actual_transition[i,tie(v),tin(v),j])
+        // satisfaction[tp(v), i] => (satisfaction[v, j] <=> ...
+        // ... <=> actual_transition[i,tie(v),tin(v),j] & output_event[j, toe(v)] & output_values[j, tov(v)])
         for (v in activeVs) {
             val p = negativeScenarioTree.parent(v)
             val e = negativeScenarioTree.inputEvent(v)
             val u = negativeScenarioTree.inputNumber(v)
-            for (i in 1..C)
-                for (j in 1..C)
-                    implyIff(
+            val o = negativeScenarioTree.outputEvent(v)
+
+            for (j in 1..C) {
+                // aux = output_values[j, tov(v)]
+                // aux <=> AND_{z in tov(v), z' in tov(p)}( z ~~> z' )
+                val aux = newVariable()
+                iffAnd(aux, sequence {
+                    for (z in 1..Z) {
+                        val oldValue = negativeScenarioTree.outputValue(p, z)
+                        val newValue = negativeScenarioTree.outputValue(v, z)
+
+                        yield(
+                            when (val values = oldValue to newValue) {
+                                false to false -> -algorithm0[j, z]
+                                false to true -> algorithm0[j, z]
+                                true to false -> -algorithm1[j, z]
+                                true to true -> algorithm1[j, z]
+                                else -> error("Weird combination of old/new values: $values")
+                            }
+                        )
+                    }
+                })
+
+                for (i in 1..C)
+                    implyIffAnd(
                         satisfaction[p, i],
                         satisfaction[v, j],
-                        actualTransition[i, e, u, j]
+                        actualTransition[i, e, u, j],
+                        outputEvent[j, o],
+                        aux
                     )
+            }
         }
 
         comment("CE.1.1+. Non-satisfaction of active vertices (redundant)")
@@ -234,7 +244,7 @@ internal class NegativeReduction(
                     )
         }
 
-        // comment("CE.1.3. Propagation of satisfaction for passive vertices")
+        // comment("CE.1.3. Passive vertex may be satisfied only as its parent")
         // // satisfaction[tp(v), c] => satisfaction[v, c] | satisfaction[v, 0]
         // for (v in passiveVs) {
         //     val p = negativeScenarioTree.parent(v)
@@ -337,42 +347,6 @@ internal class NegativeReduction(
         for (c in 1..C)
             for (u in newU)
                 iff(firstFired[c, u, K + 1], notFired[c, u, K])
-    }
-
-    private fun Solver.declareOutputEventConstraints() {
-        comment("CE.4. Output event constraints")
-
-        comment("CE.4.1. output_event definition")
-        // satisfaction[v, c] => output_event[c, toe(v)]
-        for (v in activeVs) {
-            val o = negativeScenarioTree.outputEvent(v)
-            for (c in 1..C)
-                imply(satisfaction[v, c], outputEvent[c, o])
-        }
-    }
-
-    private fun Solver.declareAlgorithmConstraints() {
-        comment("CE.5. Algorithm constraints")
-
-        comment("CE.5.2. Algorithms definition")
-        for (v in activeVs) {
-            val p = negativeScenarioTree.parent(v)
-            for (z in 1..Z) {
-                val oldValue = negativeScenarioTree.outputValue(p, z)
-                val newValue = negativeScenarioTree.outputValue(v, z)
-                for (c in 1..C)
-                    imply(
-                        satisfaction[v, c],
-                        when (val values = oldValue to newValue) {
-                            false to false -> -algorithm0[c, z]
-                            false to true -> algorithm0[c, z]
-                            true to false -> -algorithm1[c, z]
-                            true to true -> algorithm1[c, z]
-                            else -> error("Weird combination of values: $values")
-                        }
-                    )
-            }
-        }
     }
 
     private fun Solver.declareGuardConstraints() {

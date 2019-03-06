@@ -1,13 +1,14 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 group = "ru.ifmo.fbsat"
-version = "1.0"
 
 plugins {
     `build-scan`
     application
     kotlin("jvm") version Versions.kotlin
     id("org.jlleitschuh.gradle.ktlint") version Versions.ktlint
+    id("fr.brouillard.oss.gradle.jgitver") version Versions.jgitver
+    id("com.github.johnrengelman.shadow") version Versions.shadow
 }
 
 repositories {
@@ -17,7 +18,9 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib"))
     implementation(Libs.clikt)
+    implementation(Libs.multiarray)
 
+    // testImplementation(Libs.kotlintest_runner_junit5)
     testImplementation(Libs.junit_jupiter_api)
     testRuntimeOnly(Libs.junit_jupiter_engine)
     testImplementation(Libs.junit_jupiter_params)
@@ -46,8 +49,8 @@ tasks {
         kotlinOptions.jvmTarget = "1.8"
     }
 
-    test {
-        useJUnit()
+    withType<Test> {
+        useJUnitPlatform()
     }
 
     jar {
@@ -56,7 +59,12 @@ tasks {
                 "Main-Class" to "ru.ifmo.fbsat.MainKt"
             )
         }
-        from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    }
+
+    shadowJar {
+        archiveBaseName.set(rootProject.name)
+        archiveClassifier.set(null as String?)
+        archiveVersion.set(null as String?)
     }
 
     wrapper {

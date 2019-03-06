@@ -203,7 +203,7 @@ class Automaton(
         return ok
     }
 
-    fun verify(negativeScenarioTree: NegativeScenarioTree): Boolean {
+    fun verify(negativeScenarioTree: NegativeScenarioTree, markCEStates: Boolean = false): Boolean {
         var ok = true
 
         for ((i, counterExample) in negativeScenarioTree.counterExamples.withIndex()) {
@@ -219,6 +219,10 @@ class Automaton(
                 val inputEvent = element.inputEvent
                 val inputValues = element.inputValues
                 val (newState, outputEvent, newValues) = go(currentState, inputEvent, inputValues, currentValues)
+
+                if (markCEStates) {
+                    element.ceState = "${newState.id}"
+                }
 
                 if (outputEvent == element.outputEvent && newValues == element.outputValues) {
                     // println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element satisfied by $newState")

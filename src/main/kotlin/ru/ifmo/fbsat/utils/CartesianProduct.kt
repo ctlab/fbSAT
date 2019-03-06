@@ -11,42 +11,46 @@ val <T> Sequence<Iterable<T>>.cartesianProduct: Sequence<List<T>>
 val <T> Iterable<Iterable<T>>.cartesianProduct: Sequence<List<T>>
     get() = this.asSequence().cartesianProduct
 
-fun <A, B> product(
-    xs1: Iterable<A>,
-    xs2: Iterable<B>
-) = sequence {
-    for (x1 in xs1) for (x2 in xs2)
-        yield(Tuple(x1, x2))
-}
-
-fun <A, B, C> product(
+fun <A, B, T> product(
     xs1: Iterable<A>,
     xs2: Iterable<B>,
-    xs3: Iterable<C>
+    block: (A, B) -> T
 ) = sequence {
-    for (x1 in xs1) for (x2 in xs2) for (x3 in xs3)
-        yield(Tuple(x1, x2, x3))
+    for (x1 in xs1) for (x2 in xs2)
+        yield(block(x1, x2))
 }
 
-fun <A, B, C, D> product(
+fun <A, B, C, T> product(
     xs1: Iterable<A>,
     xs2: Iterable<B>,
     xs3: Iterable<C>,
-    xs4: Iterable<D>
+    block: (A, B, C) -> T
 ) = sequence {
-    for (x1 in xs1) for (x2 in xs2) for (x3 in xs3) for (x4 in xs4)
-        yield(Tuple(x1, x2, x3, x4))
+    for (x1 in xs1) for (x2 in xs2) for (x3 in xs3)
+        yield(block(x1, x2, x3))
 }
 
-fun <A, B, C, D, E> product(
+fun <A, B, C, D, T> product(
     xs1: Iterable<A>,
     xs2: Iterable<B>,
     xs3: Iterable<C>,
     xs4: Iterable<D>,
-    xs5: Iterable<E>
+    block: (A, B, C, D) -> T
+) = sequence {
+    for (x1 in xs1) for (x2 in xs2) for (x3 in xs3) for (x4 in xs4)
+        yield(block(x1, x2, x3, x4))
+}
+
+fun <A, B, C, D, E, T> product(
+    xs1: Iterable<A>,
+    xs2: Iterable<B>,
+    xs3: Iterable<C>,
+    xs4: Iterable<D>,
+    xs5: Iterable<E>,
+    block: (A, B, C, D, E) -> T
 ) = sequence {
     for (x1 in xs1) for (x2 in xs2) for (x3 in xs3) for (x4 in xs4) for (x5 in xs5)
-        yield(Tuple(x1, x2, x3, x4, x5))
+        yield(block(x1, x2, x3, x4, x5))
 }
 
 fun main() {
@@ -60,7 +64,7 @@ fun main() {
     println("cartesianProduct(lists) = ${cp.map { it.joinToString("") }.toList()}")
     require(cp.size == 16) { "cp.size should be 16" }
 
-    for ((a, b, c) in product("AB".asIterable(), 1..3, "!?".asIterable())) {
+    product("AB".asIterable(), 1..3, "!?".asIterable()) { a, b, c ->
         println("abc = $a$b$c")
     }
 }

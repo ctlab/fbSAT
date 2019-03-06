@@ -6,9 +6,9 @@ import ru.ifmo.fbsat.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.automaton.NodeType
 import ru.ifmo.fbsat.automaton.ParseTreeGuard
 import ru.ifmo.fbsat.scenario.ScenarioTree
-import ru.ifmo.fbsat.utils.BooleanMultiArray
-import ru.ifmo.fbsat.utils.IntMultiArray
-import ru.ifmo.fbsat.utils.MultiArray
+import ru.ifmo.multiarray.BooleanMultiArray
+import ru.ifmo.multiarray.IntMultiArray
+import ru.ifmo.multiarray.MultiArray
 
 internal class BaseAssignment(
     val scenarioTree: ScenarioTree,

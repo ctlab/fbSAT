@@ -10,7 +10,7 @@ import ru.ifmo.fbsat.solver.iff
 import ru.ifmo.fbsat.solver.iffAnd
 import ru.ifmo.fbsat.solver.iffOr
 import ru.ifmo.fbsat.solver.imply
-import ru.ifmo.fbsat.utils.IntMultiArray
+import ru.ifmo.multiarray.IntMultiArray
 
 class Reduction(
     val scenarioTree: ScenarioTree,

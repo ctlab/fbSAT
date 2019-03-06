@@ -2,9 +2,9 @@ package ru.ifmo.fbsat.task.extended
 
 import ru.ifmo.fbsat.automaton.NodeType
 import ru.ifmo.fbsat.scenario.NegativeScenarioTree
-import ru.ifmo.fbsat.utils.BooleanMultiArray
-import ru.ifmo.fbsat.utils.IntMultiArray
-import ru.ifmo.fbsat.utils.MultiArray
+import ru.ifmo.multiarray.BooleanMultiArray
+import ru.ifmo.multiarray.IntMultiArray
+import ru.ifmo.multiarray.MultiArray
 
 internal class NegativeAssignment(
     val negativeScenarioTree: NegativeScenarioTree,
@@ -87,16 +87,16 @@ internal class NegativeAssignment(
             //     )
             // }
 
-            println("[*] Satisfaction for negative scenarios:")
-            for ((j, scenario) in negTree.counterExamples.withIndex()) {
-                val sat = scenario.elements.mapIndexed { i, elem ->
-                    elem.nodeId?.let { id ->
-                        val c = satisfaction[id]
-                        if (i + 1 == scenario.loopPosition) "<$c>" else "$c"
-                    } ?: "?"
-                }.joinToString(" ")
-                println("[${j + 1}/${negTree.counterExamples.size}] satisfaction = [$sat]")
-            }
+            // println("[*] Satisfaction for negative scenarios:")
+            // for ((j, scenario) in negTree.counterExamples.withIndex()) {
+            //     val sat = scenario.elements.mapIndexed { i, elem ->
+            //         elem.nodeId?.let { id ->
+            //             val c = satisfaction[id]
+            //             if (i + 1 == scenario.loopPosition) "<$c>" else "$c"
+            //         } ?: "?"
+            //     }.joinToString(" ")
+            //     println("[${j + 1}/${negTree.counterExamples.size}] satisfaction = [$sat]")
+            // }
 
             return NegativeAssignment(
                 negTree, C, K, P,

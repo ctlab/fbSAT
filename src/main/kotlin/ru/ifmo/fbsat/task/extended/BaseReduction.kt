@@ -11,7 +11,7 @@ import ru.ifmo.fbsat.solver.imply
 import ru.ifmo.fbsat.solver.implyIff
 import ru.ifmo.fbsat.solver.implyIffAnd
 import ru.ifmo.fbsat.solver.implyIffOr
-import ru.ifmo.fbsat.utils.IntMultiArray
+import ru.ifmo.multiarray.IntMultiArray
 
 @Suppress("PropertyName", "PrivatePropertyName", "MemberVisibilityCanBePrivate")
 internal class BaseReduction(

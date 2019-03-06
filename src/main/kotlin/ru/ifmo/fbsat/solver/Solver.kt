@@ -1,6 +1,6 @@
 package ru.ifmo.fbsat.solver
 
-import ru.ifmo.fbsat.utils.IntMultiArray
+import ru.ifmo.multiarray.IntMultiArray
 import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlin.math.absoluteValue

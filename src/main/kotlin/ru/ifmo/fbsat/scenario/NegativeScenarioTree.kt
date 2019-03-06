@@ -217,10 +217,12 @@ class NegativeScenarioTree(
         }
         check(loopBack != null) { "Weird, but loopBack is null." }
 
-        loopBack.isLoopBack = true
-        val last: Node = current
-        check(!(loopBack.id in last.loopBacks.map { it.id } && loopBack !in last.loopBacks))
-        last.loopBacks.add(loopBack)
+        if (loopBack != null) {
+            loopBack.isLoopBack = true
+            val last: Node = current
+            check(!(loopBack.id in last.loopBacks.map { it.id } && loopBack !in last.loopBacks))
+            last.loopBacks.add(loopBack)
+        }
 
         // if (isAnyoneCreated) {
         _counterExamples.add(negativeScenario)

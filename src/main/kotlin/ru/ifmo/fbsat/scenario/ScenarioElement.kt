@@ -5,7 +5,7 @@ class ScenarioElement(
     val inputValues: String,
     val outputEvent: String?,
     val outputValues: String,
-    val ceState: String? = null // FIXME: remove
+    var ceState: String? = null // FIXME: remove
 ) {
     var nodeId: Int? = null
 

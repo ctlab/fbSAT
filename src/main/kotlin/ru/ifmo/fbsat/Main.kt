@@ -425,7 +425,7 @@ class FbSAT : CliktCommand() {
                     maxOutgoingTransitions,
                     maxGuardSize!!,
                     solverProvider,
-                    smvDir!!
+                    smvDir
                 )
                 task.infer(maxTotalGuardsSize)
             }
@@ -455,14 +455,18 @@ class FbSAT : CliktCommand() {
                     error("ST verification failed")
             }
 
-            negTree?.let {
-                if (automaton.verify(it))
+            if (negTree != null) {
+                if (automaton.verify(negTree, markCEStates = true))
                     println("[+] Verify CE: OK")
                 else {
                     println("[-] Verify CE: FAILED")
                     if (failIfCEVerifyFailed)
                         error("CE verification failed")
                 }
+
+                val fileMarked = File("$fileCounterExamples-marked")
+                fileMarked.writeText(negTree.toGraphvizString())
+                Runtime.getRuntime().exec("dot -Tpdf -O $fileMarked.gv")
             }
 
             fileVerifyCE?.let {
