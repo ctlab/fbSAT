@@ -1,6 +1,12 @@
 language: java
 
-install: true
+jdk:
+  - oraclejdk8
+
+install: true  # skip the installation phase
+
+script:
+  - ./gradlew clean build --scan --stacktrace
 
 # https://docs.travis-ci.com/user/languages/java/#Caching
 before_cache:
