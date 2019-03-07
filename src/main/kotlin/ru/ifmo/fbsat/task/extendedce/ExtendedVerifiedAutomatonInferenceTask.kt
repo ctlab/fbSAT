@@ -36,7 +36,7 @@ class ExtendedVerifiedAutomatonInferenceTask(
         )
         var automaton: Automaton? = null
 
-        for (iterationNumber in 1..1000) {
+        for (iterationNumber in 1..10000) {
             println("===== Iteration #$iterationNumber =====")
 
             // Infer automaton
