@@ -459,9 +459,9 @@ class FbSAT : CliktCommand() {
                         error("CE verification failed")
                 }
 
-                val fileMarked = File("$fileCounterExamples-marked")
-                fileMarked.writeText(negTree.toGraphvizString())
-                Runtime.getRuntime().exec("dot -Tpdf -O $fileMarked.gv")
+                val fileCEMarkedGv = File("ce-marked.gv")
+                fileCEMarkedGv.writeText(negTree.toGraphvizString())
+                Runtime.getRuntime().exec("dot -Tpdf -O $fileCEMarkedGv")
             }
 
             fileVerifyCE?.let {
