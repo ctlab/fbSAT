@@ -28,6 +28,12 @@ Tool for automatic inference and generalization of function block finite-state m
     ./gradlew clean shadowJar && java -jar build/libs/fbSAT.jar -h
     ```
 
+* If you want to create and install application distribution and use provided binary, use `isntallDist` gradle task:
+
+    ```
+    ./gradlew clean installDist && ./build/install/fbSAT/bin/fbSAT -h
+    ```
+
 ## Command-line interface
 
 ```
