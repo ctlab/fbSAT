@@ -206,15 +206,15 @@ class Automaton(
     fun verify(negativeScenarioTree: NegativeScenarioTree, markCEStates: Boolean = false): Boolean {
         var ok = true
 
-        for ((i, counterExample) in negativeScenarioTree.counterExamples.withIndex()) {
-            val satisfyingStates = MutableList<State?>(counterExample.elements.size) { null }
+        for ((i, counterexample) in negativeScenarioTree.counterexamples.withIndex()) {
+            val satisfyingStates = MutableList<State?>(counterexample.elements.size) { null }
             satisfyingStates[0] = this.initialState
-            // println("[${i + 1}::1/${counterExample.elements.size}] ${negativeScenarioTree.rootElement} satisfied by ${this.initialState}")
+            // println("[${i + 1}::1/${counterexample.elements.size}] ${negativeScenarioTree.rootElement} satisfied by ${this.initialState}")
 
             var currentState = this.initialState
             var currentValues = negativeScenarioTree.rootElement!!.outputValues
 
-            for ((j, element) in counterExample.elements.withIndex().drop(1)) {
+            for ((j, element) in counterexample.elements.withIndex().drop(1)) {
                 // j -- 0-based index of CE-element (CE-state)
                 val inputEvent = element.inputEvent
                 val inputValues = element.inputValues
@@ -225,10 +225,10 @@ class Automaton(
                 }
 
                 if (outputEvent == element.outputEvent && newValues == element.outputValues) {
-                    // println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element satisfied by $newState")
+                    // println("[${i + 1}::${j + 1}/${counterexample.elements.size}] $element satisfied by $newState")
                     satisfyingStates[j] = newState
                 } else {
-                    // println("[${i + 1}::${j + 1}/${counterExample.elements.size}] $element not satisfied (newState=$newState, newValues=$newValues)")
+                    // println("[${i + 1}::${j + 1}/${counterexample.elements.size}] $element not satisfied (newState=$newState, newValues=$newValues)")
                     break
                 }
 
@@ -236,24 +236,24 @@ class Automaton(
                 currentValues = newValues
             }
 
-            println(
-                "[CE::${i + 1}] Satisfying states: [${satisfyingStates.map {
-                    it?.id ?: 0
-                }.withIndex().joinToString(" ") { (j, x) ->
-                    if (j + 1 == counterExample.loopPosition) "<$x>" else "$x"
-                }}] (loop = ${counterExample.loopPosition} / ${counterExample.elements.size})"
-            )
+            // println(
+            //     "[CE::${i + 1}] Satisfying states: [${satisfyingStates.map {
+            //         it?.id ?: 0
+            //     }.withIndex().joinToString(" ") { (j, x) ->
+            //         if (j + 1 == counterexample.loopPosition) "<$x>" else "$x"
+            //     }}] (loop = ${counterexample.loopPosition} / ${counterexample.elements.size})"
+            // )
 
-            if (counterExample.loopPosition != null) {
-                val loop = satisfyingStates[counterExample.loopPosition - 1]
+            if (counterexample.loopPosition != null) {
+                val loop = satisfyingStates[counterexample.loopPosition - 1]
                 val last = satisfyingStates.last()
                 if (loop != null && last != null) {
                     if (last == loop) {
                         println("[!] Counterexample #${i + 1} is satisfied (last==loop)")
-                        println(">>> loopPosition = ${counterExample.loopPosition}")
+                        println(">>> loopPosition = ${counterexample.loopPosition}")
                         println(">>> loop = $loop")
                         println(">>> last = $last")
-                        println(">>> counterExample = $counterExample")
+                        println(">>> counterexample = $counterexample")
                         ok = false
                     }
                 }

@@ -74,28 +74,28 @@ internal class NegativeAssignment(
             //         println("[.] terminal[c = $c, k = $k, p = ${1..P}] = ${(1..P).map { p -> if (terminal[c, k, p] != 0) reduction.terminal[c, k, p, terminal[c, k, p]] else 0 }} = ${(1..P).map { p -> terminal[c, k, p] }}")
 
             // println("[*] elem.nodeId`s for counterexamples:")
-            // for ((j, scenario) in negTree.counterExamples.withIndex()) {
+            // for ((j, scenario) in negTree.counterexamples.withIndex()) {
             //     val nodeIds = scenario.elements.mapIndexed { i, elem ->
             //         elem.nodeId?.let { id ->
             //             if (i + 1 == scenario.loopPosition) "<$id>" else "$id"
             //         } ?: "?"
             //     }.joinToString(" ")
             //     println(
-            //         "[${j + 1}/${negTree.counterExamples.size}] nodeIds = [$nodeIds] (loopPosition = ${scenario.loopPosition}, loopBacks = ${negTree.loopBacks(
+            //         "[${j + 1}/${negTree.counterexamples.size}] nodeIds = [$nodeIds] (loopPosition = ${scenario.loopPosition}, loopBacks = ${negTree.loopBacks(
             //             scenario.elements.last().nodeId!!
             //         )})"
             //     )
             // }
 
             // println("[*] Satisfaction for negative scenarios:")
-            // for ((j, scenario) in negTree.counterExamples.withIndex()) {
+            // for ((j, scenario) in negTree.counterexamples.withIndex()) {
             //     val sat = scenario.elements.mapIndexed { i, elem ->
             //         elem.nodeId?.let { id ->
             //             val c = satisfaction[id]
             //             if (i + 1 == scenario.loopPosition) "<$c>" else "$c"
             //         } ?: "?"
             //     }.joinToString(" ")
-            //     println("[${j + 1}/${negTree.counterExamples.size}] satisfaction = [$sat]")
+            //     println("[${j + 1}/${negTree.counterexamples.size}] satisfaction = [$sat]")
             // }
 
             return NegativeAssignment(

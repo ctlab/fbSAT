@@ -2,7 +2,8 @@ package ru.ifmo.fbsat.scenario
 
 import java.io.File
 
-class CounterExample(
+// TODO: rename to `Counterexample` without capitalizing second subword
+class Counterexample(
     val states: List<State>
 ) {
     /**
@@ -19,7 +20,7 @@ class CounterExample(
             }
         }
 
-        // println("[*] CounterExample:")
+        // println("[*] Counterexample:")
         // states.forEachIndexed { index, state ->
         //     println("[${index + 1}/${states.size}] $state")
         // }
@@ -38,12 +39,12 @@ class CounterExample(
     }
 
     override fun toString(): String {
-        return "CounterExample(loopPosition=$loopPosition, states=$states)"
+        return "Counterexample(loopPosition=$loopPosition, states=$states)"
     }
 
     companion object {
-        fun fromFile(file: File): List<CounterExample> {
-            val ces = mutableListOf<CounterExample>()
+        fun fromFile(file: File): List<Counterexample> {
+            val ces = mutableListOf<Counterexample>()
             var states = mutableListOf<State>()
             var hasState = false
             var stateName = ""
@@ -60,7 +61,7 @@ class CounterExample(
                             hasState = false
                             // Add counter-example
                             if (states.isNotEmpty())
-                                ces.add(CounterExample(states))
+                                ces.add(Counterexample(states))
                             // Reset states
                             states = mutableListOf()
                         }
@@ -99,7 +100,7 @@ class CounterExample(
                     states.add(State(stateName, isLoop, variables))
                 // Post-add counter-example
                 if (states.isNotEmpty())
-                    ces.add(CounterExample(states))
+                    ces.add(Counterexample(states))
             }
 
             return ces

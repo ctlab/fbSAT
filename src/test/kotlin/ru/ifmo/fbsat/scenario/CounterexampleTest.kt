@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class CounterExampleTest {
+class CounterexampleTest {
     private val file = createTempFile()
 
     init {
@@ -42,7 +42,7 @@ class CounterExampleTest {
 
     @Test
     fun `counter-example from file`() {
-        val ces = CounterExample.fromFile(file)
+        val ces = Counterexample.fromFile(file)
         assertEquals(1, ces.size)
 
         val ce = ces.first()

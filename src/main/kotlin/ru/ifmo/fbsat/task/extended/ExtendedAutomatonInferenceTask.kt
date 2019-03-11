@@ -91,9 +91,9 @@ class ExtendedAutomatonInferenceTask(
 
     private fun declareNegativeReduction() {
         if (negativeScenarioTree == null) return
-        if (negativeScenarioTree.counterExamples.isEmpty()) return
+        if (negativeScenarioTree.counterexamples.isEmpty()) return
         // FIXME: must do following:
-        if (negativeScenarioTree.counterExamples.first().elements.isEmpty()) return
+        if (negativeScenarioTree.counterexamples.first().elements.isEmpty()) return
 
         // if (negativeReduction != null) return
 

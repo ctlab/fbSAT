@@ -44,7 +44,7 @@ class FbSAT : CliktCommand() {
         readable = true
     ).required()
 
-    private val fileCounterExamples by option(
+    private val fileCounterexamples by option(
         "-ce", "--counterexamples",
         help = "File with counter-examples",
         metavar = "<path>"
@@ -200,7 +200,7 @@ class FbSAT : CliktCommand() {
             )
         )
 
-        val negTree = fileCounterExamples?.let {
+        val negTree = fileCounterexamples?.let {
             NegativeScenarioTree.fromFile(
                 it,
                 tree.inputEvents,
@@ -231,7 +231,7 @@ class FbSAT : CliktCommand() {
                 val loopBacks = negST.loopBacks(v)
                 if (loopBacks.size >= 2) {
                     println("[*] Node v = $v has ${loopBacks.size} loop-backs: $loopBacks")
-                    for ((i, ns) in negST.counterExamples.withIndex()) {
+                    for ((i, ns) in negST.counterexamples.withIndex()) {
                         // if (ns.elements.last().nodeId == v) {
                         //     println(" >> NegativeScenario #${i + 1} with loop position ${ns.loopPosition} (id = ${ns.elements[ns.loopPosition!! - 1].nodeId})")
                         // }
@@ -363,9 +363,9 @@ class FbSAT : CliktCommand() {
 
             if (negTree != null)
                 if (automaton2.verify(negTree))
-                    println("[+] Verify(CE) automaton2 on $fileCounterExamples: OK")
+                    println("[+] Verify(CE) automaton2 on $fileCounterexamples: OK")
                 else
-                    println("[-] Verify(CE) automaton2 on $fileCounterExamples: FAILED")
+                    println("[-] Verify(CE) automaton2 on $fileCounterexamples: FAILED")
             return
         }
 

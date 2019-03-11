@@ -1,8 +1,10 @@
 package ru.ifmo.fbsat.task.extendedce
 
 import ru.ifmo.fbsat.automaton.Automaton
+import ru.ifmo.fbsat.scenario.Counterexample
 import ru.ifmo.fbsat.scenario.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.ScenarioTree
+import ru.ifmo.fbsat.scenario.toNegativeScenario
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.task.extended.ExtendedAutomatonInferenceTask
 import java.io.File
@@ -51,15 +53,28 @@ class ExtendedVerifiedAutomatonInferenceTask(
             Runtime.getRuntime().exec(cmd, null, smvDir).waitFor()
 
             // Handle counterexamples after verification
-            val fileCounterExamples = smvDir.resolve("counterexamples")
-            if (fileCounterExamples.exists()) {
-                // Populate CETree with new counterexamples
-                negativeScenarioTree.addFromFile(fileCounterExamples, scenarioTree)
+            val fileCounterexamples = smvDir.resolve("counterexamples")
+            if (fileCounterexamples.exists()) {
+                // Read new counterexamples
+                val newCounterexamples = Counterexample.fromFile(fileCounterexamples)
+
+                // Convert counterexamples to negative scenarios
+                val newNegativeScenarios = newCounterexamples.map {
+                    it.toNegativeScenario(
+                        scenarioTree.inputEvents,
+                        scenarioTree.outputEvents,
+                        scenarioTree.inputNames,
+                        scenarioTree.outputNames
+                    )
+                }
+
+                // Populate CETree with new negative scenarios
+                newNegativeScenarios.forEach(negativeScenarioTree::addNegativeScenario)
 
                 // [DEBUG] Append new counterexamples to 'ce'
                 println("[*] Appending new counterexamples to 'ce'...")
-                File("ce").appendText(fileCounterExamples.readText())
-                // val cmd2 = "cat $fileCounterExamples >> ce"
+                File("ce").appendText(fileCounterexamples.readText())
+                // val cmd2 = "cat $fileCounterexamples >> ce"
                 // println("[$] Running '$cmd2'...")
                 // Runtime.getRuntime().exec(cmd2).waitFor()
             } else {

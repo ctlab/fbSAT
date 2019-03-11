@@ -42,13 +42,13 @@ class NegativeScenario(
             inputNames: List<String>,
             outputNames: List<String>
         ): List<NegativeScenario> =
-            CounterExample.fromFile(file).map {
+            Counterexample.fromFile(file).map {
                 it.toNegativeScenario(inputEvents, outputEvents, inputNames, outputNames)
             }
     }
 }
 
-fun CounterExample.toNegativeScenario(
+fun Counterexample.toNegativeScenario(
     inputEvents: List<String>,
     outputEvents: List<String>,
     inputNames: List<String>,

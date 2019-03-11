@@ -10,7 +10,7 @@ class NegativeScenarioTree(
     private val isTrie: Boolean = true
 ) {
     private val lazyCache = LazyCache()
-    private val _counterExamples: MutableList<NegativeScenario> = mutableListOf()
+    private val _counterexamples: MutableList<NegativeScenario> = mutableListOf()
     private val _inputNames: List<String>? = inputNames
     private val _outputNames: List<String>? = outputNames
     private val _nodes: MutableList<Node> = mutableListOf()
@@ -18,7 +18,7 @@ class NegativeScenarioTree(
     private val root: Node?
         get() = nodes.firstOrNull()
 
-    val counterExamples: List<NegativeScenario> = _counterExamples
+    val counterexamples: List<NegativeScenario> = _counterexamples
 
     val size
         get() = nodes.size
@@ -225,7 +225,7 @@ class NegativeScenarioTree(
         }
 
         // if (isAnyoneCreated) {
-        _counterExamples.add(negativeScenario)
+        _counterexamples.add(negativeScenario)
         lazyCache.invalidate()
         // } else {
         //     check(isTrie)
@@ -309,7 +309,7 @@ class NegativeScenarioTree(
     }
 
     override fun toString(): String {
-        return "NegativeScenarioTree(size=$size, counterexamples=${counterExamples.size}, inputEvents=$inputEvents, outputEvents=$outputEvents, inputNames=$inputNames, outputNames=$outputNames)"
+        return "NegativeScenarioTree(size=$size, counterexamples=${counterexamples.size}, inputEvents=$inputEvents, outputEvents=$outputEvents, inputNames=$inputNames, outputNames=$outputNames)"
     }
 
     companion object {
@@ -321,7 +321,7 @@ class NegativeScenarioTree(
             outputNames: List<String>,
             isTrie: Boolean = true
         ): NegativeScenarioTree {
-            val counterExamples = NegativeScenario.fromFile(
+            val negativeScenarios = NegativeScenario.fromFile(
                 file,
                 inputEvents,
                 outputEvents,
@@ -329,7 +329,7 @@ class NegativeScenarioTree(
                 outputNames
             )
             return NegativeScenarioTree(
-                counterExamples,
+                negativeScenarios,
                 inputNames = inputNames,
                 outputNames = outputNames,
                 isTrie = isTrie
