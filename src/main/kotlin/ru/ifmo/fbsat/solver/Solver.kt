@@ -127,12 +127,14 @@ class IncrementalSolver(command: String) : AbstractSolver() {
 
     override fun clause(literals: List<Int>) {
         ++numberOfClauses
+
         for (x in literals)
-            processInput.writeUtf8("$x").writeUtf8(" ")
+            processInput.writeUtf8(x.toString()).writeUtf8(" ")
         processInput.writeUtf8("0\n")
 
-        val s = literals.joinToString(" ", postfix = " 0\n")
-        buffer.writeUtf8(s)
+        for (x in literals)
+            buffer.writeUtf8(x.toString()).writeUtf8(" ")
+        buffer.writeUtf8("0\n")
     }
 
     override fun comment(comment: String) {
