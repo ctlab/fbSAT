@@ -9,6 +9,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version Versions.ktlint
     id("fr.brouillard.oss.gradle.jgitver") version Versions.jgitver
     id("com.github.johnrengelman.shadow") version Versions.shadow
+    id("org.jetbrains.dokka") version Versions.dokka
 }
 
 repositories {
@@ -52,6 +53,11 @@ tasks {
 
     withType<Test> {
         useJUnit()
+    }
+
+    dokka {
+        outputFormat = "html"
+        outputDirectory = "$buildDir/javadoc"
     }
 
     jar {
