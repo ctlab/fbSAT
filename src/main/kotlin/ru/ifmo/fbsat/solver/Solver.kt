@@ -12,12 +12,12 @@ interface Solver {
     val numberOfClauses: Int
 
     fun newVariable(): Int
-    fun newArray(vararg shape: Int) = IntMultiArray(shape) { newVariable() }
+    fun newArray(vararg shape: Int): IntMultiArray
 
     fun clause(literals: List<Int>)
-    fun clause(vararg literals: Int) = clause(literals.asList())
-    fun clause(literals: Sequence<Int>) = clause(literals.toList())
-    fun clause(block: suspend SequenceScope<Int>.() -> Unit) = clause(sequence(block))
+    fun clause(vararg literals: Int)
+    fun clause(literals: Sequence<Int>)
+    fun clause(block: suspend SequenceScope<Int>.() -> Unit)
 
     fun comment(comment: String)
 
@@ -31,7 +31,12 @@ abstract class AbstractSolver : Solver {
     final override var numberOfClauses = 0
         protected set
 
-    override fun newVariable(): Int = ++numberOfVariables
+    final override fun newVariable(): Int = ++numberOfVariables
+    final override fun newArray(vararg shape: Int) = IntMultiArray(shape) { newVariable() }
+
+    final override fun clause(vararg literals: Int) = clause(literals.asList())
+    final override fun clause(literals: Sequence<Int>) = clause(literals.toList())
+    final override fun clause(block: suspend SequenceScope<Int>.() -> Unit) = clause(sequence(block))
 }
 
 class DefaultSolver(private val command: String) : AbstractSolver() {
