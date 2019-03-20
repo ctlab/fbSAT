@@ -5,7 +5,7 @@ import ru.ifmo.fbsat.automaton.Automaton
 import ru.ifmo.fbsat.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.automaton.NodeType
 import ru.ifmo.fbsat.automaton.ParseTreeGuard
-import ru.ifmo.fbsat.scenario.ScenarioTree
+import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.multiarray.BooleanMultiArray
 import ru.ifmo.multiarray.IntMultiArray
 import ru.ifmo.multiarray.MultiArray

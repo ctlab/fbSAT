@@ -1,7 +1,9 @@
 package ru.ifmo.fbsat.task.extended
 
+import ru.ifmo.fbsat.automaton.Automaton
+import ru.ifmo.fbsat.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.automaton.NodeType
-import ru.ifmo.fbsat.scenario.ScenarioTree
+import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.solver.exactlyOne
 import ru.ifmo.fbsat.solver.iff
@@ -11,7 +13,16 @@ import ru.ifmo.fbsat.solver.imply
 import ru.ifmo.fbsat.solver.implyIff
 import ru.ifmo.fbsat.solver.implyIffAnd
 import ru.ifmo.fbsat.solver.implyIffOr
+import ru.ifmo.fbsat.utils.toBooleanString
 import ru.ifmo.multiarray.IntMultiArray
+
+typealias AlgorithmsAssumptions = Map<Int, Pair<String, String>>
+
+fun Automaton.getAlgorithmsAssumptions(): AlgorithmsAssumptions = states.associate { state ->
+    with(state.algorithm as BinaryAlgorithm) {
+        state.id to (algorithm0.toBooleanString() to algorithm1.toBooleanString())
+    }
+}
 
 @Suppress("PropertyName", "PrivatePropertyName", "MemberVisibilityCanBePrivate")
 internal class BaseReduction(
@@ -20,7 +31,8 @@ internal class BaseReduction(
     val K: Int,
     val P: Int,
     solver: Solver,
-    isEncodeAutomaton: Boolean = false
+    isEncodeAutomaton: Boolean = false,
+    isEncodeTransitionsOrder: Boolean
 ) {
     // Constants
     private val V = scenarioTree.size
@@ -96,6 +108,7 @@ internal class BaseReduction(
             declareNotNodesConstraints()
             declareAdhocConstraints()
             if (isEncodeAutomaton) declareSuperAdhocConstraints()
+            if (isEncodeTransitionsOrder) declareTransitionsOrderConstraints()
         }
     }
 
@@ -843,5 +856,31 @@ internal class BaseReduction(
         magic(6, "01010xx")
         magic(7, "xxxxx1x")
         magic(8, "xxxxx01")
+    }
+
+    private fun Solver.declareTransitionsOrderConstraints() {
+        comment("+++. Transitions order constraints")
+
+        // transition[i,k,j] => AND_{k'<k, j'>j}( ~transition[i,k',j'] )
+        for (i in 1..C)
+            for (k in 2..K)
+                for (k_ in 1 until k)
+                    for (j in 1..(C - 1))
+                        for (j_ in (j + 1)..C)
+                            imply(
+                                transition[i, k, j],
+                                -transition[i, k_, j_]
+                            )
+
+        // transition[i,k,j] => AND_{k'<k}( OR_{j'<=j}( transition[i,k',j'] ) )
+        for (i in 1..C)
+            for (k in 2..K)
+                for (k_ in 1 until k)
+                    for (j in 1..C)
+                        clause {
+                            yield(-transition[i, k, j])
+                            for (j_ in 1..j)
+                                yield(transition[i, k_, j_])
+                        }
     }
 }

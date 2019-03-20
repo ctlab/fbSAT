@@ -19,6 +19,7 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(Libs.clikt)
     implementation(Libs.multiarray)
+    implementation(Libs.okio)
 
     // testImplementation(Libs.kotlintest_runner_junit5)
     testImplementation(Libs.junit_jupiter_api)
@@ -50,7 +51,7 @@ tasks {
     }
 
     withType<Test> {
-        useJUnitPlatform()
+        useJUnit()
     }
 
     jar {

@@ -1,8 +1,7 @@
-package ru.ifmo.fbsat.scenario
+package ru.ifmo.fbsat.scenario.negative
 
 import java.io.File
 
-// TODO: rename to `Counterexample` without capitalizing second subword
 class Counterexample(
     val states: List<State>
 ) {
@@ -57,7 +56,13 @@ class Counterexample(
                         line.startsWith("Trace Description") -> {
                             // Add last state
                             if (hasState)
-                                states.add(State(stateName, isLoop, variables))
+                                states.add(
+                                    State(
+                                        stateName,
+                                        isLoop,
+                                        variables
+                                    )
+                                )
                             hasState = false
                             // Add counter-example
                             if (states.isNotEmpty())
@@ -71,14 +76,26 @@ class Counterexample(
                         line == "-- Loop starts here" -> {
                             // Add last state
                             if (hasState)
-                                states.add(State(stateName, isLoop, variables))
+                                states.add(
+                                    State(
+                                        stateName,
+                                        isLoop,
+                                        variables
+                                    )
+                                )
                             hasState = false
                             isLoop = true
                         }
                         line.startsWith("-> State") -> {
                             // Add last state
                             if (hasState) {
-                                states.add(State(stateName, isLoop, variables))
+                                states.add(
+                                    State(
+                                        stateName,
+                                        isLoop,
+                                        variables
+                                    )
+                                )
                                 // Reset isLoop only after state processing
                                 isLoop = false
                             }

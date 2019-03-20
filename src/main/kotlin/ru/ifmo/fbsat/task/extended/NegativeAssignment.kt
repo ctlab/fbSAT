@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.task.extended
 
 import ru.ifmo.fbsat.automaton.NodeType
-import ru.ifmo.fbsat.scenario.NegativeScenarioTree
+import ru.ifmo.fbsat.scenario.negative.NegativeScenarioTree
 import ru.ifmo.multiarray.BooleanMultiArray
 import ru.ifmo.multiarray.IntMultiArray
 import ru.ifmo.multiarray.MultiArray

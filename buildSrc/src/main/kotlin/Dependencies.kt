@@ -8,6 +8,7 @@ object Versions {
     const val kotlintest_runner_jnuit5 = "3.3.0"
     const val multiarray = "1.1.1-5"
     const val shadow = "5.0.0"
+    const val okio = "2.2.0"
 }
 
 object Libs {
@@ -18,4 +19,5 @@ object Libs {
     const val kluent = "org.amshove.kluent:kluent:${Versions.kluent}"
     const val kotlintest_runner_junit5 = "io.kotlintest:kotlintest-runner-junit5:${Versions.kotlintest_runner_jnuit5}"
     const val multiarray = "ru.ifmo.multiarray:multiarray:${Versions.multiarray}"
+    const val okio = "com.squareup.okio:okio:${Versions.okio}"
 }

@@ -1,6 +1,6 @@
 package ru.ifmo.fbsat.task.basic
 
-import ru.ifmo.fbsat.scenario.ScenarioTree
+import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.solver.atMostOne
 import ru.ifmo.fbsat.solver.declareComparatorLessThanOrEqual

@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.task.extended
 
 import ru.ifmo.fbsat.automaton.Automaton
-import ru.ifmo.fbsat.scenario.ScenarioTree
+import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.utils.toBooleanArray
 
 internal fun Automaton.checkNegativeAssignment(negAssignment: NegativeAssignment, scenarioTree: ScenarioTree) {

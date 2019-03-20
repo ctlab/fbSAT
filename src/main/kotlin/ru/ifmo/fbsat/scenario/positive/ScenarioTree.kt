@@ -1,15 +1,16 @@
-package ru.ifmo.fbsat.scenario
+package ru.ifmo.fbsat.scenario.positive
 
+import ru.ifmo.fbsat.scenario.ScenarioElement
 import ru.ifmo.fbsat.utils.LazyCache
 
 class ScenarioTree(
-    scenarios: List<Scenario>,
+    scenarios: List<PositiveScenario>,
     inputNames: List<String>? = null,
     outputNames: List<String>? = null,
     private val isTrie: Boolean = true
 ) {
     private val lazyCache = LazyCache()
-    private val _scenarios: MutableList<Scenario> = mutableListOf()
+    private val _scenarios: MutableList<PositiveScenario> = mutableListOf()
     private val _inputNames: List<String>? = inputNames
     private val _outputNames: List<String>? = outputNames
     private val _nodes: MutableList<Node> = mutableListOf()
@@ -17,7 +18,7 @@ class ScenarioTree(
     private val root: Node?
         get() = nodes.firstOrNull()
 
-    val scenarios: List<Scenario> = _scenarios
+    val scenarios: List<PositiveScenario> = _scenarios
 
     val size
         get() = nodes.size
@@ -124,7 +125,7 @@ class ScenarioTree(
         }
     }
 
-    fun addScenario(scenario: Scenario) {
+    fun addScenario(scenario: PositiveScenario) {
         val root = this.root ?: Node(
             ScenarioElement(
                 inputEvent = "",

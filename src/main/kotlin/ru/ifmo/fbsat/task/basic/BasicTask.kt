@@ -1,13 +1,13 @@
 package ru.ifmo.fbsat.task.basic
 
 import ru.ifmo.fbsat.automaton.Automaton
-import ru.ifmo.fbsat.scenario.NegativeScenarioTree
-import ru.ifmo.fbsat.scenario.ScenarioTree
+import ru.ifmo.fbsat.scenario.negative.NegativeScenarioTree
+import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import kotlin.system.measureTimeMillis
 
 // BasicAutomatonInferenceTask
-class Basic(
+class BasicTask(
     val scenarioTree: ScenarioTree,
     val negativeScenarioTree: NegativeScenarioTree?,
     val numberOfStates: Int, // C

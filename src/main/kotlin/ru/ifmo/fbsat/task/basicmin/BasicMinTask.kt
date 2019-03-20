@@ -1,11 +1,11 @@
 package ru.ifmo.fbsat.task.basicmin
 
 import ru.ifmo.fbsat.automaton.Automaton
-import ru.ifmo.fbsat.scenario.ScenarioTree
+import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
-import ru.ifmo.fbsat.task.basic.Basic
+import ru.ifmo.fbsat.task.basic.BasicTask
 
-class BasicMin(
+class BasicMinTask(
     val scenarioTree: ScenarioTree,
     val numberOfStates: Int?, // C, search if null
     val maxOutgoingTransitions: Int?, // K, =C if null
@@ -13,18 +13,18 @@ class BasicMin(
     val solverProvider: () -> Solver
 ) {
     init {
-        require(!(numberOfStates == null && maxOutgoingTransitions == null)) {
+        require(!(numberOfStates == null && maxOutgoingTransitions != null)) {
             "do not specify only K"
         }
     }
 
     fun infer(isOnlyC: Boolean = false): Automaton? {
         var best: Automaton? = null
-        var task: Basic? = null
+        var task: BasicTask? = null
 
         if (numberOfStates == null) {
             for (C in 1..20) {
-                task = Basic(
+                task = BasicTask(
                     scenarioTree,
                     null,
                     C,
@@ -38,7 +38,7 @@ class BasicMin(
                 }
             }
         } else {
-            task = Basic(
+            task = BasicTask(
                 scenarioTree,
                 null,
                 numberOfStates,

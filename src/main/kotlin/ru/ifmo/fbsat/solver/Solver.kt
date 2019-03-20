@@ -1,8 +1,10 @@
 package ru.ifmo.fbsat.solver
 
+import okio.Buffer
+import okio.buffer
+import okio.sink
+import okio.source
 import ru.ifmo.multiarray.IntMultiArray
-import java.io.ByteArrayOutputStream
-import java.io.File
 import kotlin.math.absoluteValue
 
 interface Solver {
@@ -12,9 +14,9 @@ interface Solver {
     fun newVariable(): Int
     fun newArray(vararg shape: Int) = IntMultiArray(shape) { newVariable() }
 
-    fun clause(literals: Sequence<Int>)
-    fun clause(literals: Iterable<Int>) = clause(literals.asSequence())
-    fun clause(vararg literals: Int) = clause(literals.asSequence())
+    fun clause(literals: List<Int>)
+    fun clause(vararg literals: Int) = clause(literals.asList())
+    fun clause(literals: Sequence<Int>) = clause(literals.toList())
     fun clause(block: suspend SequenceScope<Int>.() -> Unit) = clause(sequence(block))
 
     fun comment(comment: String)
@@ -33,43 +35,37 @@ abstract class AbstractSolver : Solver {
 }
 
 class DefaultSolver(private val command: String) : AbstractSolver() {
-    private val buffer = ByteArrayOutputStream()
-    private val writer = buffer.bufferedWriter()
+    private val buffer = Buffer()
 
-    override fun clause(literals: Sequence<Int>) {
+    override fun clause(literals: List<Int>) {
         ++numberOfClauses
-        val s = literals.joinToString(" ", postfix = " 0\n")
-        writer.write(s)
+        for (x in literals)
+            buffer.writeUtf8(x.toString()).writeUtf8(" ")
+        buffer.writeUtf8("0\n")
     }
 
     override fun comment(comment: String) {
-        println("// $comment")
-        val s = "c $comment\n"
-        writer.write(s)
+        // println("// $comment")
+        buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
     }
 
     override fun solve(): BooleanArray? {
-        // println("[*] Flushing writer...")
-        writer.flush()
-        // println("[*] Closing writer...")
-        // writer.close()
-
-        println("[*] Dumping cnf to file...")
-        File("cnf").outputStream().use {
-            it.write("p cnf $numberOfVariables $numberOfClauses\n".toByteArray())
-            buffer.writeTo(it)
-        }
+        // println("[*] Dumping cnf to file...")
+        // File("cnf").outputStream().use {
+        //     it.write("p cnf $numberOfVariables $numberOfClauses\n".toByteArray())
+        //     buffer.copyTo(it)
+        // }
 
         val process = Runtime.getRuntime().exec(command)
+        val processInput = process.outputStream.sink().buffer()
         // println("[*] Writing DIMACS header to process.outputStream...")
-        process.outputStream.write("p cnf $numberOfVariables $numberOfClauses\n".toByteArray())
+        processInput.writeUtf8("p cnf $numberOfVariables $numberOfClauses\n")
         // println("[*] Redirecting buffer to process.outputStream...")
-        buffer.writeTo(process.outputStream)
+        buffer.copyTo(processInput.buffer)
 
-        println("[*] Solving...")
+        // println("[*] Solving...")
         val timeSolveStart = System.currentTimeMillis()
-        process.outputStream.close()
-        val timeSolve = (System.currentTimeMillis() - timeSolveStart) / 1000.0
+        processInput.close()
 
         var isSat: Boolean? = null
         val rawAssignment: MutableList<Boolean> = mutableListOf()
@@ -79,10 +75,12 @@ class DefaultSolver(private val command: String) : AbstractSolver() {
                 // if (!line.startsWith("v ")) println(line)
                 when {
                     line == "s SATISFIABLE" -> {
+                        val timeSolve = (System.currentTimeMillis() - timeSolveStart) / 1000.0
                         println("[+] SAT in %.2f seconds".format(timeSolve))
                         isSat = true
                     }
                     line == "s UNSATISFIABLE" -> {
+                        val timeSolve = (System.currentTimeMillis() - timeSolveStart) / 1000.0
                         println("[-] UNSAT in %.2f seconds".format(timeSolve))
                         isSat = false
                         continue@label
@@ -118,42 +116,44 @@ class DefaultSolver(private val command: String) : AbstractSolver() {
 
 class IncrementalSolver(command: String) : AbstractSolver() {
     private val process = Runtime.getRuntime().exec(command)
-    private val processInput = process.outputStream.bufferedWriter()
-    private val processOutput = process.inputStream.bufferedReader()
-    // ===
-    private val buffer = ByteArrayOutputStream()
-    private val writer = buffer.bufferedWriter()
+    private val processInput = process.outputStream.sink().buffer()
+    private val processOutput = process.inputStream.source().buffer()
+    private val buffer = Buffer()
 
-    override fun clause(literals: Sequence<Int>) {
+    override fun clause(literals: List<Int>) {
         ++numberOfClauses
+        for (x in literals)
+            processInput.writeUtf8("$x").writeUtf8(" ")
+        processInput.writeUtf8("0\n")
+
         val s = literals.joinToString(" ", postfix = " 0\n")
-        processInput.write(s)
-        // ===
-        writer.write(s)
+        buffer.writeUtf8(s)
     }
 
     override fun comment(comment: String) {
+        processInput.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
+
         // println("// $comment")
-        val s = "c $comment\n"
-        processInput.write(s)
-        // ===
-        writer.write(s)
+        buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
     }
 
     override fun solve(): BooleanArray? {
-        writer.flush()
-        println("[*] Dumping cnf to file...")
-        File("cnf").outputStream().use {
-            it.write("p cnf $numberOfVariables $numberOfClauses\n".toByteArray())
-            buffer.writeTo(it)
-        }
+        // measureNanoTime {
+        //     println("[*] Dumping cnf to file...")
+        //     File("cnf").outputStream().use {
+        //         it.write("p cnf $numberOfVariables $numberOfClauses\n".toByteArray())
+        //         buffer.copyTo(it)
+        //     }
+        // }.also {
+        //     println("CNF dumped in %.2f ms".format(it / 1_000_000.0))
+        // }
 
-        processInput.write("solve 0\n")
+        processInput.writeUtf8("solve 0\n")
         processInput.flush()
 
-        println("[*] Solving...")
+        // println("[*] Solving...")
         val timeSolveStart = System.currentTimeMillis()
-        val answer: String? = processOutput.readLine()
+        val answer: String? = processOutput.readUtf8Line()
         val timeSolve = (System.currentTimeMillis() - timeSolveStart) / 1000.0
 
         if (answer == null) {
@@ -161,16 +161,18 @@ class IncrementalSolver(command: String) : AbstractSolver() {
             return null
         }
 
-        return when (answer) {
+        when (answer) {
             "SAT" -> {
                 println("[+] SAT in %.2f s".format(timeSolve))
 
-                val line = processOutput.readLine() ?: run {
+                val line = processOutput.readUtf8Line()
+
+                if (line == null) {
                     println("[!] Solver returned no assignment")
                     return null
                 }
 
-                line.trim()
+                return line.trim()
                     .splitToSequence(" ")
                     .drop(1) // drop "v"
                     .map { it.toInt() > 0 }
@@ -179,11 +181,11 @@ class IncrementalSolver(command: String) : AbstractSolver() {
             }
             "UNSAT" -> {
                 println("[-] UNSAT in %.2f s".format(timeSolve))
-                null
+                return null
             }
             else -> {
                 println("[!] Implicit UNSAT or ERROR (\"$answer\") in %.2f s.".format(timeSolve))
-                null
+                return null
             }
         }
     }

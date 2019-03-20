@@ -15,17 +15,18 @@ import ru.ifmo.fbsat.automaton.Algorithm
 import ru.ifmo.fbsat.automaton.Automaton
 import ru.ifmo.fbsat.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.automaton.StringGuard
-import ru.ifmo.fbsat.scenario.NegativeScenarioTree
-import ru.ifmo.fbsat.scenario.Scenario
-import ru.ifmo.fbsat.scenario.ScenarioTree
+import ru.ifmo.fbsat.scenario.negative.NegativeScenarioTree
+import ru.ifmo.fbsat.scenario.positive.PositiveScenario
+import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.DefaultSolver
 import ru.ifmo.fbsat.solver.IncrementalSolver
 import ru.ifmo.fbsat.solver.Solver
-import ru.ifmo.fbsat.task.basic.Basic
-import ru.ifmo.fbsat.task.basicmin.BasicMin
-import ru.ifmo.fbsat.task.extended.ExtendedAutomatonInferenceTask
-import ru.ifmo.fbsat.task.extendedce.ExtendedVerifiedAutomatonInferenceTask
-import ru.ifmo.fbsat.task.extendedmin.ExtendedMin
+import ru.ifmo.fbsat.task.basic.BasicTask
+import ru.ifmo.fbsat.task.basicmin.BasicMinTask
+import ru.ifmo.fbsat.task.extended.ExtendedTask
+import ru.ifmo.fbsat.task.extendedce.ExtendedCETask
+import ru.ifmo.fbsat.task.extendedmin.ExtendedMinTask
+import ru.ifmo.fbsat.task.extendedmince.ExtendedMinCETask
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -69,6 +70,7 @@ class FbSAT : CliktCommand() {
         metavar = "<path>"
     ).file().defaultLazy { File("") }
 
+    // TODO: enum Method
     private val method by option(
         "-m", "--method",
         help = "Method to use [required]",
@@ -76,7 +78,7 @@ class FbSAT : CliktCommand() {
     ).choice(
         "basic", "basic-min",
         "extended", "extended-min", "extended-min-ub",
-        "extended-ce", "extended-ce-min", "extended-ce-min-ub"
+        "extended-ce", "extended-min-ce"
     ).required()
 
     private val numberOfStates by option(
@@ -136,7 +138,7 @@ class FbSAT : CliktCommand() {
 
     private val failIfCEVerifyFailed by option(
         "--fail-verify-ce",
-        help = "Halt if verification of counterexamples has failed [default: true]"
+        help = "Halt if verification of negativeScenarios has failed [default: true]"
     ).flag(
         "--no-fail-verify-ce",
         default = true
@@ -158,6 +160,14 @@ class FbSAT : CliktCommand() {
         default = false
     )
 
+    private val isEncodeTransitionsOrder by option(
+        "--encode-transitions-order",
+        help = "[DEBUG] Encode transitions lexicographic order"
+    ).flag(
+        "--no-encode-transitions-order",
+        default = false
+    )
+
     private val isOnlyAutomaton2 by option(
         "--only-automaton2"
     ).flag()
@@ -171,7 +181,7 @@ class FbSAT : CliktCommand() {
     }
 
     override fun run() {
-        val scenarios = Scenario.fromFile(fileScenarios)
+        val scenarios = PositiveScenario.fromFile(fileScenarios)
         println("[*] Scenarios: ${scenarios.size}")
         println("[*] Elements: ${scenarios.sumBy { it.elements.size }}")
 
@@ -231,7 +241,7 @@ class FbSAT : CliktCommand() {
                 val loopBacks = negST.loopBacks(v)
                 if (loopBacks.size >= 2) {
                     println("[*] Node v = $v has ${loopBacks.size} loop-backs: $loopBacks")
-                    for ((i, ns) in negST.counterexamples.withIndex()) {
+                    for ((i, ns) in negST.negativeScenarios.withIndex()) {
                         // if (ns.elements.last().nodeId == v) {
                         //     println(" >> NegativeScenario #${i + 1} with loop position ${ns.loopPosition} (id = ${ns.elements[ns.loopPosition!! - 1].nodeId})")
                         // }
@@ -255,7 +265,7 @@ class FbSAT : CliktCommand() {
         }
 
         if (isOnlyAutomaton2) {
-            val scenarios4 = Scenario.fromFile(File("data/tests-4"))
+            val scenarios4 = PositiveScenario.fromFile(File("data/tests-4"))
             val tree4 = ScenarioTree(scenarios4, tree.inputNames, tree.outputNames)
 
             val automaton2 = Automaton(tree4)
@@ -371,7 +381,7 @@ class FbSAT : CliktCommand() {
 
         val automaton: Automaton? = when (method) {
             "basic" -> {
-                val task = Basic(
+                val task = BasicTask(
                     tree,
                     negTree,
                     numberOfStates!!,
@@ -381,7 +391,7 @@ class FbSAT : CliktCommand() {
                 task.infer(maxTransitions)
             }
             "basic-min" -> {
-                val task = BasicMin(
+                val task = BasicMinTask(
                     tree,
                     // ceTree,
                     numberOfStates,
@@ -392,7 +402,7 @@ class FbSAT : CliktCommand() {
                 task.infer()
             }
             "extended" -> {
-                val task = ExtendedAutomatonInferenceTask(
+                val task = ExtendedTask(
                     tree,
                     negTree,
                     numberOfStates!!,
@@ -400,12 +410,13 @@ class FbSAT : CliktCommand() {
                     maxGuardSize!!,
                     solverProvider,
                     isForbidLoops = isForbidLoops,
-                    isEncodeAutomaton = isEncodeAutomaton
+                    isEncodeAutomaton = isEncodeAutomaton,
+                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
                 )
                 task.infer(maxTotalGuardsSize)
             }
             "extended-min" -> {
-                val task = ExtendedMin(
+                val task = ExtendedMinTask(
                     tree,
                     negTree,
                     numberOfStates,
@@ -414,12 +425,13 @@ class FbSAT : CliktCommand() {
                     maxTotalGuardsSize,
                     solverProvider,
                     isForbidLoops = isForbidLoops,
-                    isEncodeAutomaton = isEncodeAutomaton
+                    isEncodeAutomaton = isEncodeAutomaton,
+                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
                 )
                 task.infer()
             }
             "extended-ce" -> {
-                val task = ExtendedVerifiedAutomatonInferenceTask(
+                val task = ExtendedCETask(
                     tree,
                     negTree,
                     numberOfStates!!,
@@ -427,9 +439,25 @@ class FbSAT : CliktCommand() {
                     maxGuardSize!!,
                     solverProvider,
                     smvDir,
-                    isEncodeAutomaton = isEncodeAutomaton
+                    isEncodeAutomaton = isEncodeAutomaton,
+                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
                 )
                 task.infer(maxTotalGuardsSize)
+            }
+            "extended-min-ce" -> {
+                val task = ExtendedMinCETask(
+                    tree,
+                    negTree,
+                    numberOfStates,
+                    maxOutgoingTransitions,
+                    maxGuardSize!!,
+                    maxTotalGuardsSize,
+                    solverProvider,
+                    smvDir,
+                    isEncodeAutomaton = isEncodeAutomaton,
+                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
+                )
+                task.infer()
             }
             else -> TODO("Method '$method' is not implemented yet.")
         }
@@ -451,7 +479,7 @@ class FbSAT : CliktCommand() {
             }
 
             if (negTree != null) {
-                if (automaton.verify(negTree, markCEStates = true))
+                if (automaton.verify(negTree))
                     println("[+] Verify CE: OK")
                 else {
                     println("[-] Verify CE: FAILED")
@@ -459,9 +487,9 @@ class FbSAT : CliktCommand() {
                         error("CE verification failed")
                 }
 
-                val fileCEMarkedGv = File("ce-marked.gv")
-                fileCEMarkedGv.writeText(negTree.toGraphvizString())
-                Runtime.getRuntime().exec("dot -Tpdf -O $fileCEMarkedGv")
+                // val fileCEMarkedGv = File("ce-marked.gv")
+                // fileCEMarkedGv.writeText(negTree.toGraphvizString())
+                // Runtime.getRuntime().exec("dot -Tpdf -O $fileCEMarkedGv")
             }
 
             fileVerifyCE?.let {

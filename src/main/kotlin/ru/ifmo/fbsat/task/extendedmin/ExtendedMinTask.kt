@@ -1,13 +1,13 @@
 package ru.ifmo.fbsat.task.extendedmin
 
 import ru.ifmo.fbsat.automaton.Automaton
-import ru.ifmo.fbsat.scenario.NegativeScenarioTree
-import ru.ifmo.fbsat.scenario.ScenarioTree
+import ru.ifmo.fbsat.scenario.negative.NegativeScenarioTree
+import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
-import ru.ifmo.fbsat.task.basicmin.BasicMin
-import ru.ifmo.fbsat.task.extended.ExtendedAutomatonInferenceTask
+import ru.ifmo.fbsat.task.basicmin.BasicMinTask
+import ru.ifmo.fbsat.task.extended.ExtendedTask
 
-class ExtendedMin(
+class ExtendedMinTask(
     val scenarioTree: ScenarioTree,
     val negativeScenarioTree: NegativeScenarioTree?,
     val numberOfStates: Int?, // C, search if null
@@ -16,7 +16,8 @@ class ExtendedMin(
     val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
     val solverProvider: () -> Solver,
     private val isForbidLoops: Boolean = true,
-    private val isEncodeAutomaton: Boolean = false
+    private val isEncodeAutomaton: Boolean = false,
+    private val isEncodeTransitionsOrder: Boolean
 ) {
     init {
         require(!(numberOfStates == null && maxOutgoingTransitions != null)) {
@@ -24,10 +25,10 @@ class ExtendedMin(
         }
     }
 
+    @Suppress("LocalVariableName")
     fun infer(): Automaton? {
-        @Suppress("LocalVariableName")
         val C = numberOfStates ?: run {
-            val task = BasicMin(
+            val task = BasicMinTask(
                 scenarioTree,
                 null,
                 null,
@@ -38,7 +39,7 @@ class ExtendedMin(
             automaton.numberOfStates
         }
 
-        val task = ExtendedAutomatonInferenceTask(
+        val task = ExtendedTask(
             scenarioTree,
             negativeScenarioTree,
             C,
@@ -46,14 +47,17 @@ class ExtendedMin(
             maxGuardSize,
             solverProvider,
             isForbidLoops = isForbidLoops,
-            isEncodeAutomaton = isEncodeAutomaton
+            isEncodeAutomaton = isEncodeAutomaton,
+            isEncodeTransitionsOrder = isEncodeTransitionsOrder
         )
         var best: Automaton? = task.infer(initialMaxTotalGuardsSize, finalize = false)
 
         if (best != null) {
             while (true) {
-                @Suppress("LocalVariableName")
                 val N = best!!.totalGuardsSize - 1
+                // // ==============
+                // if (N < 23) break
+                // // ==============
                 println("[*] Trying N = $N...")
                 best = task.infer(N, finalize = false) ?: break
             }

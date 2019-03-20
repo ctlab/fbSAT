@@ -1,7 +1,10 @@
 package ru.ifmo.fbsat.automaton
 
-import ru.ifmo.fbsat.scenario.NegativeScenarioTree
-import ru.ifmo.fbsat.scenario.ScenarioTree
+import ru.ifmo.fbsat.scenario.Scenario
+import ru.ifmo.fbsat.scenario.negative.NegativeScenario
+import ru.ifmo.fbsat.scenario.negative.NegativeScenarioTree
+import ru.ifmo.fbsat.scenario.positive.PositiveScenario
+import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.utils.LazyCache
 import ru.ifmo.fbsat.utils.toBooleanArray
 import ru.ifmo.fbsat.utils.toBooleanString
@@ -28,15 +31,35 @@ class Automaton(
     private var _states: MutableMap<Int, State> = mutableMapOf()
     private val lazyCache = LazyCache()
 
+    /**
+     * Set of automaton states.
+     */
     val states: Set<State> by lazyCache {
         _states.values.toSet()
     }
+    /**
+     * Initial automaton state.
+     */
     val initialState: State
         get() = states.first()
+    /**
+     * Number of automaton states **C**.
+     */
     val numberOfStates: Int
         get() = states.size
+    // /**
+    //  * Maximal guard size **P**.
+    //  */
+    // val maxGuardSize: Int
+    //     get() = states.flatMap { it.transitions }.map { it.guard.size }.max()!!
+    /**
+     * Number of automaton transitions **T**.
+     */
     val numberOfTransitions: Int
         get() = states.sumBy { it.transitions.size }
+    /**
+     * Total guards size **N**.
+     */
     val totalGuardsSize: Int
         get() = states.flatMap { it.transitions }.sumBy { it.guard.size }
 
@@ -171,105 +194,108 @@ class Automaton(
         return source.go(inputEvent, inputValues, outputValues)
     }
 
-    fun verify(scenarioTree: ScenarioTree): Boolean {
-        var ok = true
+    /**
+     * Evaluate given [scenario].
+     *
+     * @return list of satisfying automaton states (i.e. states, by which each scenario element is satisfied).
+     */
+    private fun eval(scenario: Scenario): List<Automaton.State?> {
+        val satisfyingStates = Array<Automaton.State?>(scenario.elements.size) { null }
+        satisfyingStates[0] = initialState
 
-        outer@ for ((i, scenario) in scenarioTree.scenarios.withIndex()) {
-            var currentState = this.initialState
-            var currentValues = scenarioTree.rootElement!!.outputValues
+        var currentState = initialState
+        var currentValues = "0".repeat(scenario.elements.first().outputValues.length)
 
-            for ((j, element) in scenario.elements.withIndex()) {
-                val inputEvent = element.inputEvent
-                val inputValues = element.inputValues
-                val (newState, outputEvent, newValues) = go(currentState, inputEvent, inputValues, currentValues)
-                // println("[${i+1}::${j+1}] ${currentState.id} -> ${newState.id} / $outputEvent [$newValues]")
+        for ((j, element) in scenario.elements.withIndex().drop(1)) {
+            // j -- 0-based index of CE-element (CE-state)
+            val inputEvent = element.inputEvent
+            val inputValues = element.inputValues
+            val (newState, outputEvent, newValues) =
+                go(currentState, inputEvent, inputValues, currentValues)
 
-                if (outputEvent != element.outputEvent) {
-                    println("[${i + 1}::${j + 1}] Incorrect outputEvent($outputEvent) != element.outputEvent(${element.outputEvent})  [currentState = ${currentState.id}, inputEvent = $inputEvent, inputValues = $inputValues, currentValues = $currentValues]")
-                    ok = false
-                }
-                // else println("[${i + 1}:${j + 1}] Correct outputEvent($outputEvent)")
-                if (newValues != element.outputValues) {
-                    println("[${i + 1}::${j + 1}] Incorrect newValues($newValues) != element.outputValues(${element.outputValues})  [currentState = ${currentState.id}, inputEvent = $inputEvent, inputValues = $inputValues, currentValues = $currentValues]")
-                    ok = false
-                }
-                // else println("[${i + 1}:${j + 1}] Correct newValues($newValues)")
+            // if (markCEStates) {
+            //     element.ceState = "${newState.id}"
+            // }
 
-                currentState = newState
-                currentValues = newValues
+            if (outputEvent == element.outputEvent && newValues == element.outputValues) {
+                satisfyingStates[j] = newState
+            } else {
+                break
             }
+
+            currentState = newState
+            currentValues = newValues
         }
 
-        return ok
+        return satisfyingStates.asList()
     }
 
-    fun verify(negativeScenarioTree: NegativeScenarioTree, markCEStates: Boolean = false): Boolean {
-        var ok = true
+    /**
+     * Verify given [positiveScenario].
+     *
+     * @return `true` if [positiveScenario] is satisfied.
+     */
+    private fun verify(positiveScenario: PositiveScenario): Boolean {
+        val satisfyingStates = eval(positiveScenario)
+        return satisfyingStates.last() != null
+    }
 
-        for ((i, counterexample) in negativeScenarioTree.counterexamples.withIndex()) {
-            val satisfyingStates = MutableList<State?>(counterexample.elements.size) { null }
-            satisfyingStates[0] = this.initialState
-            // println("[${i + 1}::1/${counterexample.elements.size}] ${negativeScenarioTree.rootElement} satisfied by ${this.initialState}")
+    /**
+     * Verify given [negativeScenario].
+     *
+     * @return `true` if [negativeScenario] is **not** satisfied.
+     */
+    private fun verify(negativeScenario: NegativeScenario): Boolean {
+        val satisfyingStates = eval(negativeScenario)
 
-            var currentState = this.initialState
-            var currentValues = negativeScenarioTree.rootElement!!.outputValues
-
-            for ((j, element) in counterexample.elements.withIndex().drop(1)) {
-                // j -- 0-based index of CE-element (CE-state)
-                val inputEvent = element.inputEvent
-                val inputValues = element.inputValues
-                val (newState, outputEvent, newValues) = go(currentState, inputEvent, inputValues, currentValues)
-
-                if (markCEStates) {
-                    element.ceState = "${newState.id}"
+        if (negativeScenario.loopPosition != null) {
+            val loop = satisfyingStates[negativeScenario.loopPosition - 1]
+            val last = satisfyingStates.last()
+            if (loop != null && last != null) {
+                if (last == loop) {
+                    println("[!] Negative scenario is satisfied (last==loop)")
+                    println(">>> loopPosition = ${negativeScenario.loopPosition}")
+                    println(">>> loop = $loop")
+                    println(">>> last = $last")
+                    println(">>> negativeScenario = $negativeScenario")
+                    return false
                 }
-
-                if (outputEvent == element.outputEvent && newValues == element.outputValues) {
-                    // println("[${i + 1}::${j + 1}/${counterexample.elements.size}] $element satisfied by $newState")
-                    satisfyingStates[j] = newState
-                } else {
-                    // println("[${i + 1}::${j + 1}/${counterexample.elements.size}] $element not satisfied (newState=$newState, newValues=$newValues)")
-                    break
-                }
-
-                currentState = newState
-                currentValues = newValues
             }
-
-            // println(
-            //     "[CE::${i + 1}] Satisfying states: [${satisfyingStates.map {
-            //         it?.id ?: 0
-            //     }.withIndex().joinToString(" ") { (j, x) ->
-            //         if (j + 1 == counterexample.loopPosition) "<$x>" else "$x"
-            //     }}] (loop = ${counterexample.loopPosition} / ${counterexample.elements.size})"
-            // )
-
-            if (counterexample.loopPosition != null) {
-                val loop = satisfyingStates[counterexample.loopPosition - 1]
-                val last = satisfyingStates.last()
-                if (loop != null && last != null) {
-                    if (last == loop) {
-                        println("[!] Counterexample #${i + 1} is satisfied (last==loop)")
-                        println(">>> loopPosition = ${counterexample.loopPosition}")
-                        println(">>> loop = $loop")
-                        println(">>> last = $last")
-                        println(">>> counterexample = $counterexample")
-                        ok = false
-                    }
-                }
-            } else if (satisfyingStates.last() != null) {
-                println("[!] Terminal in counterexample #${i + 1} is satisfied")
-            }
+        } else if (satisfyingStates.last() != null) {
+            println("[!] Terminal is satisfied")
+            return false
         }
 
-        return ok
+        return true
     }
 
+    /**
+     * Verify all positive scenarios in given [scenarioTree].
+     *
+     * @return `true` if **all** scenarios are satisfied.
+     */
+    fun verify(scenarioTree: ScenarioTree): Boolean =
+        scenarioTree.scenarios.all(this@Automaton::verify)
+
+    /**
+     * Verify all negative scenarios in given [negativeScenarioTree].
+     *
+     * @return `true` if **all** scenarios are **not** satisfied.
+     */
+    fun verify(negativeScenarioTree: NegativeScenarioTree): Boolean =
+        negativeScenarioTree.negativeScenarios.all(this@Automaton::verify)
+
+    /**
+     * Dump automaton in Graphviz and SMV formats to the [dir] directory using [name] as the file basename.
+     */
     fun dump(dir: File, name: String = "automaton") {
         dumpGv(dir.resolve("$name.gv"))
         dumpSmv(dir.resolve("$name.smv"))
     }
 
+    /**
+     * Dump automaton in Graphviz format to [file].
+     */
     fun dumpGv(file: File) {
         file.printWriter().use {
             it.println(this.toGraphvizString())
@@ -278,16 +304,25 @@ class Automaton(
         Runtime.getRuntime().exec("dot -Tpng -O $file")
     }
 
+    /**
+     * Dump automaton in Smv format to [file].
+     */
     fun dumpSmv(file: File) {
         file.printWriter().use {
             it.println(this.toSmvString())
         }
     }
 
+    /**
+     * Pretty-print automaton.
+     */
     fun pprint() {
         println(toSimpleString().prependIndent("  "))
     }
 
+    /**
+     * Stringify automaton to pretty string.
+     */
     fun toSimpleString(): String {
         val lines: MutableList<String> = mutableListOf()
         for (state in states) {
@@ -304,6 +339,9 @@ class Automaton(
         return lines.joinToString("\n")
     }
 
+    /**
+     * Stringify automaton to Graphviz format.
+     */
     fun toGraphvizString(): String {
         val fontSettings = """fontname="Source Code Pro,monospace" fontsize="12""""
         val setupBlock = """
@@ -340,6 +378,9 @@ class Automaton(
         return "digraph {\n${body.prependIndent()}\n}"
     }
 
+    /**
+     * Stringify automaton to SMV format.
+     */
     fun toSmvString(): String {
         val module = "CONTROL(${inputEvents.joinToString(",")}, ${inputNames.joinToString(",")})"
 
@@ -422,5 +463,6 @@ class Automaton(
         return "Automaton(numberOfStates=$numberOfStates, numberOfTransitions=$numberOfTransitions, totalGuardsSize=$totalGuardsSize, inputEvents=$inputEvents, outputEvents=$outputEvents, inputNames=$inputNames, outputNames=$outputNames)"
     }
 
+    // Allow companion object extensions
     companion object
 }

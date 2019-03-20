@@ -1,14 +1,16 @@
-package ru.ifmo.fbsat.scenario
+package ru.ifmo.fbsat.scenario.negative
 
+import ru.ifmo.fbsat.scenario.Scenario
+import ru.ifmo.fbsat.scenario.ScenarioElement
 import java.io.File
 
 class NegativeScenario(
-    val elements: List<ScenarioElement>,
+    override val elements: List<ScenarioElement>,
     /**
      * One-based index of loop-back state
      */
     val loopPosition: Int?
-) {
+) : Scenario {
     init {
         if (loopPosition != null) {
             val loop = elements[loopPosition - 1]
@@ -70,7 +72,7 @@ fun Counterexample.toNegativeScenario(
             )
         )
         yieldAll(
-            states.zipWithNext { first, second ->
+            states.asSequence().zipWithNext { first, second ->
                 ScenarioElement(
                     first.getFirstTrue(inputEvents)!!,
                     first.getBooleanString(inputNames),

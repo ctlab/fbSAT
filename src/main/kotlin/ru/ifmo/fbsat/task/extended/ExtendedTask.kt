@@ -1,13 +1,13 @@
 package ru.ifmo.fbsat.task.extended
 
 import ru.ifmo.fbsat.automaton.Automaton
-import ru.ifmo.fbsat.scenario.NegativeScenarioTree
-import ru.ifmo.fbsat.scenario.ScenarioTree
+import ru.ifmo.fbsat.scenario.negative.NegativeScenarioTree
+import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.solver.declareComparatorLessThanOrEqual
 import kotlin.system.measureTimeMillis
 
-class ExtendedAutomatonInferenceTask(
+class ExtendedTask(
     val scenarioTree: ScenarioTree,
     val negativeScenarioTree: NegativeScenarioTree?,
     val numberOfStates: Int, // C
@@ -15,13 +15,15 @@ class ExtendedAutomatonInferenceTask(
     val maxGuardSize: Int, // P
     solverProvider: () -> Solver,
     private val isForbidLoops: Boolean = true,
-    private val isEncodeAutomaton: Boolean = false
+    private val isEncodeAutomaton: Boolean = false,
+    private val isEncodeTransitionsOrder: Boolean
 ) {
     private val solver: Solver = solverProvider()
     private var baseReduction: BaseReduction? = null
     private var totalizer: IntArray? = null
     private var declaredMaxTotalGuardSize: Int? = null
     private var negativeReduction: NegativeReduction? = null
+    private var algorithmsAssumptions: AlgorithmsAssumptions? = null
 
     /**
      * Infer automaton.
@@ -31,10 +33,19 @@ class ExtendedAutomatonInferenceTask(
      *
      * @return automaton if *SAT*, or `null` if *UNSAT*
      */
-    fun infer(maxTotalGuardsSize: Int? = null, finalize: Boolean = true): Automaton? {
+    fun infer(
+        maxTotalGuardsSize: Int? = null,
+        finalize: Boolean = true,
+        algorithmsAssumptions: AlgorithmsAssumptions? = null
+    ): Automaton? {
+        require(algorithmsAssumptions == null) {
+            "Algorithms assumptions are not supported"
+        }
+
         declareBaseReduction()
         declareCardinality(maxTotalGuardsSize)
         declareNegativeReduction()
+        declareAlgorithmsAssumptions(algorithmsAssumptions)
 
         solver.comment("Total variables: ${solver.numberOfVariables}, clauses: ${solver.numberOfClauses}")
 
@@ -48,6 +59,11 @@ class ExtendedAutomatonInferenceTask(
                 val negativeAssignment = NegativeAssignment.fromRaw(rawAssignment, negativeReduction!!)
                 automaton.checkNegativeAssignment(negativeAssignment, scenarioTree)
             }
+            // ====================
+            if (negativeScenarioTree != null) {
+                check(automaton.verify(negativeScenarioTree)) { "NST verification failed" }
+            }
+            // ====================
             automaton
         } else null
     }
@@ -66,7 +82,8 @@ class ExtendedAutomatonInferenceTask(
                 K = maxOutgoingTransitions ?: numberOfStates,
                 P = maxGuardSize,
                 solver = solver,
-                isEncodeAutomaton = isEncodeAutomaton
+                isEncodeAutomaton = isEncodeAutomaton,
+                isEncodeTransitionsOrder = isEncodeTransitionsOrder
             )
         }.also {
             println(
@@ -91,9 +108,9 @@ class ExtendedAutomatonInferenceTask(
 
     private fun declareNegativeReduction() {
         if (negativeScenarioTree == null) return
-        if (negativeScenarioTree.counterexamples.isEmpty()) return
+        if (negativeScenarioTree.negativeScenarios.isEmpty()) return
         // FIXME: must do following:
-        if (negativeScenarioTree.counterexamples.first().elements.isEmpty()) return
+        if (negativeScenarioTree.negativeScenarios.first().elements.isEmpty()) return
 
         // if (negativeReduction != null) return
 
@@ -113,5 +130,41 @@ class ExtendedAutomatonInferenceTask(
             "[+] Done declaring negative reduction (${solver.numberOfVariables - nov} variables, ${solver.numberOfClauses - noc} clauses) in %.3f seconds"
                 .format(runningTime / 1000.0)
         )
+    }
+
+    private fun declareAlgorithmsAssumptions(algorithmsAssumptions: AlgorithmsAssumptions?) {
+        if (algorithmsAssumptions == null) return
+        if (this.algorithmsAssumptions != null) {
+            check(this.algorithmsAssumptions == algorithmsAssumptions) { "AA mismatch" }
+            return
+        }
+
+        this.algorithmsAssumptions = algorithmsAssumptions
+
+        with(solver) {
+            println("Declaring algorithms assumptions constraints")
+            comment("5*. Algorithms assumptions constraints")
+
+            @Suppress("LocalVariableName")
+            val Z = scenarioTree.uniqueOutputs.first().length
+            val algorithm0 = baseReduction!!.algorithm0
+            val algorithm1 = baseReduction!!.algorithm1
+
+            for (c in algorithmsAssumptions.keys) {
+                val (algo0, algo1) = algorithmsAssumptions.getValue(c)
+                for (z in 1..Z) {
+                    when (val a0 = algo0[z - 1]) {
+                        '0' -> clause(-algorithm0[c, z])
+                        '1' -> clause(algorithm0[c, z])
+                        else -> error("Weird algorithm value: $a0")
+                    }
+                    when (val a1 = algo1[z - 1]) {
+                        '0' -> clause(-algorithm1[c, z])
+                        '1' -> clause(algorithm1[c, z])
+                        else -> error("Weird algorithm value: $a1")
+                    }
+                }
+            }
+        }
     }
 }

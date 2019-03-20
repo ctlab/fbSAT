@@ -1,8 +1,8 @@
 package ru.ifmo.fbsat.task.extended
 
 import ru.ifmo.fbsat.automaton.NodeType
-import ru.ifmo.fbsat.scenario.NegativeScenarioTree
-import ru.ifmo.fbsat.scenario.ScenarioTree
+import ru.ifmo.fbsat.scenario.negative.NegativeScenarioTree
+import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.solver.exactlyOne
 import ru.ifmo.fbsat.solver.iff
@@ -67,7 +67,7 @@ internal class NegativeReduction(
     val notFired: IntMultiArray // [C, U, K]
 
     init {
-        println("[.] C = $C, K = $K, P = $P, V = $V, oldV = $oldV, Vs = $Vs, E = $E, U = $U, newU = $newU, X = $X, Z = $Z")
+        // println("[.] C = $C, K = $K, P = $P, V = $V, oldV = $oldV, Vs = $Vs, E = $E, U = $U, newU = $newU, X = $X, Z = $Z")
     }
 
     private fun getU(input: String): Int = UIs.indexOf(input) + 1

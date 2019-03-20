@@ -4,6 +4,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import ru.ifmo.fbsat.scenario.negative.Counterexample
+import ru.ifmo.fbsat.scenario.negative.NegativeScenario
+import ru.ifmo.fbsat.scenario.negative.NegativeScenarioTree
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CounterexampleTest {

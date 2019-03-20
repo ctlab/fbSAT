@@ -1,5 +1,7 @@
-package ru.ifmo.fbsat.scenario
+package ru.ifmo.fbsat.scenario.negative
 
+import ru.ifmo.fbsat.scenario.ScenarioElement
+import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.utils.LazyCache
 import java.io.File
 
@@ -10,7 +12,7 @@ class NegativeScenarioTree(
     private val isTrie: Boolean = true
 ) {
     private val lazyCache = LazyCache()
-    private val _counterexamples: MutableList<NegativeScenario> = mutableListOf()
+    private val _negativeScenarios: MutableList<NegativeScenario> = mutableListOf()
     private val _inputNames: List<String>? = inputNames
     private val _outputNames: List<String>? = outputNames
     private val _nodes: MutableList<Node> = mutableListOf()
@@ -18,7 +20,7 @@ class NegativeScenarioTree(
     private val root: Node?
         get() = nodes.firstOrNull()
 
-    val counterexamples: List<NegativeScenario> = _counterexamples
+    val negativeScenarios: List<NegativeScenario> = _negativeScenarios
 
     val size
         get() = nodes.size
@@ -225,7 +227,7 @@ class NegativeScenarioTree(
         }
 
         // if (isAnyoneCreated) {
-        _counterexamples.add(negativeScenario)
+        _negativeScenarios.add(negativeScenario)
         lazyCache.invalidate()
         // } else {
         //     check(isTrie)
@@ -309,10 +311,21 @@ class NegativeScenarioTree(
     }
 
     override fun toString(): String {
-        return "NegativeScenarioTree(size=$size, counterexamples=${counterexamples.size}, inputEvents=$inputEvents, outputEvents=$outputEvents, inputNames=$inputNames, outputNames=$outputNames)"
+        return "NegativeScenarioTree(size=$size, negativeScenarios=${negativeScenarios.size}, inputEvents=$inputEvents, outputEvents=$outputEvents, inputNames=$inputNames, outputNames=$outputNames)"
     }
 
     companion object {
+        fun empty(
+            inputNames: List<String>,
+            outputNames: List<String>,
+            isTrie: Boolean = true
+        ) = NegativeScenarioTree(
+            emptyList(),
+            inputNames = inputNames,
+            outputNames = outputNames,
+            isTrie = isTrie
+        )
+
         fun fromFile(
             file: File,
             inputEvents: List<String>,
