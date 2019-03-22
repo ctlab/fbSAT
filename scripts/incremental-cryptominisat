@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+docker exec -i icms /usr/local/bin/incremental-cryptominisat

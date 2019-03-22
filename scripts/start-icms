@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+docker rm -f icms
+docker run -d -i --name icms --entrypoint="/bin/sh" lipen/incremental-cryptominisat
