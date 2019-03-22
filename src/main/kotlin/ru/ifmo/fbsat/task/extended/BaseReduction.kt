@@ -1,7 +1,5 @@
 package ru.ifmo.fbsat.task.extended
 
-import ru.ifmo.fbsat.automaton.Automaton
-import ru.ifmo.fbsat.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.automaton.NodeType
 import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
@@ -13,16 +11,7 @@ import ru.ifmo.fbsat.solver.imply
 import ru.ifmo.fbsat.solver.implyIff
 import ru.ifmo.fbsat.solver.implyIffAnd
 import ru.ifmo.fbsat.solver.implyIffOr
-import ru.ifmo.fbsat.utils.toBooleanString
 import ru.ifmo.multiarray.IntMultiArray
-
-typealias AlgorithmsAssumptions = Map<Int, Pair<String, String>>
-
-fun Automaton.getAlgorithmsAssumptions(): AlgorithmsAssumptions = states.associate { state ->
-    with(state.algorithm as BinaryAlgorithm) {
-        state.id to (algorithm0.toBooleanString() to algorithm1.toBooleanString())
-    }
-}
 
 @Suppress("PropertyName", "PrivatePropertyName", "MemberVisibilityCanBePrivate")
 internal class BaseReduction(

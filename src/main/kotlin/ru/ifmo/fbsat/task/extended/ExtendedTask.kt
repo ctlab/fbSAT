@@ -23,7 +23,6 @@ class ExtendedTask(
     private var totalizer: IntArray? = null
     private var declaredMaxTotalGuardSize: Int? = null
     private var negativeReduction: NegativeReduction? = null
-    private var algorithmsAssumptions: AlgorithmsAssumptions? = null
 
     /**
      * Infer automaton.
@@ -35,17 +34,11 @@ class ExtendedTask(
      */
     fun infer(
         maxTotalGuardsSize: Int? = null,
-        finalize: Boolean = true,
-        algorithmsAssumptions: AlgorithmsAssumptions? = null
+        finalize: Boolean = true
     ): Automaton? {
-        require(algorithmsAssumptions == null) {
-            "Algorithms assumptions are not supported"
-        }
-
         declareBaseReduction()
         declareCardinality(maxTotalGuardsSize)
         declareNegativeReduction()
-        declareAlgorithmsAssumptions(algorithmsAssumptions)
 
         solver.comment("Total variables: ${solver.numberOfVariables}, clauses: ${solver.numberOfClauses}")
 
@@ -130,41 +123,5 @@ class ExtendedTask(
             "[+] Done declaring negative reduction (${solver.numberOfVariables - nov} variables, ${solver.numberOfClauses - noc} clauses) in %.3f seconds"
                 .format(runningTime / 1000.0)
         )
-    }
-
-    private fun declareAlgorithmsAssumptions(algorithmsAssumptions: AlgorithmsAssumptions?) {
-        if (algorithmsAssumptions == null) return
-        if (this.algorithmsAssumptions != null) {
-            check(this.algorithmsAssumptions == algorithmsAssumptions) { "AA mismatch" }
-            return
-        }
-
-        this.algorithmsAssumptions = algorithmsAssumptions
-
-        with(solver) {
-            println("Declaring algorithms assumptions constraints")
-            comment("5*. Algorithms assumptions constraints")
-
-            @Suppress("LocalVariableName")
-            val Z = scenarioTree.uniqueOutputs.first().length
-            val algorithm0 = baseReduction!!.algorithm0
-            val algorithm1 = baseReduction!!.algorithm1
-
-            for (c in algorithmsAssumptions.keys) {
-                val (algo0, algo1) = algorithmsAssumptions.getValue(c)
-                for (z in 1..Z) {
-                    when (val a0 = algo0[z - 1]) {
-                        '0' -> clause(-algorithm0[c, z])
-                        '1' -> clause(algorithm0[c, z])
-                        else -> error("Weird algorithm value: $a0")
-                    }
-                    when (val a1 = algo1[z - 1]) {
-                        '0' -> clause(-algorithm1[c, z])
-                        '1' -> clause(algorithm1[c, z])
-                        else -> error("Weird algorithm value: $a1")
-                    }
-                }
-            }
-        }
     }
 }

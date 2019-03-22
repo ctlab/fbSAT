@@ -30,18 +30,6 @@ class ExtendedMinCETask(
         val negativeScenarioTree = initialNegativeScenarioTree
             ?: NegativeScenarioTree.empty(scenarioTree.inputNames, scenarioTree.outputNames)
 
-        // phase 1: ext-min to find C and N (P is given)
-        // in loop:
-        //    phase 2: ext-ce with C, P, N
-        //     -> SAT => found automaton is minimal and fully verified
-        //     -> UNSAT => N is too small, repeat with larger N (+1)
-        //
-        // Variation of phase 2:
-        //    ext-ce with C, P, without N
-        //      -> if UNSAT then C or P are too small, repeat with larger P up to UB, then try increasing C
-        //      -> if SAT then incrementally call ext-ce with C, P, N
-        //         -> SAT/UNSAT => same as above
-
         val taskExtMin = ExtendedMinTask(
             scenarioTree,
             negativeScenarioTree,
@@ -54,22 +42,9 @@ class ExtendedMinCETask(
             isEncodeTransitionsOrder = isEncodeTransitionsOrder
         )
         val automatonExtMin = taskExtMin.infer() ?: error("ExtendedMinTask could not infer an automaton")
-        // val taskExtMin = ExtendedTask(
-        //     scenarioTree,
-        //     negativeScenarioTree,
-        //     numberOfStates!!,
-        //     maxOutgoingTransitions,
-        //     maxGuardSize,
-        //     solverProvider,
-        //     isEncodeAutomaton = isEncodeAutomaton,
-        //     isEncodeTransitionsOrder = isEncodeTransitionsOrder
-        // )
-        // val automatonExtMin =
-        //     taskExtMin.infer(initialMaxTotalGuardsSize) ?: error("ExtendedMinTask could not infer an automaton")
         val C = automatonExtMin.numberOfStates
         val P = maxGuardSize
         var N = automatonExtMin.totalGuardsSize
-        // val initialAlgorithmsAssumptions = automatonExtMin.getAlgorithmsAssumptions()
 
         println("C = $C, P = $P, N = $N")
 
@@ -85,8 +60,7 @@ class ExtendedMinCETask(
                 solverProvider,
                 smvDir = smvDir,
                 isEncodeAutomaton = isEncodeAutomaton,
-                isEncodeTransitionsOrder = isEncodeTransitionsOrder //,
-                // initialAlgorithmsAssumptions = initialAlgorithmsAssumptions
+                isEncodeTransitionsOrder = isEncodeTransitionsOrder
             )
 
             val automaton = task.infer(N)

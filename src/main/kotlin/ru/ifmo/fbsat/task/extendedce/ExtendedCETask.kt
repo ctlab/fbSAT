@@ -58,47 +58,7 @@ class ExtendedCETask(
             println("===== Iteration #$iterationNumber =====")
 
             // Infer automaton
-            //   > First, with algorithms assumption
-            //   > Or without, if UNSAT
-            //   > Break if UNSAT anyway
-            // println("Trying with algorithms assumptions...")
-            // val automatonWithAlgorithmAssumptions = if (algorithmsAssumptions != null) {
-            //     task.infer(
-            //         maxTotalGuardsSize,
-            //         finalize = false,
-            //         algorithmsAssumptions = algorithmsAssumptions
-            //     )
-            // } else {
-            //     null
-            // }
-            // val automaton = if (automatonWithAlgorithmAssumptions != null) {
-            //     println("SAT with algorithms assumptions")
-            //     check(algorithmsAssumptions.toString() == automatonWithAlgorithmAssumptions.getAlgorithmsAssumptions().toString()) {
-            //         "Algorithms assumptions mismatch.\nGiven:  $algorithmsAssumptions.\nActual: ${automatonWithAlgorithmAssumptions.getAlgorithmsAssumptions()}"
-            //     }
-            //     automatonWithAlgorithmAssumptions
-            // } else {
-            //     println("Retrying without algorithms assumptions... !!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            //     task = ExtendedTask(
-            //         scenarioTree,
-            //         negativeScenarioTree,
-            //         numberOfStates,
-            //         maxOutgoingTransitions,
-            //         maxGuardSize,
-            //         solverProvider,
-            //         isEncodeAutomaton = isEncodeAutomaton,
-            //         isEncodeTransitionsOrder = isEncodeTransitionsOrder
-            //     )
-            //     task.infer(maxTotalGuardsSize, finalize = false)?.also {
-            //         println("Reassigning algorithms assumptions")
-            //         algorithmsAssumptions = it.getAlgorithmsAssumptions()
-            //     }
-            // }
-            val automaton = task.infer(maxTotalGuardsSize, finalize = false)
-            if (automaton == null) {
-                // println("UNSAT even without algorithms assumptions")
-                break
-            }
+            val automaton = task.infer(maxTotalGuardsSize, finalize = false) ?: break
 
             // Save automaton to smv directory
             automaton.dumpSmv(smvDir.resolve("control.smv"))
@@ -130,11 +90,8 @@ class ExtendedCETask(
                 // [DEBUG] Append new counterexamples to 'ce'
                 println("[*] Appending ${newCounterexamples.size} new counterexample(s) to 'ce'...")
                 File("ce").appendText(fileCounterexamples.readText())
-                // val cmd2 = "cat $fileCounterexamples >> ce"
-                // println("[$] Running '$cmd2'...")
-                // Runtime.getRuntime().exec(cmd2).waitFor()
             } else {
-                // There is not CEs => automaton is fully-verified
+                // There is no CEs => automaton is fully-verified
                 println("[+] There is no counterexamples, nice!")
                 best = automaton
                 break
