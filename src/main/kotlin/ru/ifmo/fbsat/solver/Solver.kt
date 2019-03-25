@@ -63,7 +63,7 @@ class DefaultSolver(private val command: String) : AbstractSolver() {
         // println("[*] Redirecting buffer to process.outputStream...")
         buffer.copyTo(processInput.buffer)
 
-        // println("[*] Solving...")
+        println("[*] Solving...")
         val timeSolveStart = System.currentTimeMillis()
         processInput.close()
 
@@ -153,7 +153,7 @@ class IncrementalSolver(command: String) : AbstractSolver() {
         processInput.writeUtf8("solve 0\n")
         processInput.flush()
 
-        // println("[*] Solving...")
+        println("[*] Solving...")
         val timeSolveStart = System.currentTimeMillis()
         val answer: String? = processOutput.readUtf8Line()
         val timeSolve = (System.currentTimeMillis() - timeSolveStart) / 1000.0
