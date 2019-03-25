@@ -204,7 +204,7 @@ class Automaton(
         satisfyingStates[0] = initialState
 
         var currentState = initialState
-        var currentValues = "0".repeat(scenario.elements.first().outputValues.length)
+        var currentValues = "0".repeat(outputNames.size)
 
         for ((j, element) in scenario.elements.withIndex().drop(1)) {
             // j -- 0-based index of CE-element (CE-state)

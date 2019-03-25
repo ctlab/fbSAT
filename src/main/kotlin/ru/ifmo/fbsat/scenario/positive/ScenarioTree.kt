@@ -131,7 +131,7 @@ class ScenarioTree(
                 inputEvent = "",
                 inputValues = "",
                 outputEvent = "INITO",
-                outputValues = "0".repeat(scenario.elements.first().outputValues.length)
+                outputValues = "0".repeat(outputNames.size)
             ),
             null
         )
