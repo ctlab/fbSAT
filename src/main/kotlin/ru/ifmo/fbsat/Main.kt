@@ -393,7 +393,6 @@ class FbSAT : CliktCommand() {
             "basic-min" -> {
                 val task = BasicMinTask(
                     tree,
-                    // ceTree,
                     numberOfStates,
                     maxOutgoingTransitions,
                     maxTransitions,
