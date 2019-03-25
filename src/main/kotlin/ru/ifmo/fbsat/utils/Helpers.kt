@@ -13,3 +13,7 @@ fun String.toBooleanArray(): BooleanArray {
 fun BooleanArray.toBinaryString(): String {
     return this.joinToString("") { if (it) "1" else "0" }
 }
+
+fun randomBinaryString(length: Int): String {
+    return (1..length).asSequence().map { "01".random() }.joinToString("")
+}
