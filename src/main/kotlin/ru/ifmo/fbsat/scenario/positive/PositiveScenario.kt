@@ -9,14 +9,11 @@ class PositiveScenario(
     elements: List<ScenarioElement>,
     preprocess: Boolean = true
 ) : Scenario {
-    override val elements: List<ScenarioElement>
-
-    init {
+    override val elements: List<ScenarioElement> =
         if (preprocess && elements.isNotEmpty())
-            this.elements = elements.preprocessed
+            elements.preprocessed
         else
-            this.elements = elements
-    }
+            elements
 
     override fun toString(): String {
         return "PositiveScenario(elements=$elements)"
