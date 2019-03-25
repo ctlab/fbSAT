@@ -64,6 +64,9 @@ class TruthTableGuard(
     override fun toString(): String {
         return "TruthTableGuard(tt = $truthTable)"
     }
+
+    // Allow companion object extensions
+    companion object
 }
 
 class ParseTreeGuard(
@@ -110,10 +113,13 @@ class ParseTreeGuard(
 
         val size: Int
             get() = 1 + (childLeft?.size ?: 0) + (childRight?.size ?: 0)
-        //    when(nodeType) {
-        //    NodeType.TERMINAL-> 1
-        //    NodeType.AND ->1 + childLeft!!.size + childRight!!.size
-        // }
+
+        init {
+            if (nodeType == NodeType.TERMINAL)
+                require(terminalNumber > 0) { "Terminal number of terminal node must be > 0" }
+            else
+                require(terminalNumber == 0) { "Terminal number of non-terminal node must be = 0" }
+        }
 
         fun eval(inputValues: BooleanArray): Boolean {
             return when (nodeType) {
@@ -218,11 +224,12 @@ class ParseTreeGuard(
         return "ParseTreeGuard(size=${nodes.size})"
     }
 
+    // Allow companion object extensions
     companion object
 }
 
 class StringGuard(val expr: String, val inputNames: List<String>) : Guard {
-    private val literals = expr.split('&').map { it.trim() }
+    private val literals = expr.splitToSequence('&').map(String::trim).toList()
 
     override val size: Int =
         2 * literals.size - 1 + literals.count { it.startsWith("!") || it.startsWith("~") }
@@ -247,6 +254,9 @@ class StringGuard(val expr: String, val inputNames: List<String>) : Guard {
     override fun toSmvString(): String {
         return expr
     }
+
+    // Allow companion object extensions
+    companion object
 }
 
 enum class NodeType(val value: Int) {
