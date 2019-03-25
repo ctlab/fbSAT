@@ -42,6 +42,8 @@ ktlint {
     ignoreFailures.set(true)
 }
 
+defaultTasks("clean", "build", "installDist")
+
 tasks {
     withType<JavaExec> {
         args("--help")
