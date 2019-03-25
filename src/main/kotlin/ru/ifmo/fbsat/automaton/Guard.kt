@@ -1,6 +1,6 @@
 package ru.ifmo.fbsat.automaton
 
-import ru.ifmo.fbsat.utils.toBooleanString
+import ru.ifmo.fbsat.utils.toBinaryString
 import ru.ifmo.multiarray.IntMultiArray
 import ru.ifmo.multiarray.MultiArray
 
@@ -28,7 +28,7 @@ class TruthTableGuard(
     }
 
     override fun eval(inputValues: BooleanArray): Boolean {
-        return truthTable[uniqueInputs.indexOf(inputValues.toBooleanString())] in "1x"
+        return truthTable[uniqueInputs.indexOf(inputValues.toBinaryString())] in "1x"
     }
 
     override fun toSimpleString(): String {

@@ -10,6 +10,6 @@ fun String.toBooleanArray(): BooleanArray {
     }.toBooleanArray()
 }
 
-fun BooleanArray.toBooleanString(): String {
+fun BooleanArray.toBinaryString(): String {
     return this.joinToString("") { if (it) "1" else "0" }
 }

@@ -7,7 +7,7 @@ import ru.ifmo.fbsat.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.utils.LazyCache
 import ru.ifmo.fbsat.utils.toBooleanArray
-import ru.ifmo.fbsat.utils.toBooleanString
+import ru.ifmo.fbsat.utils.toBinaryString
 import java.io.File
 
 class Automaton(
@@ -128,7 +128,7 @@ class Automaton(
         }
 
         fun eval(outputValues: String): String {
-            return algorithm.eval(outputValues.toBooleanArray()).toBooleanString()
+            return algorithm.eval(outputValues.toBooleanArray()).toBinaryString()
         }
 
         fun go(inputEvent: String, inputValues: String, outputValues: String): GoResult {

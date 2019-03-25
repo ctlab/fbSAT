@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.automaton
 
+import ru.ifmo.fbsat.utils.toBinaryString
 import ru.ifmo.fbsat.utils.toBooleanArray
-import ru.ifmo.fbsat.utils.toBooleanString
 
 interface Algorithm {
     fun eval(outputValues: BooleanArray): BooleanArray
@@ -10,7 +10,8 @@ interface Algorithm {
 
 class BinaryAlgorithm(val algorithm0: BooleanArray, val algorithm1: BooleanArray) : Algorithm {
 
-    constructor(algorithm0: String, algorithm1: String) : this(algorithm0.toBooleanArray(), algorithm1.toBooleanArray())
+    constructor(algorithm0: String, algorithm1: String)
+            : this(algorithm0.toBooleanArray(), algorithm1.toBooleanArray())
 
     init {
         require(algorithm0.size == algorithm1.size) { "Algorithm size mismatch (algo0 = $algorithm0, algo1 = $algorithm1)" }
@@ -24,7 +25,7 @@ class BinaryAlgorithm(val algorithm0: BooleanArray, val algorithm1: BooleanArray
     }
 
     override fun toSimpleString(): String {
-        return "0:${algorithm0.toBooleanString()}, 1:${algorithm1.toBooleanString()}"
+        return "0:${algorithm0.toBinaryString()}, 1:${algorithm1.toBinaryString()}"
     }
 
     override fun toString(): String {
