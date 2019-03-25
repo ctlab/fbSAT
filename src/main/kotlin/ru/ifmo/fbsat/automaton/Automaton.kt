@@ -6,8 +6,8 @@ import ru.ifmo.fbsat.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.utils.LazyCache
-import ru.ifmo.fbsat.utils.toBooleanArray
 import ru.ifmo.fbsat.utils.toBinaryString
+import ru.ifmo.fbsat.utils.toBooleanArray
 import java.io.File
 
 class Automaton(

@@ -27,8 +27,7 @@ import ru.ifmo.fbsat.task.extended.ExtendedTask
 import ru.ifmo.fbsat.task.extendedce.ExtendedCETask
 import ru.ifmo.fbsat.task.extendedmin.ExtendedMinTask
 import ru.ifmo.fbsat.task.extendedmince.ExtendedMinCETask
-import ru.ifmo.fbsat.utils.inputNamesPnP
-import ru.ifmo.fbsat.utils.outputNamesPnP
+import ru.ifmo.fbsat.utils.PnP
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -187,7 +186,7 @@ class FbSAT : CliktCommand() {
         println("[*] Scenarios: ${scenarios.size}")
         println("[*] Elements: ${scenarios.sumBy { it.elements.size }}")
 
-        val tree = ScenarioTree(scenarios, inputNames = inputNamesPnP, outputNames = outputNamesPnP)
+        val tree = ScenarioTree(scenarios, inputNames = PnP.inputNames, outputNames = PnP.outputNames)
 
         val negTree = fileCounterexamples?.let {
             NegativeScenarioTree.fromFile(
