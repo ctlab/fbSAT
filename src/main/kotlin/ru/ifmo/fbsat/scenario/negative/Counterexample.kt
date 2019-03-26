@@ -1,5 +1,7 @@
 package ru.ifmo.fbsat.scenario.negative
 
+import okio.source
+import ru.ifmo.fbsat.utils.useLines
 import java.io.File
 
 class Counterexample(
@@ -43,14 +45,14 @@ class Counterexample(
 
     companion object {
         fun fromFile(file: File): List<Counterexample> {
-            val ces = mutableListOf<Counterexample>()
-            var states = mutableListOf<State>()
+            val ces: MutableList<Counterexample> = mutableListOf()
+            var states: MutableList<State> = mutableListOf()
             var hasState = false
             var stateName = ""
             var isLoop = false
-            var variables = mutableMapOf<String, String>()
+            var variables: MutableMap<String, String> = mutableMapOf()
 
-            file.bufferedReader().useLines { lines ->
+            file.source().useLines { lines ->
                 for (line in lines.map(String::trim)) {
                     when {
                         line.startsWith("Trace Description") -> {
