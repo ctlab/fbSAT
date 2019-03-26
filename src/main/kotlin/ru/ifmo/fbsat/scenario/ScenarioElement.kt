@@ -37,9 +37,10 @@ class ScenarioElement(
 }
 
 val List<ScenarioElement>.preprocessed: List<ScenarioElement>
-    get() = sequence {
-        yield(this@preprocessed.first())
-        for ((prev, cur) in this@preprocessed.asSequence().zipWithNext())
-            if (cur.outputEvent != null || cur != prev)
-                yield(cur)
-    }.toList()
+    get() = if (isEmpty()) emptyList() else
+        sequence {
+            yield(this@preprocessed.first())
+            for ((prev, cur) in this@preprocessed.asSequence().zipWithNext())
+                if (cur.outputEvent != null || cur != prev)
+                    yield(cur)
+        }.toList()
