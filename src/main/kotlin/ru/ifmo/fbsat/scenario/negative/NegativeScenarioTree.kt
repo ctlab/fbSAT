@@ -178,21 +178,13 @@ class NegativeScenarioTree(
             parent = null
         )
 
-        val firstElement = negativeScenario.elements.first()
-        require(firstElement.inputEvent == "")
-        require(firstElement.inputValues == "")
-        require(firstElement.outputEvent == null)
-        require(firstElement.outputValues == root.element.outputValues)
-        firstElement.nodeId = root.id
-
         var current: Node = root
         var loopBack: Node? = null
         var isAnyoneCreated = false
-        // skip first element, because it is the same as root
-        meow@ for ((i, element) in negativeScenario.elements.withIndex().drop(1)) {
+        meow@ for ((i, element) in negativeScenario.elements.withIndex()) {
             if (isTrie) {
                 for (child in current.children) {
-                    if (child.element == element) {
+                    if (element == child.element) {
                         current = child
                         element.nodeId = current.id
                         if (i + 1 == negativeScenario.loopPosition) {

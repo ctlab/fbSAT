@@ -61,28 +61,16 @@ fun Counterexample.toNegativeScenario(
     require(inputNames.isNotEmpty())
     require(outputNames.isNotEmpty())
 
-    val elements = sequence {
-        yield(
-            ScenarioElement(
-                "",
-                "",
-                states.first().getFirstTrue(outputEvents),
-                states.first().getBooleanString(outputNames),
-                states.first().variables["_state"]
-            )
+    val elements = states.zipWithNext { first, second ->
+        ScenarioElement(
+            first.getFirstTrue(inputEvents)!!,
+            first.getBooleanString(inputNames),
+            second.getFirstTrue(outputEvents),
+            second.getBooleanString(outputNames),
+            second.variables["_state"]
         )
-        yieldAll(
-            states.asSequence().zipWithNext { first, second ->
-                ScenarioElement(
-                    first.getFirstTrue(inputEvents)!!,
-                    first.getBooleanString(inputNames),
-                    second.getFirstTrue(outputEvents),
-                    second.getBooleanString(outputNames),
-                    second.variables["_state"]
-                )
-            }
-        )
-    }.toList()
+    }
 
-    return NegativeScenario(elements, loopPosition)
+    // Note: subtract 1. Just because.
+    return NegativeScenario(elements, loopPosition!! - 1)
 }

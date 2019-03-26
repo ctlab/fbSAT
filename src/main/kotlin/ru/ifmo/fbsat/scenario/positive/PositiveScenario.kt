@@ -6,15 +6,8 @@ import ru.ifmo.fbsat.scenario.preprocessed
 import java.io.File
 
 class PositiveScenario(
-    elements: List<ScenarioElement>,
-    preprocess: Boolean = true
+    override val elements: List<ScenarioElement>
 ) : Scenario {
-    override val elements: List<ScenarioElement> =
-        if (preprocess && elements.isNotEmpty())
-            elements.preprocessed
-        else
-            elements
-
     override fun toString(): String {
         return "PositiveScenario(elements=$elements)"
     }
@@ -26,13 +19,10 @@ class PositiveScenario(
                 var numberOfScenarios = 0
 
                 for ((index, line) in lines.withIndex()) {
-                    if (index == 0) numberOfScenarios = line.toInt()
-                    else scenarios.add(
-                        fromString(
-                            line,
-                            preprocess
-                        )
-                    )
+                    if (index == 0)
+                        numberOfScenarios = line.toInt()
+                    else
+                        scenarios.add(PositiveScenario.fromString(line, preprocess))
                 }
 
                 if (scenarios.size != numberOfScenarios) {
@@ -92,11 +82,14 @@ class PositiveScenario(
                         )
                         lastOutputValues = second.values
                     }
-                    else -> throw UnsupportedOperationException("Unsupported action type ${second.type}")
+                    else -> error("Unsupported action type '${second.type}'")
                 }
             }
 
-            return PositiveScenario(elements, preprocess = preprocess)
+            return if (preprocess)
+                PositiveScenario(elements.preprocessed)
+            else
+                PositiveScenario(elements)
         }
     }
 }
