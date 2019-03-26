@@ -27,6 +27,7 @@ import ru.ifmo.fbsat.task.extended.ExtendedTask
 import ru.ifmo.fbsat.task.extendedce.ExtendedCETask
 import ru.ifmo.fbsat.task.extendedmin.ExtendedMinTask
 import ru.ifmo.fbsat.task.extendedmince.ExtendedMinCETask
+import ru.ifmo.fbsat.task.extendedminub.ExtendedMinUBTask
 import ru.ifmo.fbsat.utils.PnP
 import java.io.File
 import java.time.LocalDateTime
@@ -105,6 +106,11 @@ class FbSAT : CliktCommand() {
     private val maxTotalGuardsSize by option(
         "-N",
         help = "Upper bound on total number of nodes in all guard-trees"
+    ).int()
+
+    private val maxPlateauWidth by option(
+        "-w",
+        help = "Maximum plateau width"
     ).int()
 
     private val solverCmd by option(
@@ -401,6 +407,19 @@ class FbSAT : CliktCommand() {
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxGuardSize = maxGuardSize!!,
                     initialMaxTotalGuardsSize = maxTotalGuardsSize,
+                    solverProvider = solverProvider,
+                    isForbidLoops = isForbidLoops,
+                    isEncodeAutomaton = isEncodeAutomaton,
+                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
+                )
+                task.infer()
+            }
+            "extended-min-ub" -> {
+                val task = ExtendedMinUBTask(
+                    scenarioTree = tree,
+                    negativeScenarioTree = negTree,
+                    initialMaxTotalGuardsSize = maxTotalGuardsSize,
+                    maxPlateauWidth = maxPlateauWidth,
                     solverProvider = solverProvider,
                     isForbidLoops = isForbidLoops,
                     isEncodeAutomaton = isEncodeAutomaton,
