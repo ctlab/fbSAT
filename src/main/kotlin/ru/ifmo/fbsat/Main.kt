@@ -360,31 +360,33 @@ class FbSAT : CliktCommand() {
         val automaton: Automaton? = when (method) {
             "basic" -> {
                 val task = BasicTask(
-                    tree,
-                    numberOfStates!!,
-                    maxOutgoingTransitions,
-                    solverProvider
+                    scenarioTree = tree,
+                    numberOfStates = numberOfStates!!,
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    solverProvider = solverProvider,
+                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
                 )
                 task.infer(maxTransitions)
             }
             "basic-min" -> {
                 val task = BasicMinTask(
-                    tree,
-                    numberOfStates,
-                    maxOutgoingTransitions,
-                    maxTransitions,
-                    solverProvider
+                    scenarioTree = tree,
+                    numberOfStates = numberOfStates,
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    initialMaxTransitions = maxTransitions,
+                    solverProvider = solverProvider,
+                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
                 )
                 task.infer()
             }
             "extended" -> {
                 val task = ExtendedTask(
-                    tree,
-                    negTree,
-                    numberOfStates!!,
-                    maxOutgoingTransitions,
-                    maxGuardSize!!,
-                    solverProvider,
+                    scenarioTree = tree,
+                    negativeScenarioTree = negTree,
+                    numberOfStates = numberOfStates!!,
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    maxGuardSize = maxGuardSize!!,
+                    solverProvider = solverProvider,
                     isForbidLoops = isForbidLoops,
                     isEncodeAutomaton = isEncodeAutomaton,
                     isEncodeTransitionsOrder = isEncodeTransitionsOrder
@@ -393,13 +395,13 @@ class FbSAT : CliktCommand() {
             }
             "extended-min" -> {
                 val task = ExtendedMinTask(
-                    tree,
-                    negTree,
-                    numberOfStates,
-                    maxOutgoingTransitions,
-                    maxGuardSize!!,
-                    maxTotalGuardsSize,
-                    solverProvider,
+                    scenarioTree = tree,
+                    negativeScenarioTree = negTree,
+                    numberOfStates = numberOfStates,
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    maxGuardSize = maxGuardSize!!,
+                    initialMaxTotalGuardsSize = maxTotalGuardsSize,
+                    solverProvider = solverProvider,
                     isForbidLoops = isForbidLoops,
                     isEncodeAutomaton = isEncodeAutomaton,
                     isEncodeTransitionsOrder = isEncodeTransitionsOrder
@@ -408,13 +410,13 @@ class FbSAT : CliktCommand() {
             }
             "extended-ce" -> {
                 val task = ExtendedCETask(
-                    tree,
-                    negTree,
-                    numberOfStates!!,
-                    maxOutgoingTransitions,
-                    maxGuardSize!!,
-                    solverProvider,
-                    smvDir,
+                    scenarioTree = tree,
+                    initialNegativeScenarioTree = negTree,
+                    numberOfStates = numberOfStates!!,
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    maxGuardSize = maxGuardSize!!,
+                    solverProvider = solverProvider,
+                    smvDir = smvDir,
                     isEncodeAutomaton = isEncodeAutomaton,
                     isEncodeTransitionsOrder = isEncodeTransitionsOrder
                 )
@@ -422,14 +424,14 @@ class FbSAT : CliktCommand() {
             }
             "extended-min-ce" -> {
                 val task = ExtendedMinCETask(
-                    tree,
-                    negTree,
-                    numberOfStates,
-                    maxOutgoingTransitions,
-                    maxGuardSize!!,
-                    maxTotalGuardsSize,
-                    solverProvider,
-                    smvDir,
+                    scenarioTree = tree,
+                    initialNegativeScenarioTree = negTree,
+                    numberOfStates = numberOfStates,
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    maxGuardSize = maxGuardSize!!,
+                    initialMaxTotalGuardsSize = maxTotalGuardsSize,
+                    solverProvider = solverProvider,
+                    smvDir = smvDir,
                     isEncodeAutomaton = isEncodeAutomaton,
                     isEncodeTransitionsOrder = isEncodeTransitionsOrder
                 )
