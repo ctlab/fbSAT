@@ -7,6 +7,7 @@ import java.io.File
 
 class NegativeScenarioTree(
     negativeScenarios: List<NegativeScenario>,
+    // TODO: forbid passing null input/output names
     inputNames: List<String>? = null,
     outputNames: List<String>? = null,
     private val isTrie: Boolean = true
