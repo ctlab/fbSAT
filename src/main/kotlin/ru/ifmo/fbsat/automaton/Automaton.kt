@@ -202,21 +202,15 @@ class Automaton(
      */
     private fun eval(scenario: Scenario): List<Automaton.State?> {
         val satisfyingStates = Array<Automaton.State?>(scenario.elements.size) { null }
-        satisfyingStates[0] = initialState
 
         var currentState = initialState
         var currentValues = "0".repeat(outputNames.size)
 
-        for ((j, element) in scenario.elements.withIndex().drop(1)) {
-            // j -- 0-based index of CE-element (CE-state)
+        for ((j, element) in scenario.elements.withIndex()) {
             val inputEvent = element.inputEvent
             val inputValues = element.inputValues
             val (newState, outputEvent, newValues) =
                 go(currentState, inputEvent, inputValues, currentValues)
-
-            // if (markCEStates) {
-            //     element.ceState = "${newState.id}"
-            // }
 
             if (outputEvent == element.outputEvent && newValues == element.outputValues) {
                 satisfyingStates[j] = newState
@@ -255,6 +249,7 @@ class Automaton(
             if (loop != null && last != null) {
                 if (last == loop) {
                     println("[!] Negative scenario is satisfied (last==loop)")
+                    println(">>> satisfyingStates = ${satisfyingStates.map { it?.id ?: 0 }}")
                     println(">>> loopPosition = ${negativeScenario.loopPosition}")
                     println(">>> loop = $loop")
                     println(">>> last = $last")
