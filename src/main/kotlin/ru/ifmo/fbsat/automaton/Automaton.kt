@@ -41,7 +41,8 @@ class Automaton(
      * Initial automaton state.
      */
     val initialState: State
-        get() = states.first()
+        // get() = states.first()
+        get() = _states[1]!!
     /**
      * Number of automaton states **C**.
      */
