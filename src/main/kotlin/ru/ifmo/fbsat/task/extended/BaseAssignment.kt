@@ -28,11 +28,11 @@ internal class BaseAssignment(
     val parent: IntMultiArray, // [C, K, P] : 0..P
     val childLeft: IntMultiArray, // [C, K, P] : 0..P
     val childRight: IntMultiArray, // [C, K, P] : 0..P
-    val nodeValue: BooleanMultiArray, // [C, K, P, U]
-    val childValueLeft: BooleanMultiArray, // [C, K, P, U]
-    val childValueRight: BooleanMultiArray, // [C, K, P, U]
+    val nodeValue: BooleanMultiArray, // [C, K, P, U] : Boolean
+    val childValueLeft: BooleanMultiArray, // [C, K, P, U] : Boolean
+    val childValueRight: BooleanMultiArray, // [C, K, P, U] : Boolean
     val firstFired: IntMultiArray, // [C, U] : 0..K
-    val notFired: BooleanMultiArray // [C, U, K]
+    val notFired: BooleanMultiArray // [C, U, K] : Boolean
 ) {
     companion object {
         @Suppress("LocalVariableName")

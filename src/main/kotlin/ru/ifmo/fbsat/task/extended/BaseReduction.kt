@@ -35,7 +35,7 @@ internal class BaseReduction(
     // Automaton variables
     val transition: IntMultiArray // [C, K, C+1]
     val actualTransition: IntMultiArray // [C, E, U, C+1]
-    val inputEvent: IntMultiArray // [C, K, E]
+    val inputEvent: IntMultiArray // [C, K, E+1]
     val outputEvent: IntMultiArray // [C, O]
     val algorithm0: IntMultiArray // [C, Z]
     val algorithm1: IntMultiArray // [C, Z]

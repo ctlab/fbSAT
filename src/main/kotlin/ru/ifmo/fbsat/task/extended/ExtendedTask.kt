@@ -14,9 +14,9 @@ class ExtendedTask(
     val maxOutgoingTransitions: Int?, // K, K=C if null
     val maxGuardSize: Int, // P
     solverProvider: () -> Solver,
-    private val isForbidLoops: Boolean = true,
-    private val isEncodeAutomaton: Boolean = false,
-    private val isEncodeTransitionsOrder: Boolean
+    val isForbidLoops: Boolean = true,
+    val isEncodeAutomaton: Boolean = false,
+    val isEncodeTransitionsOrder: Boolean
 ) {
     private val solver: Solver = solverProvider()
     private var baseReduction: BaseReduction? = null
@@ -25,12 +25,11 @@ class ExtendedTask(
     private var negativeReduction: NegativeReduction? = null
 
     /**
-     * Infer automaton.
+     * Infer automaton using **extended** method.
      *
      * @param[maxTotalGuardsSize] maximum total guard size *N*, unconstrained if `null`.
      * @param[finalize] call `finalize` method after inference?
-     *
-     * @return automaton if *SAT*, or `null` if *UNSAT*
+     * @return automaton if *SAT*, or `null` if *UNSAT*.
      */
     fun infer(
         maxTotalGuardsSize: Int? = null,
@@ -70,7 +69,7 @@ class ExtendedTask(
 
         measureTimeMillis {
             baseReduction = BaseReduction(
-                scenarioTree,
+                scenarioTree = scenarioTree,
                 C = numberOfStates,
                 K = maxOutgoingTransitions ?: numberOfStates,
                 P = maxGuardSize,

@@ -15,9 +15,9 @@ class ExtendedMinTask(
     val maxGuardSize: Int, // P
     val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
     val solverProvider: () -> Solver,
-    private val isForbidLoops: Boolean = true,
-    private val isEncodeAutomaton: Boolean = false,
-    private val isEncodeTransitionsOrder: Boolean
+    val isForbidLoops: Boolean = true,
+    val isEncodeAutomaton: Boolean = false,
+    val isEncodeTransitionsOrder: Boolean
 ) {
     init {
         require(!(numberOfStates == null && maxOutgoingTransitions != null)) {
@@ -29,23 +29,24 @@ class ExtendedMinTask(
     fun infer(): Automaton? {
         val C = numberOfStates ?: run {
             val task = BasicMinTask(
-                scenarioTree,
-                null,
-                null,
-                null,
-                solverProvider
+                scenarioTree = scenarioTree,
+                numberOfStates = null,
+                maxOutgoingTransitions = null,
+                initialMaxTransitions = null,
+                solverProvider = solverProvider,
+                isEncodeTransitionsOrder = isEncodeTransitionsOrder
             )
             val automaton = task.infer(isOnlyC = true) ?: return null
             automaton.numberOfStates
         }
 
         val task = ExtendedTask(
-            scenarioTree,
-            negativeScenarioTree,
-            C,
-            maxOutgoingTransitions,
-            maxGuardSize,
-            solverProvider,
+            scenarioTree = scenarioTree,
+            negativeScenarioTree = negativeScenarioTree,
+            numberOfStates = C,
+            maxOutgoingTransitions = maxOutgoingTransitions,
+            maxGuardSize = maxGuardSize,
+            solverProvider = solverProvider,
             isForbidLoops = isForbidLoops,
             isEncodeAutomaton = isEncodeAutomaton,
             isEncodeTransitionsOrder = isEncodeTransitionsOrder
@@ -55,9 +56,6 @@ class ExtendedMinTask(
         if (best != null) {
             while (true) {
                 val N = best!!.totalGuardsSize - 1
-                // // ==============
-                // if (N < 23) break
-                // // ==============
                 println("[*] Trying N = $N...")
                 best = task.infer(N, finalize = false) ?: break
             }
