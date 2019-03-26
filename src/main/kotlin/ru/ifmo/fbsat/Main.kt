@@ -361,7 +361,6 @@ class FbSAT : CliktCommand() {
             "basic" -> {
                 val task = BasicTask(
                     tree,
-                    negTree,
                     numberOfStates!!,
                     maxOutgoingTransitions,
                     solverProvider

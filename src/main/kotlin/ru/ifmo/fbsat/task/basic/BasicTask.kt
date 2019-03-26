@@ -1,44 +1,45 @@
 package ru.ifmo.fbsat.task.basic
 
 import ru.ifmo.fbsat.automaton.Automaton
-import ru.ifmo.fbsat.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
+import ru.ifmo.fbsat.solver.declareComparatorLessThanOrEqual
 import kotlin.system.measureTimeMillis
 
-// BasicAutomatonInferenceTask
 class BasicTask(
     val scenarioTree: ScenarioTree,
-    val negativeScenarioTree: NegativeScenarioTree?,
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int?, // K, K=C if null
-    val solverProvider: () -> Solver
+    solverProvider: () -> Solver,
+    val isEncodeTransitionsOrder: Boolean
 ) {
     private val solver = solverProvider()
-    private var baseReduction: Reduction? = null
+    private var baseReduction: BaseReduction? = null
     private var totalizer: IntArray? = null
     private var declaredMaxTransitions: Int? = null
-    private var ceReduction: Boolean = false
 
     /**
-     * @param[maxTransitions] maximum number of transitions *T*, unconstrained if `null`
-     * @return automaton if *SAT*, or `null` if *UNSAT*
+     * Infer automaton using **basic** method.
+     *
+     * @param[maxTransitions] maximum number of transitions *T*, unconstrained if `null`.
+     * @param[finalize] call `finalize` method after inference?
+     * @return automaton if *SAT*, or `null` if *UNSAT*.
      */
     fun infer(maxTransitions: Int? = null, finalize: Boolean = true): Automaton? {
         declareBaseReduction()
         declareCardinality(maxTransitions)
 
-        // =============================================
-        // if (negativeScenarioTree != null)
-        //     declareCE(negativeScenarioTree)
-        // =============================================
         solver.comment("Total variables: ${solver.numberOfVariables}, clauses: ${solver.numberOfClauses}")
 
-        val automaton = solver.solve()?.let { Assignment.fromRaw(baseReduction!!, it).toAutomaton() }
-
+        val rawAssignment = solver.solve()
         if (finalize) finalize()
 
-        return automaton
+        return if (rawAssignment != null) {
+            val assignment = BaseAssignment.fromRaw(rawAssignment, baseReduction!!)
+            @Suppress("UnnecessaryVariable")
+            val automaton = assignment.toAutomaton()
+            automaton
+        } else null
     }
 
     fun finalize() {
@@ -46,19 +47,21 @@ class BasicTask(
     }
 
     private fun declareBaseReduction() {
-        if (baseReduction == null) {
-            measureTimeMillis {
-                baseReduction = solver.declareBaseReduction(
-                    scenarioTree,
-                    C = numberOfStates,
-                    K = maxOutgoingTransitions ?: numberOfStates
-                )
-            }.also {
-                println(
-                    "[+] Done declaring base reduction (${solver.numberOfVariables} variables, ${solver.numberOfClauses} clauses) in %.3f seconds"
-                        .format(it / 1000.0)
-                )
-            }
+        if (baseReduction != null) return
+
+        measureTimeMillis {
+            baseReduction = BaseReduction(
+                scenarioTree,
+                C = numberOfStates,
+                K = maxOutgoingTransitions ?: numberOfStates,
+                solver = solver,
+                isEncodeTransitionsOrder = isEncodeTransitionsOrder
+            )
+        }.also {
+            println(
+                "[+] Done declaring base reduction (${solver.numberOfVariables} variables, ${solver.numberOfClauses} clauses) in %.3f seconds"
+                    .format(it / 1000.0)
+            )
         }
     }
 
@@ -67,7 +70,8 @@ class BasicTask(
             if (totalizer == null) {
                 totalizer = solver.declareTotalizer(baseReduction!!)
             }
-            solver.declareComparator(totalizer!!, maxTransitions, declaredMaxTransitions)
+
+            solver.declareComparatorLessThanOrEqual(totalizer!!, maxTransitions, declaredMaxTransitions)
             declaredMaxTransitions = maxTransitions
         }
     }
