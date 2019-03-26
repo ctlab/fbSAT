@@ -437,7 +437,7 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            else -> TODO("Method '$method' is not implemented yet.")
+            else -> TODO("method '$method'")
         }
 
         if (automaton == null) {
