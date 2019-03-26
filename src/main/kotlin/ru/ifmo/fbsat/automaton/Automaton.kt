@@ -285,6 +285,7 @@ class Automaton(
      * Dump automaton in Graphviz and SMV formats to the [dir] directory using [name] as the file basename.
      */
     fun dump(dir: File, name: String = "automaton") {
+        dir.mkdirs()
         dumpGv(dir.resolve("$name.gv"))
         dumpSmv(dir.resolve("$name.smv"))
     }
