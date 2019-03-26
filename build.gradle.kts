@@ -38,10 +38,6 @@ application {
     mainClassName = "ru.ifmo.fbsat.MainKt"
 }
 
-ktlint {
-    ignoreFailures.set(true)
-}
-
 defaultTasks("clean", "build", "installDist")
 
 tasks {
