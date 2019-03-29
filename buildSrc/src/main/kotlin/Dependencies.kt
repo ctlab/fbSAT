@@ -1,15 +1,15 @@
 object Versions {
     const val kotlin = "1.3.21"
     const val jgitver = "0.8.0"
-    const val ktlint = "7.1.0"
-    const val clikt = "1.6.0"
-    const val junit = "5.4.0"
-    const val kluent = "1.48"
+    const val ktlint = "7.2.1"
+    const val clikt = "1.7.0"
+    const val junit = "5.5.0-M1"
+    const val kluent = "1.49"
     const val kotlintest_runner_jnuit5 = "3.3.0"
     const val multiarray = "1.1.1-6"
     const val shadow = "5.0.0"
-    const val okio = "2.2.0"
-    const val dokka = "0.9.17"
+    const val okio = "2.2.2"
+    const val dokka = "0.9.18"
 }
 
 object Libs {
