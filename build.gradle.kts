@@ -10,6 +10,7 @@ plugins {
     id("fr.brouillard.oss.gradle.jgitver") version Versions.jgitver
     id("com.github.johnrengelman.shadow") version Versions.shadow
     id("org.jetbrains.dokka") version Versions.dokka
+    id("com.github.ben-manes.versions") version Versions.gradleversions
 }
 
 repositories {
@@ -21,6 +22,7 @@ dependencies {
     implementation(Libs.clikt)
     implementation(Libs.multiarray)
     implementation(Libs.okio)
+    implementation(Libs.mordant)
 
     // testImplementation(Libs.kotlintest_runner_junit5)
     testImplementation(Libs.junit_jupiter_api)

@@ -10,6 +10,8 @@ object Versions {
     const val shadow = "5.0.0"
     const val okio = "2.2.2"
     const val dokka = "0.9.18"
+    const val gradleversions = "0.21.0"
+    const val mordant = "1.2.1"
 }
 
 object Libs {
@@ -21,4 +23,5 @@ object Libs {
     const val kotlintest_runner_junit5 = "io.kotlintest:kotlintest-runner-junit5:${Versions.kotlintest_runner_jnuit5}"
     const val multiarray = "ru.ifmo.multiarray:multiarray:${Versions.multiarray}"
     const val okio = "com.squareup.okio:okio:${Versions.okio}"
+    const val mordant = "com.github.ajalt:mordant:${Versions.mordant}"
 }
