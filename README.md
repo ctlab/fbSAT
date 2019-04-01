@@ -43,20 +43,17 @@ Usage: fbsat [OPTIONS]
 Options:
   -i, --scenarios <path>                    File with scenarios [required]
   -ce, --counterexamples <path>             File with counter-examples
-  -smv, --smvdir <path>                     Folder with SMV files/scripts for verification
+  -smv, --smvdir <path>                     Directory with SMV files/scripts for verification
   -o, --outdir <path>                       Output directory [default: current directory]
   -m, --method <method>                     Method to use [required]
-  -C INT                                    Number of automaton states
-  -K INT                                    Maximum number of transitions from each state
-  -P INT                                    Maximum number of nodes in guard's boolean formula's parse tree
-  -T INT                                    Upper bound on total number of transitions in automaton
-  -N INT                                    Upper bound on total number of nodes in all guard-trees
-  -w INT                                    Maximum plateau width
+  -C <int>                                  Number of automaton states
+  -K <int>                                  Maximum number of transitions from each state
+  -P <int>                                  Maximum number of nodes in guard's boolean formula's parse tree
+  -T <int>                                  Upper bound on total number of transitions in automaton
+  -N <int>                                  Upper bound on total number of nodes in all guard-trees
+  -w <int>                                  Maximum plateau width
   --solver <cmd>                            SAT-solver [default: incremental-cryptominisat]
   --incremental / --no-incremental          Use IncrementalSolver backend [default: true]
   --forbid-loops / --no-forbid-loops        Forbid loops [default: true]
-  --vis FILE                                [DEBUG] Visualize given counterexamples via graphviz
-  --only-automaton2
-  --verify-ce PATH
   -h, --help                                Show this message and exit
 ```

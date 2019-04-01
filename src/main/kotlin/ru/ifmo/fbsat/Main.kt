@@ -61,7 +61,7 @@ class FbSAT : CliktCommand() {
 
     private val smvDir by option(
         "-smv", "--smvdir",
-        help = "Folder with SMV files/scripts for verification",
+        help = "Directory with SMV files/scripts for verification",
         metavar = "<path>"
     ).file(
         exists = true,
@@ -93,32 +93,38 @@ class FbSAT : CliktCommand() {
 
     private val numberOfStates by option(
         "-C",
-        help = "Number of automaton states"
+        help = "Number of automaton states",
+        metavar = "<int>"
     ).int()
 
     private val maxOutgoingTransitions by option(
         "-K",
-        help = "Maximum number of transitions from each state"
+        help = "Maximum number of transitions from each state",
+        metavar = "<int>"
     ).int()
 
     private val maxGuardSize by option(
         "-P",
-        help = "Maximum number of nodes in guard's boolean formula's parse tree"
+        help = "Maximum number of nodes in guard's boolean formula's parse tree",
+        metavar = "<int>"
     ).int()
 
     private val maxTransitions by option(
         "-T",
-        help = "Upper bound on total number of transitions in automaton"
+        help = "Upper bound on total number of transitions in automaton",
+        metavar = "<int>"
     ).int()
 
     private val maxTotalGuardsSize by option(
         "-N",
-        help = "Upper bound on total number of nodes in all guard-trees"
+        help = "Upper bound on total number of nodes in all guard-trees",
+        metavar = "<int>"
     ).int()
 
     private val maxPlateauWidth by option(
         "-w",
-        help = "Maximum plateau width"
+        help = "Maximum plateau width",
+        metavar = "<int>"
     ).int()
 
     private val solverCmd by option(
