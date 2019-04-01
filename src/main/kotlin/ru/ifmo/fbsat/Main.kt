@@ -28,7 +28,9 @@ import ru.ifmo.fbsat.task.extendedce.ExtendedCETask
 import ru.ifmo.fbsat.task.extendedmin.ExtendedMinTask
 import ru.ifmo.fbsat.task.extendedmince.ExtendedMinCETask
 import ru.ifmo.fbsat.task.extendedminub.ExtendedMinUBTask
+import ru.ifmo.fbsat.utils.Globals
 import ru.ifmo.fbsat.utils.PnP
+import ru.ifmo.fbsat.utils.log
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -70,7 +72,13 @@ class FbSAT : CliktCommand() {
         "-o", "--outdir",
         help = "Output directory [default: current directory]",
         metavar = "<path>"
-    ).file().defaultLazy { File("") }
+    ).file().defaultLazy { File(".") }
+
+    private val logDir by option(
+        "--logdir",
+        help = "Directory for logs [default: \$outDir/]",
+        metavar = "<path>"
+    ).file().defaultLazy { outDir }
 
     // TODO: enum Method
     private val method by option(
@@ -135,6 +143,27 @@ class FbSAT : CliktCommand() {
         default = true
     )
 
+    private val isForbidOr by option(
+        "--forbid-or"
+    ).flag(
+        "--no-forbid-or",
+        default = false
+    )
+
+    private val isBfsAutomaton by option(
+        "--bfs-automaton"
+    ).flag(
+        "--no-bfs-automaton",
+        default = true
+    )
+
+    private val isBfsGuard by option(
+        "--bfs-guard"
+    ).flag(
+        "--no-bfs-guard",
+        default = false
+    )
+
     private val failIfSTVerifyFailed by option(
         "--fail-verify-st",
         help = "Halt if verification of scenario tree has failed [default: true]"
@@ -145,7 +174,7 @@ class FbSAT : CliktCommand() {
 
     private val failIfCEVerifyFailed by option(
         "--fail-verify-ce",
-        help = "Halt if verification of negativeScenarios has failed [default: true]"
+        help = "Halt if verification of negative scenarios has failed [default: true]"
     ).flag(
         "--no-fail-verify-ce",
         default = true
@@ -162,17 +191,25 @@ class FbSAT : CliktCommand() {
 
     private val isEncodeAutomaton by option(
         "--encode-automaton",
-        help = "[DEBUG] Encode Daniil's automaton"
+        help = "[DEBUG] Encode Daniil's automaton [default: false]"
     ).flag(
         default = false
     )
 
     private val isEncodeTransitionsOrder by option(
         "--encode-transitions-order",
-        help = "[DEBUG] Encode transitions lexicographic order"
+        help = "[DEBUG] Encode transitions lexicographic order [default: false]"
     ).flag(
         "--no-encode-transitions-order",
         default = false
+    )
+
+    private val isEncodeTerminalsOrder by option(
+        "--encode-terminals-order",
+        help = "[DEBUG] Encode terminal numbers lexicographic order [default: true]"
+    ).flag(
+        "--no-encode-terminals-order",
+        default = true
     )
 
     private val isOnlyAutomaton2 by option(
@@ -183,11 +220,25 @@ class FbSAT : CliktCommand() {
         "--verify-ce"
     ).file()
 
+    private val isDebug by option(
+        "--debug",
+        help = "Debug mode [default: false]"
+    ).flag(
+        default = false
+    )
+
     init {
         context { helpFormatter = PlaintextHelpFormatter(maxWidth = 999) }
     }
 
     override fun run() {
+        Globals.IS_FORBID_OR = isForbidOr
+        Globals.IS_BFS_AUTOMATON = isBfsAutomaton
+        Globals.IS_BFS_GUARD = isBfsGuard
+        Globals.IS_ENCODE_TRANSITIONS_ORDER = isEncodeTransitionsOrder
+        Globals.IS_ENCODE_TERMINALS_ORDER = isEncodeTerminalsOrder
+        Globals.IS_DEBUG = isDebug
+
         val scenarios = PositiveScenario.fromFile(fileScenarios)
         println("[*] Scenarios: ${scenarios.size}")
         println("[*] Elements: ${scenarios.sumBy { it.elements.size }}")
@@ -216,8 +267,8 @@ class FbSAT : CliktCommand() {
                 tree.outputNames
             )
             File("$file.gv").writeText(negST.toGraphvizString())
-            Runtime.getRuntime().exec("dot -Tpdf -O $file.gv")
-            // Runtime.getRuntime().exec("dot -Tpng -O ce.gv")
+            Runtime.getRuntime().exec("dot -Tpdf -O $file.gv").waitFor()
+            // Runtime.getRuntime().exec("dot -Tpng -O ce.gv").waitFor()
 
             println("======================================")
             println("[*] Searching for multi-loops...")
@@ -369,10 +420,10 @@ class FbSAT : CliktCommand() {
                     scenarioTree = tree,
                     numberOfStates = numberOfStates!!,
                     maxOutgoingTransitions = maxOutgoingTransitions,
-                    solverProvider = solverProvider,
-                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
+                    maxTransitions = maxTransitions,
+                    solver = solverProvider()
                 )
-                task.infer(maxTransitions)
+                task.infer()
             }
             "basic-min" -> {
                 val task = BasicMinTask(
@@ -380,8 +431,7 @@ class FbSAT : CliktCommand() {
                     numberOfStates = numberOfStates,
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     initialMaxTransitions = maxTransitions,
-                    solverProvider = solverProvider,
-                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
+                    solverProvider = solverProvider
                 )
                 task.infer()
             }
@@ -460,28 +510,25 @@ class FbSAT : CliktCommand() {
         }
 
         if (automaton == null) {
-            println("[-] Automaton not found")
+            log.failure("Automaton not found")
         } else {
-            println("[+] Automaton:")
+            log.success("Inferred automaton:")
             automaton.pprint()
-
-            println("[+] Automaton has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes")
+            log.info("Inferred automaton has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes")
 
             if (automaton.verify(tree))
-                println("[+] Verify: OK")
+                log.success("Verify: OK")
             else {
-                println("[-] Verify: FAILED")
-                if (failIfSTVerifyFailed)
-                    error("ST verification failed")
+                log.failure("Verify: FAILED")
+                if (failIfSTVerifyFailed) error("ST verification failed")
             }
 
             if (negTree != null) {
                 if (automaton.verify(negTree))
-                    println("[+] Verify CE: OK")
+                    log.success("Verify CE: OK")
                 else {
-                    println("[-] Verify CE: FAILED")
-                    if (failIfCEVerifyFailed)
-                        error("CE verification failed")
+                    log.failure("Verify CE: FAILED")
+                    if (failIfCEVerifyFailed) error("CE verification failed")
                 }
 
                 // val fileCEMarkedGv = File("ce-marked.gv")
@@ -498,9 +545,9 @@ class FbSAT : CliktCommand() {
                     tree.outputNames
                 )
                 if (automaton.verify(nst))
-                    println("[+] Verify CE from '$fileVerifyCE': OK")
+                    log.success("Verify CE from '$fileVerifyCE': OK")
                 else
-                    println("[-] Verify CE from '$fileVerifyCE': FAILED")
+                    log.failure("Verify CE from '$fileVerifyCE': FAILED")
             }
 
             outDir.mkdirs()
@@ -510,8 +557,8 @@ class FbSAT : CliktCommand() {
 }
 
 fun main(args: Array<String>) {
-    println("=== ${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))}")
+    log.br(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
     val runningTime = measureTimeMillis { FbSAT().main(args) }
-    println("[+] All done in %.3f seconds".format(runningTime / 1000.0))
-    println("=== ${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))}")
+    log.br(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+    log.success("All done in %.3f seconds".format(runningTime / 1000.0))
 }

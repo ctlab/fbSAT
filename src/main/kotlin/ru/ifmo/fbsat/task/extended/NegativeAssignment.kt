@@ -88,14 +88,14 @@ internal class NegativeAssignment(
             // }
 
             // println("[*] Satisfaction for negative scenarios:")
-            // for ((j, scenario) in negTree.counterexamples.withIndex()) {
+            // for ((j, scenario) in negTree.negativeScenarios.withIndex()) {
             //     val sat = scenario.elements.mapIndexed { i, elem ->
             //         elem.nodeId?.let { id ->
             //             val c = satisfaction[id]
             //             if (i + 1 == scenario.loopPosition) "<$c>" else "$c"
             //         } ?: "?"
             //     }.joinToString(" ")
-            //     println("[${j + 1}/${negTree.counterexamples.size}] satisfaction = [$sat]")
+            //     println("[${j + 1}/${negTree.negativeScenarios.size}] satisfaction = [$sat]")
             // }
 
             return NegativeAssignment(

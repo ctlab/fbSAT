@@ -4,85 +4,104 @@ import ru.ifmo.fbsat.automaton.Automaton
 import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.solver.declareComparatorLessThanOrEqual
-import kotlin.system.measureTimeMillis
 
-class BasicTask(
+internal class Cardinality(
+    val totalizer: IntArray,
+    val declaredMaxTransitions: Int
+)
+
+class BasicTask private constructor(
     val scenarioTree: ScenarioTree,
     val numberOfStates: Int, // C
-    val maxOutgoingTransitions: Int?, // K, K=C if null
-    solverProvider: () -> Solver,
-    val isEncodeTransitionsOrder: Boolean
+    val maxOutgoingTransitions: Int, // K
+    val maxTransitions: Int?, // T, unconstrained if null
+    private val solver: Solver,
+    private val autoFinalize: Boolean,
+    oldBaseReduction: BaseReduction?,
+    oldCardinality: Cardinality?
 ) {
-    private val solver = solverProvider()
-    private var baseReduction: BaseReduction? = null
-    private var totalizer: IntArray? = null
-    private var declaredMaxTransitions: Int? = null
+    private val baseReduction: BaseReduction
+    private val cardinality: Cardinality?
+    private var canBeReused: Boolean
 
-    /**
-     * Infer automaton using **basic** method.
-     *
-     * @param[maxTransitions] maximum number of transitions *T*, unconstrained if `null`.
-     * @param[finalize] call `finalize` method after inference?
-     * @return automaton if *SAT*, or `null` if *UNSAT*.
-     */
-    fun infer(maxTransitions: Int? = null, finalize: Boolean = true): Automaton? {
-        declareBaseReduction()
-        declareCardinality(maxTransitions)
+    constructor(
+        scenarioTree: ScenarioTree,
+        numberOfStates: Int, // C
+        maxOutgoingTransitions: Int? = null, // K, K=C if null
+        maxTransitions: Int? = null, // T, unconstrained if null
+        solver: Solver,
+        autoFinalize: Boolean = true
+    ) : this(
+        scenarioTree = scenarioTree,
+        numberOfStates = numberOfStates,
+        maxOutgoingTransitions = maxOutgoingTransitions ?: numberOfStates,
+        maxTransitions = maxTransitions,
+        solver = solver,
+        autoFinalize = autoFinalize,
+        oldBaseReduction = null,
+        oldCardinality = null
+    )
 
-        solver.comment("Total variables: ${solver.numberOfVariables}, clauses: ${solver.numberOfClauses}")
+    init {
+        this.baseReduction = oldBaseReduction ?: declareBaseReduction()
+        this.cardinality = declareCardinality(maxTransitions, oldCardinality)
+        this.canBeReused = !autoFinalize
+    }
 
+    fun infer(): Automaton? {
         val rawAssignment = solver.solve()
-        if (finalize) finalize()
+        if (autoFinalize) finalize()
 
-        return if (rawAssignment != null) {
-            val assignment = BaseAssignment.fromRaw(rawAssignment, baseReduction!!)
-            @Suppress("UnnecessaryVariable")
-            val automaton = assignment.toAutomaton()
-            automaton
-        } else null
+        if (rawAssignment == null)
+            return null
+
+        val assignment = BaseAssignment.fromRaw(rawAssignment, baseReduction)
+        @Suppress("UnnecessaryVariable")
+        val automaton = assignment.toAutomaton()
+        return automaton
     }
 
     fun finalize() {
         solver.finalize()
+        canBeReused = false
     }
 
-    private fun declareBaseReduction() {
-        if (baseReduction != null) return
+    fun reuse(newMaxTransitions: Int): BasicTask {
+        check(canBeReused)
+        canBeReused = false
 
-        measureTimeMillis {
-            baseReduction = BaseReduction(
-                scenarioTree,
-                C = numberOfStates,
-                K = maxOutgoingTransitions ?: numberOfStates,
-                solver = solver,
-                isEncodeTransitionsOrder = isEncodeTransitionsOrder
-            )
-        }.also {
-            println(
-                "[+] Done declaring base reduction (${solver.numberOfVariables} variables, ${solver.numberOfClauses} clauses) in %.3f seconds"
-                    .format(it / 1000.0)
-            )
-        }
+        return BasicTask(
+            scenarioTree = this.scenarioTree,
+            numberOfStates = this.numberOfStates,
+            maxOutgoingTransitions = this.maxOutgoingTransitions,
+            maxTransitions = newMaxTransitions,
+            solver = this.solver,
+            autoFinalize = this.autoFinalize,
+            oldBaseReduction = this.baseReduction,
+            oldCardinality = this.cardinality
+        )
     }
 
-    private fun declareCardinality(maxTransitions: Int?) {
-        if (maxTransitions != null) {
-            if (totalizer == null) {
-                totalizer = solver.declareTotalizer(baseReduction!!)
-            }
+    private fun declareBaseReduction(): BaseReduction {
+        // TODO: ensure called no more than once
 
-            solver.declareComparatorLessThanOrEqual(totalizer!!, maxTransitions, declaredMaxTransitions)
-            declaredMaxTransitions = maxTransitions
-        }
+        return BaseReduction(
+            scenarioTree = scenarioTree,
+            C = numberOfStates,
+            K = maxOutgoingTransitions,
+            solver = solver
+        )
     }
 
-    // private fun declareCE(negativeScenarioTree: NegativeScenarioTree) {
-    //     if (!ceReduction) {
-    //         solver.declareCE(
-    //             baseReduction!!,
-    //             negativeScenarioTree
-    //         )
-    //         ceReduction = true
-    //     }
-    // }
+    private fun declareCardinality(maxTransitions: Int?, oldCardinality: Cardinality?): Cardinality? {
+        // TODO: ensure called no more than once
+
+        if (maxTransitions == null) return null
+
+        val totalizer = oldCardinality?.totalizer ?: solver.declareTotalizer(baseReduction)
+        val declaredMaxTransitions = oldCardinality?.declaredMaxTransitions
+        solver.declareComparatorLessThanOrEqual(totalizer, maxTransitions, declaredMaxTransitions)
+
+        return Cardinality(totalizer, maxTransitions)
+    }
 }

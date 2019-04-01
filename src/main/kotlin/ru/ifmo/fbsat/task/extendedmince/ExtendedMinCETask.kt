@@ -44,9 +44,12 @@ class ExtendedMinCETask(
         val automatonExtMin = taskExtMin.infer() ?: error("ExtendedMinTask could not infer an automaton")
         val C = automatonExtMin.numberOfStates
         val P = maxGuardSize
-        var N = automatonExtMin.totalGuardsSize
+        // var N = automatonExtMin.totalGuardsSize
+        var N = automatonExtMin.getN()
 
-        println("C = $C, P = $P, N = $N")
+        println("[*] automatonExtMin:")
+        automatonExtMin.pprint()
+        println("[*] automatonExtMin has C = $C, P = $P, N = $N")
 
         out@ for (loopNumber in 1..100) {
             println("===== Loop number #$loopNumber =====")

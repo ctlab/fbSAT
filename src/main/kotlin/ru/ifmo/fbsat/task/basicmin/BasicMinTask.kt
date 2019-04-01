@@ -4,14 +4,16 @@ import ru.ifmo.fbsat.automaton.Automaton
 import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.task.basic.BasicTask
+import ru.ifmo.fbsat.utils.log
+import ru.ifmo.fbsat.utils.timeIt
+import kotlin.properties.Delegates
 
 class BasicMinTask(
     val scenarioTree: ScenarioTree,
     val numberOfStates: Int?, // C, search if null
     val maxOutgoingTransitions: Int?, // K, =C if null
     val initialMaxTransitions: Int?, // T_init, unconstrained if null
-    val solverProvider: () -> Solver,
-    val isEncodeTransitionsOrder: Boolean
+    private val solverProvider: () -> Solver
 ) {
     init {
         require(!(numberOfStates == null && maxOutgoingTransitions != null)) {
@@ -19,50 +21,76 @@ class BasicMinTask(
         }
     }
 
+    @Suppress("LocalVariableName")
     fun infer(isOnlyC: Boolean = false): Automaton? {
+        log.debug { "BasicMinTask::infer(${if (isOnlyC) "onlyC" else ""})" }
+
         var best: Automaton? = null
-        var task: BasicTask? = null
+        var task: BasicTask by Delegates.notNull()
 
         if (numberOfStates == null) {
+            log.info("BasicMinTask: searching for minimal C...")
             for (C in 1..20) {
-                println("Trying C = $C")
                 task = BasicTask(
                     scenarioTree = scenarioTree,
                     numberOfStates = C,
                     maxOutgoingTransitions = maxOutgoingTransitions,
-                    solverProvider = solverProvider,
-                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
+                    maxTransitions = initialMaxTransitions,
+                    solver = solverProvider(),
+                    autoFinalize = false
                 )
-                val automaton = task.infer(initialMaxTransitions, finalize = false)
+                val (automaton, runningTime) = timeIt { task.infer() }
                 if (automaton != null) {
+                    log.success("BasicMinTask: C = $C -> SAT in %.2f s".format(runningTime))
+                    log.info("BasicMinTask: minimal C = $C")
                     best = automaton
                     break
                 } else {
+                    log.failure("BasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
                     task.finalize()
                 }
             }
         } else {
+            val C = numberOfStates
+            log.info("BasicMinTask: using provided C = $C")
             task = BasicTask(
                 scenarioTree = scenarioTree,
                 numberOfStates = numberOfStates,
                 maxOutgoingTransitions = maxOutgoingTransitions,
-                solverProvider = solverProvider,
-                isEncodeTransitionsOrder = isEncodeTransitionsOrder
+                maxTransitions = initialMaxTransitions,
+                solver = solverProvider(),
+                autoFinalize = false
             )
-            best = task.infer(initialMaxTransitions, finalize = false)
+            val (automaton, runningTime) = timeIt { task.infer() }
+            if (automaton != null)
+                log.success("BasicMinTask: C = $C -> SAT in %.2f s".format(runningTime))
+            else
+                log.failure("BasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
+            best = automaton
         }
 
         if (!isOnlyC && best != null) {
+            log.info("BasicMinTask: searching for minimal T...")
             while (true) {
-                @Suppress("LocalVariableName")
                 val T = best!!.numberOfTransitions - 1
-                println("Trying T = $T...")
-                val automaton = task!!.infer(T, finalize = false) ?: break
-                best = automaton
+                task = task.reuse(T)
+                val (automaton, runningTime) = timeIt { task.infer() }
+                if (automaton != null) {
+                    log.success(
+                        "BasicMinTask: T = $T -> SAT in %.2f with T = ${automaton.numberOfTransitions}"
+                            .format(runningTime)
+                    )
+                    best = automaton
+                } else {
+                    log.failure("BasicMinTask: T = $T -> UNSAT in %.2f".format(runningTime))
+                    log.info("BasicMinTask: minimal T = ${best.numberOfTransitions}")
+                    break
+                }
             }
+            log.info("BasicMinTask: minimal T = ${best?.numberOfTransitions}")
         }
 
-        task!!.finalize()
+        task.finalize()
 
         return best
     }

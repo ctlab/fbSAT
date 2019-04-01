@@ -7,22 +7,22 @@ import ru.ifmo.fbsat.solver.iff
 import ru.ifmo.fbsat.solver.iffAnd
 import ru.ifmo.fbsat.solver.iffOr
 import ru.ifmo.fbsat.solver.imply
+import ru.ifmo.fbsat.utils.Globals
 import ru.ifmo.multiarray.IntMultiArray
 
 internal class BaseReduction(
     val scenarioTree: ScenarioTree,
     val C: Int,
     val K: Int,
-    solver: Solver,
-    isEncodeTransitionsOrder: Boolean
+    solver: Solver
 ) {
     // Constants
     private val V = scenarioTree.size
     private val E = scenarioTree.inputEvents.size
     private val O = scenarioTree.outputEvents.size
     private val U = scenarioTree.uniqueInputs.size
-    private val X = scenarioTree.uniqueInputs.first().length
-    private val Z = scenarioTree.uniqueOutputs.first().length
+    private val X = scenarioTree.inputNames.size
+    private val Z = scenarioTree.outputNames.size
     // Scenario tree variables
     val color: IntMultiArray // [V, C]
     // Automaton variables
@@ -67,7 +67,7 @@ internal class BaseReduction(
             declareAlgorithmConstraints()
             declareBfsConstraints()
             declareAdhocConstraints()
-            if (isEncodeTransitionsOrder) declareTransitionsOrderConstraints()
+            if (Globals.IS_ENCODE_TRANSITIONS_ORDER) declareTransitionsOrderConstraints()
         }
     }
 

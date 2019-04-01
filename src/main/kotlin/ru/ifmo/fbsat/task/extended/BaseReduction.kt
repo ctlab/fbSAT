@@ -11,6 +11,8 @@ import ru.ifmo.fbsat.solver.imply
 import ru.ifmo.fbsat.solver.implyIff
 import ru.ifmo.fbsat.solver.implyIffAnd
 import ru.ifmo.fbsat.solver.implyIffOr
+import ru.ifmo.fbsat.utils.Globals
+import ru.ifmo.fbsat.utils.empty
 import ru.ifmo.multiarray.IntMultiArray
 
 @Suppress("PropertyName", "PrivatePropertyName", "MemberVisibilityCanBePrivate")
@@ -51,9 +53,12 @@ internal class BaseReduction(
     val childValueRight: IntMultiArray // [C, K, P, U]
     val firstFired: IntMultiArray // [C, U, K+1]
     val notFired: IntMultiArray // [C, U, K]
-    // BFS variables
-    val bfsTransition: IntMultiArray // [C, C]
-    val bfsParent: IntMultiArray // [C, C]
+    // Automaton BFS variables
+    val bfsTransitionAutomaton: IntMultiArray // [C, C]
+    val bfsParentAutomaton: IntMultiArray // [C, C]
+    // Guard BFS variables
+    val bfsTransitionGuard: IntMultiArray // [C, K, P, P]
+    val bfsParentGuard: IntMultiArray // [C, K, P, P]
 
     init {
         with(solver) {
@@ -67,7 +72,9 @@ internal class BaseReduction(
             algorithm0 = newArray(C, Z)
             algorithm1 = newArray(C, Z)
             // Guards variables
-            nodeType = newArray(C, K, P, 5)
+            nodeType = IntMultiArray.new(C, K, P, NodeType.values().size) { (_, _, _, nt0) ->
+                if (Globals.IS_FORBID_OR && NodeType.values()[nt0] == NodeType.OR) -1 else newVariable()
+            }
             terminal = newArray(C, K, P, X + 1)
             parent = newArray(C, K, P, P + 1)
             childLeft = newArray(C, K, P, P + 1)
@@ -78,9 +85,18 @@ internal class BaseReduction(
             childValueRight = newArray(C, K, P, U)
             firstFired = newArray(C, U, K + 1)
             notFired = newArray(C, U, K)
-            // BFS variables
-            bfsTransition = newArray(C, C)
-            bfsParent = newArray(C, C)
+            // Automaton BFS variables
+            bfsTransitionAutomaton = if (Globals.IS_BFS_AUTOMATON) newArray(C, C) else IntMultiArray.empty()
+            bfsParentAutomaton = if (Globals.IS_BFS_AUTOMATON) newArray(C, C) else IntMultiArray.empty()
+            // Guard BFS variables
+            bfsTransitionGuard = if (!Globals.IS_BFS_GUARD) IntMultiArray.empty() else
+                IntMultiArray.new(C, K, P, P) { (c, k, i, j) ->
+                    if (j > i) parent[c, k, j, i] else -1
+                }
+            bfsParentGuard = if (!Globals.IS_BFS_GUARD) IntMultiArray.empty() else
+                IntMultiArray.new(C, K, P, P) { (_, _, j, i) ->
+                    if (i < j) newVariable() else -1
+                }
 
             // Constraints
             declareColorConstraints()
@@ -88,7 +104,8 @@ internal class BaseReduction(
             declareFiringConstraints()
             declareOutputEventConstraints()
             declareAlgorithmConstraints()
-            declareBfsConstraints()
+            if (Globals.IS_BFS_AUTOMATON) declareAutomatonBfsConstraints()
+            if (Globals.IS_BFS_GUARD) declareGuardBfsConstraints()
             declareNodeTypeConstraints()
             declareParentAndChildrenConstraints()
             declareNoneTypeNodesConstraints()
@@ -291,14 +308,14 @@ internal class BaseReduction(
         }
     }
 
-    private fun Solver.declareBfsConstraints() {
-        comment("6. BFS constraints")
+    private fun Solver.declareAutomatonBfsConstraints() {
+        comment("6. Automaton BFS constraints")
 
         comment("6.1. F_t")
         // t[i, j] <=> OR_k( transition[i,k,j] )
         for (i in 1..C)
             for (j in 1..C)
-                iffOr(bfsTransition[i, j], sequence {
+                iffOr(bfsTransitionAutomaton[i, j], sequence {
                     for (k in 1..K)
                         yield(transition[i, k, j])
                 })
@@ -308,39 +325,70 @@ internal class BaseReduction(
         for (i in 1..C) {
             // to avoid ambiguous unused variable:
             for (j in 1..i)
-                clause(-bfsParent[j, i])
+                clause(-bfsParentAutomaton[j, i])
 
             for (j in (i + 1)..C)
-                iffAnd(bfsParent[j, i], sequence {
-                    yield(bfsTransition[i, j])
+                iffAnd(bfsParentAutomaton[j, i], sequence {
+                    yield(bfsTransitionAutomaton[i, j])
                     for (k in 1..(i - 1))
-                        yield(-bfsTransition[k, j])
+                        yield(-bfsTransitionAutomaton[k, j])
                 })
         }
 
         comment("6.3. F_ALO(p)")
+        // OR_{i<j}( p[j, i] )
         for (j in 2..C)
             clause {
                 for (i in 1..(j - 1))
-                    yield(bfsParent[j, i])
+                    yield(bfsParentAutomaton[j, i])
             }
 
         comment("6.4. F_BFS(p)")
-        // p[j, i] => ~p[j+1, k]
+        // p[j, i] => ~p[j+1, k] :: LB<=k<i<j<UB
         for (k in 1..C)
             for (i in (k + 1)..C)
                 for (j in (i + 1)..(C - 1))
-                    imply(bfsParent[j, i], -bfsParent[j + 1, k])
+                    imply(bfsParentAutomaton[j, i], -bfsParentAutomaton[j + 1, k])
+    }
+
+    private fun Solver.declareGuardBfsConstraints() {
+        comment("66. Guard BFS constraints")
+
+        comment("66.2. F_p")
+        // p[j, i] <=> t[i, j] & AND_{n<i}( ~t[n, j] )
+        for (c in 1..C)
+            for (k in 1..K)
+                for (i in 1..P)
+                    for (j in (i + 1)..P)
+                        iffAnd(bfsParentGuard[c, k, j, i], sequence {
+                            yield(bfsTransitionGuard[c, k, i, j])
+                            for (n in 1..(i - 1))
+                                yield(-bfsTransitionGuard[c, k, n, j])
+                        })
+
+        comment("66.4. F_BFS(p)")
+        // p[j, i] => ~p[j+1, n] :: LB<=n<i<j<UB
+        for (c in 1..C)
+            for (k in 1..K)
+                for (n in 1..P)
+                    for (i in (n + 1)..P)
+                        for (j in (i + 1)..(P - 1))
+                            imply(bfsParentGuard[c, k, j, i], -bfsParentGuard[c, k, j + 1, n])
     }
 
     private fun Solver.declareNodeTypeConstraints() {
         comment("7. Nodetype constraints")
 
-        comment("7.0. ONE(nodetype)_{1..5}")
+        comment("7.0. ONE(nodetype)_{all nodetypes}")
         for (c in 1..C)
             for (k in 1..K)
                 for (p in 1..P)
-                    exactlyOne(1..5, nodeType, c, k, p)
+                    exactlyOne {
+                        for (nt in NodeType.values()) {
+                            if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
+                            yield(nodeType[c, k, p, nt.value])
+                        }
+                    }
 
         comment("7.1. Only null-transitions have no guard")
         // transition[0] <=> nodetype[1, NONE]
@@ -371,13 +419,13 @@ internal class BaseReduction(
                     exactlyOne(1..(P + 1), childRight, c, k, p)
 
         comment("8.1. parent<->child relation")
-        // parent[ch, p] => (child_left[p, ch] | child_right[p, ch])
+        // parent[ch, p] <=> (child_left[p, ch] | child_right[p, ch])
         for (c in 1..C)
             for (k in 1..K)
                 for (p in 1..(P - 1))
                     for (ch in (p + 1)..P)
-                        clause(
-                            -parent[c, k, ch, p],
+                        iffOr(
+                            parent[c, k, ch, p],
                             childLeft[c, k, p, ch],
                             childRight[c, k, p, ch]
                         )
@@ -512,6 +560,18 @@ internal class BaseReduction(
                                 '0' -> imply(terminal[c, k, p, x], -nodeValue[c, k, p, u])
                                 else -> error("Character $char for u = $u, x = $x is neither '1' nor '0'")
                             }
+
+        if (Globals.IS_ENCODE_TERMINALS_ORDER) {
+            comment("10.5. Terminals order")
+            // terminal[p, x] => AND_{p'<p, x'>=x}( ~terminal[r_, x_] )
+            for (c in 1..C)
+                for (k in 1..K)
+                    for (p in 1..P)
+                        for (x in 1..X)
+                            for (p_ in 1..(p - 1))
+                                for (x_ in x..X)
+                                    imply(terminal[c, k, p, x], -terminal[c, k, p_, x_])
+        }
     }
 
     private fun Solver.declareAndOrNodesConstraints() {
@@ -522,11 +582,11 @@ internal class BaseReduction(
             for (k in 1..K) {
                 if (P >= 1) {
                     clause(-nodeType[c, k, P, NodeType.AND.value])
-                    clause(-nodeType[c, k, P, NodeType.OR.value])
+                    if (!Globals.IS_FORBID_OR) clause(-nodeType[c, k, P, NodeType.OR.value])
                 }
                 if (P >= 2) {
                     clause(-nodeType[c, k, P - 1, NodeType.AND.value])
-                    clause(-nodeType[c, k, P - 1, NodeType.OR.value])
+                    if (!Globals.IS_FORBID_OR) clause(-nodeType[c, k, P - 1, NodeType.OR.value])
                 }
             }
 
@@ -535,12 +595,14 @@ internal class BaseReduction(
         for (c in 1..C)
             for (k in 1..K)
                 for (p in 1..(P - 2))
-                    for (nt in sequenceOf(NodeType.AND, NodeType.OR))
+                    for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
+                        if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
                         clause(sequence {
                             yield(-nodeType[c, k, p, nt.value])
                             for (ch in (p + 1)..(P - 1))
                                 yield(childLeft[c, k, p, ch])
                         })
+                    }
 
         comment("11.2. AND/OR: right child is adjacent (+1) to left")
         // nodetype[p, AND/OR] & child_left[p, ch] => child_right[p, ch+1]
@@ -548,12 +610,14 @@ internal class BaseReduction(
             for (k in 1..K)
                 for (p in 1..(P - 2))
                     for (ch in (p + 1)..(P - 1))
-                        for (nt in sequenceOf(NodeType.AND, NodeType.OR))
+                        for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
+                            if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
                             clause(
                                 -nodeType[c, k, p, nt.value],
                                 -childLeft[c, k, p, ch],
                                 childRight[c, k, p, ch + 1]
                             )
+                        }
 
         comment("11.3. AND/OR: children`s parents")
         // nodetype[p, AND/OR] & child_left[p, ch] => parent[ch, p] & parent[ch+1, p]
@@ -562,6 +626,7 @@ internal class BaseReduction(
                 for (p in 1..(P - 2))
                     for (ch in (p + 1)..(P - 1))
                         for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
+                            if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
                             val x1 = nodeType[c, k, p, nt.value]
                             val x2 = childLeft[c, k, p, ch]
                             val x3 = parent[c, k, ch, p]
@@ -578,6 +643,7 @@ internal class BaseReduction(
                     for (ch in (p + 1)..(P - 1))
                         for (u in 1..U)
                             for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
+                                if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
                                 val x1 = nodeType[c, k, p, nt.value]
                                 val x2 = childLeft[c, k, p, ch]
                                 val x3 = childValueLeft[c, k, p, u]
@@ -594,6 +660,7 @@ internal class BaseReduction(
                     for (ch in (p + 2)..P)
                         for (u in 1..U)
                             for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
+                                if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
                                 val x1 = nodeType[c, k, p, nt.value]
                                 val x2 = childRight[c, k, p, ch]
                                 val x3 = childValueRight[c, k, p, u]
@@ -615,18 +682,20 @@ internal class BaseReduction(
                             childValueRight[c, k, p, u]
                         )
 
-        comment("11.5b. OR: value is calculated as a disjunction of children")
-        // nodetype[p, OR] => AND_u( value[p, u] <=> (child_value_left[p, u] | child_value_right[p, u]) )
-        for (c in 1..C)
-            for (k in 1..K)
-                for (p in 1..(P - 2))
-                    for (u in 1..U)
-                        implyIffOr(
-                            nodeType[c, k, p, NodeType.OR.value],
-                            nodeValue[c, k, p, u],
-                            childValueLeft[c, k, p, u],
-                            childValueRight[c, k, p, u]
-                        )
+        if (!Globals.IS_FORBID_OR) {
+            comment("11.5b. OR: value is calculated as a disjunction of children")
+            // nodetype[p, OR] => AND_u( value[p, u] <=> (child_value_left[p, u] | child_value_right[p, u]) )
+            for (c in 1..C)
+                for (k in 1..K)
+                    for (p in 1..(P - 2))
+                        for (u in 1..U)
+                            implyIffOr(
+                                nodeType[c, k, p, NodeType.OR.value],
+                                nodeValue[c, k, p, u],
+                                childValueLeft[c, k, p, u],
+                                childValueRight[c, k, p, u]
+                            )
+        }
     }
 
     private fun Solver.declareNotNodesConstraints() {
@@ -726,6 +795,14 @@ internal class BaseReduction(
 
         comment("A.2. Distinct transitions")
         // TODO: Distinct transitions
+
+        if (Globals.IS_FORBID_OR) {
+            comment("A.3. Forbid ORs")
+            for (c in 1..C)
+                for (k in 1..K)
+                    for (p in 1..P)
+                        clause(-nodeType[c, k, p, NodeType.OR.value])
+        }
     }
 
     private fun Solver.declareSuperAdhocConstraints() {

@@ -4,6 +4,8 @@ import okio.Buffer
 import okio.buffer
 import okio.sink
 import okio.source
+import ru.ifmo.fbsat.utils.log
+import ru.ifmo.fbsat.utils.timeIt
 import ru.ifmo.multiarray.IntMultiArray
 import kotlin.math.absoluteValue
 
@@ -45,7 +47,7 @@ class DefaultSolver(private val command: String) : AbstractSolver() {
     }
 
     override fun comment(comment: String) {
-        // println("// $comment")
+        log.debug { "// $comment" }
         buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
     }
 
@@ -63,7 +65,7 @@ class DefaultSolver(private val command: String) : AbstractSolver() {
         // println("[*] Redirecting buffer to process.outputStream...")
         buffer.copyTo(processInput.buffer)
 
-        println("[*] Solving...")
+        log.debug { "Solving..." }
         val timeSolveStart = System.currentTimeMillis()
         processInput.close()
 
@@ -76,12 +78,12 @@ class DefaultSolver(private val command: String) : AbstractSolver() {
                 when {
                     line == "s SATISFIABLE" -> {
                         val timeSolve = (System.currentTimeMillis() - timeSolveStart) / 1000.0
-                        println("[+] SAT in %.2f seconds".format(timeSolve))
+                        log.success("SAT in %.2f seconds".format(timeSolve))
                         isSat = true
                     }
                     line == "s UNSATISFIABLE" -> {
                         val timeSolve = (System.currentTimeMillis() - timeSolveStart) / 1000.0
-                        println("[-] UNSAT in %.2f seconds".format(timeSolve))
+                        log.failure("[-] UNSAT in %.2f seconds".format(timeSolve))
                         isSat = false
                         continue@label
                     }
@@ -133,9 +135,8 @@ class IncrementalSolver(command: String) : AbstractSolver() {
     }
 
     override fun comment(comment: String) {
+        log.debug { "// $comment" }
         processInput.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
-
-        // println("// $comment")
         buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
     }
 
@@ -153,27 +154,19 @@ class IncrementalSolver(command: String) : AbstractSolver() {
         processInput.writeUtf8("solve 0\n")
         processInput.flush()
 
-        println("[*] Solving...")
-        val timeSolveStart = System.currentTimeMillis()
-        val answer: String? = processOutput.readUtf8Line()
-        val timeSolve = (System.currentTimeMillis() - timeSolveStart) / 1000.0
+        log.debug { "Solving..." }
+        val (answer, solvingTime) = timeIt { processOutput.readUtf8Line() }
+        log.debug { "Done solving in %.2f s.".format(solvingTime) }
 
         if (answer == null) {
-            println("[!] Solver returned nothing")
+            // log.error("Solver returned nothing")
             return null
         }
 
         when (answer) {
             "SAT" -> {
-                println("[+] SAT in %.2f s".format(timeSolve))
-
-                val line = processOutput.readUtf8Line()
-
-                if (line == null) {
-                    println("[!] Solver returned no assignment")
-                    return null
-                }
-
+                // log.success("SAT in %.2f s".format(timeSolve))
+                val line = processOutput.readUtf8Line() ?: return null
                 return line.trim()
                     .splitToSequence(" ")
                     .drop(1) // drop "v"
@@ -182,11 +175,11 @@ class IncrementalSolver(command: String) : AbstractSolver() {
                     .toBooleanArray()
             }
             "UNSAT" -> {
-                println("[-] UNSAT in %.2f s".format(timeSolve))
+                // log.failure("UNSAT in %.2f s".format(timeSolve))
                 return null
             }
             else -> {
-                println("[!] Implicit UNSAT or ERROR (\"$answer\") in %.2f s.".format(timeSolve))
+                // log.error("Implicit UNSAT or ERROR ('$answer') in %.2f s.".format(timeSolve))
                 return null
             }
         }

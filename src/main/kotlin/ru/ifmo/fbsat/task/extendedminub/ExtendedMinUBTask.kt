@@ -10,6 +10,7 @@ import ru.ifmo.fbsat.task.extendedmin.ExtendedMinTask
 class ExtendedMinUBTask(
     val scenarioTree: ScenarioTree,
     val negativeScenarioTree: NegativeScenarioTree?,
+    // FIXME: seems like N_init support is not needed
     val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
     val maxPlateauWidth: Int?, // w, unconstrained (=Inf) if null
     val solverProvider: () -> Solver,
@@ -24,8 +25,7 @@ class ExtendedMinUBTask(
             numberOfStates = null,
             maxOutgoingTransitions = null,
             initialMaxTransitions = null,
-            solverProvider = solverProvider,
-            isEncodeTransitionsOrder = isEncodeTransitionsOrder
+            solverProvider = solverProvider
         )
         val automatonBasicMin = taskBasicMin.infer()
         checkNotNull(automatonBasicMin)
@@ -62,11 +62,10 @@ class ExtendedMinUBTask(
                 isEncodeTransitionsOrder = isEncodeTransitionsOrder
             )
             val automaton = task.infer()
-
             if (automaton != null) {
                 best = automaton
                 Plow = P
-                N = best.totalGuardsSize
+                N = best.totalGuardsSize - 1
             }
         }
 

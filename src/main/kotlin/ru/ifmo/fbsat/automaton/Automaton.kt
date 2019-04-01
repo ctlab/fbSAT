@@ -6,6 +6,7 @@ import ru.ifmo.fbsat.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.utils.LazyCache
+import ru.ifmo.fbsat.utils.log
 import ru.ifmo.fbsat.utils.toBinaryString
 import ru.ifmo.fbsat.utils.toBooleanArray
 import java.io.File
@@ -63,6 +64,15 @@ class Automaton(
      */
     val totalGuardsSize: Int
         get() = states.flatMap { it.transitions }.sumBy { it.guard.size }
+
+    fun getN(): Int {
+        // return totalGuardsSize + states.sumBy { state ->
+        //     with(state.algorithm as BinaryAlgorithm) {
+        //         algorithm0.count { it } + algorithm1.count { !it }
+        //     }
+        // }
+        return totalGuardsSize
+    }
 
     constructor(scenarioTree: ScenarioTree) : this(
         scenarioTree.inputEvents,
@@ -240,7 +250,7 @@ class Automaton(
      *
      * @return `true` if [negativeScenario] is **not** satisfied.
      */
-    private fun verify(negativeScenario: NegativeScenario): Boolean {
+    private fun verify(negativeScenario: NegativeScenario, index: Int? = null): Boolean {
         val satisfyingStates = eval(negativeScenario)
 
         if (negativeScenario.loopPosition != null) {
@@ -248,8 +258,11 @@ class Automaton(
             val last = satisfyingStates.last()
             if (loop != null && last != null) {
                 if (last == loop) {
-                    println("[!] Negative scenario is satisfied (last==loop)")
-                    println(">>> satisfyingStates = ${satisfyingStates.map { it?.id ?: 0 }}")
+                    println("[!] Negative scenario${index?.let { " ($index)" } ?: ""} is satisfied (last==loop)")
+                    println(">>> satisfyingStates = ${satisfyingStates.map {
+                        it?.id ?: 0
+                    }} (size = ${satisfyingStates.size})")
+                    println(">>> something = ${negativeScenario.elements.map { it.nodeId }}")
                     println(">>> loopPosition = ${negativeScenario.loopPosition}")
                     println(">>> loop = $loop")
                     println(">>> last = $last")
@@ -258,7 +271,7 @@ class Automaton(
                 }
             }
         } else if (satisfyingStates.last() != null) {
-            println("[!] Terminal is satisfied")
+            log.error("Terminal is satisfied")
             return false
         }
 
@@ -279,7 +292,7 @@ class Automaton(
      * @return `true` if **all** scenarios are **not** satisfied.
      */
     fun verify(negativeScenarioTree: NegativeScenarioTree): Boolean =
-        negativeScenarioTree.negativeScenarios.all(this@Automaton::verify)
+        negativeScenarioTree.negativeScenarios.mapIndexed { index, scenario -> verify(scenario, index + 1) }.all { it }
 
     /**
      * Dump automaton in Graphviz and SMV formats to the [dir] directory using [name] as the file basename.
@@ -314,7 +327,7 @@ class Automaton(
      * Pretty-print automaton.
      */
     fun pprint() {
-        println(toSimpleString().prependIndent("  "))
+        log.just(toSimpleString().prependIndent("  "))
     }
 
     /**

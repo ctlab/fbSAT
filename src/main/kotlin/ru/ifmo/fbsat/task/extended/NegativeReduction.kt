@@ -12,6 +12,7 @@ import ru.ifmo.fbsat.solver.imply
 import ru.ifmo.fbsat.solver.implyIff
 import ru.ifmo.fbsat.solver.implyIffAnd
 import ru.ifmo.fbsat.solver.implyIffOr
+import ru.ifmo.fbsat.utils.Globals
 import ru.ifmo.multiarray.IntMultiArray
 
 @Suppress("PropertyName", "PrivatePropertyName", "MemberVisibilityCanBePrivate")
@@ -43,8 +44,10 @@ internal class NegativeReduction(
     private val newNegUIs = negUIs - oldNegUIs
     private val U = UIs.size
     private val newU = newNegUIs.map { getU(it) }
-    private val X = negativeScenarioTree.uniqueInputs.first().length
-    private val Z = negativeScenarioTree.uniqueOutputs.first().length
+    private val X = negativeScenarioTree.inputNames.size
+    private val Z = negativeScenarioTree.outputNames.size
+    private val forbiddenLoops: MutableSet<Pair<Int, Int>> =
+        previousNegativeReduction?.forbiddenLoops ?: mutableSetOf()
     // Negative scenario tree variables
     val satisfaction: IntMultiArray // [V, C+1]
     // Automaton variables
@@ -265,13 +268,13 @@ internal class NegativeReduction(
 
         comment("CE.1.5. Forbid loops")
         // satisfaction[v, c] => ~satisfaction[loop(v), c]
-        if (isForbidLoops)
-            for (v in VsWithLoops) {
+        if (isForbidLoops) {
+            for (v in 1..V)
                 for (l in negativeScenarioTree.loopBacks(v))
-                    for (c in 1..C)
-                        imply(satisfaction[v, c], -satisfaction[l, c])
-            }
-        else
+                    if (forbiddenLoops.add(v to l))
+                        for (c in 1..C)
+                            imply(satisfaction[v, c], -satisfaction[l, c])
+        } else
             comment("===== NOT FORBIDDING LOOPS =====")
 
         comment("CE.1.6. Root is satisfied by start state")
@@ -408,6 +411,7 @@ internal class NegativeReduction(
                     for (ch in (p + 1)..(P - 1))
                         for (u in newU)
                             for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
+                                if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
                                 val x1 = nodeType[c, k, p, nt.value]
                                 val x2 = childLeft[c, k, p, ch]
                                 val x3 = childValueLeft[c, k, p, u]
@@ -424,6 +428,7 @@ internal class NegativeReduction(
                     for (ch in (p + 2)..P)
                         for (u in newU)
                             for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
+                                if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
                                 val x1 = nodeType[c, k, p, nt.value]
                                 val x2 = childRight[c, k, p, ch]
                                 val x3 = childValueRight[c, k, p, u]
@@ -445,18 +450,20 @@ internal class NegativeReduction(
                             childValueRight[c, k, p, u]
                         )
 
-        comment("CE.11.5b. OR: value is calculated as a disjunction of children")
-        // nodetype[p, OR] => AND_u( value[p, u] <=> (child_value_left[p, u] | child_value_right[p, u]) )
-        for (c in 1..C)
-            for (k in 1..K)
-                for (p in 1..(P - 2))
-                    for (u in newU)
-                        implyIffOr(
-                            nodeType[c, k, p, NodeType.OR.value],
-                            nodeValue[c, k, p, u],
-                            childValueLeft[c, k, p, u],
-                            childValueRight[c, k, p, u]
-                        )
+        if (!Globals.IS_FORBID_OR) {
+            comment("CE.11.5b. OR: value is calculated as a disjunction of children")
+            // nodetype[p, OR] => AND_u( value[p, u] <=> (child_value_left[p, u] | child_value_right[p, u]) )
+            for (c in 1..C)
+                for (k in 1..K)
+                    for (p in 1..(P - 2))
+                        for (u in newU)
+                            implyIffOr(
+                                nodeType[c, k, p, NodeType.OR.value],
+                                nodeValue[c, k, p, u],
+                                childValueLeft[c, k, p, u],
+                                childValueRight[c, k, p, u]
+                            )
+        }
 
         comment("CE.12.4a. NOT: child_value_left is a value of left child")
         // nodetype[p, NOT] & child_left[p, ch] => AND_u( child_value_left[p, u] <=> value[ch, u] )

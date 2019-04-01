@@ -5,6 +5,7 @@ import ru.ifmo.fbsat.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.solver.declareComparatorLessThanOrEqual
+import ru.ifmo.fbsat.utils.log
 import kotlin.system.measureTimeMillis
 
 class ExtendedTask(
@@ -35,6 +36,8 @@ class ExtendedTask(
         maxTotalGuardsSize: Int? = null,
         finalize: Boolean = true
     ): Automaton? {
+        log.debug { "ExtendedTask::infer(N = $maxTotalGuardsSize)" }
+
         declareBaseReduction()
         declareCardinality(maxTotalGuardsSize)
         declareNegativeReduction()
@@ -43,21 +46,24 @@ class ExtendedTask(
 
         val rawAssignment = solver.solve()
         if (finalize) finalize()
+        if (rawAssignment == null)
+            return null
 
-        return if (rawAssignment != null) {
-            val assignment = BaseAssignment.fromRaw(rawAssignment, baseReduction!!)
-            val automaton = assignment.toAutomaton()
-            if (negativeReduction != null) {
-                val negativeAssignment = NegativeAssignment.fromRaw(rawAssignment, negativeReduction!!)
-                automaton.checkNegativeAssignment(negativeAssignment, scenarioTree)
-            }
-            // ====================
-            if (negativeScenarioTree != null) {
-                check(automaton.verify(negativeScenarioTree)) { "NST verification failed" }
-            }
-            // ====================
-            automaton
-        } else null
+        val assignment = BaseAssignment.fromRaw(rawAssignment, baseReduction!!)
+        val automaton = assignment.toAutomaton()
+        if (negativeReduction != null) {
+            val negativeAssignment = NegativeAssignment.fromRaw(rawAssignment, negativeReduction!!)
+            automaton.checkNegativeAssignment(negativeAssignment, scenarioTree)
+        }
+        // ====================
+        if (negativeScenarioTree != null) {
+            check(automaton.verify(negativeScenarioTree)) { "NST verification failed" }
+            // if (!automaton.verify(negativeScenarioTree)) {
+            //     println("[!] NST verification failed")
+            // }
+        }
+        // ====================
+        return automaton
     }
 
     fun finalize() {
@@ -67,7 +73,8 @@ class ExtendedTask(
     private fun declareBaseReduction() {
         if (baseReduction != null) return
 
-        measureTimeMillis {
+        val runningTime = measureTimeMillis {
+            log.debug { "ExtendedTask::declareBaseReduction()" }
             baseReduction = BaseReduction(
                 scenarioTree = scenarioTree,
                 C = numberOfStates,
@@ -77,11 +84,10 @@ class ExtendedTask(
                 isEncodeAutomaton = isEncodeAutomaton,
                 isEncodeTransitionsOrder = isEncodeTransitionsOrder
             )
-        }.also {
-            println(
-                "[+] Done declaring base reduction (${solver.numberOfVariables} variables, ${solver.numberOfClauses} clauses) in %.3f seconds"
-                    .format(it / 1000.0)
-            )
+        }
+        log.debug {
+            "Done declaring base reduction (${solver.numberOfVariables} variables, ${solver.numberOfClauses} clauses) in %.3f seconds"
+                .format(runningTime / 1000.0)
         }
     }
 
@@ -89,6 +95,8 @@ class ExtendedTask(
         check(baseReduction != null) { "Run declareBaseReductionExtended first" }
 
         if (maxTotalGuardSize != null) {
+            log.debug { "ExtendedTask::declareCardinality(N = $maxTotalGuardSize)" }
+
             if (totalizer == null) {
                 totalizer = solver.declareTotalizerExtended(baseReduction!!)
             }
@@ -106,6 +114,7 @@ class ExtendedTask(
 
         // if (negativeReduction != null) return
 
+        log.debug { "ExtendedTask:declareNegativeReduction()" }
         val nov = solver.numberOfVariables
         val noc = solver.numberOfClauses
         val runningTime = measureTimeMillis {
@@ -118,9 +127,9 @@ class ExtendedTask(
                 isForbidLoops = isForbidLoops
             )
         }
-        println(
-            "[+] Done declaring negative reduction (${solver.numberOfVariables - nov} variables, ${solver.numberOfClauses - noc} clauses) in %.3f seconds"
+        log.debug {
+            "Done declaring negative reduction (${solver.numberOfVariables - nov} variables, ${solver.numberOfClauses - noc} clauses) in %.3f seconds"
                 .format(runningTime / 1000.0)
-        )
+        }
     }
 }
