@@ -23,6 +23,7 @@ dependencies {
     implementation(Libs.multiarray)
     implementation(Libs.okio)
     implementation(Libs.mordant)
+    implementation("org.redundent:kotlin-xml-builder:1.5.0")
 
     // testImplementation(Libs.kotlintest_runner_junit5)
     testImplementation(Libs.junit_jupiter_api)

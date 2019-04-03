@@ -5,6 +5,7 @@ import okio.Source
 import okio.buffer
 import ru.ifmo.multiarray.BooleanMultiArray
 import ru.ifmo.multiarray.IntMultiArray
+import kotlin.random.Random
 
 fun String.toBooleanArray(): BooleanArray {
     return this.map {
@@ -26,6 +27,14 @@ fun randomBinaryString(length: Int): String {
 
 fun <T> randomChoice(vararg choices: T): T {
     return choices.random()
+}
+
+fun ClosedRange<Double>.random(): Double {
+    return random(Random)
+}
+
+fun ClosedRange<Double>.random(random: Random): Double {
+    return start + random.nextDouble() * (endInclusive - start)
 }
 
 /**

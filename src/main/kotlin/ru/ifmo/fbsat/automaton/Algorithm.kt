@@ -28,6 +28,24 @@ class BinaryAlgorithm(val algorithm0: BooleanArray, val algorithm1: BooleanArray
         return "0:${algorithm0.toBinaryString()}, 1:${algorithm1.toBinaryString()}"
     }
 
+    fun toFbtString(): String {
+        return "${algorithm0.toBinaryString()}_${algorithm1.toBinaryString()}"
+    }
+
+    fun toST(outputNames: List<String>): String {
+        require(outputNames.size == algorithm0.size) { "Wrong number of names" }
+
+        return outputNames.indices.joinToString("") { i ->
+            val name = outputNames[i]
+            val a0 = algorithm0[i]
+            val a1 = algorithm1[i]
+            if (a0 == a1)
+                "$name:=${if (a0) "TRUE" else "FALSE"};"
+            else
+                "$name:=~$name;"
+        }
+    }
+
     override fun toString(): String {
         return "BinaryAlgorithm(${this.toSimpleString()})"
     }

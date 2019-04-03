@@ -1,5 +1,7 @@
 package ru.ifmo.fbsat.automaton
 
+import org.redundent.kotlin.xml.PrintOptions
+import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.scenario.Scenario
 import ru.ifmo.fbsat.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.scenario.negative.NegativeScenarioTree
@@ -7,6 +9,7 @@ import ru.ifmo.fbsat.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.utils.LazyCache
 import ru.ifmo.fbsat.utils.log
+import ru.ifmo.fbsat.utils.random
 import ru.ifmo.fbsat.utils.toBinaryString
 import ru.ifmo.fbsat.utils.toBooleanArray
 import java.io.File
@@ -33,10 +36,10 @@ class Automaton(
     private val lazyCache = LazyCache()
 
     /**
-     * Set of automaton states.
+     * Automaton states.
      */
-    val states: Set<State> by lazyCache {
-        _states.values.toSet()
+    val states: Collection<State> by lazyCache {
+        _states.values
     }
     /**
      * Initial automaton state.
@@ -55,15 +58,21 @@ class Automaton(
     // val maxGuardSize: Int
     //     get() = states.flatMap { it.transitions }.map { it.guard.size }.max()!!
     /**
+     * Automaton transitions.
+     */
+    val transitions: Collection<State.Transition> by lazyCache {
+        states.flatMap { it.transitions }
+    }
+    /**
      * Number of automaton transitions **T**.
      */
     val numberOfTransitions: Int
-        get() = states.sumBy { it.transitions.size }
+        get() = transitions.size
     /**
      * Total guards size **N**.
      */
     val totalGuardsSize: Int
-        get() = states.flatMap { it.transitions }.sumBy { it.guard.size }
+        get() = transitions.sumBy { it.guard.size }
 
     fun getN(): Int {
         // return totalGuardsSize + states.sumBy { state ->
@@ -129,6 +138,10 @@ class Automaton(
                 return "${source.id} -> ${destination.id} [label=\"$k:$inputEvent/${guard.toGraphvizString()}\"]"
             }
 
+            fun toFbtString(): String {
+                return "$inputEvent&${guard.toFbtString()}"
+            }
+
             fun toSmvString(): String {
                 return "_state=${source.toSmvString()} & $inputEvent & (${guard.toSmvString()})"
             }
@@ -188,6 +201,10 @@ class Automaton(
             """.trimIndent().format(tableBody.prependIndent())
 
             return "$id [label=<\n${html.prependIndent()}> shape=plaintext]"
+        }
+
+        fun toFbtString(): String {
+            return "s$id"
         }
 
         fun toSmvString(): String {
@@ -295,11 +312,12 @@ class Automaton(
         negativeScenarioTree.negativeScenarios.mapIndexed { index, scenario -> verify(scenario, index + 1) }.all { it }
 
     /**
-     * Dump automaton in Graphviz and SMV formats to the [dir] directory using [name] as the file basename.
+     * Dump automaton in Graphviz, FBT and SMV formats to the [dir] directory using [name] as the file basename.
      */
     fun dump(dir: File, name: String = "automaton") {
         dir.mkdirs()
         dumpGv(dir.resolve("$name.gv"))
+        dumpFbt(dir.resolve("$name.fbt"))
         dumpSmv(dir.resolve("$name.smv"))
     }
 
@@ -315,7 +333,16 @@ class Automaton(
     }
 
     /**
-     * Dump automaton in Smv format to [file].
+     * Dump automaton in FBT format to [file].
+     */
+    fun dumpFbt(file: File) {
+        file.printWriter().use {
+            it.println(this.toFbtString())
+        }
+    }
+
+    /**
+     * Dump automaton in SMV format to [file].
      */
     fun dumpSmv(file: File) {
         file.printWriter().use {
@@ -334,19 +361,19 @@ class Automaton(
      * Stringify automaton to pretty string.
      */
     fun toSimpleString(): String {
-        val lines: MutableList<String> = mutableListOf()
-        for (state in states) {
-            if (state.transitions.isNotEmpty()) {
-                lines.add("┌─${state.toSimpleString()}")
-                for (transition in state.transitions.dropLast(1)) {
-                    lines.add("├──${transition.toSimpleString()}")
+        return sequence {
+            for (state in states) {
+                if (state.transitions.isNotEmpty()) {
+                    yield("┌─${state.toSimpleString()}")
+                    for (transition in state.transitions.dropLast(1)) {
+                        yield("├──${transition.toSimpleString()}")
+                    }
+                    yield("└──${state.transitions.last().toSimpleString()}")
+                } else {
+                    yield("──${state.toSimpleString()}")
                 }
-                lines.add("└──${state.transitions.last().toSimpleString()}")
-            } else {
-                lines.add("──${state.toSimpleString()}")
             }
-        }
-        return lines.joinToString("\n")
+        }.joinToString("\n")
     }
 
     /**
@@ -375,9 +402,7 @@ class Automaton(
             // Transitions
             %s
         """.trimIndent().format(
-            states
-                .flatMap { it.transitions }
-                .joinToString("\n") { it.toGraphvizString() }
+            transitions.joinToString("\n") { it.toGraphvizString() }
         )
 
         val body = "%s\n\n%s\n\n%s".format(
@@ -386,6 +411,126 @@ class Automaton(
             transitionsBlock
         )
         return "digraph {\n${body.prependIndent()}\n}"
+    }
+
+    /**
+     * Stringify automaton to FBT format.
+     */
+    fun toFbtString(): String {
+        fun r() = "%.3f".format((1.0..1000.0).random())
+
+        return xml("FBType") {
+            "Identification" {
+                attribute("Standard", "61499-2")
+            }
+            "VersionInfo" {
+                attributes(
+                    "Organization" to "nxtControl GmbH",
+                    "Version" to "0.0",
+                    "Author" to "fbSAT",
+                    "Date" to "2011-08-30",
+                    "Remarks" to "Template",
+                    "Namespace" to "Main",
+                    "Name" to "CentralController",
+                    "Comment" to "Basic Function Block Type"
+                )
+            }
+            "InterfaceList" {
+                "InputVars" {
+                    for (inputName in inputNames) {
+                        "VarDeclaration" {
+                            attributes(
+                                "Name" to inputName,
+                                "Type" to "BOOL"
+                            )
+                        }
+                    }
+                }
+                "OutputVars" {
+                    for (outputName in outputNames) {
+                        "VarDeclaration" {
+                            attributes(
+                                "Name" to outputName,
+                                "Type" to "BOOL"
+                            )
+                        }
+                    }
+                }
+                "EventInputs" {
+                    "Event" {
+                        attribute("Name", "INIT")
+                    }
+                    for (inputEvent in listOf("INIT") + inputEvents) {
+                        "Event" {
+                            attribute("Name", inputEvent)
+                            if (inputEvent != "INIT") {
+                                for (inputName in inputNames)
+                                    "With" {
+                                        attribute("Var", inputName)
+                                    }
+                            }
+                        }
+                    }
+                }
+                "EventOutputs" {
+                    for (outputEvent in outputEvents) {
+                        "Event" {
+                            attribute("Name", outputEvent)
+                            if (outputEvent != "INITO") {
+                                for (outputName in outputNames)
+                                    "With" {
+                                        attribute("Var", outputName)
+                                    }
+                            }
+                        }
+                    }
+                }
+            }
+            "BasicFB" {
+                "ECC" {
+                    "ECState" {
+                        attributes(
+                            "Name" to "START",
+                            "x" to r(),
+                            "y" to r()
+                        )
+                    }
+                    for (state in states) {
+                        "ECState" {
+                            attributes(
+                                "Name" to state.toFbtString(),
+                                "x" to r(),
+                                "y" to r()
+                            )
+                            "ECAction" {
+                                attributes(
+                                    "Algorithm" to (state.algorithm as BinaryAlgorithm).toFbtString(),
+                                    "Output" to state.outputEvent
+                                )
+                            }
+                        }
+                    }
+                    for (transition in transitions)
+                        "ECTransition" {
+                            attributes(
+                                "x" to r(),
+                                "y" to r(),
+                                "Source" to transition.source.toFbtString(),
+                                "Destination" to transition.destination.toFbtString(),
+                                "Condition" to transition.guard.toFbtString()
+                            )
+                        }
+                }
+                for (algorithm in states.map { it.algorithm as BinaryAlgorithm }.toSet()) {
+                    "Algorithm" {
+                        attribute("Name", algorithm.toFbtString())
+                        "ST" {
+                            attribute("Text", algorithm.toST(outputNames))
+                        }
+                    }
+                }
+            }
+        }.toString(PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = false))
     }
 
     /**
@@ -413,8 +558,7 @@ class Automaton(
         val declarations: MutableMap<String, Pair<String, String>> = mutableMapOf() // {name: (init, next)}
 
         // State declarations
-        val stateNextCases = states
-            .flatMap { it.transitions }
+        val stateNextCases = transitions
             .map { it.toSmvString() to it.destination.toSmvString() }
         declarations["_state"] = initialState.toSmvString() to buildCase(stateNextCases, default = "_state")
 
@@ -431,8 +575,7 @@ class Automaton(
         // Output variables declarations
         for (z in 1..outputNames.size) {
             val outputName = outputNames[z - 1]
-            val outputVariableNextCases = states
-                .flatMap { it.transitions }
+            val outputVariableNextCases = transitions
                 .flatMap {
                     val guard = "_state=${it.source.toSmvString()} & ${it.inputEvent} & (${it.guard.toSmvString()})"
                     val algo = it.destination.algorithm as BinaryAlgorithm

@@ -9,6 +9,7 @@ interface Guard {
     fun eval(inputValues: BooleanArray): Boolean
     fun toSimpleString(): String
     fun toGraphvizString(): String
+    fun toFbtString(): String
     fun toSmvString(): String
 }
 
@@ -40,6 +41,10 @@ class TruthTableGuard(
             "[$truthTable]"
         else
             "[${truthTable.substring(0, 3)}${Typography.ellipsis}]"
+
+    override fun toFbtString(): String {
+        TODO()
+    }
 
     override fun toSmvString(): String {
         return truthTable
@@ -168,6 +173,38 @@ class ParseTreeGuard(
             return toSimpleString()
         }
 
+        fun toFbtString(): String {
+            return when (nodeType) {
+                NodeType.TERMINAL -> this.toSimpleString()
+                NodeType.AND -> {
+                    var left = childLeft!!.toFbtString()
+                    var right = childRight!!.toFbtString()
+                    if (childLeft!!.nodeType == NodeType.OR)
+                        left = "($left)"
+                    if (childRight!!.nodeType == NodeType.OR)
+                        right = "($right)"
+                    "$left AND $right"
+                }
+                NodeType.OR -> {
+                    var left = childLeft!!.toFbtString()
+                    var right = childRight!!.toFbtString()
+                    // if (childLeft!!.nodeType == NodeType.AND)
+                    //     left = "($left)"
+                    // if (childRight!!.nodeType == NodeType.AND)
+                    //     right = "($right)"
+                    "$left | $right"
+                }
+                NodeType.NOT -> {
+                    val left = childLeft!!.toFbtString()
+                    if (childLeft!!.nodeType in setOf(NodeType.TERMINAL, NodeType.NOT))
+                        "NOT $left"
+                    else
+                        "NOT($left)"
+                }
+                NodeType.NONE -> error("Why are you trying to display none-typed node?")
+            }
+        }
+
         fun toSmvString(): String {
             return when (nodeType) {
                 NodeType.TERMINAL -> this.toSimpleString()
@@ -216,6 +253,10 @@ class ParseTreeGuard(
         return root.toGraphvizString()
     }
 
+    override fun toFbtString(): String {
+        return root.toFbtString()
+    }
+
     override fun toSmvString(): String {
         return root.toSmvString()
     }
@@ -249,6 +290,10 @@ class StringGuard(val expr: String, val inputNames: List<String>) : Guard {
 
     override fun toGraphvizString(): String {
         return expr
+    }
+
+    override fun toFbtString(): String {
+        TODO()
     }
 
     override fun toSmvString(): String {
