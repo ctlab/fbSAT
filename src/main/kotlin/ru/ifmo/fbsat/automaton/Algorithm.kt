@@ -14,7 +14,9 @@ class BinaryAlgorithm(val algorithm0: BooleanArray, val algorithm1: BooleanArray
         this(algorithm0.toBooleanArray(), algorithm1.toBooleanArray())
 
     init {
-        require(algorithm0.size == algorithm1.size) { "Algorithm size mismatch (algo0 = $algorithm0, algo1 = $algorithm1)" }
+        require(algorithm0.size == algorithm1.size) {
+            "Algorithm size mismatch (algo0 = $algorithm0, algo1 = $algorithm1)"
+        }
     }
 
     override fun eval(outputValues: BooleanArray): BooleanArray {
