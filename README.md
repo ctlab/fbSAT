@@ -41,19 +41,19 @@ Tool for automatic inference and generalization of function block finite-state m
 Usage: fbsat [OPTIONS]
 
 Options:
-  -i, --scenarios <path>                    File with scenarios [required]
-  -ce, --counterexamples <path>             File with counter-examples
-  -smv, --smvdir <path>                     Directory with SMV files/scripts for verification
-  -o, --outdir <path>                       Output directory [default: current directory]
-  -m, --method <method>                     Method to use [required]
-  -C <int>                                  Number of automaton states
-  -K <int>                                  Maximum number of transitions from each state
-  -P <int>                                  Maximum number of nodes in guard's boolean formula's parse tree
-  -T <int>                                  Upper bound on total number of transitions in automaton
-  -N <int>                                  Upper bound on total number of nodes in all guard-trees
-  -w <int>                                  Maximum plateau width
-  --solver <cmd>                            SAT-solver [default: incremental-cryptominisat]
-  --incremental / --no-incremental          Use IncrementalSolver backend [default: true]
-  --forbid-loops / --no-forbid-loops        Forbid loops [default: true]
-  -h, --help                                Show this message and exit
+  -i, --scenarios <path>               File with scenarios [required]
+  -ce, --counterexamples <path>        File with counter-examples
+  -smv, --smvdir <path>                Directory with SMV files/scripts for verification
+  -o, --outdir <path>                  Output directory [default: current directory]
+  -m, --method <method>                Method to use [required]
+  -C <int>                             Number of automaton states
+  -K <int>                             Maximum number of transitions from each state
+  -P <int>                             Maximum number of nodes in guard's boolean formula's parse tree
+  -T <int>                             Upper bound on total number of transitions in automaton
+  -N <int>                             Upper bound on total number of nodes in all guard-trees
+  -w <int>                             Maximum plateau width
+  --solver <cmd>                       SAT-solver [default: incremental-cryptominisat]
+  --incremental / --no-incremental     Use IncrementalSolver backend [default: true]
+  --forbid-loops / --no-forbid-loops   Forbid loops [default: true]
+  -h, --help                           Show this message and exit
 ```
