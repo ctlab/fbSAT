@@ -239,6 +239,9 @@ class FbSAT : CliktCommand() {
         Globals.IS_ENCODE_TERMINALS_ORDER = isEncodeTerminalsOrder
         Globals.IS_DEBUG = isDebug
 
+        outDir.deleteRecursively()
+        outDir.mkdirs()
+
         val scenarios = PositiveScenario.fromFile(fileScenarios)
         println("[*] Scenarios: ${scenarios.size}")
         println("[*] Elements: ${scenarios.sumBy { it.elements.size }}")
@@ -557,7 +560,6 @@ class FbSAT : CliktCommand() {
                     log.failure("Verify CE from '$fileVerifyCE': FAILED")
             }
 
-            outDir.mkdirs()
             automaton.dump(outDir, "automaton")
         }
     }
