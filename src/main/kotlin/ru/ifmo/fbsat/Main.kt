@@ -74,12 +74,6 @@ class FbSAT : CliktCommand() {
         metavar = "<path>"
     ).file().defaultLazy { File(".") }
 
-    private val logDir by option(
-        "--logdir",
-        help = "Directory for logs [default: \$outDir/]",
-        metavar = "<path>"
-    ).file().defaultLazy { outDir }
-
     // TODO: enum Method
     private val method by option(
         "-m", "--method",
