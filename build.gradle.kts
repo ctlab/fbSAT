@@ -19,6 +19,7 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
+    implementation(kotlin("reflect", Versions.kotlin))
     implementation(Libs.clikt)
     implementation(Libs.multiarray)
     implementation(Libs.okio)
