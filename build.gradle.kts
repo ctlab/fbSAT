@@ -10,7 +10,7 @@ plugins {
     id("fr.brouillard.oss.gradle.jgitver") version Versions.jgitver
     id("com.github.johnrengelman.shadow") version Versions.shadow
     id("org.jetbrains.dokka") version Versions.dokka
-    id("com.github.ben-manes.versions") version Versions.gradleversions
+    id("com.github.ben-manes.versions") version Versions.gradle_versions
 }
 
 repositories {
@@ -23,9 +23,8 @@ dependencies {
     implementation(Libs.multiarray)
     implementation(Libs.okio)
     implementation(Libs.mordant)
-    implementation("org.redundent:kotlin-xml-builder:1.5.0")
+    implementation(Libs.kotlin_xml_builder)
 
-    // testImplementation(Libs.kotlintest_runner_junit5)
     testImplementation(Libs.junit_jupiter_api)
     testRuntimeOnly(Libs.junit_jupiter_engine)
     testImplementation(Libs.junit_jupiter_params)
