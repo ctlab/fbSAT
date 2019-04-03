@@ -6,6 +6,7 @@ import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.task.basicmin.BasicMinTask
 import ru.ifmo.fbsat.task.extendedmin.ExtendedMinTask
+import java.io.File
 
 class ExtendedMinUBTask(
     val scenarioTree: ScenarioTree,
@@ -13,10 +14,11 @@ class ExtendedMinUBTask(
     // FIXME: seems like N_init support is not needed
     val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
     val maxPlateauWidth: Int?, // w, unconstrained (=Inf) if null
-    val solverProvider: () -> Solver,
-    val isForbidLoops: Boolean = true,
-    val isEncodeAutomaton: Boolean = false,
-    val isEncodeTransitionsOrder: Boolean
+    val outDir: File,
+    private val solverProvider: () -> Solver,
+    private val isForbidLoops: Boolean = true,
+    private val isEncodeAutomaton: Boolean = false,
+    private val isEncodeTransitionsOrder: Boolean
 ) {
     @Suppress("LocalVariableName")
     fun infer(): Automaton? {
@@ -25,6 +27,7 @@ class ExtendedMinUBTask(
             numberOfStates = null,
             maxOutgoingTransitions = null,
             initialMaxTransitions = null,
+            outDir = outDir,
             solverProvider = solverProvider
         )
         val automatonBasicMin = taskBasicMin.infer()
@@ -56,6 +59,7 @@ class ExtendedMinUBTask(
                 maxOutgoingTransitions = null,
                 maxGuardSize = P,
                 initialMaxTotalGuardsSize = N,
+                outDir = outDir,
                 solverProvider = solverProvider,
                 isForbidLoops = isForbidLoops,
                 isEncodeAutomaton = isEncodeAutomaton,

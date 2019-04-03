@@ -6,6 +6,7 @@ import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.solver.declareComparatorLessThanOrEqual
 import ru.ifmo.fbsat.utils.log
+import java.io.File
 import kotlin.system.measureTimeMillis
 
 class ExtendedTask(
@@ -14,12 +15,12 @@ class ExtendedTask(
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int?, // K, K=C if null
     val maxGuardSize: Int, // P
-    solverProvider: () -> Solver,
-    val isForbidLoops: Boolean = true,
-    val isEncodeAutomaton: Boolean = false,
-    val isEncodeTransitionsOrder: Boolean
+    outDir: File,
+    private val solver: Solver,
+    private val isForbidLoops: Boolean = true,
+    private val isEncodeAutomaton: Boolean = false,
+    private val isEncodeTransitionsOrder: Boolean
 ) {
-    private val solver: Solver = solverProvider()
     private var baseReduction: BaseReduction? = null
     private var totalizer: IntArray? = null
     private var declaredMaxTotalGuardSize: Int? = null

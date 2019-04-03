@@ -4,6 +4,7 @@ import ru.ifmo.fbsat.automaton.Automaton
 import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.solver.declareComparatorLessThanOrEqual
+import java.io.File
 
 internal class Cardinality(
     val totalizer: IntArray,
@@ -15,6 +16,7 @@ class BasicTask private constructor(
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int, // K
     val maxTransitions: Int?, // T, unconstrained if null
+    val outDir: File,
     private val solver: Solver,
     private val autoFinalize: Boolean,
     oldBaseReduction: BaseReduction?,
@@ -29,6 +31,7 @@ class BasicTask private constructor(
         numberOfStates: Int, // C
         maxOutgoingTransitions: Int? = null, // K, K=C if null
         maxTransitions: Int? = null, // T, unconstrained if null
+        outDir: File,
         solver: Solver,
         autoFinalize: Boolean = true
     ) : this(
@@ -36,6 +39,7 @@ class BasicTask private constructor(
         numberOfStates = numberOfStates,
         maxOutgoingTransitions = maxOutgoingTransitions ?: numberOfStates,
         maxTransitions = maxTransitions,
+        outDir = outDir,
         solver = solver,
         autoFinalize = autoFinalize,
         oldBaseReduction = null,
@@ -75,6 +79,7 @@ class BasicTask private constructor(
             numberOfStates = this.numberOfStates,
             maxOutgoingTransitions = this.maxOutgoingTransitions,
             maxTransitions = newMaxTransitions,
+            outDir = this.outDir,
             solver = this.solver,
             autoFinalize = this.autoFinalize,
             oldBaseReduction = this.baseReduction,

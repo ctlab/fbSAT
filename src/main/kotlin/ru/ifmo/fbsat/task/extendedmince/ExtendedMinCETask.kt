@@ -15,8 +15,9 @@ class ExtendedMinCETask(
     val maxOutgoingTransitions: Int?, // K, K=C if null
     val maxGuardSize: Int, // P
     val initialMaxTotalGuardsSize: Int? = null, // N_init, unconstrained if null
-    val solverProvider: () -> Solver,
+    val outDir: File,
     val smvDir: File,
+    private val solverProvider: () -> Solver,
     private val isEncodeAutomaton: Boolean = false,
     private val isEncodeTransitionsOrder: Boolean = false
 ) {
@@ -31,13 +32,14 @@ class ExtendedMinCETask(
             ?: NegativeScenarioTree.empty(scenarioTree.inputNames, scenarioTree.outputNames)
 
         val taskExtMin = ExtendedMinTask(
-            scenarioTree,
-            negativeScenarioTree,
-            numberOfStates,
-            maxOutgoingTransitions,
-            maxGuardSize,
-            initialMaxTotalGuardsSize,
-            solverProvider,
+            scenarioTree = scenarioTree,
+            negativeScenarioTree = negativeScenarioTree,
+            numberOfStates = numberOfStates,
+            maxOutgoingTransitions = maxOutgoingTransitions,
+            maxGuardSize = maxGuardSize,
+            initialMaxTotalGuardsSize = initialMaxTotalGuardsSize,
+            outDir = outDir,
+            solverProvider = solverProvider,
             isEncodeAutomaton = isEncodeAutomaton,
             isEncodeTransitionsOrder = isEncodeTransitionsOrder
         )
@@ -55,13 +57,14 @@ class ExtendedMinCETask(
             println("===== Loop number #$loopNumber =====")
 
             val task = ExtendedCETask(
-                scenarioTree,
-                negativeScenarioTree,
-                C,
-                maxOutgoingTransitions,
-                P,
-                solverProvider,
+                scenarioTree = scenarioTree,
+                initialNegativeScenarioTree = negativeScenarioTree,
+                numberOfStates = C,
+                maxOutgoingTransitions = maxOutgoingTransitions,
+                maxGuardSize = P,
+                outDir = outDir,
                 smvDir = smvDir,
+                solverProvider = solverProvider,
                 isEncodeAutomaton = isEncodeAutomaton,
                 isEncodeTransitionsOrder = isEncodeTransitionsOrder
             )

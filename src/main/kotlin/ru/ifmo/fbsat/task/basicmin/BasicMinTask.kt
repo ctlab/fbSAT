@@ -6,6 +6,7 @@ import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.task.basic.BasicTask
 import ru.ifmo.fbsat.utils.log
 import ru.ifmo.fbsat.utils.timeIt
+import java.io.File
 import kotlin.properties.Delegates
 
 class BasicMinTask(
@@ -13,6 +14,7 @@ class BasicMinTask(
     val numberOfStates: Int?, // C, search if null
     val maxOutgoingTransitions: Int?, // K, =C if null
     val initialMaxTransitions: Int?, // T_init, unconstrained if null
+    val outDir: File,
     private val solverProvider: () -> Solver
 ) {
     init {
@@ -36,6 +38,7 @@ class BasicMinTask(
                     numberOfStates = C,
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxTransitions = initialMaxTransitions,
+                    outDir = outDir,
                     solver = solverProvider(),
                     autoFinalize = false
                 )
@@ -58,6 +61,7 @@ class BasicMinTask(
                 numberOfStates = numberOfStates,
                 maxOutgoingTransitions = maxOutgoingTransitions,
                 maxTransitions = initialMaxTransitions,
+                outDir = outDir,
                 solver = solverProvider(),
                 autoFinalize = false
             )

@@ -8,6 +8,7 @@ import ru.ifmo.fbsat.task.basicmin.BasicMinTask
 import ru.ifmo.fbsat.task.extended.ExtendedTask
 import ru.ifmo.fbsat.utils.log
 import ru.ifmo.fbsat.utils.timeIt
+import java.io.File
 
 class ExtendedMinTask(
     val scenarioTree: ScenarioTree,
@@ -16,10 +17,11 @@ class ExtendedMinTask(
     val maxOutgoingTransitions: Int?, // K, =C if null
     val maxGuardSize: Int, // P
     val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
-    val solverProvider: () -> Solver,
-    val isForbidLoops: Boolean = true,
-    val isEncodeAutomaton: Boolean = false,
-    val isEncodeTransitionsOrder: Boolean
+    val outDir: File,
+    private val solverProvider: () -> Solver,
+    private val isForbidLoops: Boolean = true,
+    private val isEncodeAutomaton: Boolean = false,
+    private val isEncodeTransitionsOrder: Boolean
 ) {
     init {
         require(!(numberOfStates == null && maxOutgoingTransitions != null)) {
@@ -38,6 +40,7 @@ class ExtendedMinTask(
                 numberOfStates = null,
                 maxOutgoingTransitions = null,
                 initialMaxTransitions = null,
+                outDir = outDir,
                 solverProvider = solverProvider
             )
             val automaton = task.infer(isOnlyC = true) ?: return null
@@ -51,7 +54,8 @@ class ExtendedMinTask(
             numberOfStates = C,
             maxOutgoingTransitions = maxOutgoingTransitions,
             maxGuardSize = maxGuardSize,
-            solverProvider = solverProvider,
+            outDir = outDir,
+            solver = solverProvider(),
             isForbidLoops = isForbidLoops,
             isEncodeAutomaton = isEncodeAutomaton,
             isEncodeTransitionsOrder = isEncodeTransitionsOrder

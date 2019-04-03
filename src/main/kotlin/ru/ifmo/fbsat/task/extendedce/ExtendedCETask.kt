@@ -1,5 +1,8 @@
 package ru.ifmo.fbsat.task.extendedce
 
+import okio.buffer
+import okio.sink
+import okio.source
 import ru.ifmo.fbsat.automaton.Automaton
 import ru.ifmo.fbsat.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.scenario.negative.Counterexample
@@ -17,38 +20,55 @@ class ExtendedCETask(
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int?, // K, K=C if null
     val maxGuardSize: Int, // P
-    val solverProvider: () -> Solver,
+    val outDir: File,
     val smvDir: File,
-    val isEncodeAutomaton: Boolean = false,
-    val isEncodeTransitionsOrder: Boolean = false
+    private val solverProvider: () -> Solver,
+    private val isEncodeAutomaton: Boolean = false,
+    private val isEncodeTransitionsOrder: Boolean = false
 ) {
     private val negativeScenarioTree =
         initialNegativeScenarioTree
             ?: NegativeScenarioTree.empty(scenarioTree.inputNames, scenarioTree.outputNames)
     // private var algorithmsAssumptions = initialAlgorithmsAssumptions
     private var task = ExtendedTask(
-        scenarioTree,
-        negativeScenarioTree,
-        numberOfStates,
-        maxOutgoingTransitions,
-        maxGuardSize,
-        solverProvider,
+        scenarioTree = scenarioTree,
+        negativeScenarioTree = negativeScenarioTree,
+        numberOfStates = numberOfStates,
+        maxOutgoingTransitions = maxOutgoingTransitions,
+        maxGuardSize = maxGuardSize,
+        outDir = outDir,
+        solver = solverProvider(),
         isEncodeAutomaton = isEncodeAutomaton,
         isEncodeTransitionsOrder = isEncodeTransitionsOrder
     )
     private var _executed = false
 
+    private fun prepareSmvFiles() {
+        // Copy smv files to output directory
+        for (name in sequenceOf("commands", "extra.smv", "plant.smv", "main.smv", "spec.smv", "Makefile")) {
+            val fileSmv = smvDir.resolve(name)
+            val fileOut = outDir.resolve(name)
+            // fileSmv.copyTo(fileOut, overwrite = true)
+            fileSmv.source().use { a ->
+                fileOut.sink().buffer().use { b ->
+                    b.writeAll(a)
+                }
+            }
+        }
+    }
+
     private fun verifyWithNuSMV(automaton: Automaton): Boolean {
         // Save automaton to smv directory
-        automaton.dumpSmv(smvDir.resolve("control.smv"))
+        automaton.dumpSmv(outDir.resolve("control.smv"))
 
         // Perform formal verification using NuSMV, generate counterexamples to given ltl-spec
         val cmd = "make model counterexamples"
         log.debug { "Running '$cmd'..." }
-        Runtime.getRuntime().exec(cmd, null, smvDir).waitFor()
+        val exitcode = Runtime.getRuntime().exec(cmd, null, outDir).waitFor()
+        check(exitcode == 0) { "exitcode $exitcode" }
 
         // Handle counterexamples after verification
-        val fileCounterexamples = smvDir.resolve("counterexamples")
+        val fileCounterexamples = outDir.resolve("counterexamples")
         if (fileCounterexamples.exists()) {
             // Read new counterexamples
             val newCounterexamples = Counterexample.fromFile(fileCounterexamples)
@@ -67,8 +87,8 @@ class ExtendedCETask(
             newNegativeScenarios.forEach(negativeScenarioTree::addNegativeScenario)
 
             // [DEBUG] Append new counterexamples to 'ce'
-            log.debug { "Appending ${newCounterexamples.size} new counterexample(s) to 'ce'..." }
-            File("ce").appendText(fileCounterexamples.readText())
+            log.debug { "Dumping ${newCounterexamples.size} new counterexample(s)..." }
+            outDir.resolve("ce").appendText(fileCounterexamples.readText())
             return false
         } else {
             // There is no CEs => automaton is fully-verified
@@ -81,6 +101,8 @@ class ExtendedCETask(
     ): Automaton? {
         check(!_executed) { "The task has already been executed" }
         _executed = true
+
+        prepareSmvFiles()
 
         var best: Automaton? = null
 

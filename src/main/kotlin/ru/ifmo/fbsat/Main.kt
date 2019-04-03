@@ -421,7 +421,8 @@ class FbSAT : CliktCommand() {
                     numberOfStates = numberOfStates!!,
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxTransitions = maxTransitions,
-                    solver = solverProvider()
+                    solver = solverProvider(),
+                    outDir = outDir
                 )
                 task.infer()
             }
@@ -431,7 +432,8 @@ class FbSAT : CliktCommand() {
                     numberOfStates = numberOfStates,
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     initialMaxTransitions = maxTransitions,
-                    solverProvider = solverProvider
+                    solverProvider = solverProvider,
+                    outDir = outDir
                 )
                 task.infer()
             }
@@ -442,7 +444,8 @@ class FbSAT : CliktCommand() {
                     numberOfStates = numberOfStates!!,
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxGuardSize = maxGuardSize!!,
-                    solverProvider = solverProvider,
+                    solver = solverProvider(),
+                    outDir = outDir,
                     isForbidLoops = isForbidLoops,
                     isEncodeAutomaton = isEncodeAutomaton,
                     isEncodeTransitionsOrder = isEncodeTransitionsOrder
@@ -458,6 +461,7 @@ class FbSAT : CliktCommand() {
                     maxGuardSize = maxGuardSize!!,
                     initialMaxTotalGuardsSize = maxTotalGuardsSize,
                     solverProvider = solverProvider,
+                    outDir = outDir,
                     isForbidLoops = isForbidLoops,
                     isEncodeAutomaton = isEncodeAutomaton,
                     isEncodeTransitionsOrder = isEncodeTransitionsOrder
@@ -470,6 +474,7 @@ class FbSAT : CliktCommand() {
                     negativeScenarioTree = negTree,
                     initialMaxTotalGuardsSize = maxTotalGuardsSize,
                     maxPlateauWidth = maxPlateauWidth,
+                    outDir = outDir,
                     solverProvider = solverProvider,
                     isForbidLoops = isForbidLoops,
                     isEncodeAutomaton = isEncodeAutomaton,
@@ -484,8 +489,9 @@ class FbSAT : CliktCommand() {
                     numberOfStates = numberOfStates!!,
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxGuardSize = maxGuardSize!!,
-                    solverProvider = solverProvider,
+                    outDir = outDir,
                     smvDir = smvDir,
+                    solverProvider = solverProvider,
                     isEncodeAutomaton = isEncodeAutomaton,
                     isEncodeTransitionsOrder = isEncodeTransitionsOrder
                 )
@@ -499,8 +505,9 @@ class FbSAT : CliktCommand() {
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxGuardSize = maxGuardSize!!,
                     initialMaxTotalGuardsSize = maxTotalGuardsSize,
-                    solverProvider = solverProvider,
+                    outDir = outDir,
                     smvDir = smvDir,
+                    solverProvider = solverProvider,
                     isEncodeAutomaton = isEncodeAutomaton,
                     isEncodeTransitionsOrder = isEncodeTransitionsOrder
                 )
