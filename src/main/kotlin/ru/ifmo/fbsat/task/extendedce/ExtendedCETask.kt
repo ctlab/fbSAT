@@ -1,8 +1,5 @@
 package ru.ifmo.fbsat.task.extendedce
 
-import okio.buffer
-import okio.sink
-import okio.source
 import ru.ifmo.fbsat.automaton.Automaton
 import ru.ifmo.fbsat.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.scenario.negative.Counterexample
@@ -11,6 +8,7 @@ import ru.ifmo.fbsat.scenario.negative.toNegativeScenario
 import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.task.extended.ExtendedTask
+import ru.ifmo.fbsat.utils.copyFile
 import ru.ifmo.fbsat.utils.log
 import java.io.File
 
@@ -49,12 +47,7 @@ class ExtendedCETask(
         for (name in sequenceOf("commands", "extra.smv", "plant.smv", "main.smv", "spec.smv", "Makefile")) {
             val fileSmv = smvDir.resolve(name)
             val fileOut = outDir.resolve(name)
-            // fileSmv.copyTo(fileOut, overwrite = true)
-            fileSmv.source().use { a ->
-                fileOut.sink().buffer().use { b ->
-                    b.writeAll(a)
-                }
-            }
+            copyFile(fileSmv, fileOut)
         }
     }
 

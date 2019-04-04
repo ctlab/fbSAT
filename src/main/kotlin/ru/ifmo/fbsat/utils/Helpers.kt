@@ -3,8 +3,11 @@ package ru.ifmo.fbsat.utils
 import okio.BufferedSource
 import okio.Source
 import okio.buffer
+import okio.sink
+import okio.source
 import ru.ifmo.multiarray.BooleanMultiArray
 import ru.ifmo.multiarray.IntMultiArray
+import java.io.File
 import kotlin.random.Random
 
 fun String.toBooleanArray(): BooleanArray {
@@ -52,6 +55,15 @@ inline fun <T> Source.useLines(block: (Sequence<String>) -> T): T =
 
 fun BufferedSource.lineSequence(): Sequence<String> =
     sequence<String> { while (true) yield(readUtf8Line() ?: break) }.constrainOnce()
+
+fun copyFile(source: File, destination: File) {
+    // Note: destination folder existence must be ensured externally!
+    source.source().use { a ->
+        destination.sink().buffer().use { b ->
+            b.writeAll(a)
+        }
+    }
+}
 
 fun IntMultiArray.Companion.empty() = IntMultiArray(intArrayOf()) { 0 }
 fun BooleanMultiArray.Companion.empty() = BooleanMultiArray(intArrayOf()) { false }
