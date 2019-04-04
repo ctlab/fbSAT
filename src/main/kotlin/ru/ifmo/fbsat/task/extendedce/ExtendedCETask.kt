@@ -24,7 +24,8 @@ class ExtendedCETask(
     val smvDir: File,
     private val solverProvider: () -> Solver,
     private val isEncodeAutomaton: Boolean = false,
-    private val isEncodeTransitionsOrder: Boolean = false
+    private val isEncodeTransitionsOrder: Boolean = false,
+    private val loopNumber: Int = 0
 ) {
     private val negativeScenarioTree =
         initialNegativeScenarioTree
@@ -122,9 +123,12 @@ class ExtendedCETask(
             // Infer automaton
             val automaton = task.infer(maxTotalGuardsSize, finalize = false) ?: break
 
-            println("[*] Verifying inferred automaton")
+            log.debug { "Dump intermediate automaton" }
+            automaton.dump(outDir, "_automaton_loop${loopNumber}_iter$iterationNumber")
+
+            log.info("Verifying inferred automaton...")
             if (verifyWithNuSMV(automaton)) {
-                println("[+] There is no counterexamples, nice!")
+                log.success("There is no counterexamples, nice!")
                 best = automaton
                 break
             }

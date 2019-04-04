@@ -66,7 +66,8 @@ class ExtendedMinCETask(
                 smvDir = smvDir,
                 solverProvider = solverProvider,
                 isEncodeAutomaton = isEncodeAutomaton,
-                isEncodeTransitionsOrder = isEncodeTransitionsOrder
+                isEncodeTransitionsOrder = isEncodeTransitionsOrder,
+                loopNumber = loopNumber
             )
 
             val automaton = task.infer(N)
