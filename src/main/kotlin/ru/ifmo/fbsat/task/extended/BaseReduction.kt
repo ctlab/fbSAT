@@ -35,6 +35,8 @@ internal class BaseReduction(
     private val U = scenarioTree.uniqueInputs.size
     private val X = scenarioTree.uniqueInputs.first().length
     private val Z = scenarioTree.uniqueOutputs.first().length
+    // Auxiliary always-false variable
+    private val falseVariable: Int
     // Scenario tree variables
     val color: IntMultiArray // [V, C]
     // Automaton variables
@@ -56,15 +58,14 @@ internal class BaseReduction(
     val childValueRight: IntMultiArray // [C, K, P, U]
     val firstFired: IntMultiArray // [C, U, K+1]
     val notFired: IntMultiArray // [C, U, K]
-    // Automaton BFS variables
-    val bfsTransitionAutomaton: IntMultiArray // [C, C]
-    val bfsParentAutomaton: IntMultiArray // [C, C]
     // Guard BFS variables
     val bfsTransitionGuard: IntMultiArray // [C, K, P, P]
     val bfsParentGuard: IntMultiArray // [C, K, P, P]
 
     init {
         with(solver) {
+            // Auxiliary always-false variable
+            falseVariable = newVariable()
             // Scenario tree variables
             color = newArray(V, C)
             // Automaton variables
@@ -75,8 +76,8 @@ internal class BaseReduction(
             algorithm0 = newArray(C, Z)
             algorithm1 = newArray(C, Z)
             // Guards variables
-            nodeType = IntMultiArray.new(C, K, P, NodeType.values().size) { (_, _, _, nt0) ->
-                if (Globals.IS_FORBID_OR && NodeType.values()[nt0] == NodeType.OR) -1 else newVariable()
+            nodeType = IntMultiArray.new(C, K, P, NodeType.values().size) { (_, _, _, nt) ->
+                if (Globals.IS_FORBID_OR && NodeType.values()[nt - 1] == NodeType.OR) falseVariable else newVariable()
             }
             terminal = newArray(C, K, P, X + 1)
             parent = newArray(C, K, P, P + 1)
@@ -88,20 +89,18 @@ internal class BaseReduction(
             childValueRight = newArray(C, K, P, U)
             firstFired = newArray(C, U, K + 1)
             notFired = newArray(C, U, K)
-            // Automaton BFS variables
-            bfsTransitionAutomaton = if (Globals.IS_BFS_AUTOMATON) newArray(C, C) else IntMultiArray.empty()
-            bfsParentAutomaton = if (Globals.IS_BFS_AUTOMATON) newArray(C, C) else IntMultiArray.empty()
             // Guard BFS variables
             bfsTransitionGuard = if (!Globals.IS_BFS_GUARD) IntMultiArray.empty() else
                 IntMultiArray.new(C, K, P, P) { (c, k, i, j) ->
-                    if (j > i) parent[c, k, j, i] else -1
+                    if (j > i) parent[c, k, j, i] else falseVariable
                 }
             bfsParentGuard = if (!Globals.IS_BFS_GUARD) IntMultiArray.empty() else
                 IntMultiArray.new(C, K, P, P) { (_, _, j, i) ->
-                    if (i < j) newVariable() else -1
+                    if (i < j) newVariable() else falseVariable
                 }
 
             // Constraints
+            clause(-falseVariable)
             declareColorConstraints()
             declareTransitionConstraints()
             declareFiringConstraints()
@@ -334,6 +333,12 @@ internal class BaseReduction(
     }
 
     private fun Solver.declareAutomatonBfsConstraints() {
+        // Automaton BFS variables
+        val bfsTransitionAutomaton = newArray(C, C)
+        val bfsParentAutomaton = IntMultiArray.new(C, C) { (j, i) ->
+            if (j <= i) falseVariable else newVariable()
+        }
+
         comment("6. Automaton BFS constraints")
 
         comment("6.1. F_t")
@@ -348,10 +353,6 @@ internal class BaseReduction(
         comment("6.2. F_p")
         // p[j, i] <=> t[i, j] & AND_{k<i}( ~t[k, j] )
         for (i in 1..C) {
-            // to avoid ambiguous unused variable:
-            for (j in 1..i)
-                clause(-bfsParentAutomaton[j, i])
-
             for (j in (i + 1)..C)
                 iffAnd(bfsParentAutomaton[j, i], sequence {
                     yield(bfsTransitionAutomaton[i, j])
@@ -363,7 +364,7 @@ internal class BaseReduction(
         comment("6.3. F_ALO(p)")
         // OR_{i<j}( p[j, i] )
         for (j in 2..C)
-            clause {
+            atLeastOne {
                 for (i in 1..(j - 1))
                     yield(bfsParentAutomaton[j, i])
             }
