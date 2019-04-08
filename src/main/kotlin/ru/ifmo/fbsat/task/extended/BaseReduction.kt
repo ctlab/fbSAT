@@ -3,6 +3,7 @@ package ru.ifmo.fbsat.task.extended
 import ru.ifmo.fbsat.automaton.NodeType
 import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
+import ru.ifmo.fbsat.solver.atLeastOne
 import ru.ifmo.fbsat.solver.exactlyOne
 import ru.ifmo.fbsat.solver.iff
 import ru.ifmo.fbsat.solver.iffAnd
@@ -13,6 +14,7 @@ import ru.ifmo.fbsat.solver.implyIffAnd
 import ru.ifmo.fbsat.solver.implyIffOr
 import ru.ifmo.fbsat.utils.Globals
 import ru.ifmo.fbsat.utils.empty
+import ru.ifmo.fbsat.utils.log
 import ru.ifmo.multiarray.IntMultiArray
 
 @Suppress("PropertyName", "PrivatePropertyName", "MemberVisibilityCanBePrivate")
@@ -23,7 +25,8 @@ internal class BaseReduction(
     val P: Int,
     solver: Solver,
     isEncodeAutomaton: Boolean = false,
-    isEncodeTransitionsOrder: Boolean
+    isEncodeTransitionsOrder: Boolean,
+    private val isEncodeReverseImplication: Boolean
 ) {
     // Constants
     private val V = scenarioTree.size
@@ -139,7 +142,29 @@ internal class BaseReduction(
                         actualTransition[i, e, u, j]
                     )
         }
+        if (isEncodeReverseImplication) {
+            // OR_k(transition[i,k,j]) <=> OR_{v|active}( color[tp(v), i] & color[v, j] )
+            for (i in 1..C)
+                for (j in 1..C) {
+                    val lhsAux = newVariable()
+                    iffOr(lhsAux, sequence {
+                        for (k in 1..K)
+                            yield(transition[i, k, j])
+                    })
 
+                    val rhsAux = newVariable()
+                    iffOr(rhsAux, sequence {
+                        for (v in scenarioTree.activeVertices) {
+                            val p = scenarioTree.parent(v)
+                            val aux = newVariable()
+                            iffAnd(aux, color[p, i], color[v, j])
+                            yield(aux)
+                        }
+                    })
+
+                    imply(lhsAux, rhsAux)
+                }
+        }
         comment("1.2. Color of passive vertices")
         // color[tp(v), c] => actual_transition[c,tie(v),tin(v),0]
         for (v in scenarioTree.passiveVertices) {

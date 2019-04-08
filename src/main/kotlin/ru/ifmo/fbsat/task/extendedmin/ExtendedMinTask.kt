@@ -21,7 +21,8 @@ class ExtendedMinTask(
     private val solverProvider: () -> Solver,
     private val isForbidLoops: Boolean = true,
     private val isEncodeAutomaton: Boolean = false,
-    private val isEncodeTransitionsOrder: Boolean
+    private val isEncodeTransitionsOrder: Boolean,
+    private val isEncodeReverseImplication: Boolean
 ) {
     init {
         require(!(numberOfStates == null && maxOutgoingTransitions != null)) {
@@ -58,7 +59,8 @@ class ExtendedMinTask(
             solver = solverProvider(),
             isForbidLoops = isForbidLoops,
             isEncodeAutomaton = isEncodeAutomaton,
-            isEncodeTransitionsOrder = isEncodeTransitionsOrder
+            isEncodeTransitionsOrder = isEncodeTransitionsOrder,
+            isEncodeReverseImplication = isEncodeReverseImplication
         )
         val (automaton, runningTime) = timeIt { task.infer(initialMaxTotalGuardsSize, finalize = false) }
         if (automaton != null)

@@ -212,6 +212,13 @@ class FbSAT : CliktCommand() {
         default = true
     )
 
+    private val isEncodeReverseImplication by option(
+        "--encode-reverse-implication"
+    ).flag(
+        "--no-encode-reverse-implication",
+        default = false
+    )
+
     private val isOnlyAutomaton2 by option(
         "--only-automaton2"
     ).flag()
@@ -452,7 +459,8 @@ class FbSAT : CliktCommand() {
                     outDir = outDir,
                     isForbidLoops = isForbidLoops,
                     isEncodeAutomaton = isEncodeAutomaton,
-                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
+                    isEncodeTransitionsOrder = isEncodeTransitionsOrder,
+                    isEncodeReverseImplication = isEncodeReverseImplication
                 )
                 task.infer(maxTotalGuardsSize)
             }
@@ -468,7 +476,8 @@ class FbSAT : CliktCommand() {
                     outDir = outDir,
                     isForbidLoops = isForbidLoops,
                     isEncodeAutomaton = isEncodeAutomaton,
-                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
+                    isEncodeTransitionsOrder = isEncodeTransitionsOrder,
+                    isEncodeReverseImplication = isEncodeReverseImplication
                 )
                 task.infer()
             }
@@ -482,7 +491,8 @@ class FbSAT : CliktCommand() {
                     solverProvider = solverProvider,
                     isForbidLoops = isForbidLoops,
                     isEncodeAutomaton = isEncodeAutomaton,
-                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
+                    isEncodeTransitionsOrder = isEncodeTransitionsOrder,
+                    isEncodeReverseImplication = isEncodeReverseImplication
                 )
                 task.infer()
             }
@@ -523,7 +533,7 @@ class FbSAT : CliktCommand() {
         if (automaton == null) {
             log.failure("Automaton not found")
         } else {
-            log.success("Inferred automaton:")
+            log.info("Inferred automaton:")
             automaton.pprint()
             log.info("Inferred automaton has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes")
 

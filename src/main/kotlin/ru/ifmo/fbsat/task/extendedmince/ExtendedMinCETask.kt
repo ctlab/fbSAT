@@ -6,6 +6,7 @@ import ru.ifmo.fbsat.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.solver.Solver
 import ru.ifmo.fbsat.task.extendedce.ExtendedCETask
 import ru.ifmo.fbsat.task.extendedmin.ExtendedMinTask
+import ru.ifmo.fbsat.utils.log
 import java.io.File
 
 class ExtendedMinCETask(
@@ -19,7 +20,7 @@ class ExtendedMinCETask(
     val smvDir: File,
     private val solverProvider: () -> Solver,
     private val isEncodeAutomaton: Boolean = false,
-    private val isEncodeTransitionsOrder: Boolean = false
+    private val isEncodeTransitionsOrder: Boolean
 ) {
     private var _executed = false
 
@@ -41,7 +42,8 @@ class ExtendedMinCETask(
             outDir = outDir,
             solverProvider = solverProvider,
             isEncodeAutomaton = isEncodeAutomaton,
-            isEncodeTransitionsOrder = isEncodeTransitionsOrder
+            isEncodeTransitionsOrder = isEncodeTransitionsOrder,
+            isEncodeReverseImplication = true
         )
         val automatonExtMin = taskExtMin.infer() ?: error("ExtendedMinTask could not infer an automaton")
         val C = automatonExtMin.numberOfStates
@@ -49,9 +51,9 @@ class ExtendedMinCETask(
         // var N = automatonExtMin.totalGuardsSize
         var N = automatonExtMin.getN()
 
-        println("[*] automatonExtMin:")
+        log.info("automatonExtMin:")
         automatonExtMin.pprint()
-        println("[*] automatonExtMin has C = $C, P = $P, N = $N")
+        log.info("automatonExtMin has C = $C, P = $P, N = $N")
 
         out@ for (loopNumber in 1..100) {
             println("===== Loop number #$loopNumber =====")

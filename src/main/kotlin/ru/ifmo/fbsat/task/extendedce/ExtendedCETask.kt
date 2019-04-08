@@ -22,7 +22,7 @@ class ExtendedCETask(
     val smvDir: File,
     private val solverProvider: () -> Solver,
     private val isEncodeAutomaton: Boolean = false,
-    private val isEncodeTransitionsOrder: Boolean = false,
+    private val isEncodeTransitionsOrder: Boolean,
     private val loopNumber: Int = 0
 ) {
     private val negativeScenarioTree =
@@ -38,7 +38,8 @@ class ExtendedCETask(
         outDir = outDir,
         solver = solverProvider(),
         isEncodeAutomaton = isEncodeAutomaton,
-        isEncodeTransitionsOrder = isEncodeTransitionsOrder
+        isEncodeTransitionsOrder = isEncodeTransitionsOrder,
+        isEncodeReverseImplication = false
     )
     private var _executed = false
 

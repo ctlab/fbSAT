@@ -18,7 +18,8 @@ class ExtendedMinUBTask(
     private val solverProvider: () -> Solver,
     private val isForbidLoops: Boolean = true,
     private val isEncodeAutomaton: Boolean = false,
-    private val isEncodeTransitionsOrder: Boolean
+    private val isEncodeTransitionsOrder: Boolean,
+    private val isEncodeReverseImplication: Boolean
 ) {
     @Suppress("LocalVariableName")
     fun infer(): Automaton? {
@@ -63,7 +64,8 @@ class ExtendedMinUBTask(
                 solverProvider = solverProvider,
                 isForbidLoops = isForbidLoops,
                 isEncodeAutomaton = isEncodeAutomaton,
-                isEncodeTransitionsOrder = isEncodeTransitionsOrder
+                isEncodeTransitionsOrder = isEncodeTransitionsOrder,
+                isEncodeReverseImplication = isEncodeReverseImplication
             )
             val automaton = task.infer()
             if (automaton != null) {

@@ -19,7 +19,8 @@ class ExtendedTask(
     private val solver: Solver,
     private val isForbidLoops: Boolean = true,
     private val isEncodeAutomaton: Boolean = false,
-    private val isEncodeTransitionsOrder: Boolean
+    private val isEncodeTransitionsOrder: Boolean,
+    private val isEncodeReverseImplication: Boolean
 ) {
     private var baseReduction: BaseReduction? = null
     private var totalizer: IntArray? = null
@@ -83,7 +84,8 @@ class ExtendedTask(
                 P = maxGuardSize,
                 solver = solver,
                 isEncodeAutomaton = isEncodeAutomaton,
-                isEncodeTransitionsOrder = isEncodeTransitionsOrder
+                isEncodeTransitionsOrder = isEncodeTransitionsOrder,
+                isEncodeReverseImplication = isEncodeReverseImplication
             )
         }
         log.debug {
