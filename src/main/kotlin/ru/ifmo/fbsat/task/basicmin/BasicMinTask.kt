@@ -50,7 +50,7 @@ class BasicMinTask(
                     break
                 } else {
                     log.failure("BasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
-                    task.finalize()
+                    task.finalize2()
                 }
             }
         } else {
@@ -94,7 +94,7 @@ class BasicMinTask(
             log.info("BasicMinTask: minimal T = ${best?.numberOfTransitions}")
         }
 
-        task.finalize()
+        task.finalize2()
 
         return best
     }

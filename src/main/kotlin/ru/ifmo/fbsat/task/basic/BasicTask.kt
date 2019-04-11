@@ -54,7 +54,7 @@ class BasicTask private constructor(
 
     fun infer(): Automaton? {
         val rawAssignment = solver.solve()
-        if (autoFinalize) finalize()
+        if (autoFinalize) finalize2()
 
         if (rawAssignment == null)
             return null
@@ -65,8 +65,8 @@ class BasicTask private constructor(
         return automaton
     }
 
-    fun finalize() {
-        solver.finalize()
+    fun finalize2() {
+        solver.finalize2()
         canBeReused = false
     }
 

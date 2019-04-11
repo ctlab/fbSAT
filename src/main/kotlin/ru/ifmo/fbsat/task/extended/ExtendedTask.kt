@@ -36,7 +36,7 @@ class ExtendedTask(
      */
     fun infer(
         maxTotalGuardsSize: Int? = null,
-        finalize: Boolean = true
+        finalize2: Boolean = true
     ): Automaton? {
         log.debug { "ExtendedTask::infer(N = $maxTotalGuardsSize)" }
 
@@ -47,7 +47,7 @@ class ExtendedTask(
         solver.comment("Total variables: ${solver.numberOfVariables}, clauses: ${solver.numberOfClauses}")
 
         val rawAssignment = solver.solve()
-        if (finalize) finalize()
+        if (finalize2) finalize2()
         if (rawAssignment == null)
             return null
 
@@ -68,8 +68,8 @@ class ExtendedTask(
         return automaton
     }
 
-    fun finalize() {
-        solver.finalize()
+    fun finalize2() {
+        solver.finalize2()
     }
 
     private fun declareBaseReduction() {

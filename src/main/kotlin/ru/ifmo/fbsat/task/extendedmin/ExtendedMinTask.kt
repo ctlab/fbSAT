@@ -62,7 +62,7 @@ class ExtendedMinTask(
             isEncodeTransitionsOrder = isEncodeTransitionsOrder,
             isEncodeReverseImplication = isEncodeReverseImplication
         )
-        val (automaton, runningTime) = timeIt { task.infer(initialMaxTotalGuardsSize, finalize = false) }
+        val (automaton, runningTime) = timeIt { task.infer(initialMaxTotalGuardsSize, finalize2 = false) }
         if (automaton != null)
             log.success(
                 "ExtMinTask: initial N = $initialMaxTotalGuardsSize -> ${automaton.getN()} in %.2f s"
@@ -76,7 +76,7 @@ class ExtendedMinTask(
             while (true) {
                 // val N = best!!.totalGuardsSize - 1
                 val N = best!!.getN() - 1
-                val (automaton, runningTime) = timeIt { task.infer(N, finalize = false) }
+                val (automaton, runningTime) = timeIt { task.infer(N, finalize2 = false) }
                 if (automaton != null) {
                     log.success("ExtMinTask: N = $N -> ${automaton.getN()} in %.2f s".format(runningTime))
                     best = automaton
@@ -90,7 +90,7 @@ class ExtendedMinTask(
             log.error("ExtMinTask: could not infer automaton with C = $C, P = $maxGuardSize, N = $initialMaxTotalGuardsSize")
         }
 
-        task.finalize()
+        task.finalize2()
 
         return best
     }

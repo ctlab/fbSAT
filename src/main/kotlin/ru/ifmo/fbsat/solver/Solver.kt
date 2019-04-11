@@ -24,7 +24,7 @@ interface Solver {
     fun comment(comment: String)
 
     fun solve(): BooleanArray?
-    fun finalize()
+    fun finalize2()
 }
 
 abstract class AbstractSolver : Solver {
@@ -113,7 +113,7 @@ class DefaultSolver(private val command: String) : AbstractSolver() {
         }
     }
 
-    override fun finalize() {}
+    override fun finalize2() {}
 }
 
 class IncrementalSolver(command: String) : AbstractSolver() {
@@ -185,7 +185,7 @@ class IncrementalSolver(command: String) : AbstractSolver() {
         }
     }
 
-    override fun finalize() {
+    override fun finalize2() {
         // Thread {
         //     processInput.write("halt\n")
         //     processInput.flush()

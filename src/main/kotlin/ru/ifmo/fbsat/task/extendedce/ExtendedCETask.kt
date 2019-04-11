@@ -104,8 +104,8 @@ class ExtendedCETask(
         // First, try to infer automaton without upper bounding total guards size
         if (maxTotalGuardsSize != null) {
             println("Trying without upper bound (N <= $maxTotalGuardsSize)...")
-            if (task.infer(finalize = false) == null) {
-                task.finalize()
+            if (task.infer(finalize2 = false) == null) {
+                task.finalize2()
                 error("UNSAT, try larger P or even C")
                 // return null
             }
@@ -115,7 +115,7 @@ class ExtendedCETask(
             println("===== Iteration #$iterationNumber =====")
 
             // Infer automaton
-            val automaton = task.infer(maxTotalGuardsSize, finalize = false) ?: break
+            val automaton = task.infer(maxTotalGuardsSize, finalize2 = false) ?: break
 
             log.debug { "Dump intermediate automaton" }
             automaton.dump(outDir, "_automaton_loop${loopNumber}_iter$iterationNumber")
@@ -128,7 +128,7 @@ class ExtendedCETask(
             }
         }
 
-        task.finalize()
+        task.finalize2()
 
         return best
     }
