@@ -1,4 +1,4 @@
-[ ![Build Status](https://travis-ci.org/Lipen/fbSAT.svg) ](https://travis-ci.org/Lipen/fbSAT)
+[ ![Build Status](https://travis-ci.org/ctlab/fbSAT.svg) ](https://travis-ci.org/ctlab/fbSAT)
 
 # fbSAT
 
