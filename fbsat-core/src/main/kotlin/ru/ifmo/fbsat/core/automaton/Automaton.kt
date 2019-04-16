@@ -517,7 +517,7 @@ class Automaton(
                                 "y" to r(),
                                 "Source" to transition.source.toFbtString(),
                                 "Destination" to transition.destination.toFbtString(),
-                                "Condition" to transition.guard.toFbtString()
+                                "Condition" to transition.toFbtString()
                             )
                         }
                 }
