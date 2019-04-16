@@ -247,7 +247,7 @@ class FbSAT : CliktCommand() {
         Globals.IS_DEBUG = isDebug
 
         // outDir.deleteRecursively()
-        outDir.walkBottomUp().forEach { if (it != outDir) it.delete() }
+        // outDir.walkBottomUp().forEach { if (it != outDir) it.delete() }
         outDir.mkdirs()
 
         val scenarios = PositiveScenario.fromFile(fileScenarios)
