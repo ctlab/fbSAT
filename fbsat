@@ -3,5 +3,4 @@
 set -e
 ./gradlew -q installDist
 mkdir -p logs
-# ./build/install/fbSAT/bin/fbSAT "$@" |& tee "logs/log_$(date +"%Y-%m-%d_%T")"
-./build/install/fbSAT/bin/fbSAT "$@"
+./fbsat-cli/build/install/fbSAT/bin/fbSAT "$@"

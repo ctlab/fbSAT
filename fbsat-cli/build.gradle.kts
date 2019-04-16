@@ -17,7 +17,7 @@ tasks.withType<JavaExec> {
 }
 
 tasks.startScripts {
-    applicationName = "fbsat"
+    applicationName = rootProject.name
 }
 
 tasks.jar {
