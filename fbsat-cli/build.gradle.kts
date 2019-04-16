@@ -16,6 +16,10 @@ tasks.withType<JavaExec> {
     args("--help")
 }
 
+tasks.startScripts {
+    applicationName = "fbsat"
+}
+
 tasks.jar {
     manifest.attributes("Main-Class" to application.mainClassName)
 }
