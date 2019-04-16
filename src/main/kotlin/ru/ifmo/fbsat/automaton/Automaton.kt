@@ -52,11 +52,11 @@ class Automaton(
      */
     val numberOfStates: Int
         get() = states.size
-    // /**
-    //  * Maximal guard size **P**.
-    //  */
-    // val maxGuardSize: Int
-    //     get() = states.flatMap { it.transitions }.map { it.guard.size }.max()!!
+    /**
+     * Maximal guard size **P**.
+     */
+    val maxGuardSize: Int
+        get() = transitions.map { it.guard.size }.max()!!
     /**
      * Automaton transitions.
      */
@@ -257,7 +257,7 @@ class Automaton(
      *
      * @return `true` if [positiveScenario] is satisfied.
      */
-    private fun verify(positiveScenario: PositiveScenario): Boolean {
+    fun verify(positiveScenario: PositiveScenario): Boolean {
         val satisfyingStates = eval(positiveScenario)
         return satisfyingStates.last() != null
     }
@@ -267,7 +267,7 @@ class Automaton(
      *
      * @return `true` if [negativeScenario] is **not** satisfied.
      */
-    private fun verify(negativeScenario: NegativeScenario, index: Int? = null): Boolean {
+    fun verify(negativeScenario: NegativeScenario, index: Int? = null): Boolean {
         val satisfyingStates = eval(negativeScenario)
 
         if (negativeScenario.loopPosition != null) {
