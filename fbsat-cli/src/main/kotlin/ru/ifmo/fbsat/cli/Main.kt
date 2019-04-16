@@ -29,8 +29,9 @@ import ru.ifmo.fbsat.core.task.extendedmin.ExtendedMinTask
 import ru.ifmo.fbsat.core.task.extendedmince.ExtendedMinCETask
 import ru.ifmo.fbsat.core.task.extendedminub.ExtendedMinUBTask
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.PnP
+import ru.ifmo.fbsat.core.utils.inputNamesPnP
 import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.outputNamesPnP
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -256,8 +257,8 @@ class FbSAT : CliktCommand() {
 
         val tree = ScenarioTree(
             scenarios,
-            inputNames = PnP.inputNames,
-            outputNames = PnP.outputNames
+            inputNames = inputNamesPnP,
+            outputNames = outputNamesPnP
         )
 
         val negTree = fileCounterexamples?.let {

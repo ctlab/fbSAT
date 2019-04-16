@@ -41,14 +41,21 @@ fun ClosedRange<Double>.random(random: Random): Double {
 }
 
 /**
- * Pick-and-Place manipulator in/out events/variables names.
+ * Pick-and-Place manipulator input events.
  */
-object PnP {
-    val inputEvents = listOf("REQ")
-    val outputEvents = listOf("CNF")
-    val inputNames = listOf("c1Home", "c1End", "c2Home", "c2End", "vcHome", "vcEnd", "pp1", "pp2", "pp3", "vac")
-    val outputNames = listOf("c1Extend", "c1Retract", "c2Extend", "c2Retract", "vcExtend", "vacuum_on", "vacuum_off")
-}
+val inputEventsPnP = listOf("REQ")
+/**
+ * Pick-and-Place manipulator output events.
+ */
+val outputEventsPnP = listOf("CNF")
+/**
+ * Pick-and-Place manipulator input variables names.
+ */
+val inputNamesPnP = listOf("c1Home", "c1End", "c2Home", "c2End", "vcHome", "vcEnd", "pp1", "pp2", "pp3", "vac")
+/**
+ * Pick-and-Place manipulator output variables names.
+ */
+val outputNamesPnP = listOf("c1Extend", "c1Retract", "c2Extend", "c2Retract", "vcExtend", "vacuum_on", "vacuum_off")
 
 inline fun <T> Source.useLines(block: (Sequence<String>) -> T): T =
     buffer().use { block(it.lineSequence()) }
