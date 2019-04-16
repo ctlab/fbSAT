@@ -293,7 +293,10 @@ class StringGuard(val expr: String, val inputNames: List<String>) : Guard {
     }
 
     override fun toFbtString(): String {
-        TODO()
+        return expr
+            .replace("&", " AND ")
+            .replace("~", "NOT ")
+            .replace("!", "NOT ")
     }
 
     override fun toSmvString(): String {
