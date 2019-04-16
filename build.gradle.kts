@@ -1,11 +1,12 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 plugins {
     `build-scan`
     kotlin("jvm") version Versions.kotlin
-    id("org.jlleitschuh.gradle.ktlint") version Versions.ktlint
     id("fr.brouillard.oss.gradle.jgitver") version Versions.jgitver
     id("com.github.ben-manes.versions") version Versions.gradle_versions
+    id("org.jlleitschuh.gradle.ktlint") version Versions.ktlint apply false
     id("com.github.johnrengelman.shadow") version Versions.shadow apply false
 }
 
@@ -24,9 +25,7 @@ subprojects {
         implementation(kotlin("stdlib"))
     }
 
-    // Without an explicit `this`, IDEA goes crazy during gradle project import:
-    // it finds and auto-imports `Versions.ktlint` before `(this).ktlint`.
-    this.ktlint {
+    configure<KtlintExtension> {
         ignoreFailures.set(true)
     }
 
