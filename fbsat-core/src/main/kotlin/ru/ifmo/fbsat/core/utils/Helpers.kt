@@ -87,7 +87,7 @@ inline fun <T> timeIt(block: () -> T): Pair<T, Double> {
     return result to (System.currentTimeMillis() - timeStart) / 1000.0
 }
 
-fun File.sourceAutoGzip() : Source =
+fun File.sourceAutoGzip(): Source =
     if (path.endsWith(".gz", ignoreCase = true))
         source().gzip()
     else
