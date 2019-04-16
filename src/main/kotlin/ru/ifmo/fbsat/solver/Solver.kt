@@ -186,11 +186,6 @@ class IncrementalSolver(command: String) : AbstractSolver() {
     }
 
     override fun finalize2() {
-        // Thread {
-        //     processInput.write("halt\n")
-        //     processInput.flush()
-        //     process.waitFor(100, TimeUnit.MILLISECONDS)
         process.destroy()
-        // }.start()
     }
 }
