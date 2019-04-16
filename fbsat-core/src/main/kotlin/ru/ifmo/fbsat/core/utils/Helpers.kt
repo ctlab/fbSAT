@@ -3,6 +3,7 @@ package ru.ifmo.fbsat.core.utils
 import okio.BufferedSource
 import okio.Source
 import okio.buffer
+import okio.gzip
 import okio.sink
 import okio.source
 import ru.ifmo.multiarray.BooleanMultiArray
@@ -85,3 +86,9 @@ inline fun <T> timeIt(block: () -> T): Pair<T, Double> {
     val result = block()
     return result to (System.currentTimeMillis() - timeStart) / 1000.0
 }
+
+fun File.sourceAutoGzip() : Source =
+    if (path.endsWith(".gz", ignoreCase = true))
+        source().gzip()
+    else
+        source()

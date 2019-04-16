@@ -1,9 +1,9 @@
 package ru.ifmo.fbsat.core.scenario.positive
 
-import okio.source
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.preprocessed
+import ru.ifmo.fbsat.core.utils.sourceAutoGzip
 import ru.ifmo.fbsat.core.utils.useLines
 import java.io.File
 
@@ -16,7 +16,7 @@ class PositiveScenario(
 
     companion object {
         fun fromFile(file: File, preprocess: Boolean = true): List<PositiveScenario> {
-            return file.source().useLines { lines ->
+            return file.sourceAutoGzip().useLines { lines ->
                 val scenarios: MutableList<PositiveScenario> = mutableListOf()
                 var numberOfScenarios = 0
 
