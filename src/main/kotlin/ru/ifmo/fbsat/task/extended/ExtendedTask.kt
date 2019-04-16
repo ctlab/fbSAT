@@ -31,12 +31,12 @@ class ExtendedTask(
      * Infer automaton using **extended** method.
      *
      * @param[maxTotalGuardsSize] maximum total guard size *N*, unconstrained if `null`.
-     * @param[finalize] call `finalize` method after inference?
+     * @param[finalize] call `finalize2` method after inference?
      * @return automaton if *SAT*, or `null` if *UNSAT*.
      */
     fun infer(
         maxTotalGuardsSize: Int? = null,
-        finalize2: Boolean = true
+        finalize: Boolean = true
     ): Automaton? {
         log.debug { "ExtendedTask::infer(N = $maxTotalGuardsSize)" }
 
@@ -47,7 +47,7 @@ class ExtendedTask(
         solver.comment("Total variables: ${solver.numberOfVariables}, clauses: ${solver.numberOfClauses}")
 
         val rawAssignment = solver.solve()
-        if (finalize2) finalize2()
+        if (finalize) finalize2()
         if (rawAssignment == null)
             return null
 

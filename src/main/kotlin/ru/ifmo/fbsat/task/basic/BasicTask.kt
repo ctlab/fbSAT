@@ -73,6 +73,7 @@ class BasicTask private constructor(
     fun reuse(newMaxTransitions: Int): BasicTask {
         check(canBeReused)
         canBeReused = false
+        check(!autoFinalize)
 
         return BasicTask(
             scenarioTree = this.scenarioTree,
