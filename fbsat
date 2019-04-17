@@ -2,5 +2,4 @@
 
 set -e
 ./gradlew -q installDist
-mkdir -p logs
-./fbsat-cli/build/install/fbSAT/bin/fbSAT "$@"
+./fbsat-cli/build/install/cli/bin/fbSAT "$@"
