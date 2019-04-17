@@ -1,0 +1,62 @@
+= fbSAT: Automatic Inference of Minimal Finite-State Models of Function Blocks
+Konstantin Chukharev <kchukharev@corp.ifmo.ru>
+
+image:https://travis-ci.org/ctlab/fbSAT.svg?branch=master["Build Status", link="https://travis-ci.org/ctlab/fbSAT"]
+
+== Build
+
+To build fbSAT, use shipped gradle wrapper:
+
+----
+## on Unix:
+$ ./gradlew
+
+## on Windows:
+$ gradlew.bat
+----
+
+By default, it runs `clean build installDist` gradle tasks.
+
+== Run
+
+Gradle task `installDist` produces fbSAT binaries in `fbsat-cli/build/install/fbSAT/bin/` directory:
+
+----
+## on Unix:
+$ ./fbsat-cli/build/install/cli/bin/fbSAT -h
+
+## on Windows:
+$ fbsat-cli\build\install\cli\bin\fbSAT.bat -h
+----
+
+== Command-line interface
+
+----
+$ fbSAT -h
+
+Usage: fbsat [OPTIONS]
+
+Options:
+  -i, --scenarios <path>             File with scenarios [required]
+  -ce, --counterexamples <path>      File with counter-examples
+  -smv, --smvdir <path>              Directory with SMV files/scripts for verification
+  -o, --outdir <path>                Output directory [default: current directory]
+  -m, --method <method>              Method to use [required]
+  -C <int>                           Number of automaton states
+  -K <int>                           Maximum number of transitions from each state
+  -P <int>                           Maximum guard size (number of parse tree nodes)
+  -T <int>                           Upper bound for the total number of transitions
+  -N <int>                           Upper bound for the total size of guards
+  -w <int>                           Maximum plateau width
+  --solver <cmd>                     SAT-solver [default: incremental-cryptominisat]
+  --incremental / --no-incremental   Use IncrementalSolver backend [default: true]
+  -h, --help                         Show this message and exit
+----
+
+=== Example usage
+
+ $ fbsat -i data/tests-1.gz -o out/tests-1-min extended-min -P 3
+
+ $ fbsat -i data/tests-39.gz -o out/tests-39-min extended-min -P 3
+
+ $ fbsat -i data/tests-39.gz -o out/tests-39-min-ub-w2 extended-min-ub -w 2
