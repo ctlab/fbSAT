@@ -100,19 +100,19 @@ class FbSAT : CliktCommand() {
 
     private val maxGuardSize by option(
         "-P",
-        help = "Maximum number of nodes in guard's boolean formula's parse tree",
+        help = "Maximum guard size (number of parse tree nodes)",
         metavar = "<int>"
     ).int()
 
     private val maxTransitions by option(
         "-T",
-        help = "Upper bound on total number of transitions in automaton",
+        help = "Upper bound for the total number of transitions",
         metavar = "<int>"
     ).int()
 
     private val maxTotalGuardsSize by option(
         "-N",
-        help = "Upper bound on total number of nodes in all guard-trees",
+        help = "Upper bound for the total size of guards",
         metavar = "<int>"
     ).int()
 
