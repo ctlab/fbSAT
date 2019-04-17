@@ -55,8 +55,8 @@ Options:
 
 === Example usage
 
- $ fbsat -i data/tests-1.gz -o out/tests-1-min extended-min -P 3
+ $ fbsat -i data/tests-1.gz -o out/tests-1-min -m extended-min -P 3
 
- $ fbsat -i data/tests-39.gz -o out/tests-39-min extended-min -P 3
+ $ fbsat -i data/tests-39.gz -o out/tests-39-min -m extended-min -P 3
 
- $ fbsat -i data/tests-39.gz -o out/tests-39-min-ub-w2 extended-min-ub -w 2
+ $ fbsat -i data/tests-39.gz -o out/tests-39-min-ub-w2 -m extended-min-ub -w 2
