@@ -80,7 +80,7 @@ interface Solver {
     }
 }
 
-internal abstract class AbstractSolver : Solver {
+private abstract class AbstractSolver : Solver {
     final override var numberOfVariables = 0
         protected set
     final override var numberOfClauses = 0
@@ -95,7 +95,7 @@ internal abstract class AbstractSolver : Solver {
     final override fun solve(): RawAssignment? = _solve()?.let { RawAssignment(it, context) }
 }
 
-internal class DefaultSolver(private val command: String) : AbstractSolver() {
+private class DefaultSolver(private val command: String) : AbstractSolver() {
     private val buffer = Buffer()
 
     override fun clause(literals: List<Int>) {
@@ -175,7 +175,7 @@ internal class DefaultSolver(private val command: String) : AbstractSolver() {
     override fun finalize2() {}
 }
 
-internal class IncrementalSolver(command: String) : AbstractSolver() {
+private class IncrementalSolver(command: String) : AbstractSolver() {
     private val process = Runtime.getRuntime().exec(command)
     private val processInput = process.outputStream.sink().buffer()
     private val processOutput = process.inputStream.source().buffer()
