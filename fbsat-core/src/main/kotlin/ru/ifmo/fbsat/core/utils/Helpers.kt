@@ -88,7 +88,7 @@ inline fun <T> timeIt(block: () -> T): Pair<T, Double> {
 }
 
 fun File.sourceAutoGzip(): Source =
-    if (path.endsWith(".gz", ignoreCase = true))
+    if (extension == ".gz")
         source().gzip()
     else
         source()
