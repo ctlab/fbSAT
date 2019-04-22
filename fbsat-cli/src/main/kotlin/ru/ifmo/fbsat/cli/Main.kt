@@ -18,16 +18,15 @@ import ru.ifmo.fbsat.core.automaton.StringGuard
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.solver.DefaultSolver
-import ru.ifmo.fbsat.core.solver.IncrementalSolver
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.task.basic.BasicMinTask
 import ru.ifmo.fbsat.core.task.basic.BasicTask
-import ru.ifmo.fbsat.core.task.basicmin.BasicMinTask
+import ru.ifmo.fbsat.core.task.complete.CompleteCegisTask
+import ru.ifmo.fbsat.core.task.complete.CompleteMinCegisTask
+import ru.ifmo.fbsat.core.task.complete.CompleteTask
+import ru.ifmo.fbsat.core.task.extended.ExtendedMinTask
+import ru.ifmo.fbsat.core.task.extended.ExtendedMinUBTask
 import ru.ifmo.fbsat.core.task.extended.ExtendedTask
-import ru.ifmo.fbsat.core.task.extendedce.ExtendedCETask
-import ru.ifmo.fbsat.core.task.extendedmin.ExtendedMinTask
-import ru.ifmo.fbsat.core.task.extendedmince.ExtendedMinCETask
-import ru.ifmo.fbsat.core.task.extendedminub.ExtendedMinUBTask
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
 import ru.ifmo.fbsat.core.utils.log
@@ -61,7 +60,7 @@ class FbSAT : CliktCommand() {
     )
 
     private val smvDir by option(
-        "-smv", "--smvdir",
+        "--smvdir",
         help = "Directory with SMV files/scripts for verification",
         metavar = "<path>"
     ).file(
@@ -83,7 +82,9 @@ class FbSAT : CliktCommand() {
     ).choice(
         "basic", "basic-min",
         "extended", "extended-min", "extended-min-ub",
-        "extended-ce", "extended-min-ce"
+        "extended-ce", "extended-min-ce",
+        "complete", "complete-min",
+        "complete-cegis", "complete-min-cegis"
     ).required()
 
     private val numberOfStates by option(
@@ -133,14 +134,6 @@ class FbSAT : CliktCommand() {
         help = "Use IncrementalSolver backend [default: true]"
     ).flag(
         "--no-incremental",
-        default = true
-    )
-
-    private val isForbidLoops by option(
-        "--forbid-loops",
-        help = "Forbid loops [default: true]"
-    ).flag(
-        "--no-forbid-loops",
         default = true
     )
 
@@ -213,13 +206,6 @@ class FbSAT : CliktCommand() {
         default = true
     )
 
-    private val isEncodeReverseImplication by option(
-        "--encode-reverse-implication"
-    ).flag(
-        "--no-encode-reverse-implication",
-        default = false
-    )
-
     private val isOnlyAutomaton2 by option(
         "--only-automaton2"
     ).flag()
@@ -243,6 +229,7 @@ class FbSAT : CliktCommand() {
         Globals.IS_FORBID_OR = isForbidOr
         Globals.IS_BFS_AUTOMATON = isBfsAutomaton
         Globals.IS_BFS_GUARD = isBfsGuard
+        Globals.IS_ENCODE_AUTOMATON = isEncodeAutomaton
         Globals.IS_ENCODE_TRANSITIONS_ORDER = isEncodeTransitionsOrder
         Globals.IS_ENCODE_TERMINALS_ORDER = isEncodeTerminalsOrder
         Globals.IS_DEBUG = isDebug
@@ -310,9 +297,9 @@ class FbSAT : CliktCommand() {
         // ===
 
         val solverProvider: () -> Solver = if (isIncrementalSolver) {
-            { IncrementalSolver(solverCmd) }
+            { Solver.incremental(solverCmd) }
         } else {
-            { DefaultSolver(solverCmd) }
+            { Solver.default(solverCmd) }
         }
 
         if (isOnlyAutomaton2) {
@@ -433,18 +420,18 @@ class FbSAT : CliktCommand() {
 
         val automaton: Automaton? = when (method) {
             "basic" -> {
-                val task = BasicTask(
+                val task = BasicTask.create(
                     scenarioTree = tree,
                     numberOfStates = numberOfStates!!,
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxTransitions = maxTransitions,
-                    solver = solverProvider(),
+                    solverProvider = solverProvider,
                     outDir = outDir
                 )
                 task.infer()
             }
             "basic-min" -> {
-                val task = BasicMinTask(
+                val task = BasicMinTask.create(
                     scenarioTree = tree,
                     numberOfStates = numberOfStates,
                     maxOutgoingTransitions = maxOutgoingTransitions,
@@ -455,81 +442,77 @@ class FbSAT : CliktCommand() {
                 task.infer()
             }
             "extended" -> {
-                val task = ExtendedTask(
+                val task = ExtendedTask.create(
                     scenarioTree = tree,
-                    negativeScenarioTree = negTree,
-                    numberOfStates = numberOfStates!!,
+                    numberOfStates = requireNotNull(numberOfStates),
                     maxOutgoingTransitions = maxOutgoingTransitions,
-                    maxGuardSize = maxGuardSize!!,
-                    solver = solverProvider(),
+                    maxGuardSize = requireNotNull(maxGuardSize),
+                    maxTotalGuardsSize = maxTotalGuardsSize,
                     outDir = outDir,
-                    isForbidLoops = isForbidLoops,
-                    isEncodeAutomaton = isEncodeAutomaton,
-                    isEncodeTransitionsOrder = isEncodeTransitionsOrder,
-                    isEncodeReverseImplication = isEncodeReverseImplication
+                    solverProvider = solverProvider
                 )
-                task.infer(maxTotalGuardsSize)
+                task.infer()
             }
             "extended-min" -> {
-                val task = ExtendedMinTask(
+                val task = ExtendedMinTask.create(
                     scenarioTree = tree,
-                    negativeScenarioTree = negTree,
                     numberOfStates = numberOfStates,
                     maxOutgoingTransitions = maxOutgoingTransitions,
-                    maxGuardSize = maxGuardSize!!,
+                    maxGuardSize = requireNotNull(maxGuardSize),
                     initialMaxTotalGuardsSize = maxTotalGuardsSize,
-                    solverProvider = solverProvider,
                     outDir = outDir,
-                    isForbidLoops = isForbidLoops,
-                    isEncodeAutomaton = isEncodeAutomaton,
-                    isEncodeTransitionsOrder = isEncodeTransitionsOrder,
-                    isEncodeReverseImplication = isEncodeReverseImplication
+                    solverProvider = solverProvider
                 )
                 task.infer()
             }
             "extended-min-ub" -> {
-                val task = ExtendedMinUBTask(
+                val task = ExtendedMinUBTask.create(
                     scenarioTree = tree,
-                    negativeScenarioTree = negTree,
                     initialMaxTotalGuardsSize = maxTotalGuardsSize,
                     maxPlateauWidth = maxPlateauWidth,
                     outDir = outDir,
-                    solverProvider = solverProvider,
-                    isForbidLoops = isForbidLoops,
-                    isEncodeAutomaton = isEncodeAutomaton,
-                    isEncodeTransitionsOrder = isEncodeTransitionsOrder,
-                    isEncodeReverseImplication = isEncodeReverseImplication
+                    solverProvider = solverProvider
                 )
                 task.infer()
             }
-            "extended-ce" -> {
-                val task = ExtendedCETask(
+            "complete" -> {
+                val task = CompleteTask.create(
                     scenarioTree = tree,
-                    initialNegativeScenarioTree = negTree,
-                    numberOfStates = numberOfStates!!,
+                    negativeScenarioTree = negTree,
+                    numberOfStates = requireNotNull(numberOfStates),
                     maxOutgoingTransitions = maxOutgoingTransitions,
-                    maxGuardSize = maxGuardSize!!,
+                    maxGuardSize = requireNotNull(maxGuardSize),
+                    maxTotalGuardsSize = maxTotalGuardsSize,
                     outDir = outDir,
-                    smvDir = smvDir,
-                    solverProvider = solverProvider,
-                    isEncodeAutomaton = isEncodeAutomaton,
-                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
+                    solverProvider = solverProvider
                 )
-                task.infer(maxTotalGuardsSize)
+                task.infer()
             }
-            "extended-min-ce" -> {
-                val task = ExtendedMinCETask(
+            "complete-cegis" -> {
+                val task = CompleteCegisTask.create(
+                    scenarioTree = tree,
+                    negativeScenarioTree = negTree,
+                    numberOfStates = requireNotNull(numberOfStates),
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    maxGuardSize = requireNotNull(maxGuardSize),
+                    maxTotalGuardsSize = maxTotalGuardsSize,
+                    smvDir = smvDir,
+                    outDir = outDir,
+                    solverProvider = solverProvider
+                )
+                task.infer()
+            }
+            "complete-min-cegis" -> {
+                val task = CompleteMinCegisTask.create(
                     scenarioTree = tree,
                     initialNegativeScenarioTree = negTree,
                     numberOfStates = numberOfStates,
                     maxOutgoingTransitions = maxOutgoingTransitions,
-                    maxGuardSize = maxGuardSize!!,
+                    maxGuardSize = requireNotNull(maxGuardSize),
                     initialMaxTotalGuardsSize = maxTotalGuardsSize,
-                    outDir = outDir,
                     smvDir = smvDir,
-                    solverProvider = solverProvider,
-                    isEncodeAutomaton = isEncodeAutomaton,
-                    isEncodeTransitionsOrder = isEncodeTransitionsOrder
+                    outDir = outDir,
+                    solverProvider = solverProvider
                 )
                 task.infer()
             }

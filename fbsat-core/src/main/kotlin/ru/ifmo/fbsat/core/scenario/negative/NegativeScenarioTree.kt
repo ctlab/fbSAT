@@ -240,6 +240,12 @@ class NegativeScenarioTree(
         ).forEach(::addNegativeScenario)
     }
 
+    fun isEmpty(): Boolean {
+        // Note: if you add an empty scenario to an empty tree, then the size will be equal to 1 -
+        //   due to added auxiliary root.
+        return size == 0
+    }
+
     // Note: all property-like functions are one-based and one-valued
 
     fun parent(v: Int) = nodes[v - 1].parent?.id ?: 0

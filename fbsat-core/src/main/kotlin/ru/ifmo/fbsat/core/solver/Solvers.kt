@@ -6,15 +6,63 @@ import okio.sink
 import okio.source
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeIt
+import ru.ifmo.multiarray.BooleanMultiArray
 import ru.ifmo.multiarray.IntMultiArray
 import kotlin.math.absoluteValue
+import kotlin.properties.ReadOnlyProperty
+import kotlin.reflect.KProperty
+
+class SolverContext internal constructor(val solver: Solver) : MutableMap<String, Any> by mutableMapOf() {
+    operator fun <T : Any> invoke(value: T): ContextProvider<T> = ContextProvider(value)
+    // operator fun <T : Any> invoke(init: Solver.() -> T): ContextProvider<T> = invoke(solver.init())
+
+    inner class ContextProvider<T : Any>(val value: T) {
+        operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): ReadOnlyProperty<Any?, T> {
+            this@SolverContext[property.name] = value
+            return object : ReadOnlyProperty<Any?, T> {
+                override fun getValue(thisRef: Any?, property: KProperty<*>): T {
+                    // To return dynamic value, use this:
+                    // return this@SolverContext.getForce(property.name)
+                    return value
+                }
+            }
+        }
+    }
+}
+
+class RawAssignment(
+    private val data: BooleanArray,
+    private val context: SolverContext
+) : Map<String, Any> by context {
+    operator fun get(index: Int): Boolean = data[index - 1]
+
+    fun booleanArrayOf(
+        variable: IntMultiArray,
+        vararg shape: Int
+    ) = BooleanMultiArray(shape) { index ->
+        @Suppress("ReplaceGetOrSet")
+        this[variable.get(*index)]
+    }
+
+    fun intArrayOf(
+        variable: IntMultiArray,
+        vararg shape: Int,
+        domain: Iterable<Int>,
+        onAbsence: (index: IntArray) -> Int /*= { error("variable[index = $it] is undefined") }*/
+    ) = IntMultiArray(shape) { index ->
+        @Suppress("ReplaceGetOrSet")
+        domain.firstOrNull { last -> this[variable.get(*index, last)] }
+            ?: onAbsence(index)
+    }
+}
 
 interface Solver {
     val numberOfVariables: Int
     val numberOfClauses: Int
+    val context: SolverContext
 
     fun newVariable(): Int
-    fun newArray(vararg shape: Int) = IntMultiArray(shape) { newVariable() }
+    fun newArray(vararg shape: Int, init: (IntArray) -> Int = { newVariable() }) = IntMultiArray(shape, init)
 
     fun clause(literals: List<Int>)
     fun clause(vararg literals: Int) = clause(literals.asList())
@@ -23,20 +71,31 @@ interface Solver {
 
     fun comment(comment: String)
 
-    fun solve(): BooleanArray?
+    fun solve(): RawAssignment?
     fun finalize2()
+
+    companion object {
+        fun default(command: String): Solver = DefaultSolver(command)
+        fun incremental(command: String): Solver = IncrementalSolver(command)
+    }
 }
 
-abstract class AbstractSolver : Solver {
+internal abstract class AbstractSolver : Solver {
     final override var numberOfVariables = 0
         protected set
     final override var numberOfClauses = 0
         protected set
+    final override val context: SolverContext by lazy { SolverContext(this) }
 
     final override fun newVariable(): Int = ++numberOfVariables
+
+    @Suppress("FunctionName")
+    protected abstract fun _solve(): BooleanArray?
+
+    final override fun solve(): RawAssignment? = _solve()?.let { RawAssignment(it, context) }
 }
 
-class DefaultSolver(private val command: String) : AbstractSolver() {
+internal class DefaultSolver(private val command: String) : AbstractSolver() {
     private val buffer = Buffer()
 
     override fun clause(literals: List<Int>) {
@@ -51,7 +110,7 @@ class DefaultSolver(private val command: String) : AbstractSolver() {
         buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
     }
 
-    override fun solve(): BooleanArray? {
+    override fun _solve(): BooleanArray? {
         // println("[*] Dumping cnf to file...")
         // File("cnf").outputStream().use {
         //     it.write("p cnf $numberOfVariables $numberOfClauses\n".toByteArray())
@@ -116,7 +175,7 @@ class DefaultSolver(private val command: String) : AbstractSolver() {
     override fun finalize2() {}
 }
 
-class IncrementalSolver(command: String) : AbstractSolver() {
+internal class IncrementalSolver(command: String) : AbstractSolver() {
     private val process = Runtime.getRuntime().exec(command)
     private val processInput = process.outputStream.sink().buffer()
     private val processOutput = process.inputStream.source().buffer()
@@ -140,7 +199,7 @@ class IncrementalSolver(command: String) : AbstractSolver() {
         buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
     }
 
-    override fun solve(): BooleanArray? {
+    override fun _solve(): BooleanArray? {
         // measureNanoTime {
         //     println("[*] Dumping cnf to file...")
         //     File("cnf").outputStream().use {

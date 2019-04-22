@@ -329,7 +329,7 @@ class Automaton(
             it.println(this.toGraphvizString())
         }
         Runtime.getRuntime().exec("dot -Tpdf -O $file")
-        Runtime.getRuntime().exec("dot -Tpng -O $file")
+        // Runtime.getRuntime().exec("dot -Tpng -O $file")
     }
 
     /**

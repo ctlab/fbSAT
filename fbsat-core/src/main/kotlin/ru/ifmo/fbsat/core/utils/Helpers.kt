@@ -92,3 +92,11 @@ fun File.sourceAutoGzip(): Source =
         source().gzip()
     else
         source()
+
+/**
+ * Forcibly get value from map.
+ */
+fun <K, V, T> Map<K, V>.getForce(key: K): T {
+    @Suppress("UNCHECKED_CAST")
+    return this[key] as T
+}

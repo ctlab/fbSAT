@@ -1,33 +1,52 @@
-package ru.ifmo.fbsat.core.task.extendedminub
+package ru.ifmo.fbsat.core.task.extended
 
 import ru.ifmo.fbsat.core.automaton.Automaton
-import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.basicmin.BasicMinTask
-import ru.ifmo.fbsat.core.task.extendedmin.ExtendedMinTask
+import ru.ifmo.fbsat.core.task.basic.BasicMinTask
 import java.io.File
 
-class ExtendedMinUBTask(
-    val scenarioTree: ScenarioTree,
-    val negativeScenarioTree: NegativeScenarioTree?,
-    // FIXME: seems like N_init support is not needed
-    val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
-    val maxPlateauWidth: Int?, // w, unconstrained (=Inf) if null
-    val outDir: File,
-    private val solverProvider: () -> Solver,
-    private val isForbidLoops: Boolean = true,
-    private val isEncodeAutomaton: Boolean = false,
-    private val isEncodeTransitionsOrder: Boolean,
-    private val isEncodeReverseImplication: Boolean
-) {
-    @Suppress("LocalVariableName")
-    fun infer(): Automaton? {
-        val taskBasicMin = BasicMinTask(
+interface ExtendedMinUBTask {
+    val scenarioTree: ScenarioTree
+    val initialMaxTotalGuardsSize: Int? // N_init, unconstrained if null
+    val maxPlateauWidth: Int? // w, unconstrained (=Inf) if null
+    val outDir: File
+
+    fun infer(): Automaton?
+
+    companion object {
+        @JvmStatic
+        fun create(
+            scenarioTree: ScenarioTree,
+            initialMaxTotalGuardsSize: Int? = null, // N_init, unconstrained if null
+            maxPlateauWidth: Int?, // w, unconstrained (=Inf) if null
+            outDir: File,
+            solverProvider: () -> Solver,
+            isEncodeReverseImplication: Boolean = true
+        ): ExtendedMinUBTask = ExtendedMinUBTaskImpl(
             scenarioTree = scenarioTree,
-            numberOfStates = null,
-            maxOutgoingTransitions = null,
-            initialMaxTransitions = null,
+            initialMaxTotalGuardsSize = initialMaxTotalGuardsSize,
+            maxPlateauWidth = maxPlateauWidth,
+            outDir = outDir,
+            solverProvider = solverProvider,
+            isEncodeReverseImplication = isEncodeReverseImplication
+        )
+    }
+}
+
+private class ExtendedMinUBTaskImpl(
+    override val scenarioTree: ScenarioTree,
+    // FIXME: seems like N_init support is not needed
+    override val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
+    override val maxPlateauWidth: Int?, // w, unconstrained (=Inf) if null
+    override val outDir: File,
+    private val solverProvider: () -> Solver,
+    private val isEncodeReverseImplication: Boolean
+) : ExtendedMinUBTask {
+    @Suppress("LocalVariableName")
+    override fun infer(): Automaton? {
+        val taskBasicMin = BasicMinTask.create(
+            scenarioTree = scenarioTree,
             outDir = outDir,
             solverProvider = solverProvider
         )
@@ -53,18 +72,14 @@ class ExtendedMinUBTask(
                 break
             }
 
-            val task = ExtendedMinTask(
+            val task = ExtendedMinTask.create(
                 scenarioTree = scenarioTree,
-                negativeScenarioTree = negativeScenarioTree,
                 numberOfStates = C,
                 maxOutgoingTransitions = null,
                 maxGuardSize = P,
                 initialMaxTotalGuardsSize = N,
                 outDir = outDir,
                 solverProvider = solverProvider,
-                isForbidLoops = isForbidLoops,
-                isEncodeAutomaton = isEncodeAutomaton,
-                isEncodeTransitionsOrder = isEncodeTransitionsOrder,
                 isEncodeReverseImplication = isEncodeReverseImplication
             )
             val automaton = task.infer()

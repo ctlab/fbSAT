@@ -1,22 +1,53 @@
-package ru.ifmo.fbsat.core.task.basicmin
+package ru.ifmo.fbsat.core.task.basic
 
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.basic.BasicTask
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeIt
 import java.io.File
 import kotlin.properties.Delegates
 
-class BasicMinTask(
-    val scenarioTree: ScenarioTree,
-    val numberOfStates: Int?, // C, search if null
-    val maxOutgoingTransitions: Int?, // K, =C if null
-    val initialMaxTransitions: Int?, // T_init, unconstrained if null
-    val outDir: File,
-    private val solverProvider: () -> Solver
-) {
+interface BasicMinTask {
+    val scenarioTree: ScenarioTree
+    val numberOfStates: Int? // C, search if null
+    val maxOutgoingTransitions: Int? // K, K=C if null
+    val initialMaxTransitions: Int? // T_init, unconstrained if null
+    val outDir: File
+
+    fun infer(): Automaton?
+
+    companion object {
+        @JvmStatic
+        fun create(
+            scenarioTree: ScenarioTree,
+            numberOfStates: Int? = null, // C, search if null
+            maxOutgoingTransitions: Int? = null, // K, K=C if null
+            initialMaxTransitions: Int? = null, // T_init, unconstrained if null
+            outDir: File,
+            solverProvider: () -> Solver,
+            isOnlyC: Boolean = false
+        ): BasicMinTask = BasicMinTaskImpl(
+            scenarioTree = scenarioTree,
+            numberOfStates = numberOfStates,
+            maxOutgoingTransitions = maxOutgoingTransitions,
+            initialMaxTransitions = initialMaxTransitions,
+            outDir = outDir,
+            solverProvider = solverProvider,
+            isOnlyC = isOnlyC
+        )
+    }
+}
+
+private class BasicMinTaskImpl(
+    override val scenarioTree: ScenarioTree,
+    override val numberOfStates: Int?, // C, search if null
+    override val maxOutgoingTransitions: Int?, // K, =C if null
+    override val initialMaxTransitions: Int?, // T_init, unconstrained if null
+    override val outDir: File,
+    private val solverProvider: () -> Solver,
+    private val isOnlyC: Boolean
+) : BasicMinTask {
     init {
         require(!(numberOfStates == null && maxOutgoingTransitions != null)) {
             "do not specify only K"
@@ -24,22 +55,20 @@ class BasicMinTask(
     }
 
     @Suppress("LocalVariableName")
-    fun infer(isOnlyC: Boolean = false): Automaton? {
-        log.debug { "BasicMinTask::infer(${if (isOnlyC) "onlyC" else ""})" }
-
+    override fun infer(): Automaton? {
         var best: Automaton? = null
         var task: BasicTask by Delegates.notNull()
 
         if (numberOfStates == null) {
             log.info("BasicMinTask: searching for minimal C...")
-            for (C in 1..20) {
-                task = BasicTask(
+            for (C in 1..50) {
+                task = BasicTask.create(
                     scenarioTree = scenarioTree,
                     numberOfStates = C,
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxTransitions = initialMaxTransitions,
                     outDir = outDir,
-                    solver = solverProvider(),
+                    solverProvider = solverProvider,
                     autoFinalize = false
                 )
                 val (automaton, runningTime) = timeIt { task.infer() }
@@ -56,13 +85,13 @@ class BasicMinTask(
         } else {
             val C = numberOfStates
             log.info("BasicMinTask: using provided C = $C")
-            task = BasicTask(
+            task = BasicTask.create(
                 scenarioTree = scenarioTree,
                 numberOfStates = numberOfStates,
                 maxOutgoingTransitions = maxOutgoingTransitions,
                 maxTransitions = initialMaxTransitions,
                 outDir = outDir,
-                solver = solverProvider(),
+                solverProvider = solverProvider,
                 autoFinalize = false
             )
             val (automaton, runningTime) = timeIt { task.infer() }
@@ -91,7 +120,6 @@ class BasicMinTask(
                     break
                 }
             }
-            log.info("BasicMinTask: minimal T = ${best?.numberOfTransitions}")
         }
 
         task.finalize2()

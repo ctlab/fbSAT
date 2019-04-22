@@ -1,7 +1,7 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 dependencies {
-    implementation(kotlin("reflect")) // for kotlin-xml-builder
+    implementation(kotlin("reflect"))
     implementation(Libs.kotlin_xml_builder)
     implementation(Libs.multiarray)
     implementation(Libs.mordant)

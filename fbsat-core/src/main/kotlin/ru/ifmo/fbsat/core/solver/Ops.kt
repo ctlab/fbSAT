@@ -1,13 +1,11 @@
 package ru.ifmo.fbsat.core.solver
 
-import ru.ifmo.multiarray.IntMultiArray
-
-fun Solver.atLeastOne(range: IntRange, array: IntMultiArray, vararg index: Int) {
-    clause(range.asSequence().map {
-        @Suppress("ReplaceGetOrSet")
-        array.get(*index, it)
-    })
-}
+// fun Solver.atLeastOne(range: IntRange, array: IntMultiArray, vararg index: Int) {
+//     clause(range.asSequence().map {
+//         @Suppress("ReplaceGetOrSet")
+//         array.get(*index, it)
+//     })
+// }
 
 fun Solver.atLeastOne(literals: List<Int>) {
     clause(literals)
@@ -21,14 +19,14 @@ fun Solver.atLeastOne(block: suspend SequenceScope<Int>.() -> Unit) {
     atLeastOne(sequence(block))
 }
 
-fun Solver.atMostOne(range: IntRange, array: IntMultiArray, vararg index: Int) {
-    for (i in range) {
-        for (j in (i + 1)..(range.last)) {
-            @Suppress("ReplaceGetOrSet")
-            clause(-array.get(*index, i), -array.get(*index, j))
-        }
-    }
-}
+// fun Solver.atMostOne(range: IntRange, array: IntMultiArray, vararg index: Int) {
+//     for (i in range) {
+//         for (j in (i + 1)..(range.last)) {
+//             @Suppress("ReplaceGetOrSet")
+//             clause(-array.get(*index, i), -array.get(*index, j))
+//         }
+//     }
+// }
 
 fun Solver.atMostOne(literals: List<Int>) {
     for (i in literals.indices)
@@ -44,10 +42,10 @@ fun Solver.atMostOne(block: suspend SequenceScope<Int>.() -> Unit) {
     atMostOne(sequence(block))
 }
 
-fun Solver.exactlyOne(range: IntRange, array: IntMultiArray, vararg index: Int) {
-    atLeastOne(range, array, *index)
-    atMostOne(range, array, *index)
-}
+// fun Solver.exactlyOne(range: IntRange, array: IntMultiArray, vararg index: Int) {
+//     atLeastOne(range, array, *index)
+//     atMostOne(range, array, *index)
+// }
 
 fun Solver.exactlyOne(literals: List<Int>) {
     atLeastOne(literals)
