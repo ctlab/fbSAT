@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 plugins {
+    idea
     `build-scan`
     kotlin("jvm") version Versions.kotlin
     id("fr.brouillard.oss.gradle.jgitver") version Versions.jgitver
@@ -31,6 +32,13 @@ subprojects {
 
     tasks.withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
+    }
+}
+
+idea {
+    module {
+        isDownloadSources = true
+        isDownloadJavadoc = true
     }
 }
 
