@@ -10,9 +10,8 @@ class LazyCache {
         properties.add(listener)
     }
 
-    fun <T> subscribe(init: () -> T): LazyCachedValue<T> = LazyCachedValue(
-        init
-    ).also { subscribe(it) }
+    fun <T> subscribe(init: () -> T): LazyCachedValue<T> =
+        LazyCachedValue(init).also { subscribe(it) }
 
     operator fun <T> invoke(init: () -> T): LazyCachedValue<T> = subscribe(init)
 
