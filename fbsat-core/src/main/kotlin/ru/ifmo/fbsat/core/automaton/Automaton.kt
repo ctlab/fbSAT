@@ -415,113 +415,87 @@ class Automaton(
         fun r() = "%.3f".format((1.0..1000.0).random())
 
         return xml("FBType") {
-            "Identification" {
-                attribute("Standard", "61499-2")
-            }
-            "VersionInfo" {
-                attributes(
-                    "Organization" to "nxtControl GmbH",
-                    "Version" to "0.0",
-                    "Author" to "fbSAT",
-                    "Date" to "2011-08-30",
-                    "Remarks" to "Template",
-                    "Namespace" to "Main",
-                    "Name" to "CentralController",
-                    "Comment" to "Basic Function Block Type"
-                )
-            }
+            "Identification"("Standard" to "61499-2")
+            "VersionInfo"(
+                "Organization" to "nxtControl GmbH",
+                "Version" to "0.0",
+                "Author" to "fbSAT",
+                "Date" to "2011-08-30",
+                "Remarks" to "Template",
+                "Namespace" to "Main",
+                "Name" to "CentralController",
+                "Comment" to "Basic Function Block Type"
+            )
             "InterfaceList" {
                 "InputVars" {
                     for (inputName in inputNames) {
-                        "VarDeclaration" {
-                            attributes(
-                                "Name" to inputName,
-                                "Type" to "BOOL"
-                            )
-                        }
+                        "VarDeclaration"(
+                            "Name" to inputName,
+                            "Type" to "BOOL"
+                        )
                     }
                 }
                 "OutputVars" {
                     for (outputName in outputNames) {
-                        "VarDeclaration" {
-                            attributes(
-                                "Name" to outputName,
-                                "Type" to "BOOL"
-                            )
-                        }
+                        "VarDeclaration"(
+                            "Name" to outputName,
+                            "Type" to "BOOL"
+                        )
                     }
                 }
                 "EventInputs" {
-                    "Event" {
-                        attribute("Name", "INIT")
-                    }
+                    "Event"("Name" to "INIT")
                     for (inputEvent in listOf("INIT") + inputEvents) {
-                        "Event" {
-                            attribute("Name", inputEvent)
+                        "Event"("Name" to inputEvent) {
                             if (inputEvent != "INIT") {
                                 for (inputName in inputNames)
-                                    "With" {
-                                        attribute("Var", inputName)
-                                    }
+                                    "With"("Var" to inputName)
                             }
                         }
                     }
                 }
                 "EventOutputs" {
                     for (outputEvent in outputEvents) {
-                        "Event" {
-                            attribute("Name", outputEvent)
-                            if (outputEvent != "INITO") {
+                        "Event"("Name" to outputEvent) {
+                            if (outputEvent != "INITO")
                                 for (outputName in outputNames)
-                                    "With" {
-                                        attribute("Var", outputName)
-                                    }
-                            }
+                                    "With"("Var" to outputName)
                         }
                     }
                 }
             }
             "BasicFB" {
                 "ECC" {
-                    "ECState" {
-                        attributes(
-                            "Name" to "START",
+                    "ECState"(
+                        "Name" to "START",
+                        "x" to r(),
+                        "y" to r()
+                    )
+                    for (state in states) {
+                        "ECState"(
+                            "Name" to state.toFbtString(),
                             "x" to r(),
                             "y" to r()
+                        ) {
+                            "ECAction"(
+                                "Algorithm" to (state.algorithm as BinaryAlgorithm).toFbtString(),
+                                "Output" to state.outputEvent
+                            )
+                        }
+                    }
+                    for (transition in transitions) {
+                        "ECTransition"(
+                            "x" to r(),
+                            "y" to r(),
+                            "Source" to transition.source.toFbtString(),
+                            "Destination" to transition.destination.toFbtString(),
+                            "Condition" to transition.toFbtString()
                         )
                     }
-                    for (state in states) {
-                        "ECState" {
-                            attributes(
-                                "Name" to state.toFbtString(),
-                                "x" to r(),
-                                "y" to r()
-                            )
-                            "ECAction" {
-                                attributes(
-                                    "Algorithm" to (state.algorithm as BinaryAlgorithm).toFbtString(),
-                                    "Output" to state.outputEvent
-                                )
-                            }
-                        }
-                    }
-                    for (transition in transitions)
-                        "ECTransition" {
-                            attributes(
-                                "x" to r(),
-                                "y" to r(),
-                                "Source" to transition.source.toFbtString(),
-                                "Destination" to transition.destination.toFbtString(),
-                                "Condition" to transition.toFbtString()
-                            )
-                        }
                 }
                 for (algorithm in states.map { it.algorithm as BinaryAlgorithm }.toSet()) {
-                    "Algorithm" {
-                        attribute("Name", algorithm.toFbtString())
-                        "ST" {
-                            attribute("Text", algorithm.toST(outputNames))
-                        }
+                    "Algorithm"("Name" to algorithm.toFbtString()) {
+                        "ST"("Text" to algorithm.toST(outputNames))
                     }
                 }
             }
