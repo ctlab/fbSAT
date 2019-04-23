@@ -89,7 +89,7 @@ private class ExtendedMinTaskImpl(
         val (automaton, runningTime) = timeIt { task.infer() }
         if (automaton != null)
             log.success(
-                "ExtMinTask: initial N = $initialMaxTotalGuardsSize -> ${automaton.getN()} in %.2f s"
+                "ExtMinTask: initial N = $initialMaxTotalGuardsSize -> ${automaton.totalGuardsSize} in %.2f s"
                     .format(runningTime)
             )
         else
@@ -99,12 +99,12 @@ private class ExtendedMinTaskImpl(
         if (best != null) {
             while (true) {
                 // val N = best!!.totalGuardsSize - 1
-                val N = best!!.getN() - 1
+                val N = best!!.totalGuardsSize - 1
                 task = task.reuse(N)
                 val (automaton, runningTime) = timeIt { task.infer() }
                 if (automaton != null) {
-                    log.success("ExtMinTask: N = $N -> ${automaton.getN()} in %.2f s".format(runningTime))
-                    if (automaton.getN() > N) {
+                    log.success("ExtMinTask: N = $N -> ${automaton.totalGuardsSize} in %.2f s".format(runningTime))
+                    if (automaton.totalGuardsSize > N) {
                         automaton.pprint()
                         error("Automaton has more parse tree nodes than expected")
                     }

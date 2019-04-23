@@ -45,13 +45,17 @@ class Automaton(
      * Initial automaton state.
      */
     val initialState: State
-        // get() = states.first()
         get() = _states[1]!!
     /**
      * Number of automaton states **C**.
      */
     val numberOfStates: Int
         get() = states.size
+    /**
+     * Maximum number of outgoing transitions **K**.
+     */
+    val maxOutgoingTransitions: Int
+        get() = states.map { it.transitions.size }.max() ?: 0
     /**
      * Maximal guard size **P**.
      */
@@ -73,15 +77,6 @@ class Automaton(
      */
     val totalGuardsSize: Int
         get() = transitions.sumBy { it.guard.size }
-
-    fun getN(): Int {
-        // return totalGuardsSize + states.sumBy { state ->
-        //     with(state.algorithm as BinaryAlgorithm) {
-        //         algorithm0.count { it } + algorithm1.count { !it }
-        //     }
-        // }
-        return totalGuardsSize
-    }
 
     constructor(scenarioTree: ScenarioTree) : this(
         scenarioTree.inputEvents,

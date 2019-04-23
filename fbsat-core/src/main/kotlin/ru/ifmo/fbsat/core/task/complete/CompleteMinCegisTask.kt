@@ -81,8 +81,7 @@ private class CompleteMinCegisTaskImpl(
         val C = automatonExtendedMin.numberOfStates
         val K = maxOutgoingTransitions
         val P = maxGuardSize
-        // var N = automatonExtendedMin.totalGuardsSize
-        var N = automatonExtendedMin.getN()
+        var N = automatonExtendedMin.totalGuardsSize
 
         log.info("automatonExtendedMin:")
         automatonExtendedMin.pprint()
