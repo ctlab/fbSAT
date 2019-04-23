@@ -10,7 +10,7 @@ object Versions {
     const val okio = "2.2.2"
     const val gradle_versions = "0.21.0"
     const val mordant = "1.2.1"
-    const val kotlin_xmk_builder = "1.5.1"
+    const val kotlin_xml_builder = "1.5.1"
 }
 
 object Libs {
@@ -21,5 +21,5 @@ object Libs {
     const val multiarray = "ru.ifmo.multiarray:multiarray:${Versions.multiarray}"
     const val okio = "com.squareup.okio:okio:${Versions.okio}"
     const val mordant = "com.github.ajalt:mordant:${Versions.mordant}"
-    const val kotlin_xml_builder = "org.redundent:kotlin-xml-builder:${Versions.kotlin_xmk_builder}"
+    const val kotlin_xml_builder = "org.redundent:kotlin-xml-builder:${Versions.kotlin_xml_builder}"
 }
