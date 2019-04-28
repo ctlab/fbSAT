@@ -149,6 +149,7 @@ private class ExtendedTaskImpl(
         val U: Int by context(scenarioTree.uniqueInputs.size)
 
         // Variables
+        val falseVariable: Int by context
         val transition: IntMultiArray by context(newArray(C, K, C + 1))
         val actualTransition: IntMultiArray by context(newArray(C, E, U, C + 1))
         val inputEvent: IntMultiArray by context(newArray(C, K, E + 1))
@@ -158,13 +159,19 @@ private class ExtendedTaskImpl(
         val color: IntMultiArray by context(newArray(V, C))
         val nodeType: IntMultiArray by context(
             newArray(C, K, P, NodeType.values().size) { (_, _, _, nt) ->
-                if (Globals.IS_FORBID_OR && NodeType.from(nt - 1) == NodeType.OR) 0 else newVariable()
+                if (Globals.IS_FORBID_OR && NodeType.from(nt - 1) == NodeType.OR) falseVariable else newVariable()
             }
         )
         val terminal: IntMultiArray by context(newArray(C, K, P, X + 1))
-        val parent: IntMultiArray by context(newArray(C, K, P, P + 1))
-        val childLeft: IntMultiArray by context(newArray(C, K, P, P + 1))
-        val childRight: IntMultiArray by context(newArray(C, K, P, P + 1))
+        val parent: IntMultiArray by context(newArray(C, K, P, P + 1) { (_, _, p, par) ->
+            if (par < p || par == P + 1) newVariable() else falseVariable
+        })
+        val childLeft: IntMultiArray by context(newArray(C, K, P, P + 1) { (_, _, p, ch) ->
+            if (ch >= p + 1 || ch == P + 1) newVariable() else falseVariable
+        })
+        val childRight: IntMultiArray by context(newArray(C, K, P, P + 1) { (_, _, p, ch) ->
+            if (ch >= p + 2 || ch == P + 1) newVariable() else falseVariable
+        })
         val nodeValue: IntMultiArray by context(newArray(C, K, P, U))
         val rootValue: IntMultiArray by context(newArray(C, K, U) { (c, k, u) -> nodeValue[c, k, 1, u] })
         val childValueLeft: IntMultiArray by context(newArray(C, K, P, U))

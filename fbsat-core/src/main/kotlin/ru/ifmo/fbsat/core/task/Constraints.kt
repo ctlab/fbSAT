@@ -6,15 +6,16 @@ import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.atLeastOne
 import ru.ifmo.fbsat.core.solver.exactlyOne
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
+import ru.ifmo.fbsat.core.solver.implyAnd
 import ru.ifmo.fbsat.core.solver.implyIff
 import ru.ifmo.fbsat.core.solver.implyIffAnd
 import ru.ifmo.fbsat.core.solver.implyIffOr
+import ru.ifmo.fbsat.core.solver.implyOr
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.multiarray.IntMultiArray
 
@@ -155,7 +156,7 @@ fun Solver.declareTransitionConstraints() {
     comment("2.2. Null-transitions are last")
     // transition[k, 0] => transition[k+1, 0]
     for (c in 1..C)
-        for (k in 1..(K - 1))
+        for (k in 1 until K)
             imply(transition[c, k, C + 1], transition[c, k + 1, C + 1])
 
     comment("2.3. Only null-transitions have no input event")
@@ -210,7 +211,7 @@ fun Solver.declareFiringConstraints() {
     // ~not_fired[k] => ~not_fired[k+1]
     for (c in 1..C)
         for (u in 1..U)
-            for (k in 1..(K - 1))
+            for (k in 1 until K)
                 imply(-notFired[c, u, k], -notFired[c, u, k + 1])
 
     comment("3.4. first_fired[0] <=> not_fired[K] (shortcut)")
@@ -288,50 +289,86 @@ fun Solver.declareAlgorithmConstraints() {
 fun Solver.declareAutomatonBfsConstraints() {
     val C: Int by context
     val K: Int by context
-    // val falseVariable: Int by context
+    val falseVariable: Int by context
     val transition: IntMultiArray by context
-
-    // Automaton BFS variables
     val bfsTransitionAutomaton = newArray(C, C)
-    val bfsParentAutomaton = IntMultiArray.new(C, C) { (j, i) ->
-        if (j <= i) 0 else newVariable()
+    val bfsParentAutomaton = newArray(C, C) { (j, i) ->
+        if (i < j) newVariable() else falseVariable
     }
 
     comment("6. Automaton BFS constraints")
 
-    comment("6.1. F_t")
-    // t[i, j] <=> OR_k( transition[i,k,j] )
-    for (i in 1..C)
-        for (j in 1..C)
+    comment("6.1. bfs_t definition")
+    // t[i, j] <=> OR_k( transition[i, k, j] )
+    for (j in 1..C)
+        for (i in 1..C)
             iffOr(bfsTransitionAutomaton[i, j], sequence {
                 for (k in 1..K)
                     yield(transition[i, k, j])
             })
 
-    comment("6.2. F_p")
-    // p[j, i] <=> t[i, j] & AND_{k<i}( ~t[k, j] )
-    for (i in 1..C) {
-        for (j in (i + 1)..C)
+    comment("6.2. bfs_p definition")
+    // p[j, i] <=> t[i, j] & AND_{k<i}( ~t[k, j] ) :: i<j
+    for (j in 1..C)
+        for (i in 1 until j)
             iffAnd(bfsParentAutomaton[j, i], sequence {
                 yield(bfsTransitionAutomaton[i, j])
-                for (k in 1..(i - 1))
+                for (k in 1 until i)
                     yield(-bfsTransitionAutomaton[k, j])
             })
-    }
 
-    comment("6.3. F_ALO(p)")
-    // OR_{i<j}( p[j, i] )
+    // // p_order[j, i] <=> p[j] >= i
+    // val bfsParentAutomaton_order = newArray(C, C) { (j, i) ->
+    //     if (i < j) newVariable() else falseVariable
+    // }
+    // // monotonicity
+    // // (1) p_order[j, i] => p_order[j, i-1]
+    // // for (j in 4..C)
+    // //     for (i in 3 until j)
+    // //         imply(bfsParentAutomaton_order[j, i], bfsParentAutomaton_order[j, i - 1])
+    // // (2) ~p_order[j, i] => ~p_order[j, i+1]
+    // for (j in 1..C)
+    //     for (i in 1 until C)
+    //         imply(-bfsParentAutomaton_order[j, i], -bfsParentAutomaton_order[j, i + 1])
+    // // channel
+    // for (j in 1..C) {
+    //     // p[j,C] <=> p_order[j,C]
+    //     iff(bfsParentAutomaton[j, C], bfsParentAutomaton_order[j, C])
+    //     // p[j,i] <=> p_order[j,i] & ~p_order[j,i+1]
+    //     for (i in 1 until C)
+    //         iffAnd(bfsParentAutomaton[j, i], bfsParentAutomaton_order[j, i], -bfsParentAutomaton_order[j, i + 1])
+    // }
+    // // p[j] >= 1 :: j>1
+    // for (j in 2..C)
+    //     clause(bfsParentAutomaton_order[j, 1])
+    // // p[j] < j  (same as)  ~p_order[j,j]  (Note: using monotonicity)
+    // for (j in 1..C)
+    //     clause(-bfsParentAutomaton_order[j, j])
+    // // p[j, i] => p[j+1]>=i
+    // for (j in 3 until C)
+    //     for (i in 2 until j)
+    //         imply(bfsParentAutomaton[j, i], bfsParentAutomaton_order[j + 1, i])
+
+    // comment("6.3. ALO(p)")
+    // // ALO_{i<j}( p[j,i] ) :: j>1
+    // for (j in 2..C)
+    //     atLeastOne {
+    //         for (i in 1 until j)
+    //             yield(bfsParentAutomaton[j, i])
+    //     }
+    comment("6.3+. EO(p)")
+    // EO_{i<j}( p[j,i] ) :: j>1
     for (j in 2..C)
-        atLeastOne {
-            for (i in 1..(j - 1))
+        exactlyOne {
+            for (i in 1 until j)
                 yield(bfsParentAutomaton[j, i])
         }
 
-    comment("6.4. F_BFS(p)")
+    comment("6.4. BFS(p)")
     // p[j, i] => ~p[j+1, k] :: LB<=k<i<j<UB
-    for (k in 1..C)
-        for (i in (k + 1)..C)
-            for (j in (i + 1)..(C - 1))
+    for (j in 3 until C)
+        for (i in 2 until j)
+            for (k in 1 until i)
                 imply(bfsParentAutomaton[j, i], -bfsParentAutomaton[j + 1, k])
 }
 
@@ -339,39 +376,61 @@ fun Solver.declareGuardBfsConstraints() {
     val C: Int by context
     val K: Int by context
     val P: Int by context
-    // val falseVariable: Int by context
+    val falseVariable: Int by context
     val parent: IntMultiArray by context
-
-    // Guard BFS variables
-    val bfsTransitionGuard = IntMultiArray.new(C, K, P, P) { (c, k, i, j) ->
-        if (j > i) parent[c, k, j, i] else 0
-    }
-    val bfsParentGuard = IntMultiArray.new(C, K, P, P) { (_, _, j, i) ->
-        if (i < j) newVariable() else 0
-    }
 
     comment("66. Guard BFS constraints")
 
-    comment("66.2. F_p")
-    // p[j, i] <=> t[i, j] & AND_{n<i}( ~t[n, j] )
     for (c in 1..C)
-        for (k in 1..K)
-            for (i in 1..P)
-                for (j in (i + 1)..P)
-                    iffAnd(bfsParentGuard[c, k, j, i], sequence {
-                        yield(bfsTransitionGuard[c, k, i, j])
-                        for (n in 1..(i - 1))
-                            yield(-bfsTransitionGuard[c, k, n, j])
-                    })
+        for (k in 1..K) {
+            // p[j, i] <=> parent[j, i]
+            val bfsParentGuard = newArray(P, P + 1) { (j, i) ->
+                if (i < j) parent[c, k, j, i] else falseVariable
+            }
 
-    comment("66.4. F_BFS(p)")
-    // p[j, i] => ~p[j+1, n] :: LB<=n<i<j<UB
-    for (c in 1..C)
-        for (k in 1..K)
-            for (n in 1..P)
-                for (i in (n + 1)..P)
-                    for (j in (i + 1)..(P - 1))
-                        imply(bfsParentGuard[c, k, j, i], -bfsParentGuard[c, k, j + 1, n])
+            // // p_order[j, i] <=> p[j] >= i
+            // val bfsParentGuard_order = newArray(P, P)
+            // // monotonicity
+            // // ~p_order[j, i] => ~p_order[j, i+1]
+            // for (j in 1..P)
+            //     for (i in 1 until P)
+            //         imply(-bfsParentGuard_order[j, i], -bfsParentGuard_order[j, i + 1])
+            // // channel
+            // for (j in 1..P) {
+            //     // p[j,0] <=> ~p[j,1]
+            //     iffAnd(bfsParentGuard[j, P + 1], -bfsParentGuard_order[j, 1])
+            //     // p[j,P] <=> p_order[j,P]
+            //     iffAnd(bfsParentGuard[j, P], bfsParentGuard_order[j, P])
+            //     // p[j,i] <=> p_order[j,i] & ~p_order[j,i+1]
+            //     for (i in 1 until P) {
+            //         iffAnd(bfsParentGuard[j, i], bfsParentGuard_order[j, i], -bfsParentGuard_order[j, i + 1])
+            //     }
+            // }
+            // // p[j] < j  (same as)  ~p_order[j,j]  (Note: using monotonicity)
+            // for (j in 1..P)
+            //     clause(-bfsParentGuard_order[j, j])
+            // p[j, i] => p[j+1]>=i | p[j+1]=0
+            // for (j in 1 until P)
+            //     for (i in 1..P)
+            //     // implyOr(bfsParentGuard[j, i], bfsParentGuard_order[j + 1, i], -bfsParentGuard_order[j + 1, 1])
+            //         imply(bfsParentGuard[j, i], bfsParentGuard_order[j + 1, i])
+
+            // p[j] < j
+            for (j in 1..P)
+                for (i in j..P)
+                    clause(-bfsParentGuard[j, i])
+
+            // p[j, 0] => p[j+1, 0] :: j>1
+            for (j in 2 until P)
+                imply(bfsParentGuard[j, P + 1], bfsParentGuard[j + 1, P + 1])
+
+            comment("66.4. BFS(p)")
+            // p[j, i] => ~p[j+1, n] :: LB<=n<i<j<UB
+            for (j in 3 until P)
+                for (i in 2 until j)
+                    for (n in 1 until i)
+                        imply(bfsParentGuard[j, i], -bfsParentGuard[j + 1, n])
+        }
 }
 
 fun Solver.declareNodeTypeConstraints() {
@@ -412,16 +471,16 @@ fun Solver.declareParentAndChildrenConstraints() {
 
     comment("8. Parent and children constraints")
 
-    comment("8.0a. ONE(parent)_{0..P}")
+    comment("8.0a. ONE(parent)_{0..P} :: parent[p] < p")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
                 exactlyOne {
-                    for (p_ in 1..(P + 1))
-                        yield(parent[c, k, p, p_])
+                    for (par in 1..(P + 1))
+                        yield(parent[c, k, p, par])
                 }
 
-    comment("8.0b. ONE(child_left)_{0..P}")
+    comment("8.0b. ONE(child_left)_{0..P} :: child_left[p] >= p+1")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
@@ -430,7 +489,7 @@ fun Solver.declareParentAndChildrenConstraints() {
                         yield(childLeft[c, k, p, ch])
                 }
 
-    comment("8.0c. ONE(child_right)_{0..P}")
+    comment("8.0c. ONE(child_right)_{0..P} :: child_right[p] >= p+2")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
@@ -443,7 +502,7 @@ fun Solver.declareParentAndChildrenConstraints() {
     // parent[ch, p] <=> (child_left[p, ch] | child_right[p, ch])
     for (c in 1..C)
         for (k in 1..K)
-            for (p in 1..(P - 1))
+            for (p in 1..P)
                 for (ch in (p + 1)..P)
                     iffOr(
                         parent[c, k, ch, p],
@@ -451,16 +510,15 @@ fun Solver.declareParentAndChildrenConstraints() {
                         childRight[c, k, p, ch]
                     )
 
-    comment("8.2. Typed nodes (except root) have parent with lesser number")
-    // ~nodetype[p, NONE]  =>  OR_par( parent[p, par] )
+    comment("8.2. Only typed nodes (except root) have a parent")
+    // ~nodetype[p, NONE] <=> ~parent[p, 0] :: p>1
     for (c in 1..C)
         for (k in 1..K)
             for (p in 2..P)
-                clause(sequence {
-                    yield(nodeType[c, k, p, NodeType.NONE.value])
-                    for (par in 1..(p - 1))
-                        yield(parent[c, k, p, par])
-                })
+                iff(
+                    -nodeType[c, k, p, NodeType.NONE.value],
+                    -parent[c, k, p, P + 1]
+                )
 
     comment("8.3. Root has no parent")
     for (c in 1..C)
@@ -487,7 +545,7 @@ fun Solver.declareNoneTypeNodesConstraints() {
     // nodetype[p, NONE] => nodetype[p+1, NONE]
     for (c in 1..C)
         for (k in 1..K)
-            for (p in 1..(P - 1))
+            for (p in 1 until P)
                 imply(
                     nodeType[c, k, p, NodeType.NONE.value],
                     nodeType[c, k, p + 1, NodeType.NONE.value]
@@ -496,39 +554,25 @@ fun Solver.declareNoneTypeNodesConstraints() {
     comment("9.2. None-type nodes have no parent and no children")
     for (c in 1..C)
         for (k in 1..K)
-            for (p in 1..P) {
-                imply(
+            for (p in 1..P)
+                implyAnd(
                     nodeType[c, k, p, NodeType.NONE.value],
-                    parent[c, k, p, P + 1]
-                )
-                imply(
-                    nodeType[c, k, p, NodeType.NONE.value],
-                    childLeft[c, k, p, P + 1]
-                )
-                imply(
-                    nodeType[c, k, p, NodeType.NONE.value],
+                    parent[c, k, p, P + 1],
+                    childLeft[c, k, p, P + 1],
                     childRight[c, k, p, P + 1]
                 )
-            }
 
-    comment("9.3. None-type nodes have False value and child_values")
+    comment("9.3. None-type nodes have False value and False child-values")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
-                for (u in 1..U) {
-                    imply(
+                for (u in 1..U)
+                    implyAnd(
                         nodeType[c, k, p, NodeType.NONE.value],
-                        -nodeValue[c, k, p, u]
-                    )
-                    imply(
-                        nodeType[c, k, p, NodeType.NONE.value],
-                        -childValueLeft[c, k, p, u]
-                    )
-                    imply(
-                        nodeType[c, k, p, NodeType.NONE.value],
+                        -nodeValue[c, k, p, u],
+                        -childValueLeft[c, k, p, u],
                         -childValueRight[c, k, p, u]
                     )
-                }
 }
 
 fun Solver.declareTerminalsConstraints() {
@@ -571,32 +615,24 @@ fun Solver.declareTerminalsConstraints() {
     // nodetype[p, TERMINAL] => child_left[p, 0] & child_right[p, 0]
     for (c in 1..C)
         for (k in 1..K)
-            for (p in 1..P) {
-                imply(
+            for (p in 1..P)
+                implyAnd(
                     nodeType[c, k, p, NodeType.TERMINAL.value],
-                    childLeft[c, k, p, P + 1]
-                )
-                imply(
-                    nodeType[c, k, p, NodeType.TERMINAL.value],
+                    childLeft[c, k, p, P + 1],
                     childRight[c, k, p, P + 1]
                 )
-            }
 
     comment("10.3. Terminal: child_value_left and child_value_right are False")
     // nodetype[p, TERMINAL] => AND_u( ~child_value_left[p, u] & ~child_value_right[p, u] )
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
-                for (u in 1..U) {
-                    imply(
+                for (u in 1..U)
+                    implyAnd(
                         nodeType[c, k, p, NodeType.TERMINAL.value],
-                        -childValueLeft[c, k, p, u]
-                    )
-                    imply(
-                        nodeType[c, k, p, NodeType.TERMINAL.value],
+                        -childValueLeft[c, k, p, u],
                         -childValueRight[c, k, p, u]
                     )
-                }
 
     comment("10.4. Terminals have value from associated input variable")
     // terminal[p, x] => AND_u( value[p, u] <=> u[x] )
@@ -618,9 +654,11 @@ fun Solver.declareTerminalsConstraints() {
             for (k in 1..K)
                 for (p in 1..P)
                     for (x in 1..X)
-                        for (p_ in 1..(p - 1))
-                            for (x_ in x..X)
-                                imply(terminal[c, k, p, x], -terminal[c, k, p_, x_])
+                        implyAnd(terminal[c, k, p, x], sequence {
+                            for (p_ in 1 until p)
+                                for (x_ in x..X)
+                                    yield(-terminal[c, k, p_, x_])
+                        })
     }
 }
 
@@ -659,8 +697,7 @@ fun Solver.declareAndOrNodesConstraints() {
             for (p in 1..(P - 2))
                 for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
                     if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
-                    clause(sequence {
-                        yield(-nodeType[c, k, p, nt.value])
+                    implyOr(nodeType[c, k, p, nt.value], sequence {
                         for (ch in (p + 1)..(P - 1))
                             yield(childLeft[c, k, p, ch])
                     })
@@ -785,8 +822,7 @@ fun Solver.declareNotNodesConstraints() {
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 1))
-                clause(sequence {
-                    yield(-nodeType[c, k, p, NodeType.NOT.value])
+                implyOr(nodeType[c, k, p, NodeType.NOT.value], sequence {
                     for (ch in (p + 1)..P)
                         yield(childLeft[c, k, p, ch])
                 })
@@ -865,10 +901,7 @@ fun Solver.declareTransitionsOrderConstraints() {
             for (k_ in 1 until k)
                 for (j in 1..(C - 1))
                     for (j_ in (j + 1)..C)
-                        imply(
-                            transition[i, k, j],
-                            -transition[i, k_, j_]
-                        )
+                        imply(transition[i, k, j], -transition[i, k_, j_])
 
     // transition[i,k,j] => AND_{k'<k}( OR_{j'<=j}( transition[i,k',j'] ) )
     for (i in 1..C)
@@ -1040,7 +1073,10 @@ fun Solver.declareNegativeTransitionConstraints() {
     for (i in 1..C)
         for (e in 1..E)
             for (u in newOnlyNegUs)
-                exactlyOne((1..(C + 1)).map { j -> negActualTransition[i, e, u, j] })
+                exactlyOne {
+                    for (j in 1..(C + 1))
+                        yield(negActualTransition[i, e, u, j])
+                }
 
     comment("Neg.2.1. Active transition definition")
     // actual_transition[i,e,u,j] <=> OR_k( transition[i,k,j] & input_event[i,k,e] & first_fired[i,u,k] )
@@ -1076,7 +1112,10 @@ fun Solver.declareNegativeFiringConstraints() {
     comment("Neg.3.0. ONE(first_fired)_{0..K}")
     for (c in 1..C)
         for (u in newOnlyNegUs)
-            exactlyOne((1..(K + 1)).map { k -> negFirstFired[c, u, k] })
+            exactlyOne {
+                for (k in 1..(K + 1))
+                    yield(negFirstFired[c, u, k])
+            }
 
     comment("Neg.3.1. first_fired definition")
     // first_fired[k] <=> root_value[k] & not_fired[k-1]
@@ -1131,36 +1170,25 @@ fun Solver.declareNegativeGuardConstraints() {
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
-                for (u in newOnlyNegUs) {
-                    imply(
+                for (u in newOnlyNegUs)
+                    implyAnd(
                         nodeType[c, k, p, NodeType.NONE.value],
-                        -negNodeValue[c, k, p, u]
-                    )
-                    imply(
-                        nodeType[c, k, p, NodeType.NONE.value],
-                        -negChildValueLeft[c, k, p, u]
-                    )
-                    imply(
-                        nodeType[c, k, p, NodeType.NONE.value],
+                        -negNodeValue[c, k, p, u],
+                        -negChildValueLeft[c, k, p, u],
                         -negChildValueRight[c, k, p, u]
                     )
-                }
 
     comment("Neg.10.3. Terminal: child_value_left and child_value_right are False")
     // nodetype[p, TERMINAL] => AND_u( ~child_value_left[p, u] & ~child_value_right[p, u] )
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
-                for (u in newOnlyNegUs) {
-                    imply(
+                for (u in newOnlyNegUs)
+                    implyAnd(
                         nodeType[c, k, p, NodeType.TERMINAL.value],
-                        -negChildValueLeft[c, k, p, u]
-                    )
-                    imply(
-                        nodeType[c, k, p, NodeType.TERMINAL.value],
+                        -negChildValueLeft[c, k, p, u],
                         -negChildValueRight[c, k, p, u]
                     )
-                }
 
     comment("Neg.10.4. Terminals have value from associated input variable")
     // terminal[p, x] => AND_u( value[p, u] <=> u[x] )

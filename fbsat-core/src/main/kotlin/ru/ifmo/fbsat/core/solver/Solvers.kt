@@ -97,8 +97,17 @@ private abstract class AbstractSolver : Solver {
 
 private class DefaultSolver(private val command: String) : AbstractSolver() {
     private val buffer = Buffer()
+    private val falseVariable: Int by context(newVariable())
+
+    init {
+        // Note: cannot just use "clause(-falseVariable)" because it drops clauses with -falseVariable
+        buffer.writeUtf8("${-falseVariable} 0\n")
+    }
 
     override fun clause(literals: List<Int>) {
+        if (-falseVariable in literals) return
+        if (falseVariable in literals) return clause(literals - falseVariable)
+
         ++numberOfClauses
         for (x in literals)
             buffer.writeUtf8(x.toString()).writeUtf8(" ")
@@ -180,8 +189,20 @@ private class IncrementalSolver(command: String) : AbstractSolver() {
     private val processInput = process.outputStream.sink().buffer()
     private val processOutput = process.inputStream.source().buffer()
     private val buffer = Buffer()
+    private val falseVariable: Int by context(newVariable())
+
+    init {
+        // Note: cannot just use "clause(-falseVariable)" because it drops clauses with -falseVariable
+        processInput.writeUtf8("${-falseVariable} 0\n")
+        buffer.writeUtf8("${-falseVariable} 0\n")
+    }
 
     override fun clause(literals: List<Int>) {
+        if (-falseVariable in literals) return
+        if (falseVariable in literals) return clause(literals - falseVariable)
+        // require(literals.isNotEmpty())
+        // literals.forEach { check(it != 0) }
+
         ++numberOfClauses
 
         for (x in literals)
