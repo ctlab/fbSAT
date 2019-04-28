@@ -1,4 +1,4 @@
-= fbSAT: Automatic Inference of Minimal Finite-State Models of Function Blocks
+= fbSAT: Automatic Inference of Minimal Finite-State Models of Function Blocks from Execution Scenarios and Temporal Properties
 Konstantin Chukharev <kchukharev@corp.ifmo.ru>
 
 image:https://travis-ci.org/ctlab/fbSAT.svg?branch=master["Build Status", link="https://travis-ci.org/ctlab/fbSAT"]
@@ -39,7 +39,7 @@ Usage: fbsat [OPTIONS]
 Options:
   -i, --scenarios <path>             File with scenarios [required]
   -ce, --counterexamples <path>      File with counter-examples
-  -smv, --smvdir <path>              Directory with SMV files/scripts for verification
+  --smvdir <path>                    Directory with SMV files/scripts for verification
   -o, --outdir <path>                Output directory [default: current directory]
   -m, --method <method>              Method to use [required]
   -C <int>                           Number of automaton states
@@ -59,14 +59,14 @@ Options:
 
  $ fbsat -i data/tests-1.gz -o out/tests-1-min -m extended-min -P 3
 
-* Minimize `tests-4` using `extended` method with automatic search of `P` (until first SAT):
+* Minimize `tests-4` using `extended` method with automatic search of `P` (until first SAT: w=0):
 
  $ fbsat -i data/tests-4.gz -o out/tests-4-min-ub-w0 -m extended-min-ub -w 0
 
-* Minimize `tests-4` using `extended` method with automatic search of `P` (up to an upper bound with plateau heuristic):
+* Minimize `tests-4` using `extended` method with automatic search of `P` (up to an upper bound with plateau heuristic: w=2):
 
  $ fbsat -i data/tests-4.gz -o out/tests-4-min-ub-w2 -m extended-min-ub -w 2
 
-* Run CEGIS loop maintaining the minimal model on `tests-1`:
+* Run CEGIS loop, maintaining the minimal model on `tests-1`:
 
  $ fbsat -i data/tests-1.gz -o out/tests-1-complete-min-cegis -m complete-min-cegis -P 3
