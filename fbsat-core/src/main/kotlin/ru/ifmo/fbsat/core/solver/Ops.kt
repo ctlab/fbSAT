@@ -64,6 +64,45 @@ fun Solver.imply(lhs: Int, rhs: Int) {
 }
 
 /**
+ * [lhs] => AND([rhs])
+ */
+fun Solver.implyAnd(lhs: Int, rhs: List<Int>) {
+    for (x in rhs)
+        imply(lhs, x)
+}
+
+/**
+ * [lhs] => AND([rhs])
+ */
+fun Solver.implyAnd(lhs: Int, rhs: Sequence<Int>) = implyAnd(lhs, rhs.toList())
+
+/**
+ * [lhs] => AND([rhs])
+ */
+fun Solver.implyAnd(lhs: Int, vararg rhs: Int) = implyAnd(lhs, rhs.asList())
+
+/**
+ * [lhs] => OR([rhs])
+ */
+fun Solver.implyOr(lhs: Int, rhs: List<Int>) {
+    clause {
+        yield(-lhs)
+        for (x in rhs)
+            yield(x)
+    }
+}
+
+/**
+ * [lhs] => OR([rhs])
+ */
+fun Solver.implyOr(lhs: Int, rhs: Sequence<Int>) = implyOr(lhs, rhs.toList())
+
+/**
+ * [lhs] => OR([rhs])
+ */
+fun Solver.implyOr(lhs: Int, vararg rhs: Int) = implyOr(lhs, rhs.asList())
+
+/**
  * [lhs] => ([base] <=> [rhs])
  */
 fun Solver.implyIff(lhs: Int, base: Int, rhs: Int) {
@@ -75,14 +114,14 @@ fun Solver.implyIff(lhs: Int, base: Int, rhs: Int) {
  * [lhs] => ([base] <=> AND([rhs]))
  */
 fun Solver.implyIffAnd(lhs: Int, base: Int, rhs: List<Int>) {
-    clause(sequence {
+    clause {
         yield(-lhs)
         yield(base)
         for (x in rhs) {
             clause(-lhs, -base, x)
             yield(-x)
         }
-    })
+    }
 }
 
 /**
@@ -99,14 +138,14 @@ fun Solver.implyIffAnd(lhs: Int, base: Int, vararg rhs: Int) = implyIffAnd(lhs, 
  * [lhs] => ([base] <=> OR([rhs]))
  */
 fun Solver.implyIffOr(lhs: Int, base: Int, rhs: List<Int>) {
-    clause(sequence {
+    clause {
         yield(-lhs)
         yield(-base)
         for (x in rhs) {
             clause(-lhs, base, -x)
             yield(x)
         }
-    })
+    }
 }
 
 /**
