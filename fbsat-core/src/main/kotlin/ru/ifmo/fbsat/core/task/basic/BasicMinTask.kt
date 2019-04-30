@@ -110,7 +110,7 @@ private class BasicMinTaskImpl(
                 val (automaton, runningTime) = timeIt { task.infer() }
                 if (automaton != null) {
                     log.success(
-                        "BasicMinTask: T = $T -> SAT in %.2f with T = ${automaton.numberOfTransitions}"
+                        "BasicMinTask: T = $T -> ${automaton.numberOfTransitions} in %.2f s"
                             .format(runningTime)
                     )
                     best = automaton

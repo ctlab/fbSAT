@@ -467,8 +467,7 @@ fun Solver.declareParentAndChildrenConstraints() {
     val P: Int by context
     val nodeType: IntMultiArray by context
     val parent: IntMultiArray by context
-    val childLeft: IntMultiArray by context
-    val childRight: IntMultiArray by context
+    val child: IntMultiArray by context
 
     comment("8. Parent and children constraints")
 
@@ -477,38 +476,30 @@ fun Solver.declareParentAndChildrenConstraints() {
         for (k in 1..K)
             for (p in 1..P)
                 exactlyOne {
-                    for (par in 1..(P + 1))
+                    yield(parent[c, k, p, P + 1])
+                    for (par in 1 until p)
                         yield(parent[c, k, p, par])
                 }
 
-    comment("8.0b. ONE(child_left)_{0..P} :: child_left[p] >= p+1")
+    comment("8.0b. ONE(child)_{0..P} :: child[p] > p")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
                 exactlyOne {
-                    for (ch in 1..(P + 1))
-                        yield(childLeft[c, k, p, ch])
+                    yield(child[c, k, p, P + 1])
+                    for (ch in (p + 1)..P)
+                        yield(child[c, k, p, ch])
                 }
 
-    comment("8.0c. ONE(child_right)_{0..P} :: child_right[p] >= p+2")
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                exactlyOne {
-                    for (ch in 1..(P + 1))
-                        yield(childRight[c, k, p, ch])
-                }
-
-    comment("8.1. parent<->child relation")
-    // parent[ch, p] <=> (child_left[p, ch] | child_right[p, ch])
+    comment("8.1. child=>parent relation")
+    // child[p, ch] => parent[ch, p] :: ch > p
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
                 for (ch in (p + 1)..P)
-                    iffOr(
-                        parent[c, k, ch, p],
-                        childLeft[c, k, p, ch],
-                        childRight[c, k, p, ch]
+                    imply(
+                        child[c, k, p, ch],
+                        parent[c, k, ch, p]
                     )
 
     comment("8.2. Only typed nodes (except root) have a parent")
@@ -520,11 +511,6 @@ fun Solver.declareParentAndChildrenConstraints() {
                     -nodeType[c, k, p, NodeType.NONE.value],
                     -parent[c, k, p, P + 1]
                 )
-
-    comment("8.3. Root has no parent")
-    for (c in 1..C)
-        for (k in 1..K)
-            clause(parent[c, k, 1, P + 1])
 }
 
 fun Solver.declareNoneTypeNodesConstraints() {
@@ -534,11 +520,8 @@ fun Solver.declareNoneTypeNodesConstraints() {
     val U: Int by context
     val nodeType: IntMultiArray by context
     val parent: IntMultiArray by context
-    val childLeft: IntMultiArray by context
-    val childRight: IntMultiArray by context
+    val child: IntMultiArray by context
     val nodeValue: IntMultiArray by context
-    val childValueLeft: IntMultiArray by context
-    val childValueRight: IntMultiArray by context
 
     comment("9. None-type nodes constraints")
 
@@ -559,20 +542,17 @@ fun Solver.declareNoneTypeNodesConstraints() {
                 implyAnd(
                     nodeType[c, k, p, NodeType.NONE.value],
                     parent[c, k, p, P + 1],
-                    childLeft[c, k, p, P + 1],
-                    childRight[c, k, p, P + 1]
+                    child[c, k, p, P + 1]
                 )
 
-    comment("9.3. None-type nodes have False value and False child-values")
+    comment("9.3. None-type nodes have False value")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
                 for (u in 1..U)
-                    implyAnd(
+                    imply(
                         nodeType[c, k, p, NodeType.NONE.value],
-                        -nodeValue[c, k, p, u],
-                        -childValueLeft[c, k, p, u],
-                        -childValueRight[c, k, p, u]
+                        -nodeValue[c, k, p, u]
                     )
 }
 
@@ -585,11 +565,8 @@ fun Solver.declareTerminalsConstraints() {
     val X: Int by context
     val nodeType: IntMultiArray by context
     val terminal: IntMultiArray by context
-    val childLeft: IntMultiArray by context
-    val childRight: IntMultiArray by context
+    val child: IntMultiArray by context
     val nodeValue: IntMultiArray by context
-    val childValueLeft: IntMultiArray by context
-    val childValueRight: IntMultiArray by context
 
     comment("10. Terminals constraints")
 
@@ -613,27 +590,14 @@ fun Solver.declareTerminalsConstraints() {
                 )
 
     comment("10.2. Terminals have no children")
-    // nodetype[p, TERMINAL] => child_left[p, 0] & child_right[p, 0]
+    // nodetype[p, TERMINAL] => child[p, 0]
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
-                implyAnd(
+                imply(
                     nodeType[c, k, p, NodeType.TERMINAL.value],
-                    childLeft[c, k, p, P + 1],
-                    childRight[c, k, p, P + 1]
+                    child[c, k, p, P + 1]
                 )
-
-    comment("10.3. Terminal: child_value_left and child_value_right are False")
-    // nodetype[p, TERMINAL] => AND_u( ~child_value_left[p, u] & ~child_value_right[p, u] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                for (u in 1..U)
-                    implyAnd(
-                        nodeType[c, k, p, NodeType.TERMINAL.value],
-                        -childValueLeft[c, k, p, u],
-                        -childValueRight[c, k, p, u]
-                    )
 
     comment("10.4. Terminals have value from associated input variable")
     // terminal[p, x] => AND_u( value[p, u] <=> u[x] )
@@ -669,11 +633,8 @@ fun Solver.declareAndOrNodesConstraints() {
     val U: Int by context
     val nodeType: IntMultiArray by context
     val parent: IntMultiArray by context
-    val childLeft: IntMultiArray by context
-    val childRight: IntMultiArray by context
+    val child: IntMultiArray by context
     val nodeValue: IntMultiArray by context
-    val childValueLeft: IntMultiArray by context
-    val childValueRight: IntMultiArray by context
 
     comment("11. AND/OR nodes constraints")
 
@@ -690,110 +651,79 @@ fun Solver.declareAndOrNodesConstraints() {
             }
         }
 
-    comment("11.1. AND/OR: left child has greater number")
-    // nodetype[p, AND/OR] => OR_{ch in (p+1)..(P-1)}( child_left[p, ch] )
+    comment("11.1. AND/OR: left child cannot have number P")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 2))
                 for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
                     if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
-                    implyOr(nodeType[c, k, p, nt.value], sequence {
-                        for (ch in (p + 1)..(P - 1))
-                            yield(childLeft[c, k, p, ch])
-                    })
+                    imply(
+                        nodeType[c, k, p, nt.value],
+                        -child[c, k, p, P]
+                    )
                 }
 
-    comment("11.2. AND/OR: right child is adjacent (+1) to left")
-    // nodetype[p, AND/OR] & child_left[p, ch] => child_right[p, ch+1]
+    comment("11.1+. AND/OR nodes have left child")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 2))
-                for (ch in (p + 1)..(P - 1))
+                for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
+                    if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
+                    imply(
+                        nodeType[c, k, p, nt.value],
+                        -child[c, k, p, P + 1]
+                    )
+                }
+
+    comment("11.2. AND/OR: right child is adjacent (+1) to the left")
+    // nodetype[p, AND/OR] & child[p, ch] => parent[ch+1, p]
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..(P - 2))
+                for (ch in (p + 1) until P)
                     for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
                         if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
                         clause(
                             -nodeType[c, k, p, nt.value],
-                            -childLeft[c, k, p, ch],
-                            childRight[c, k, p, ch + 1]
+                            -child[c, k, p, ch],
+                            parent[c, k, ch + 1, p]
                         )
                     }
 
-    comment("11.3. AND/OR: children`s parents")
-    // nodetype[p, AND/OR] & child_left[p, ch] => parent[ch, p] & parent[ch+1, p]
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..(P - 2))
-                for (ch in (p + 1)..(P - 1))
-                    for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
-                        if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
-                        val x1 = nodeType[c, k, p, nt.value]
-                        val x2 = childLeft[c, k, p, ch]
-                        val x3 = parent[c, k, ch, p]
-                        val x4 = parent[c, k, ch + 1, p]
-                        clause(-x1, -x2, x3)
-                        clause(-x1, -x2, x4)
-                    }
-
-    comment("11.4a. AND/OR: child_value_left is a value of left child")
-    // nodetype[p, AND/OR] & child_left[p, ch] => AND_u( child_value_left[p,u] <=> value[ch, u] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..(P - 2))
-                for (ch in (p + 1)..(P - 1))
-                    for (u in 1..U)
-                        for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
-                            if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
-                            val x1 = nodeType[c, k, p, nt.value]
-                            val x2 = childLeft[c, k, p, ch]
-                            val x3 = childValueLeft[c, k, p, u]
-                            val x4 = nodeValue[c, k, ch, u]
-                            clause(-x1, -x2, -x3, x4)
-                            clause(-x1, -x2, x3, -x4)
-                        }
-
-    comment("11.4b. AND/OR: child_value_right is a value of right child")
-    // nodetype[p, AND/OR] & child_right[p, ch] => AND_u( child_value_right[p,u] <=> value[ch, u] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..(P - 2))
-                for (ch in (p + 2)..P)
-                    for (u in 1..U)
-                        for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
-                            if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
-                            val x1 = nodeType[c, k, p, nt.value]
-                            val x2 = childRight[c, k, p, ch]
-                            val x3 = childValueRight[c, k, p, u]
-                            val x4 = nodeValue[c, k, ch, u]
-                            clause(-x1, -x2, -x3, x4)
-                            clause(-x1, -x2, x3, -x4)
-                        }
-
     comment("11.5a. AND: value is calculated as a conjunction of children")
-    // nodetype[p, AND] => AND_u(value[p, u] <=> (child_value_left[p, u] & child_value_right[p, u]))
+    // nodetype[p, AND] & child[p, ch] => AND_u( value[p, u] <=> value[ch, u] & value[ch+1, u] )
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 2))
-                for (u in 1..U)
-                    implyIffAnd(
-                        nodeType[c, k, p, NodeType.AND.value],
-                        nodeValue[c, k, p, u],
-                        childValueLeft[c, k, p, u],
-                        childValueRight[c, k, p, u]
-                    )
+                for (ch in (p + 1) until P)
+                    for (u in 1..U) {
+                        val x1 = nodeType[c, k, p, NodeType.AND.value]
+                        val x2 = child[c, k, p, ch]
+                        val x3 = nodeValue[c, k, p, u]
+                        val x4 = nodeValue[c, k, ch, u]
+                        val x5 = nodeValue[c, k, ch + 1, u]
+                        clause(-x1, -x2, -x3, x4)
+                        clause(-x1, -x2, -x3, x5)
+                        clause(-x1, -x2, x3, -x4, -x5)
+                    }
 
     if (!Globals.IS_FORBID_OR) {
         comment("11.5b. OR: value is calculated as a disjunction of children")
-        // nodetype[p, OR] => AND_u( value[p, u] <=> (child_value_left[p, u] | child_value_right[p, u]) )
+        // nodetype[p, OR] & child[p, ch] => AND_u( value[p, u] <=> value[ch, u] | value[ch+1, u] )
         for (c in 1..C)
             for (k in 1..K)
                 for (p in 1..(P - 2))
-                    for (u in 1..U)
-                        implyIffOr(
-                            nodeType[c, k, p, NodeType.OR.value],
-                            nodeValue[c, k, p, u],
-                            childValueLeft[c, k, p, u],
-                            childValueRight[c, k, p, u]
-                        )
+                    for (ch in (p + 1) until P)
+                        for (u in 1..U) {
+                            val x1 = nodeType[c, k, p, NodeType.OR.value]
+                            val x2 = child[c, k, p, ch]
+                            val x3 = nodeValue[c, k, p, u]
+                            val x4 = nodeValue[c, k, ch, u]
+                            val x5 = nodeValue[c, k, ch + 1, u]
+                            clause(-x1, -x2, -x3, x4, x5)
+                            clause(-x1, -x2, x3, -x4)
+                            clause(-x1, -x2, x3, -x5)
+                        }
     }
 }
 
@@ -803,12 +733,8 @@ fun Solver.declareNotNodesConstraints() {
     val P: Int by context
     val U: Int by context
     val nodeType: IntMultiArray by context
-    val parent: IntMultiArray by context
-    val childLeft: IntMultiArray by context
-    val childRight: IntMultiArray by context
+    val child: IntMultiArray by context
     val nodeValue: IntMultiArray by context
-    val childValueLeft: IntMultiArray by context
-    val childValueRight: IntMultiArray by context
 
     comment("12. NOT nodes constraints")
 
@@ -817,75 +743,29 @@ fun Solver.declareNotNodesConstraints() {
         for (k in 1..K)
             clause(-nodeType[c, k, P, NodeType.NOT.value])
 
-    comment("12.1. NOT: left child has greater number")
-    // nodetype[p, NOT] => OR_{ch in (p+1)..P}( child_left[p, ch] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..(P - 1))
-                implyOr(nodeType[c, k, p, NodeType.NOT.value], sequence {
-                    for (ch in (p + 1)..P)
-                        yield(childLeft[c, k, p, ch])
-                })
-
-    comment("12.2. NOT: child`s parents")
-    // nodetype[p, NOT] & child_left[p, ch] => parent[ch, p]
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..(P - 1))
-                for (ch in (p + 1)..P)
-                    clause(
-                        -nodeType[c, k, p, NodeType.NOT.value],
-                        -childLeft[c, k, p, ch],
-                        parent[c, k, ch, p]
-                    )
-
-    comment("12.3. NOT: no right child")
-    // nodetype[p, NOT] => child_right[p, 0]
+    comment("12.0+. NOT nodes have left child")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 1))
                 imply(
                     nodeType[c, k, p, NodeType.NOT.value],
-                    childRight[c, k, p, P + 1]
+                    -child[c, k, p, P + 1]
                 )
 
-    comment("12.4a. NOT: child_value_left is a value of left child")
-    // nodetype[p, NOT] & child_left[p, ch] => AND_u( child_value_left[p, u] <=> value[ch, u] )
+    comment("12.5. NOT: value is calculated as a negation of child")
+    // nodetype[p, NOT] & child[p, ch] => AND_u( value[p, u] <=> ~value[ch, u] )
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 1))
                 for (ch in (p + 1)..P)
                     for (u in 1..U) {
                         val x1 = nodeType[c, k, p, NodeType.NOT.value]
-                        val x2 = childLeft[c, k, p, ch]
-                        val x3 = childValueLeft[c, k, p, u]
+                        val x2 = child[c, k, p, ch]
+                        val x3 = nodeValue[c, k, p, u]
                         val x4 = nodeValue[c, k, ch, u]
-                        clause(-x1, -x2, -x3, x4)
-                        clause(-x1, -x2, x3, -x4)
+                        clause(-x1, -x2, -x3, -x4)
+                        clause(-x1, -x2, x3, x4)
                     }
-
-    comment("12.4b. NOT: child_value_right is False")
-    // nodetype[p, NOT] => AND_u( ~child_value_right[p, u] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..(P - 1))
-                for (u in 1..U)
-                    imply(
-                        nodeType[c, k, p, NodeType.NOT.value],
-                        -childValueRight[c, k, p, u]
-                    )
-
-    comment("12.5. NOT: value is calculated as a negation of child")
-    // nodetype[p, NOT] => AND_u( value[p, u] <=> ~child_value_left[p, u] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..(P - 1))
-                for (u in 1..U)
-                    implyIff(
-                        nodeType[c, k, p, NodeType.NOT.value],
-                        nodeValue[c, k, p, u],
-                        -childValueLeft[c, k, p, u]
-                    )
 }
 
 fun Solver.declareTransitionsOrderConstraints() {
@@ -898,21 +778,22 @@ fun Solver.declareTransitionsOrderConstraints() {
     // transition[i,k,j] => AND_{k'<k, j'>j}( ~transition[i,k',j'] )
     for (i in 1..C)
         for (k in 2..K)
-            for (k_ in 1 until k)
-                for (j in 1..(C - 1))
-                    for (j_ in (j + 1)..C)
-                        imply(transition[i, k, j], -transition[i, k_, j_])
+            for (j in 1..(C - 1))
+                implyAnd(transition[i, k, j], sequence {
+                    for (k_ in 1 until k)
+                        for (j_ in (j + 1)..C)
+                            yield(-transition[i, k_, j_])
+                })
 
     // transition[i,k,j] => AND_{k'<k}( OR_{j'<=j}( transition[i,k',j'] ) )
     for (i in 1..C)
         for (k in 2..K)
-            for (k_ in 1 until k)
-                for (j in 1..C)
-                    clause {
-                        yield(-transition[i, k, j])
+            for (j in 1..C)
+                for (k_ in 1 until k)
+                    implyOr(-transition[i, k, j], sequence {
                         for (j_ in 1..j)
                             yield(transition[i, k_, j_])
-                    }
+                    })
 }
 
 fun Solver.declareNegativeColorConstraints() {

@@ -36,7 +36,7 @@ class RawAssignment(
 ) : Map<String, Any> by context {
     operator fun get(index: Int): Boolean = data[index - 1]
 
-    fun booleanArrayOf(
+    fun booleanArray(
         variable: IntMultiArray,
         vararg shape: Int
     ) = BooleanMultiArray.create(shape) { index ->
@@ -44,7 +44,7 @@ class RawAssignment(
         this[variable.get(*index)]
     }
 
-    fun intArrayOf(
+    fun intArray(
         variable: IntMultiArray,
         vararg shape: Int,
         domain: Iterable<Int>,
@@ -107,7 +107,7 @@ private class DefaultSolver(private val command: String) : AbstractSolver() {
 
     override fun clause(literals: List<Int>) {
         if (-falseVariable in literals) return
-        if (falseVariable in literals) return clause(literals - falseVariable)
+        if (falseVariable in literals) return clause(literals.filter { it != falseVariable })
 
         ++numberOfClauses
         for (x in literals)
@@ -200,7 +200,7 @@ private class IncrementalSolver(command: String) : AbstractSolver() {
 
     override fun clause(literals: List<Int>) {
         if (-falseVariable in literals) return
-        if (falseVariable in literals) return clause(literals - falseVariable)
+        if (falseVariable in literals) return clause(literals.filter { it != falseVariable })
         // require(literals.isNotEmpty())
         // literals.forEach { check(it != 0) }
 

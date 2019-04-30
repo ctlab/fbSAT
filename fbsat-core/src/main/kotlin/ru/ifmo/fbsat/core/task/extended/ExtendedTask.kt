@@ -166,16 +166,17 @@ private class ExtendedTaskImpl(
         val parent: IntMultiArray by context(newArray(C, K, P, P + 1) { (_, _, p, par) ->
             if (par < p || par == P + 1) newVariable() else falseVariable
         })
-        val childLeft: IntMultiArray by context(newArray(C, K, P, P + 1) { (_, _, p, ch) ->
+        val child: IntMultiArray by context(newArray(C, K, P, P + 1) { (_, _, p, ch) ->
             if (ch >= p + 1 || ch == P + 1) newVariable() else falseVariable
         })
-        val childRight: IntMultiArray by context(newArray(C, K, P, P + 1) { (_, _, p, ch) ->
-            if (ch >= p + 2 || ch == P + 1) newVariable() else falseVariable
-        })
+        // val childLeft: IntMultiArray by context(newArray(C, K, P, P + 1) { (_, _, p, ch) ->
+        //     if (ch >= p + 1 || ch == P + 1) newVariable() else falseVariable
+        // })
+        // val childRight: IntMultiArray by context(newArray(C, K, P, P + 1) { (_, _, p, ch) ->
+        //     if (ch >= p + 2 || ch == P + 1) newVariable() else falseVariable
+        // })
         val nodeValue: IntMultiArray by context(newArray(C, K, P, U))
         val rootValue: IntMultiArray by context(newArray(C, K, U) { (c, k, u) -> nodeValue[c, k, 1, u] })
-        val childValueLeft: IntMultiArray by context(newArray(C, K, P, U))
-        val childValueRight: IntMultiArray by context(newArray(C, K, P, U))
         val firstFired: IntMultiArray by context(newArray(C, U, K + 1))
         val notFired: IntMultiArray by context(newArray(C, U, K))
 

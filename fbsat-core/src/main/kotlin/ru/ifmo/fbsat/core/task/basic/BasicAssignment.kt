@@ -56,13 +56,13 @@ internal class BasicAssignment(
                 scenarioTree = scenarioTree,
                 C = C,
                 K = K,
-                color = raw.intArrayOf(color, V, domain = 1..C) {
+                color = raw.intArray(color, V, domain = 1..C) {
                     error("color[index = $it] is undefined")
                 },
-                transition = raw.intArrayOf(transition, C, K, domain = 1..C) { 0 },
-                actualTransition = raw.intArrayOf(actualTransition, C, E, U, domain = 1..C) { 0 },
-                inputEvent = raw.intArrayOf(inputEvent, C, K, domain = 1..E) { 0 },
-                outputEvent = raw.intArrayOf(outputEvent, C, domain = 1..O) {
+                transition = raw.intArray(transition, C, K, domain = 1..C) { 0 },
+                actualTransition = raw.intArray(actualTransition, C, E, U, domain = 1..C) { 0 },
+                inputEvent = raw.intArray(inputEvent, C, K, domain = 1..E) { 0 },
+                outputEvent = raw.intArray(outputEvent, C, domain = 1..O) {
                     error("outputEvent[index = $it] is undefined")
                 },
                 algorithm = MultiArray.create(C) { (c) ->
@@ -72,9 +72,9 @@ internal class BasicAssignment(
                         algorithm1 = BooleanArray(Z) { z -> raw[algorithm1[c, z + 1]] }
                     )
                 },
-                rootValue = raw.booleanArrayOf(rootValue, C, K, U),
-                firstFired = raw.intArrayOf(firstFired, C, U, domain = 1..K) { 0 },
-                notFired = raw.booleanArrayOf(notFired, C, U, K)
+                rootValue = raw.booleanArray(rootValue, C, K, U),
+                firstFired = raw.intArray(firstFired, C, U, domain = 1..K) { 0 },
+                notFired = raw.booleanArray(notFired, C, U, K)
             )
         }
     }
