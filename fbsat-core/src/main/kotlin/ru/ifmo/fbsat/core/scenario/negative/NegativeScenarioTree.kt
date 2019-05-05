@@ -24,7 +24,7 @@ class NegativeScenarioTree(
 
     val negativeScenarios: List<NegativeScenario> = _negativeScenarios
 
-    val size
+    val size: Int
         get() = nodes.size
 
     val rootElement: ScenarioElement?

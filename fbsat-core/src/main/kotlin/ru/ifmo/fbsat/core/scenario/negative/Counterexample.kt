@@ -28,9 +28,9 @@ class Counterexample(
     }
 
     data class State(val name: String, val isLoop: Boolean, val variables: Map<String, String>) {
-        fun getFirstTrue(names: List<String>) = names.firstOrNull { variables[it] == "TRUE" }
+        fun getFirstTrue(names: List<String>): String? = names.firstOrNull { variables[it] == "TRUE" }
 
-        fun getBooleanString(names: List<String>) = names.joinToString("") {
+        fun getBooleanString(names: List<String>): String = names.joinToString("") {
             when (variables[it]) {
                 "TRUE" -> "1"
                 "FALSE" -> "0"

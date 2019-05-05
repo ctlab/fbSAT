@@ -21,7 +21,7 @@ class ScenarioTree(
 
     val scenarios: List<PositiveScenario> = _scenarios
 
-    val size
+    val size: Int
         get() = nodes.size
 
     val rootElement: ScenarioElement?
@@ -168,12 +168,12 @@ class ScenarioTree(
 
     // Note: all property-like functions are one-based and one-valued
 
-    fun parent(v: Int) = nodes[v - 1].parent?.id ?: 0
-    fun previousActive(v: Int) = nodes[v - 1].previousActive?.id ?: 0
-    fun inputEvent(v: Int) = inputEvents.indexOf(nodes[v - 1].element.inputEvent) + 1
-    fun outputEvent(v: Int) = outputEvents.indexOf(nodes[v - 1].element.outputEvent) + 1
-    fun inputNumber(v: Int) = uniqueInputs.indexOf(nodes[v - 1].element.inputValues) + 1
-    fun outputNumber(v: Int) = uniqueOutputs.indexOf(nodes[v - 1].element.outputValues) + 1
+    fun parent(v: Int): Int = nodes[v - 1].parent?.id ?: 0
+    fun previousActive(v: Int): Int = nodes[v - 1].previousActive?.id ?: 0
+    fun inputEvent(v: Int): Int = inputEvents.indexOf(nodes[v - 1].element.inputEvent) + 1
+    fun outputEvent(v: Int): Int = outputEvents.indexOf(nodes[v - 1].element.outputEvent) + 1
+    fun inputNumber(v: Int): Int = uniqueInputs.indexOf(nodes[v - 1].element.inputValues) + 1
+    fun outputNumber(v: Int): Int = uniqueOutputs.indexOf(nodes[v - 1].element.outputValues) + 1
 
     fun inputValue(v: Int, x: Int): Boolean =
         when (val c = nodes[v - 1].element.inputValues[x - 1]) {
