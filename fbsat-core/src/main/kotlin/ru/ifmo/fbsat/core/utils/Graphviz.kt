@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package ru.ifmo.fbsat.core.utils
 
 class Graph(val name: String) {

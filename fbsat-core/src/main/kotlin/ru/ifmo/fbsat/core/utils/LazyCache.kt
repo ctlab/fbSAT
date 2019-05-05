@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package ru.ifmo.fbsat.core.utils
 
 import kotlin.properties.ReadOnlyProperty

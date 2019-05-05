@@ -1,3 +1,5 @@
+@file:Suppress("LocalVariableName", "MemberVisibilityCanBePrivate")
+
 package ru.ifmo.fbsat.core.automaton
 
 import org.redundent.kotlin.xml.PrintOptions

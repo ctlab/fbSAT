@@ -1,3 +1,5 @@
+@file:Suppress("PublicApiImplicitType")
+
 object Versions {
     const val kotlin = "1.3.30"
     const val jgitver = "0.8.0"

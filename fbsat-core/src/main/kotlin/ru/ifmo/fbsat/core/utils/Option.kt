@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.utils
 
+@Suppress("MemberVisibilityCanBePrivate")
 sealed class Option<out T> {
     abstract fun isEmpty(): Boolean
 
