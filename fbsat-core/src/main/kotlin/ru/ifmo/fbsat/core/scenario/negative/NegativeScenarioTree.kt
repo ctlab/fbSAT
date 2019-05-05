@@ -3,6 +3,7 @@ package ru.ifmo.fbsat.core.scenario.negative
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.utils.LazyCache
+import ru.ifmo.fbsat.core.utils.ObservableMutableList
 import java.io.File
 
 class NegativeScenarioTree(
@@ -12,8 +13,8 @@ class NegativeScenarioTree(
     outputNames: List<String>? = null,
     private val isTrie: Boolean = true
 ) {
-    private val lazyCache = LazyCache()
-    private val _negativeScenarios: MutableList<NegativeScenario> = mutableListOf()
+    private val _negativeScenarios = ObservableMutableList<NegativeScenario>()
+    private val lazyCache = LazyCache(_negativeScenarios)
     private val _inputNames: List<String>? = inputNames
     private val _outputNames: List<String>? = outputNames
     private val _nodes: MutableList<Node> = mutableListOf()

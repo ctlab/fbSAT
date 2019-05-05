@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.scenario.positive
 
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.utils.LazyCache
+import ru.ifmo.fbsat.core.utils.ObservableMutableList
 
 class ScenarioTree(
     scenarios: List<PositiveScenario>,
@@ -9,8 +10,8 @@ class ScenarioTree(
     outputNames: List<String>? = null,
     private val isTrie: Boolean = true
 ) {
-    private val lazyCache = LazyCache()
-    private val _scenarios: MutableList<PositiveScenario> = mutableListOf()
+    private val _scenarios = ObservableMutableList<PositiveScenario>()
+    private val lazyCache = LazyCache(_scenarios)
     private val _inputNames: List<String>? = inputNames
     private val _outputNames: List<String>? = outputNames
     private val _nodes: MutableList<Node> = mutableListOf()
