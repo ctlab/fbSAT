@@ -8,6 +8,7 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.utils.LazyCache
+import ru.ifmo.fbsat.core.utils.graph
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.random
 import ru.ifmo.fbsat.core.utils.toBinaryString
@@ -130,7 +131,8 @@ class Automaton(
             }
 
             fun toGraphvizString(): String {
-                return "${source.id} -> ${destination.id} [label=\"$k:$inputEvent/${guard.toGraphvizString()}\"]"
+                return "$k:$inputEvent/${guard.toGraphvizString()}"
+                // return "${source.id} -> ${destination.id} [label=\"$k:$inputEvent/${guard.toGraphvizString()}\"]"
             }
 
             fun toFbtString(): String {
@@ -167,13 +169,15 @@ class Automaton(
         }
 
         fun toGraphvizString(): String {
-            algorithm as BinaryAlgorithm
-            val X = outputNames.size
+            // Note: returns html-like label
 
-            val vs = (1..X).mapNotNull { x ->
-                val name = outputNames[x - 1]
-                val d0 = algorithm.algorithm0[x - 1]
-                val d1 = algorithm.algorithm1[x - 1]
+            algorithm as BinaryAlgorithm
+            val Z = outputNames.size
+
+            val vs = (1..Z).mapNotNull { z ->
+                val name = outputNames[z - 1]
+                val d0 = algorithm.algorithm0[z - 1]
+                val d1 = algorithm.algorithm1[z - 1]
                 when (d0 to d1) {
                     true to true -> """<TR><TD align="left">$name &rarr; 1</TD></TR>"""
                     false to false -> """<TR><TD align="left">$name &rarr; 0</TD></TR>"""
@@ -184,18 +188,18 @@ class Automaton(
             }.joinToString("\n")
 
             val tableBody = """
-                <TR><TD align="center">$id / $outputEvent</TD></TR>
-                <HR/>
-                %s
-            """.trimIndent().format(vs)
+                        <TR><TD align="center">$id / $outputEvent</TD></TR>
+                        <HR/>
+                        %s
+                    """.trimIndent().format(vs)
 
             val html = """
-                <TABLE style="rounded" cellborder="0" cellspacing="0">
-                %s
-                </TABLE>
-            """.trimIndent().format(tableBody.prependIndent())
+                        <TABLE style="rounded" cellborder="0" cellspacing="0">
+                        %s
+                        </TABLE>
+                    """.trimIndent().format(tableBody.prependIndent())
 
-            return "$id [label=<\n${html.prependIndent()}> shape=plaintext]"
+            return "<\n${html.prependIndent()}>"
         }
 
         fun toFbtString(): String {
@@ -375,37 +379,29 @@ class Automaton(
      * Stringify automaton to Graphviz format.
      */
     fun toGraphvizString(): String {
-        val fontSettings = """fontname="Source Code Pro,monospace" fontsize="12""""
-        val setupBlock = """
-            graph [$fontSettings]
-            node  [$fontSettings]
-            edge  [$fontSettings]
-        """.trimIndent()
+        return graph("Automaton") {
+            setup(
+                "fontname" to "Source Code Pro,monospace",
+                "fontsize" to "12"
+            )
+            nodeSetup(
+                "margin" to "0.05,0.01",
+                "shape" to "plaintext"
+            )
 
-        val nodesBlock = """
-            // States
-            { node [margin="0.05,0.01"]
-            %s
-            }
-        """.trimIndent().format(
-            states
-                .joinToString("\n") { it.toGraphvizString() }
-                .prependIndent("  ")
-        )
+            for (state in states)
+                node(
+                    state.id,
+                    "label" to state.toGraphvizString()
+                )
 
-        val transitionsBlock = """
-            // Transitions
-            %s
-        """.trimIndent().format(
-            transitions.joinToString("\n") { it.toGraphvizString() }
-        )
-
-        val body = "%s\n\n%s\n\n%s".format(
-            setupBlock,
-            nodesBlock,
-            transitionsBlock
-        )
-        return "digraph {\n${body.prependIndent()}\n}"
+            for (transition in transitions)
+                edge(
+                    transition.source.id,
+                    transition.destination.id,
+                    "label" to transition.toGraphvizString()
+                )
+        }.toGraphvisString()
     }
 
     /**
