@@ -9,7 +9,7 @@ fun Solver.atLeastOne(literals: Sequence<Int>) {
 }
 
 fun Solver.atLeastOne(block: suspend SequenceScope<Int>.() -> Unit) {
-    atLeastOne(sequence(block))
+    atLeastOne(sequence(block).constrainOnce())
 }
 
 fun Solver.atMostOne(literals: List<Int>) {
@@ -23,7 +23,7 @@ fun Solver.atMostOne(literals: Sequence<Int>) {
 }
 
 fun Solver.atMostOne(block: suspend SequenceScope<Int>.() -> Unit) {
-    atMostOne(sequence(block))
+    atMostOne(sequence(block).constrainOnce())
 }
 
 fun Solver.exactlyOne(literals: List<Int>) {
@@ -31,8 +31,12 @@ fun Solver.exactlyOne(literals: List<Int>) {
     atMostOne(literals)
 }
 
+fun Solver.exactlyOne(literals: Sequence<Int>) {
+    exactlyOne(literals.toList())
+}
+
 fun Solver.exactlyOne(block: suspend SequenceScope<Int>.() -> Unit) {
-    exactlyOne(sequence(block).toList())
+    exactlyOne(sequence(block).constrainOnce())
 }
 
 /**
