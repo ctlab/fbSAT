@@ -35,7 +35,12 @@ interface CompleteMinCegisTask {
         ): CompleteMinCegisTask = CompleteMinCegisTaskImpl(
             scenarioTree = scenarioTree,
             negativeScenarioTree = initialNegativeScenarioTree
-                ?: NegativeScenarioTree.empty(scenarioTree.inputNames, scenarioTree.outputNames),
+                ?: NegativeScenarioTree(
+                    inputEvents = scenarioTree.inputEvents,
+                    outputEvents = scenarioTree.outputEvents,
+                    inputNames = scenarioTree.inputNames,
+                    outputNames = scenarioTree.outputNames
+                ),
             numberOfStates = numberOfStates,
             maxOutgoingTransitions = maxOutgoingTransitions,
             maxGuardSize = maxGuardSize,

@@ -41,7 +41,12 @@ interface CompleteCegisTask {
         ): CompleteCegisTask = CompleteCegisTaskImpl(
             scenarioTree = scenarioTree,
             negativeScenarioTree = negativeScenarioTree
-                ?: NegativeScenarioTree.empty(scenarioTree.inputNames, scenarioTree.outputNames),
+                ?: NegativeScenarioTree(
+                    inputEvents = scenarioTree.inputEvents,
+                    outputEvents = scenarioTree.outputEvents,
+                    inputNames = scenarioTree.inputNames,
+                    outputNames = scenarioTree.outputNames
+                ),
             numberOfStates = numberOfStates,
             maxOutgoingTransitions = maxOutgoingTransitions ?: numberOfStates,
             maxGuardSize = maxGuardSize,

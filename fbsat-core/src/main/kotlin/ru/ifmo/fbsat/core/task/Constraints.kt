@@ -17,6 +17,7 @@ import ru.ifmo.fbsat.core.solver.implyIffAnd
 import ru.ifmo.fbsat.core.solver.implyIffOr
 import ru.ifmo.fbsat.core.solver.implyOr
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.exhaustive
 import ru.ifmo.multiarray.IntMultiArray
 
 fun Solver.declareColorConstraints(isEncodeReverseImplication: Boolean = true) {
@@ -246,7 +247,7 @@ fun Solver.declareOutputEventConstraints() {
     }
 
     comment("4.2. Start state does INITO (root's output event)")
-    clause(outputEvent[1, scenarioTree.outputEvent(1)])
+    // clause(outputEvent[1, scenarioTree.outputEvent(1)])
 }
 
 fun Solver.declareAlgorithmConstraints() {
@@ -641,11 +642,10 @@ fun Solver.declareTerminalsConstraints() {
             for (p in 1..P)
                 for (u in 1..U)
                     for (x in 1..X)
-                        when (val char = scenarioTree.uniqueInputs[u - 1][x - 1]) {
-                            '1' -> imply(terminal[c, k, p, x], nodeValue[c, k, p, u])
-                            '0' -> imply(terminal[c, k, p, x], -nodeValue[c, k, p, u])
-                            else -> error("Character $char for u = $u, x = $x is neither '1' nor '0'")
-                        }
+                        when (scenarioTree.uniqueInputs[u - 1][x - 1]) {
+                            true -> imply(terminal[c, k, p, x], nodeValue[c, k, p, u])
+                            false -> imply(terminal[c, k, p, x], -nodeValue[c, k, p, u])
+                        }.exhaustive
 
     if (Globals.IS_ENCODE_TERMINALS_ORDER) {
         comment("10.5. Terminals order")

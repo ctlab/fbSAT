@@ -4,12 +4,14 @@ import org.amshove.kluent.shouldBeTrue
 import org.amshove.kluent.shouldEqual
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import ru.ifmo.fbsat.core.automaton.InputEvent
+import ru.ifmo.fbsat.core.automaton.OutputEvent
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class NegativeTest {
     private val file = createTempFile()
-    private val inputEvents = listOf("REQ")
-    private val outputEvents = listOf("CNF")
+    private val inputEvents = listOf("REQ").map(::InputEvent)
+    private val outputEvents = listOf("CNF").map(::OutputEvent)
     private val inputNames = listOf("pp1")
     private val outputNames = listOf("vcExtend")
 

@@ -15,6 +15,7 @@ allprojects {
     group = "ru.ifmo.fbsat"
     repositories {
         jcenter()
+        maven(url = "https://jitpack.io")
     }
 }
 
@@ -48,7 +49,7 @@ buildScan {
 }
 
 tasks.wrapper {
-    gradleVersion = "5.4"
+    gradleVersion = "5.4.1"
     distributionType = Wrapper.DistributionType.ALL
 }
 

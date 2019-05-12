@@ -1,19 +1,23 @@
 package ru.ifmo.fbsat.core.scenario.positive
 
+import ru.ifmo.fbsat.core.automaton.InputEvent
+import ru.ifmo.fbsat.core.automaton.InputValues
+import ru.ifmo.fbsat.core.automaton.OutputEvent
+import ru.ifmo.fbsat.core.automaton.OutputValues
+import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.preprocessed
+import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.sourceAutoGzip
+import ru.ifmo.fbsat.core.utils.toBooleanList
 import ru.ifmo.fbsat.core.utils.useLines
 import java.io.File
 
-class PositiveScenario(
+data class PositiveScenario(
     override val elements: List<ScenarioElement>
 ) : Scenario {
-    override fun toString(): String {
-        return "PositiveScenario(elements=$elements)"
-    }
-
     companion object {
         fun fromFile(file: File, preprocess: Boolean = true): List<PositiveScenario> {
             return file.sourceAutoGzip().useLines { lines ->
@@ -21,22 +25,15 @@ class PositiveScenario(
                 var numberOfScenarios = 0
 
                 for ((index, line) in lines.withIndex()) {
-                    if (index == 0)
+                    if (index == 0) {
                         numberOfScenarios = line.toInt()
-                    else
-                        scenarios.add(
-                            fromString(
-                                line,
-                                preprocess
-                            )
-                        )
+                    } else {
+                        scenarios.add(fromString(line, preprocess))
+                    }
                 }
 
-                if (scenarios.size != numberOfScenarios) {
-                    System.err.println(
-                        "[!] Number of scenarios mismatch: specified $numberOfScenarios, but found ${scenarios.size}"
-                    )
-                }
+                if (scenarios.size != numberOfScenarios)
+                    log.warn("Number of scenarios mismatch: specified $numberOfScenarios, but found ${scenarios.size}")
 
                 scenarios
             }
@@ -51,47 +48,40 @@ class PositiveScenario(
             Regex("""out=.*?\[([01]*)]""")
         }
 
-        private class Action(val type: String, val event: String, val values: String)
-
-        private fun fromString(s: String, preprocess: Boolean = true): PositiveScenario {
-            val elements: MutableList<ScenarioElement> = mutableListOf()
-
-            var lastOutputValues = "0".repeat(regexOutputValues.find(s)!!.groups[1]!!.value.length)
-
-            val actions = s.splitToSequence(";")
-                .map(String::trim)
-                .filter(String::isNotEmpty)
+        fun fromString(s: String, preprocess: Boolean = true): PositiveScenario {
+            var lastOutputValues = OutputValues.zeros(regexOutputValues.find(s)!!.groups[1]!!.value.length)
+            val elements: List<ScenarioElement> = s
+                .splitToSequence(";")
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
                 .map { regexAction.matchEntire(it) }
                 .requireNoNulls()
                 .map {
                     val (type, event, values) = it.destructured
-                    Action(type, event, values)
-                }
-
-            for ((first, second) in actions.zipWithNext().filter { it.first.type == "in" }) {
-                when (second.type) {
-                    "in" -> elements.add(
-                        ScenarioElement(
-                            first.event,
-                            first.values,
-                            null,
-                            lastOutputValues
-                        )
-                    )
-                    "out" -> {
-                        elements.add(
-                            ScenarioElement(
-                                first.event,
-                                first.values,
-                                second.event,
-                                second.values
-                            )
-                        )
-                        lastOutputValues = second.values
+                    when (type) {
+                        "in" -> InputAction(InputEvent(event), InputValues(values.toBooleanList()))
+                        "out" -> OutputAction(OutputEvent(event), OutputValues(values.toBooleanList()))
+                        else -> error("Unsupported action type '$type'")
                     }
-                    else -> error("Unsupported action type '${second.type}'")
                 }
-            }
+                .zipWithNext()
+                .mapNotNull { (first, second) ->
+                    if (first is InputAction)
+                        first to second
+                    else
+                        null
+                }
+                .map { (first, second) ->
+                    when (second) {
+                        is InputAction ->
+                            ScenarioElement(first, OutputAction(null, lastOutputValues))
+                        is OutputAction -> {
+                            lastOutputValues = second.values
+                            ScenarioElement(first, second)
+                        }
+                    }
+                }
+                .toList()
 
             return if (preprocess)
                 PositiveScenario(elements.preprocessed)

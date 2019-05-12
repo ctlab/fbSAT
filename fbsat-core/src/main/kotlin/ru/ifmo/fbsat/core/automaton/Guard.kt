@@ -1,69 +1,109 @@
 package ru.ifmo.fbsat.core.automaton
 
+import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.multiarray.IntMultiArray
 import ru.ifmo.multiarray.MultiArray
 
 interface Guard {
     val size: Int
-    fun eval(inputValues: BooleanArray): Boolean
+    fun eval(inputValues: InputValues): Boolean
     fun toSimpleString(): String
     fun toGraphvizString(): String
     fun toFbtString(): String
     fun toSmvString(): String
 }
 
+class UnconditionalGuard : Guard {
+    override val size: Int
+        get() {
+            log.warn("UnconditionalGuard has no meaningful size")
+            return 0
+        }
+
+    override fun eval(inputValues: InputValues): Boolean {
+        return true
+    }
+
+    override fun toSimpleString(): String {
+        return "1"
+    }
+
+    override fun toGraphvizString(): String {
+        return "1"
+    }
+
+    override fun toFbtString(): String {
+        return "1"
+    }
+
+    override fun toSmvString(): String {
+        return "1"
+    }
+
+    override fun toString(): String {
+        return "UnconditionalGuard()"
+    }
+
+    // Allow companion object extensions
+    companion object
+}
+
 class TruthTableGuard(
-    val truthTable: String,
+    val truthTable: Map<InputValues, Boolean?>,
     private val inputNames: List<String>,
-    private val uniqueInputs: List<String>
+    private val uniqueInputs: List<InputValues>
 ) : Guard {
     override val size: Int
         get() {
-            println("[!] TruthTableGuard has no meaningful size")
+            log.warn("TruthTableGuard has no meaningful size")
             return 0
         }
 
     init {
-        require(truthTable.length == uniqueInputs.size) { "Truth table size and number of unique inputs mismatch" }
+        // require(truthTable.size == uniqueInputs.size) {
+        //     "Truth table size and number of unique inputs mismatch"
+        // }
     }
 
-    override fun eval(inputValues: BooleanArray): Boolean {
-        return truthTable[uniqueInputs.indexOf(inputValues.toBinaryString())] in "1x"
+    override fun eval(inputValues: InputValues): Boolean {
+        // return truthTable[uniqueInputs.indexOf(inputValues)] in "1x"
+        return truthTable[inputValues] ?: true
     }
 
     override fun toSimpleString(): String {
-        return "[$truthTable]"
+        return "[${truthTable.values.toList().toBinaryString()}]"
     }
 
     override fun toGraphvizString(): String =
-        if (truthTable.length <= 8)
-            "[$truthTable]"
+        if (truthTable.size <= 8)
+            "[${truthTable.values.toList().toBinaryString()}]"
         else
-            "[${truthTable.substring(0, 3)}${Typography.ellipsis}]"
+            "[${truthTable.values.take(3).toBinaryString()}${Typography.ellipsis}]"
 
     override fun toFbtString(): String {
         TODO()
     }
 
     override fun toSmvString(): String {
-        return truthTable
-            .asIterable()
-            .zip(uniqueInputs)
-            // .filter { it.first == '1' }
-            .filter { it.first in "1x" }
-            .joinToString(" | ", prefix = "(", postfix = ")") { (_, input) ->
-                input
-                    .asIterable()
-                    .zip(inputNames)
-                    .joinToString("&") { (value, name) ->
-                        when (value) {
-                            '1' -> name
-                            '0' -> "!$name"
-                            else -> throw Exception("...")
-                        }
-                    }
-            }
+        TODO()
+        // return truthTable
+        //     .asIterable()
+        //     .zip(uniqueInputs)
+        //     // .filter { it.first == '1' }
+        //     .filter { it.first in "1x" }
+        //     .joinToString(" | ", prefix = "(", postfix = ")") { (_, input) ->
+        //         input
+        //             .asIterable()
+        //             .zip(inputNames)
+        //             .joinToString("&") { (value, name) ->
+        //                 when (value) {
+        //                     '1' -> name
+        //                     '0' -> "!$name"
+        //                     else -> throw Exception("...")
+        //                 }
+        //             }
+        //     }
     }
 
     override fun toString(): String {
@@ -126,7 +166,7 @@ class ParseTreeGuard(
                 require(terminalNumber == 0) { "Terminal number of non-terminal node must be = 0" }
         }
 
-        fun eval(inputValues: BooleanArray): Boolean {
+        fun eval(inputValues: InputValues): Boolean {
             return when (nodeType) {
                 NodeType.TERMINAL -> inputValues[terminalNumber - 1]
                 NodeType.AND -> childLeft!!.eval(inputValues) && childRight!!.eval(inputValues)
@@ -253,7 +293,7 @@ class ParseTreeGuard(
         }
     }
 
-    override fun eval(inputValues: BooleanArray): Boolean {
+    override fun eval(inputValues: InputValues): Boolean {
         return root.eval(inputValues)
     }
 
@@ -287,7 +327,7 @@ class StringGuard(val expr: String, val inputNames: List<String>) : Guard {
     override val size: Int =
         2 * literals.size - 1 + literals.count { it.startsWith("!") || it.startsWith("~") }
 
-    override fun eval(inputValues: BooleanArray): Boolean {
+    override fun eval(inputValues: InputValues): Boolean {
         return literals.all {
             if (it.startsWith("!") || it.startsWith("~"))
                 !inputValues[inputNames.indexOf(it.substring(1))]

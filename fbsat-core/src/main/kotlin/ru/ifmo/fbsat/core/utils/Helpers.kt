@@ -6,23 +6,46 @@ import okio.buffer
 import okio.gzip
 import okio.sink
 import okio.source
-import ru.ifmo.multiarray.BooleanMultiArray
-import ru.ifmo.multiarray.IntMultiArray
 import java.io.File
 import kotlin.random.Random
 
 fun String.toBooleanArray(): BooleanArray {
-    return this.map {
+    return BooleanArray(length) { i ->
+        when (this[i]) {
+            '1' -> true
+            '0' -> false
+            else -> error("All characters in string '$this' must be '1' or '0'")
+        }
+    }
+}
+
+fun String.toBooleanList(): List<Boolean> {
+    return map {
         when (it) {
             '1' -> true
             '0' -> false
             else -> error("All characters in string '$it' must be '1' or '0'")
         }
-    }.toBooleanArray()
+    }
 }
 
 fun BooleanArray.toBinaryString(): String {
-    return this.joinToString("") { if (it) "1" else "0" }
+    return joinToString("") { if (it) "1" else "0" }
+}
+
+fun List<Boolean>.toBinaryString(): String {
+    return joinToString("") { if (it) "1" else "0" }
+}
+
+@JvmName("toBinaryStringNullable")
+fun List<Boolean?>.toBinaryString(): String {
+    return joinToString("") {
+        when (it) {
+            true -> "1"
+            false -> "0"
+            null -> "x"
+        }
+    }
 }
 
 fun randomBinaryString(length: Int): String {
@@ -73,9 +96,6 @@ fun copyFile(source: File, destination: File) {
     }
 }
 
-fun IntMultiArray.Companion.empty() = IntMultiArray(intArrayOf()) { 0 }
-fun BooleanMultiArray.Companion.empty() = BooleanMultiArray(intArrayOf()) { false }
-
 /**
  * Measures the [block] execution time and returns a [Pair](result, runningTime).
  * @param[block] code to execute.
@@ -100,3 +120,6 @@ fun <K, V, T> Map<K, V>.getForce(key: K): T {
     @Suppress("UNCHECKED_CAST")
     return this[key] as T
 }
+
+val <T> T.exhaustive: T
+    get() = this

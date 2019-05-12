@@ -1,67 +1,43 @@
 package ru.ifmo.fbsat.core.scenario.positive
 
+import ru.ifmo.fbsat.core.automaton.InputEvent
+import ru.ifmo.fbsat.core.automaton.InputValues
+import ru.ifmo.fbsat.core.automaton.OutputEvent
+import ru.ifmo.fbsat.core.automaton.OutputValues
+import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
-import ru.ifmo.fbsat.core.utils.LazyCache
-import ru.ifmo.fbsat.core.utils.ObservableMutableList
+import ru.ifmo.lazycache.LazyCache
+import java.io.File
 
+@Suppress("MemberVisibilityCanBePrivate")
 class ScenarioTree(
-    scenarios: List<PositiveScenario>,
-    inputNames: List<String>? = null,
-    outputNames: List<String>? = null,
+    val inputEvents: List<InputEvent>,
+    val outputEvents: List<OutputEvent>,
+    val inputNames: List<String>,
+    val outputNames: List<String>,
     private val isTrie: Boolean = true
 ) {
-    private val _scenarios = ObservableMutableList<PositiveScenario>()
-    private val lazyCache = LazyCache(_scenarios)
-    private val _inputNames: List<String>? = inputNames
-    private val _outputNames: List<String>? = outputNames
+    private val lazyCache = LazyCache()
+    private val _scenarios: MutableList<PositiveScenario> = mutableListOf()
     private val _nodes: MutableList<Node> = mutableListOf()
-    private val nodes: List<Node> = _nodes
-    private val root: Node?
-        get() = nodes.firstOrNull()
 
     val scenarios: List<PositiveScenario> = _scenarios
-
-    val size: Int
-        get() = nodes.size
-
-    val rootElement: ScenarioElement?
-        get() = root?.element
+    val nodes: List<Node> = _nodes
+    val root: Node? by lazyCache {
+        nodes.firstOrNull()
+    }
+    val size: Int by lazyCache {
+        nodes.size
+    }
 
     // Note: all public lists are zero-based
-    val inputEvents: List<String> by lazyCache {
-        nodes.asSequence().map { it.element.inputEvent }.filter { it != "" }.toSet().sorted()
+
+    val uniqueInputs: List<InputValues> by lazyCache {
+        nodes.asSequence().drop(1).map { it.inputValues }.toSet().toList()
     }
-    val outputEvents: List<String> by lazyCache {
-        nodes.asSequence().mapNotNull { it.element.outputEvent }.toSet().sorted()
-    }
-    val uniqueInputs: List<String> by lazyCache {
-        nodes.asSequence().map { it.element.inputValues }.filter { it != "" }.toSet().sorted()
-    }
-    val uniqueOutputs: List<String> by lazyCache {
-        nodes.asSequence().map { it.element.outputValues }.filter { it != "" }.toSet().sorted()
-    }
-    val inputNames: List<String> by lazyCache {
-        _inputNames ?: uniqueInputs.first().indices.map { "x${it + 1}" }
-    }
-    val outputNames: List<String> by lazyCache {
-        _outputNames ?: uniqueOutputs.first().indices.map { "z${it + 1}" }
-    }
-    /**
-     * List of **all** vertices (including root).
-     */
-    val allVertices: List<Int> by lazyCache {
-        nodes.asSequence()
-            .map(Node::id)
-            .toList()
-    }
-    /**
-     * List of all vertices **excluding root**.
-     */
-    val verticesWithoutRoot: List<Int> by lazyCache {
-        nodes.asSequence()
-            .drop(1)
-            .map(Node::id)
-            .toList()
+    val uniqueOutputs: List<OutputValues> by lazyCache {
+        nodes.asSequence().drop(1).map { it.outputValues }.toSet().toList()
     }
     /**
      * List of **active** vertices, i.e. vertices with **non-null** output event.
@@ -70,8 +46,8 @@ class ScenarioTree(
     val activeVertices: List<Int> by lazyCache {
         nodes.asSequence()
             .drop(1) // without root
-            .filter { it.element.outputEvent != null }
-            .map(Node::id)
+            .filter { it.outputEvent != null }
+            .map { it.id }
             .toList()
     }
     /**
@@ -81,32 +57,18 @@ class ScenarioTree(
     val passiveVertices: List<Int> by lazyCache {
         nodes.asSequence()
             .drop(1) // without root
-            .filter { it.element.outputEvent == null }
-            .map(Node::id)
+            .filter { it.outputEvent == null }
+            .map { it.id }
             .toList()
     }
     val activeVerticesEU: Map<Pair<Int, Int>, List<Int>> by lazyCache {
-        activeVertices.groupBy { this.inputEvent(it) to this.inputNumber(it) }
+        activeVertices.groupBy { inputEvent(it) to inputNumber(it) }
     }
     val passiveVerticesEU: Map<Pair<Int, Int>, List<Int>> by lazyCache {
-        passiveVertices.groupBy { this.inputEvent(it) to this.inputNumber(it) }
+        passiveVertices.groupBy { inputEvent(it) to inputNumber(it) }
     }
 
-    init {
-        scenarios.forEach(this::addScenario)
-        if (inputNames != null) require(inputNames.size == uniqueInputs.first().length)
-        if (outputNames != null) require(outputNames.size == uniqueOutputs.first().length)
-    }
-
-    init {
-        println("[.] $this")
-        val n = 5
-        println("[.] First $n nodes:")
-        for (node in nodes.take(n))
-            println("[.] $node")
-    }
-
-    private inner class Node(
+    inner class Node(
         val element: ScenarioElement,
         val parent: Node?
     ) {
@@ -114,10 +76,17 @@ class ScenarioTree(
 
         val id: Int = this@ScenarioTree.size + 1 // Note: one-based
         val children: List<Node> = _children
-        val previousActive: Node? = if (parent?.element?.outputEvent != null) parent else parent?.previousActive
+        val previousActive: Node? = if (parent?.outputEvent != null) parent else parent?.previousActive
+        val inputAction: InputAction = element.inputAction
+        val outputAction: OutputAction = element.outputAction
+        val inputEvent: InputEvent? = inputAction.event
+        val inputValues: InputValues = inputAction.values
+        val outputEvent: OutputEvent? = outputAction.event
+        val outputValues: OutputValues = outputAction.values
 
         init {
             this@ScenarioTree._nodes.add(this)
+            this@ScenarioTree.lazyCache.invalidate()
             parent?._children?.add(this)
         }
 
@@ -128,13 +97,17 @@ class ScenarioTree(
 
     fun addScenario(scenario: PositiveScenario) {
         val root = this.root ?: Node(
-            ScenarioElement(
-                inputEvent = "",
-                inputValues = "",
-                outputEvent = "INITO",
-                outputValues = "0".repeat(outputNames.size)
+            element = ScenarioElement(
+                InputAction(
+                    event = null,
+                    values = InputValues.empty()
+                ),
+                OutputAction(
+                    event = null,
+                    values = OutputValues.zeros(scenario.elements.first().outputValues.values.size)
+                )
             ),
-            null
+            parent = null
         )
 
         var current = root
@@ -142,9 +115,7 @@ class ScenarioTree(
         meow@ for (element in scenario.elements) {
             if (isTrie) {
                 for (child in current.children) {
-                    if (child.element.inputEvent == element.inputEvent &&
-                        child.element.inputValues == element.inputValues
-                    ) {
+                    if (child.inputAction == element.inputAction) {
                         check(child.element == element) { "ScenarioTree is not deterministic!" }
                         current = child
                         continue@meow
@@ -170,26 +141,47 @@ class ScenarioTree(
 
     fun parent(v: Int): Int = nodes[v - 1].parent?.id ?: 0
     fun previousActive(v: Int): Int = nodes[v - 1].previousActive?.id ?: 0
-    fun inputEvent(v: Int): Int = inputEvents.indexOf(nodes[v - 1].element.inputEvent) + 1
-    fun outputEvent(v: Int): Int = outputEvents.indexOf(nodes[v - 1].element.outputEvent) + 1
-    fun inputNumber(v: Int): Int = uniqueInputs.indexOf(nodes[v - 1].element.inputValues) + 1
-    fun outputNumber(v: Int): Int = uniqueOutputs.indexOf(nodes[v - 1].element.outputValues) + 1
-
-    fun inputValue(v: Int, x: Int): Boolean =
-        when (val c = nodes[v - 1].element.inputValues[x - 1]) {
-            '1' -> true
-            '0' -> false
-            else -> error("Character $c for v = $v, x = $x is neither '1' nor '0'")
-        }
-
-    fun outputValue(v: Int, z: Int): Boolean =
-        when (val c = nodes[v - 1].element.outputValues[z - 1]) {
-            '1' -> true
-            '0' -> false
-            else -> error("Character $c for v = $v, z = $z is neither '1' nor '0'")
-        }
+    fun inputEvent(v: Int): Int = inputEvents.indexOf(nodes[v - 1].inputEvent) + 1
+    fun outputEvent(v: Int): Int = outputEvents.indexOf(nodes[v - 1].outputEvent) + 1
+    fun inputNumber(v: Int): Int = uniqueInputs.indexOf(nodes[v - 1].inputValues) + 1
+    fun outputNumber(v: Int): Int = uniqueOutputs.indexOf(nodes[v - 1].outputValues) + 1
+    fun inputValue(v: Int, x: Int): Boolean = nodes[v - 1].inputValues[x - 1]
+    fun outputValue(v: Int, z: Int): Boolean = nodes[v - 1].outputValues[z - 1]
 
     override fun toString(): String {
         return "ScenarioTree(size=$size, scenarios=${scenarios.size}, inputEvents=$inputEvents, outputEvents=$outputEvents, inputNames=$inputNames, outputNames=$outputNames)"
+    }
+
+    companion object {
+        fun fromScenarios(
+            scenarios: List<PositiveScenario>,
+            inputNames: List<String>,
+            outputNames: List<String>,
+            isTrie: Boolean = true
+        ): ScenarioTree {
+            return ScenarioTree(
+                inputEvents = scenarios.flatMap { scenario ->
+                    scenario.elements.mapNotNull { element -> element.inputAction.event }
+                }.distinct(),
+                outputEvents = scenarios.flatMap { scenario ->
+                    scenario.elements.mapNotNull { element -> element.outputAction.event }
+                }.distinct(),
+                inputNames = inputNames,
+                outputNames = outputNames,
+                isTrie = isTrie
+            ).apply {
+                scenarios.forEach(::addScenario)
+            }
+        }
+
+        fun fromFile(
+            file: File,
+            inputNames: List<String>,
+            outputNames: List<String>,
+            isTrie: Boolean = true
+        ): ScenarioTree {
+            val scenarios: List<PositiveScenario> = PositiveScenario.fromFile(file)
+            return fromScenarios(scenarios, inputNames, outputNames, isTrie)
+        }
     }
 }

@@ -2,6 +2,7 @@
 Konstantin Chukharev <kchukharev@corp.ifmo.ru>
 
 image:https://travis-ci.org/ctlab/fbSAT.svg?branch=master["Build Status", link="https://travis-ci.org/ctlab/fbSAT"]
+image:https://hitsofcode.com/github/ctlab/fbSAT["Hits-of-Code", link="https://hitsofcode.com/view/github/ctlab/fbSAT"]
 
 == Build
 

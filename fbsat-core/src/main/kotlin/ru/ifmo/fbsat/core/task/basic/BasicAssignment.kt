@@ -105,12 +105,15 @@ internal fun BasicAssignment.toAutomaton(): Automaton {
                     guard = TruthTableGuard(
                         truthTable = (1..scenarioTree.uniqueInputs.size)
                             .asSequence()
-                            .joinToString("") { u ->
+                            .associateWith { u ->
                                 when {
-                                    notFired[c, u, k] -> "0"
-                                    firstFired[c, u] == k -> "1"
-                                    else -> "x"
+                                    notFired[c, u, k] -> false
+                                    firstFired[c, u] == k -> true
+                                    else -> null
                                 }
+                            }
+                            .mapKeys { (u, _) ->
+                                scenarioTree.uniqueInputs[u - 1]
                             },
                         inputNames = scenarioTree.inputNames,
                         uniqueInputs = scenarioTree.uniqueInputs

@@ -1,10 +1,10 @@
 package ru.ifmo.fbsat.core.scenario.negative
 
-import okio.source
+import ru.ifmo.fbsat.core.utils.sourceAutoGzip
 import ru.ifmo.fbsat.core.utils.useLines
 import java.io.File
 
-class Counterexample(
+data class Counterexample(
     val states: List<State>
 ) {
     /**
@@ -28,15 +28,17 @@ class Counterexample(
     }
 
     data class State(val name: String, val isLoop: Boolean, val variables: Map<String, String>) {
-        fun getFirstTrue(names: List<String>): String? = names.firstOrNull { variables[it] == "TRUE" }
+        fun getFirstTrue(names: List<String>): String? =
+            names.firstOrNull { variables[it] == "TRUE" }
 
-        fun getBooleanString(names: List<String>): String = names.joinToString("") {
-            when (variables[it]) {
-                "TRUE" -> "1"
-                "FALSE" -> "0"
-                else -> error("Value of variable '$it' must be 'TRUE' or 'FALSE'")
+        fun getBooleanValues(names: List<String>): List<Boolean> =
+            names.map {
+                when (variables[it]) {
+                    "TRUE" -> true
+                    "FALSE" -> false
+                    else -> error("Value of variable '$it' must be either 'TRUE' or 'FALSE'")
+                }
             }
-        }
     }
 
     override fun toString(): String {
@@ -52,7 +54,7 @@ class Counterexample(
             var isLoop = false
             var variables: MutableMap<String, String> = mutableMapOf()
 
-            file.source().useLines { lines ->
+            file.sourceAutoGzip().useLines { lines ->
                 for (line in lines.map(String::trim)) {
                     when {
                         line.startsWith("Trace Description") -> {

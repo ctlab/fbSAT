@@ -1,54 +1,53 @@
 package ru.ifmo.fbsat.core.scenario.negative
 
+import ru.ifmo.fbsat.core.automaton.InputEvent
+import ru.ifmo.fbsat.core.automaton.InputValues
+import ru.ifmo.fbsat.core.automaton.OutputEvent
+import ru.ifmo.fbsat.core.automaton.OutputValues
+import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.utils.LazyCache
-import ru.ifmo.fbsat.core.utils.ObservableMutableList
+import ru.ifmo.lazycache.LazyCache
 import java.io.File
 
 class NegativeScenarioTree(
-    negativeScenarios: List<NegativeScenario>,
-    // TODO: forbid passing null input/output names
-    inputNames: List<String>? = null,
-    outputNames: List<String>? = null,
+    val inputEvents: List<InputEvent>,
+    val outputEvents: List<OutputEvent>,
+    val inputNames: List<String>,
+    val outputNames: List<String>,
     private val isTrie: Boolean = true
 ) {
-    private val _negativeScenarios = ObservableMutableList<NegativeScenario>()
-    private val lazyCache = LazyCache(_negativeScenarios)
-    private val _inputNames: List<String>? = inputNames
-    private val _outputNames: List<String>? = outputNames
+    private val lazyCache = LazyCache()
+    private val _negativeScenarios: MutableList<NegativeScenario> = mutableListOf()
     private val _nodes: MutableList<Node> = mutableListOf()
-    private val nodes: List<Node> = _nodes
-    private val root: Node?
-        get() = nodes.firstOrNull()
 
     val negativeScenarios: List<NegativeScenario> = _negativeScenarios
-
+    val nodes: List<Node> = _nodes
+    val root: Node?
+        get() = nodes.firstOrNull()
     val size: Int
         get() = nodes.size
 
-    val rootElement: ScenarioElement?
-        get() = root?.element
-
     // Note: all public lists are zero-based
-    val inputEvents: List<String> by lazyCache {
-        nodes.asSequence().map { it.element.inputEvent }.filter { it != "" }.toSet().sorted()
+    // val inputEvents: List<InputEvent> by lazyCache {
+    //     nodes.asSequence().drop(1).map { it.element.inputEvent }.toSet().toList()//.sorted()
+    // }
+    // val outputEvents: List<String> by lazyCache {
+    //     nodes.asSequence().drop(1).mapNotNull { it.element.outputEvent }.toSet().toList()//.sorted()
+    // }
+    val uniqueInputs: List<InputValues> by lazyCache {
+        nodes.asSequence().drop(1).map { it.inputValues }.toList()//.sorted()
     }
-    val outputEvents: List<String> by lazyCache {
-        nodes.asSequence().mapNotNull { it.element.outputEvent }.toSet().sorted()
+    val uniqueOutputs: List<OutputValues> by lazyCache {
+        nodes.asSequence().drop(1).map { it.outputValues }.toList()//.sorted()
     }
-    val uniqueInputs: List<String> by lazyCache {
-        nodes.asSequence().map { it.element.inputValues }.filter { it != "" }.toSet().sorted()
-    }
-    val uniqueOutputs: List<String> by lazyCache {
-        nodes.asSequence().map { it.element.outputValues }.filter { it != "" }.toSet().sorted()
-    }
-    val inputNames: List<String> by lazyCache {
-        _inputNames ?: uniqueInputs.first().indices.map { "x${it + 1}" }
-    }
-    val outputNames: List<String> by lazyCache {
-        _outputNames ?: uniqueOutputs.first().indices.map { "z${it + 1}" }
-    }
+    // val inputNames: List<String> by lazyCache {
+    //     _inputNames ?: uniqueInputs.first().indices.map { "x${it + 1}" }
+    // }
+    // val outputNames: List<String> by lazyCache {
+    //     _outputNames ?: uniqueOutputs.first().indices.map { "z${it + 1}" }
+    // }
     /**
      * List of **all** vertices (including root).
      */
@@ -96,7 +95,7 @@ class NegativeScenarioTree(
             println("[.] $node")
     }
 
-    private inner class Node(
+    inner class Node(
         val element: ScenarioElement,
         val parent: Node?,
         var isTerminal: Boolean = false
@@ -108,11 +107,18 @@ class NegativeScenarioTree(
         val previousActive: Node? = if (parent?.element?.outputEvent != null) parent else parent?.previousActive
         val loopBacks: MutableSet<Node> = mutableSetOf()
         var isLoopBack: Boolean = false
+        val inputAction: InputAction = element.inputAction
+        val outputAction: OutputAction = element.outputAction
+        val inputEvent: InputEvent? = inputAction.event
+        val inputValues: InputValues = inputAction.values
+        val outputEvent: OutputEvent? = outputAction.event
+        val outputValues: OutputValues = outputAction.values
 
         init {
             require(!isTerminal) { "Terminal nodes are not supported yet" }
 
             this@NegativeScenarioTree._nodes.add(this)
+            this@NegativeScenarioTree.lazyCache.invalidate()
             parent?._children?.add(this)
         }
 
@@ -148,9 +154,9 @@ class NegativeScenarioTree(
         fun getIncomingEdgeGraphvizString(): String {
             return if (parent != null) {
                 val label = inputNames
-                    .zip(element.inputValues.asIterable())
+                    .zip(element.inputValues.values)
                     .joinToString("") { (name, value) ->
-                        """${if (value == '0') "~" else ""}$name\l"""
+                        """${if (!value) "~" else ""}$name\l"""
                     }
                 """${parent.id} -> $id [label="$label"]"""
             } else {
@@ -170,12 +176,15 @@ class NegativeScenarioTree(
 
     fun addNegativeScenario(negativeScenario: NegativeScenario) {
         val root = this.root ?: Node(
-            ScenarioElement(
-                inputEvent = "",
-                inputValues = "",
-                outputEvent = "INITO",
-                outputValues = "0".repeat(negativeScenario.elements.first().outputValues.length),
-                ceState = negativeScenario.elements.first().ceState
+            element = ScenarioElement(
+                InputAction(
+                    event = null,
+                    values = InputValues.empty()
+                ),
+                OutputAction(
+                    event = null,
+                    values = OutputValues.zeros(negativeScenario.elements.first().outputValues.values.size)
+                )
             ),
             parent = null
         )
@@ -249,27 +258,14 @@ class NegativeScenarioTree(
 
     // Note: all property-like functions are one-based and one-valued
 
-    fun parent(v: Int) = nodes[v - 1].parent?.id ?: 0
-    fun previousActive(v: Int) = nodes[v - 1].previousActive?.id ?: 0
-    fun inputEvent(v: Int) = inputEvents.indexOf(nodes[v - 1].element.inputEvent) + 1
-    fun outputEvent(v: Int) = outputEvents.indexOf(nodes[v - 1].element.outputEvent) + 1
-    fun inputNumber(v: Int) = uniqueInputs.indexOf(nodes[v - 1].element.inputValues) + 1
-    fun outputNumber(v: Int) = uniqueOutputs.indexOf(nodes[v - 1].element.outputValues) + 1
-
-    fun inputValue(v: Int, x: Int): Boolean =
-        when (val c = nodes[v - 1].element.inputValues[x - 1]) {
-            '1' -> true
-            '0' -> false
-            else -> error("Character $c for v = $v, x = $x is neither '1' nor '0'")
-        }
-
-    fun outputValue(v: Int, z: Int): Boolean =
-        when (val c = nodes[v - 1].element.outputValues[z - 1]) {
-            '1' -> true
-            '0' -> false
-            else -> error("Character $c for v = $v, z = $z is neither '1' nor '0'")
-        }
-
+    fun parent(v: Int): Int = nodes[v - 1].parent?.id ?: 0
+    fun previousActive(v: Int): Int = nodes[v - 1].previousActive?.id ?: 0
+    fun inputEvent(v: Int): Int = inputEvents.indexOf(nodes[v - 1].inputEvent) + 1
+    fun outputEvent(v: Int): Int = outputEvents.indexOf(nodes[v - 1].outputEvent) + 1
+    fun inputNumber(v: Int): Int = uniqueInputs.indexOf(nodes[v - 1].inputValues) + 1
+    fun outputNumber(v: Int): Int = uniqueOutputs.indexOf(nodes[v - 1].outputValues) + 1
+    fun inputValue(v: Int, x: Int): Boolean = nodes[v - 1].inputValues[x - 1]
+    fun outputValue(v: Int, z: Int): Boolean = nodes[v - 1].outputValues[z - 1]
     fun isLoopBack(v: Int): Boolean = nodes[v - 1].isLoopBack
     fun isTerminal(v: Int): Boolean = nodes[v - 1].isTerminal
     fun loopBacks(v: Int): List<Int> = nodes[v - 1].loopBacks.map { it.id }
@@ -315,38 +311,30 @@ class NegativeScenarioTree(
     }
 
     companion object {
-        fun empty(
-            inputNames: List<String>,
-            outputNames: List<String>,
-            isTrie: Boolean = true
-        ) = NegativeScenarioTree(
-            emptyList(),
-            inputNames = inputNames,
-            outputNames = outputNames,
-            isTrie = isTrie
-        )
-
         fun fromFile(
             file: File,
-            inputEvents: List<String>,
-            outputEvents: List<String>,
+            inputEvents: List<InputEvent>,
+            outputEvents: List<OutputEvent>,
             inputNames: List<String>,
             outputNames: List<String>,
             isTrie: Boolean = true
         ): NegativeScenarioTree {
-            val negativeScenarios = NegativeScenario.fromFile(
-                file,
-                inputEvents,
-                outputEvents,
-                inputNames,
-                outputNames
+            val negativeScenarios: List<NegativeScenario> = NegativeScenario.fromFile(
+                file = file,
+                inputEvents = inputEvents,
+                outputEvents = outputEvents,
+                inputNames = inputNames,
+                outputNames = outputNames
             )
             return NegativeScenarioTree(
-                negativeScenarios,
+                inputEvents = inputEvents,
+                outputEvents = outputEvents,
                 inputNames = inputNames,
                 outputNames = outputNames,
                 isTrie = isTrie
-            )
+            ).apply {
+                negativeScenarios.forEach(::addNegativeScenario)
+            }
         }
     }
 }

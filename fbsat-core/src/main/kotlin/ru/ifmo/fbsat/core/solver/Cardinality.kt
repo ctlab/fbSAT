@@ -56,7 +56,6 @@ fun Solver.declareTotalizer(block: suspend SequenceScope<Int>.() -> Unit): IntAr
  */
 fun Solver.declareComparatorLessThanOrEqual(totalizer: IntArray, x: Int, declared: Int? = null) {
     val max = declared ?: totalizer.size
-    println("[*] Declaring comparator(<=$x up to $max)")
     comment("Comparator(<=$x up to $max)")
     for (i in max downTo x + 1) {
         clause(-totalizer[i - 1]) // Note: totalizer is zero-based

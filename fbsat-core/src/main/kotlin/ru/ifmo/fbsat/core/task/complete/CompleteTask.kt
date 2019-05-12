@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.core.task.complete
 
 import ru.ifmo.fbsat.core.automaton.Automaton
+import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
@@ -45,7 +46,12 @@ interface CompleteTask {
         ): CompleteTask = CompleteTaskImpl(
             scenarioTree = scenarioTree,
             negativeScenarioTree = negativeScenarioTree
-                ?: NegativeScenarioTree.empty(scenarioTree.inputNames, scenarioTree.outputNames),
+                ?: NegativeScenarioTree(
+                    inputEvents = scenarioTree.inputEvents,
+                    outputEvents = scenarioTree.outputEvents,
+                    inputNames = scenarioTree.inputNames,
+                    outputNames = scenarioTree.outputNames
+                ),
             numberOfStates = numberOfStates,
             maxOutgoingTransitions = maxOutgoingTransitions ?: numberOfStates,
             maxGuardSize = maxGuardSize,
@@ -163,15 +169,15 @@ private class CompleteTaskImpl(
         val newNegVsPassive: List<Int> by context(newNegVs.filter { it in negativeScenarioTree.passiveVertices })
         // val negU: Int by context(negativeScenarioTree.uniqueInputs.size)
         val negU: Int = negativeScenarioTree.uniqueInputs.size
-        val oldNegUIs: List<String> = context.getForce("negUIs") ?: emptyList()
-        val negUIs: List<String> by context(negativeScenarioTree.uniqueInputs)
-        val posUIs: List<String> = scenarioTree.uniqueInputs
-        fun getNegU(input: String): Int = negUIs.indexOf(input) + 1
-        fun getOldNegU(input: String): Int = oldNegUIs.indexOf(input) + 1
-        fun getPosU(input: String): Int = posUIs.indexOf(input) + 1
-        val oldOnlyNegUIs: List<String> = context.getForce("onlyNegUIs") ?: emptyList()
-        val onlyNegUIs: List<String> by context(negUIs - posUIs)
-        val newOnlyNegUIs: List<String> = onlyNegUIs - oldOnlyNegUIs
+        val oldNegUIs: List<InputValues> = context.getForce("negUIs") ?: emptyList()
+        val negUIs: List<InputValues> by context(negativeScenarioTree.uniqueInputs)
+        val posUIs: List<InputValues> = scenarioTree.uniqueInputs
+        fun getNegU(input: InputValues): Int = negUIs.indexOf(input) + 1
+        fun getOldNegU(input: InputValues): Int = oldNegUIs.indexOf(input) + 1
+        fun getPosU(input: InputValues): Int = posUIs.indexOf(input) + 1
+        val oldOnlyNegUIs: List<InputValues> = context.getForce("onlyNegUIs") ?: emptyList()
+        val onlyNegUIs: List<InputValues> by context(negUIs - posUIs)
+        val newOnlyNegUIs: List<InputValues> = onlyNegUIs - oldOnlyNegUIs
         val newOnlyNegUs: List<Int> by context(newOnlyNegUIs.map(::getNegU))
         context.computeIfAbsent("forbiddenLoops") { mutableSetOf<Pair<Int, Int>>() }
 

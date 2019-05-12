@@ -11,12 +11,8 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
-import ru.ifmo.fbsat.core.automaton.Algorithm
 import ru.ifmo.fbsat.core.automaton.Automaton
-import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
-import ru.ifmo.fbsat.core.automaton.StringGuard
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
-import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.basic.BasicMinTask
@@ -183,13 +179,6 @@ class FbSAT : CliktCommand() {
         readable = true
     )
 
-    private val isEncodeAutomaton by option(
-        "--encode-automaton",
-        help = "[DEBUG] Encode Daniil's automaton [default: false]"
-    ).flag(
-        default = false
-    )
-
     private val isEncodeTransitionsOrder by option(
         "--encode-transitions-order",
         help = "[DEBUG] Encode transitions lexicographic order [default: false]"
@@ -205,10 +194,6 @@ class FbSAT : CliktCommand() {
         "--no-encode-terminals-order",
         default = true
     )
-
-    private val isOnlyAutomaton2 by option(
-        "--only-automaton2"
-    ).flag()
 
     private val fileVerifyCE by option(
         "--verify-ce"
@@ -229,7 +214,6 @@ class FbSAT : CliktCommand() {
         Globals.IS_FORBID_OR = isForbidOr
         Globals.IS_BFS_AUTOMATON = isBfsAutomaton
         Globals.IS_BFS_GUARD = isBfsGuard
-        Globals.IS_ENCODE_AUTOMATON = isEncodeAutomaton
         Globals.IS_ENCODE_TRANSITIONS_ORDER = isEncodeTransitionsOrder
         Globals.IS_ENCODE_TERMINALS_ORDER = isEncodeTerminalsOrder
         Globals.IS_DEBUG = isDebug
@@ -238,15 +222,9 @@ class FbSAT : CliktCommand() {
         // outDir.walkBottomUp().forEach { if (it != outDir) it.delete() }
         outDir.mkdirs()
 
-        val scenarios = PositiveScenario.fromFile(fileScenarios)
-        println("[*] Scenarios: ${scenarios.size}")
-        println("[*] Elements: ${scenarios.sumBy { it.elements.size }}")
-
-        val tree = ScenarioTree(
-            scenarios,
-            inputNames = inputNamesPnP,
-            outputNames = outputNamesPnP
-        )
+        val tree = ScenarioTree.fromFile(fileScenarios, inputNamesPnP, outputNamesPnP)
+        println("[*] Scenarios: ${tree.scenarios.size}")
+        println("[*] Elements: ${tree.scenarios.sumBy { it.elements.size }}")
 
         val negTree = fileCounterexamples?.let {
             NegativeScenarioTree.fromFile(
@@ -300,122 +278,6 @@ class FbSAT : CliktCommand() {
             { Solver.incremental(solverCmd) }
         } else {
             { Solver.default(solverCmd) }
-        }
-
-        if (isOnlyAutomaton2) {
-            val scenarios4 = PositiveScenario.fromFile(File("data/tests-4"))
-            val tree4 =
-                ScenarioTree(scenarios4, tree.inputNames, tree.outputNames)
-
-            val automaton2 = Automaton(tree4)
-            fun magic(algo: String): Algorithm {
-                return BinaryAlgorithm(
-                    algorithm0 = algo.map {
-                        when (it) {
-                            '0', 'x' -> '0'
-                            '1' -> '1'
-                            else -> error("Bad char '$it'")
-                        }
-                    }.joinToString(""),
-                    algorithm1 = algo.map {
-                        when (it) {
-                            '0' -> '0'
-                            '1', 'x' -> '1'
-                            else -> error("Bad char '$it'")
-                        }
-                    }.joinToString("")
-                )
-            }
-            automaton2.addState(1, "INITO", magic("0000000"))
-            automaton2.addState(2, "CNF", magic("1x1xxxx"))
-            automaton2.addState(3, "CNF", magic("xx1x0xx"))
-            automaton2.addState(4, "CNF", magic("10x00x0"))
-            automaton2.addState(5, "CNF", magic("xxxx1xx"))
-            automaton2.addState(6, "CNF", magic("01010xx"))
-            automaton2.addState(7, "CNF", magic("xxxxx1x"))
-            automaton2.addState(8, "CNF", magic("xxxxx01"))
-
-            automaton2.addTransition(
-                1, 2, "REQ",
-                StringGuard("pp3", tree.inputNames)
-            )
-            automaton2.addTransition(
-                1, 3, "REQ",
-                StringGuard("pp2", tree.inputNames)
-            )
-            automaton2.addTransition(
-                1, 4, "REQ",
-                StringGuard("pp1", tree.inputNames)
-            )
-            automaton2.addTransition(
-                2, 5, "REQ",
-                StringGuard("c2End", tree.inputNames)
-            )
-            automaton2.addTransition(
-                3, 5, "REQ",
-                StringGuard("c2End & !vac", tree.inputNames)
-            )
-            automaton2.addTransition(
-                3, 6, "REQ",
-                StringGuard("vcHome & !pp2", tree.inputNames)
-            )
-            automaton2.addTransition(
-                4, 5, "REQ",
-                StringGuard("c1End & !vac", tree.inputNames)
-            )
-            automaton2.addTransition(
-                4, 6, "REQ",
-                StringGuard("vcHome & vac", tree.inputNames)
-            )
-            automaton2.addTransition(
-                5, 7, "REQ",
-                StringGuard("vcEnd & !vac", tree.inputNames)
-            )
-            automaton2.addTransition(
-                5, 8, "REQ",
-                StringGuard("vcEnd", tree.inputNames)
-            )
-            automaton2.addTransition(
-                6, 4, "REQ",
-                StringGuard("!vcEnd & pp1 & !vac", tree.inputNames)
-            )
-            automaton2.addTransition(
-                6, 5, "REQ",
-                StringGuard("c1Home & c2Home & vac", tree.inputNames)
-            )
-            automaton2.addTransition(
-                7, 3, "REQ",
-                StringGuard("!pp1", tree.inputNames)
-            )
-            automaton2.addTransition(
-                7, 4, "REQ",
-                StringGuard("!pp3", tree.inputNames)
-            )
-            automaton2.addTransition(
-                8, 6, "REQ",
-                StringGuard("!vac", tree.inputNames)
-            )
-
-            println("[+] Automaton2:")
-            automaton2.pprint()
-            println("[+] Automaton2 has ${automaton2.numberOfStates} states, ${automaton2.numberOfTransitions} transitions and ${automaton2.totalGuardsSize} nodes")
-
-            if (automaton2.verify(tree4))
-                println("[+] Verify automaton2 on tests-4: OK")
-            else
-                println("[-] Verify automaton2 on tests-4: FAILED")
-
-            if (automaton2.verify(tree))
-                println("[+] Verify automaton2 on $fileScenarios: OK")
-            else
-                println("[-] Verify automaton2 on $fileScenarios: FAILED")
-
-            if (negTree != null)
-                if (automaton2.verify(negTree))
-                    println("[+] Verify(CE) automaton2 on $fileCounterexamples: OK")
-                else
-                    println("[-] Verify(CE) automaton2 on $fileCounterexamples: FAILED")
-            return
         }
 
         val automaton: Automaton? = when (method) {

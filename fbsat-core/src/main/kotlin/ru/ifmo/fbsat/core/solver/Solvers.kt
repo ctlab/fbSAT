@@ -39,7 +39,7 @@ class RawAssignment(
     fun booleanArrayOf(
         variable: IntMultiArray,
         vararg shape: Int
-    ) = BooleanMultiArray(shape) { index ->
+    ) = BooleanMultiArray.new(shape) { index ->
         @Suppress("ReplaceGetOrSet")
         this[variable.get(*index)]
     }
@@ -49,7 +49,7 @@ class RawAssignment(
         vararg shape: Int,
         domain: Iterable<Int>,
         onAbsence: (index: IntArray) -> Int /*= { error("variable[index = $it] is undefined") }*/
-    ) = IntMultiArray(shape) { index ->
+    ) = IntMultiArray.new(shape) { index ->
         @Suppress("ReplaceGetOrSet")
         domain.firstOrNull { last -> this[variable.get(*index, last)] }
             ?: onAbsence(index)
@@ -62,7 +62,7 @@ interface Solver {
     val context: SolverContext
 
     fun newVariable(): Int
-    fun newArray(vararg shape: Int, init: (IntArray) -> Int = { newVariable() }) = IntMultiArray(shape, init)
+    fun newArray(vararg shape: Int, init: (IntArray) -> Int = { newVariable() }) = IntMultiArray.new(shape, init)
 
     fun clause(literals: List<Int>)
     fun clause(vararg literals: Int) = clause(literals.asList())
