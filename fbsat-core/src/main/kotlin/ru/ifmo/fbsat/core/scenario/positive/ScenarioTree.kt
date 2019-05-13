@@ -1,5 +1,8 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package ru.ifmo.fbsat.core.scenario.positive
 
+import com.github.lipen.lazycache.LazyCache
 import ru.ifmo.fbsat.core.automaton.InputEvent
 import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.automaton.OutputEvent
@@ -7,10 +10,8 @@ import ru.ifmo.fbsat.core.automaton.OutputValues
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
-import ru.ifmo.lazycache.LazyCache
 import java.io.File
 
-@Suppress("MemberVisibilityCanBePrivate")
 class ScenarioTree(
     val inputEvents: List<InputEvent>,
     val outputEvents: List<OutputEvent>,

@@ -1,9 +1,9 @@
 package ru.ifmo.fbsat.core.automaton
 
+import com.github.lipen.multiarray.IntMultiArray
+import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.toBinaryString
-import ru.ifmo.multiarray.IntMultiArray
-import ru.ifmo.multiarray.MultiArray
 
 interface Guard {
     val size: Int

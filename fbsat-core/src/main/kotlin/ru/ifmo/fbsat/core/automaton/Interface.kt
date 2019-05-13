@@ -1,7 +1,5 @@
 package ru.ifmo.fbsat.core.automaton
 
-import ru.ifmo.multiarray.IntMultiArray
-
 inline class InputEvent(val name: String) {
     companion object {
         // @JvmStatic
@@ -53,11 +51,3 @@ inline class OutputValues(val values: List<Boolean>) {
 // inline class InputVariable(val name: String)
 
 // inline class OutputVariable(val name: String)
-
-fun main() {
-
-    println(listOf("C", "D", "A", "B").map { InputEvent(it) })
-
-    println(IntMultiArray.new(10) { (i) -> i * i }.let { it to it.values })
-
-}

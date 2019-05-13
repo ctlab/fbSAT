@@ -1,5 +1,8 @@
 package ru.ifmo.fbsat.core.task.extended
 
+import com.github.lipen.multiarray.BooleanMultiArray
+import com.github.lipen.multiarray.IntMultiArray
+import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.Algorithm
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
@@ -7,9 +10,6 @@ import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.automaton.ParseTreeGuard
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
-import ru.ifmo.multiarray.BooleanMultiArray
-import ru.ifmo.multiarray.IntMultiArray
-import ru.ifmo.multiarray.MultiArray
 
 internal class ExtendedAssignment(
     val scenarioTree: ScenarioTree,
@@ -93,18 +93,14 @@ internal class ExtendedAssignment(
                 outputEvent = raw.intArrayOf(outputEvent, C, domain = 1..O) { (c) ->
                     error("outputEvent[c = $c] is undefined")
                 },
-                algorithm = MultiArray.new<Algorithm>(C) { (c) ->
+                algorithm = MultiArray.create(C) { (c) ->
                     BinaryAlgorithm(
                         // Note: c is 1-based, z is 0-based
                         algorithm0 = BooleanArray(Z) { z -> raw[algorithm0[c, z + 1]] },
                         algorithm1 = BooleanArray(Z) { z -> raw[algorithm1[c, z + 1]] }
                     )
                 },
-                nodeType = MultiArray.new<NodeType>(
-                    C,
-                    K,
-                    P
-                ) { (c, k, p) ->
+                nodeType = MultiArray.create(C, K, P) { (c, k, p) ->
                     NodeType.values().firstOrNull { nt ->
                         nodeType[c, k, p, nt.value].let { t -> if (t == 0) false else raw[t] }
                     } ?: error("nodeType[c,k,p = $c,$k,$p] is undefined")
@@ -143,11 +139,11 @@ internal fun ExtendedAssignment.toAutomaton(): Automaton {
                     destinationId = transition[c, k],
                     inputEvent = scenarioTree.inputEvents[inputEvent[c, k] - 1],
                     guard = ParseTreeGuard(
-                        nodeType = MultiArray.new<NodeType>(P) { (p) -> nodeType[c, k, p] },
-                        terminal = IntMultiArray.new(P) { (p) -> terminal[c, k, p] },
-                        parent = IntMultiArray.new(P) { (p) -> parent[c, k, p] },
-                        childLeft = IntMultiArray.new(P) { (p) -> childLeft[c, k, p] },
-                        childRight = IntMultiArray.new(P) { (p) -> childRight[c, k, p] },
+                        nodeType = MultiArray.create(P) { (p) -> nodeType[c, k, p] },
+                        terminal = IntMultiArray.create(P) { (p) -> terminal[c, k, p] },
+                        parent = IntMultiArray.create(P) { (p) -> parent[c, k, p] },
+                        childLeft = IntMultiArray.create(P) { (p) -> childLeft[c, k, p] },
+                        childRight = IntMultiArray.create(P) { (p) -> childRight[c, k, p] },
                         inputNames = scenarioTree.inputNames
                     )
                 )

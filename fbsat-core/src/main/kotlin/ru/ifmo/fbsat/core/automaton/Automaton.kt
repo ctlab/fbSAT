@@ -2,6 +2,7 @@
 
 package ru.ifmo.fbsat.core.automaton
 
+import com.github.lipen.lazycache.LazyCache
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
@@ -14,7 +15,6 @@ import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.utils.graph
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.random
-import ru.ifmo.lazycache.LazyCache
 import java.io.File
 
 class Automaton(
@@ -236,7 +236,6 @@ class Automaton(
 
             currentState = newState
             currentValues = outputAction.values
-
         }
 
         return results.asList()

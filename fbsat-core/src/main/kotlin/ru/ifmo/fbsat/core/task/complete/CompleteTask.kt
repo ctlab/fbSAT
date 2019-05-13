@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.task.complete
 
+import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
@@ -14,7 +15,6 @@ import ru.ifmo.fbsat.core.task.extended.ExtendedTask
 import ru.ifmo.fbsat.core.task.extended.toAutomaton
 import ru.ifmo.fbsat.core.utils.getForce
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.multiarray.IntMultiArray
 import java.io.File
 
 interface CompleteTask {

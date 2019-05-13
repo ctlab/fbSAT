@@ -2,6 +2,7 @@
 
 package ru.ifmo.fbsat.core.task
 
+import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
@@ -18,7 +19,6 @@ import ru.ifmo.fbsat.core.solver.implyIffOr
 import ru.ifmo.fbsat.core.solver.implyOr
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.exhaustive
-import ru.ifmo.multiarray.IntMultiArray
 
 fun Solver.declareColorConstraints(isEncodeReverseImplication: Boolean = true) {
     val scenarioTree: ScenarioTree by context

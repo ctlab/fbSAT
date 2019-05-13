@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.task.basic
 
+import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
@@ -14,7 +15,6 @@ import ru.ifmo.fbsat.core.task.declareTransitionConstraints
 import ru.ifmo.fbsat.core.task.declareTransitionsOrderConstraints
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.multiarray.IntMultiArray
 import java.io.File
 
 interface BasicTask {

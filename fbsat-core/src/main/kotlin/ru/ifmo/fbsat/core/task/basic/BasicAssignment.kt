@@ -1,14 +1,14 @@
 package ru.ifmo.fbsat.core.task.basic
 
+import com.github.lipen.multiarray.BooleanMultiArray
+import com.github.lipen.multiarray.IntMultiArray
+import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.Algorithm
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.core.automaton.TruthTableGuard
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
-import ru.ifmo.multiarray.BooleanMultiArray
-import ru.ifmo.multiarray.IntMultiArray
-import ru.ifmo.multiarray.MultiArray
 
 internal class BasicAssignment(
     val scenarioTree: ScenarioTree,
@@ -65,7 +65,7 @@ internal class BasicAssignment(
                 outputEvent = raw.intArrayOf(outputEvent, C, domain = 1..O) {
                     error("outputEvent[index = $it] is undefined")
                 },
-                algorithm = MultiArray.new<Algorithm>(C) { (c) ->
+                algorithm = MultiArray.create(C) { (c) ->
                     BinaryAlgorithm(
                         // Note: c is 1-based, z is 0-based
                         algorithm0 = BooleanArray(Z) { z -> raw[algorithm0[c, z + 1]] },

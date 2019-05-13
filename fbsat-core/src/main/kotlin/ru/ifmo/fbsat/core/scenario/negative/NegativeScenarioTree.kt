@@ -1,5 +1,8 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package ru.ifmo.fbsat.core.scenario.negative
 
+import com.github.lipen.lazycache.LazyCache
 import ru.ifmo.fbsat.core.automaton.InputEvent
 import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.automaton.OutputEvent
@@ -8,7 +11,6 @@ import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.lazycache.LazyCache
 import java.io.File
 
 class NegativeScenarioTree(
@@ -30,31 +32,12 @@ class NegativeScenarioTree(
         get() = nodes.size
 
     // Note: all public lists are zero-based
-    // val inputEvents: List<InputEvent> by lazyCache {
-    //     nodes.asSequence().drop(1).map { it.element.inputEvent }.toSet().toList()//.sorted()
-    // }
-    // val outputEvents: List<String> by lazyCache {
-    //     nodes.asSequence().drop(1).mapNotNull { it.element.outputEvent }.toSet().toList()//.sorted()
-    // }
+
     val uniqueInputs: List<InputValues> by lazyCache {
-        nodes.asSequence().drop(1).map { it.inputValues }.toList()//.sorted()
+        nodes.asSequence().drop(1).map { it.inputValues }.toList()
     }
     val uniqueOutputs: List<OutputValues> by lazyCache {
-        nodes.asSequence().drop(1).map { it.outputValues }.toList()//.sorted()
-    }
-    // val inputNames: List<String> by lazyCache {
-    //     _inputNames ?: uniqueInputs.first().indices.map { "x${it + 1}" }
-    // }
-    // val outputNames: List<String> by lazyCache {
-    //     _outputNames ?: uniqueOutputs.first().indices.map { "z${it + 1}" }
-    // }
-    /**
-     * List of **all** vertices (including root).
-     */
-    val allVertices: List<Int> by lazyCache {
-        nodes.asSequence()
-            .map { it.id }
-            .toList()
+        nodes.asSequence().drop(1).map { it.outputValues }.toList()
     }
     val activeVertices: List<Int> by lazyCache {
         nodes.asSequence()
@@ -81,18 +64,6 @@ class NegativeScenarioTree(
     }
     val passiveVerticesEU: Map<Pair<Int, Int>, List<Int>> by lazyCache {
         passiveVertices.groupBy { this.inputEvent(it) to this.inputNumber(it) }
-    }
-
-    init {
-        negativeScenarios.forEach(this::addNegativeScenario)
-    }
-
-    init {
-        println("[.] $this")
-        val n = 5
-        println("[.] First $n nodes:")
-        for (node in nodes.take(n))
-            println("[.] $node")
     }
 
     inner class Node(
