@@ -1,12 +1,11 @@
 MODULE main()
 VAR
     REQ : boolean;
-    pp1 : boolean;  -- есть деталька на дорожке
+    pp1 : boolean;
     pp2 : boolean;
     pp3 : boolean;
     vac : boolean;
-    --vs : boolean;
-    p1 : boolean;  -- new detail #1 (random variable)
+    p1 : boolean;
     p2 : boolean;
     p3 : boolean;
     lifted : boolean;
