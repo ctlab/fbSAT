@@ -34,10 +34,10 @@ class NegativeScenarioTree(
     // Note: all public lists are zero-based
 
     val uniqueInputs: List<InputValues> by lazyCache {
-        nodes.asSequence().drop(1).map { it.inputValues }.toList()
+        nodes.asSequence().drop(1).map { it.inputValues }.toSet().toList()
     }
     val uniqueOutputs: List<OutputValues> by lazyCache {
-        nodes.asSequence().drop(1).map { it.outputValues }.toList()
+        nodes.asSequence().drop(1).map { it.outputValues }.toSet().toList()
     }
     val activeVertices: List<Int> by lazyCache {
         nodes.asSequence()
