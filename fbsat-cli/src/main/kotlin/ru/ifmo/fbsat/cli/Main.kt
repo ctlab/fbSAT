@@ -17,6 +17,8 @@ import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.basic.BasicMinTask
 import ru.ifmo.fbsat.core.task.basic.BasicTask
+import ru.ifmo.fbsat.core.task.basic.ModularBasicMinTask
+import ru.ifmo.fbsat.core.task.basic.ModularBasicTask
 import ru.ifmo.fbsat.core.task.complete.CompleteCegisTask
 import ru.ifmo.fbsat.core.task.complete.CompleteMinCegisTask
 import ru.ifmo.fbsat.core.task.complete.CompleteTask
@@ -82,7 +84,8 @@ class FbSAT : CliktCommand() {
         "extended", "extended-min", "extended-min-ub",
         "extended-ce", "extended-min-ce",
         "complete", "complete-min",
-        "complete-cegis", "complete-min-cegis"
+        "complete-cegis", "complete-min-cegis",
+        "modular-basic", "modular-basic-min"
     ).required()
 
     private val numberOfStates by option(
@@ -385,6 +388,80 @@ class FbSAT : CliktCommand() {
                     solverProvider = solverProvider
                 )
                 task.infer()
+            }
+            "modular-basic" -> {
+                val task = ModularBasicTask.create(
+                    scenarioTree = tree,
+                    numberOfModules = numberOfModules!!,
+                    numberOfStates = numberOfStates!!,
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    maxTransitions = maxTransitions,
+                    solverProvider = solverProvider,
+                    outDir = outDir
+                )
+                val modularAutomaton = task.infer()
+
+                if (modularAutomaton == null) {
+                    log.failure("Modular automaton not found")
+                } else {
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules:")
+                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
+                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                        automaton.pprint()
+                        automaton.dump(outDir, "the_module-$m")
+                    }
+                    modularAutomaton.dumpFbt(
+                        outDir.resolve("modularAutomaton.fbt"),
+                        name = "ModularController"
+                    )
+                    if (modularAutomaton.verify(tree))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                    }
+                }
+
+                log.br()
+                log.br("The following messages - lies.")
+                log.br()
+                null
+            }
+            "modular-basic-min" -> {
+                val task = ModularBasicMinTask.create(
+                    scenarioTree = tree,
+                    numberOfModules = numberOfModules!!,
+                    numberOfStates = numberOfStates,
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    initialMaxTransitions = maxTransitions,
+                    solverProvider = solverProvider,
+                    outDir = outDir
+                )
+                val modularAutomaton = task.infer()
+
+                if (modularAutomaton == null) {
+                    log.failure("Modular automaton not found")
+                } else {
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules:")
+                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
+                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                        automaton.pprint()
+                        automaton.dump(outDir, "the_module-$m")
+                    }
+                    modularAutomaton.dumpFbt(
+                        outDir.resolve("modularAutomaton.fbt"),
+                        name = "ModularController"
+                    )
+                    if (modularAutomaton.verify(tree))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                    }
+                }
+
+                log.br()
+                log.br("The following messages - lies.")
+                log.br()
+                null
             }
             else -> TODO("method '$method'")
         }
