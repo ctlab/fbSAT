@@ -13,7 +13,7 @@ data class InputAction(
     val values: InputValues
 ) : Action() {
     override fun toString(): String {
-        return "${event ?: 'ε'}[${values.values.toBinaryString()}]"
+        return "${event?.name ?: 'ε'}[${values.values.toBinaryString()}]"
     }
 }
 
@@ -22,7 +22,7 @@ data class OutputAction(
     val values: OutputValues
 ) : Action() {
     override fun toString(): String {
-        return "${event ?: 'ε'}[${values.values.toBinaryString()}]"
+        return "${event?.name ?: 'ε'}[${values.values.toBinaryString()}]"
     }
 }
 

@@ -10,7 +10,6 @@ import ru.ifmo.fbsat.core.automaton.OutputValues
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import java.io.File
 
 class NegativeScenarioTree(
@@ -209,22 +208,6 @@ class NegativeScenarioTree(
         // }
 
         check(activeVertices.size + passiveVertices.size + 1 == size) // TODO: remove
-    }
-
-    fun addFromFile(fileNegativeScenarios: File, scenarioTree: ScenarioTree) {
-        NegativeScenario.fromFile(
-            fileNegativeScenarios,
-            scenarioTree.inputEvents,
-            scenarioTree.outputEvents,
-            scenarioTree.inputNames,
-            scenarioTree.outputNames
-        ).forEach(::addNegativeScenario)
-    }
-
-    fun isEmpty(): Boolean {
-        // Note: if you add an empty scenario to an empty tree, then the size will be equal to 1 -
-        //   due to added auxiliary root.
-        return size == 0
     }
 
     // Note: all property-like functions are one-based and one-valued

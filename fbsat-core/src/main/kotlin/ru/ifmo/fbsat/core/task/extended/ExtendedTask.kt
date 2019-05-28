@@ -5,22 +5,17 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.Solver.Companion.falseVariable
 import ru.ifmo.fbsat.core.solver.declareComparatorLessThanOrEqual
 import ru.ifmo.fbsat.core.solver.declareTotalizer
-import ru.ifmo.fbsat.core.task.declareAlgorithmConstraints
+import ru.ifmo.fbsat.core.task.basic.BasicTask
 import ru.ifmo.fbsat.core.task.declareAndOrNodesConstraints
-import ru.ifmo.fbsat.core.task.declareAutomatonBfsConstraints
-import ru.ifmo.fbsat.core.task.declareColorConstraints
-import ru.ifmo.fbsat.core.task.declareFiringConstraints
 import ru.ifmo.fbsat.core.task.declareGuardBfsConstraints
 import ru.ifmo.fbsat.core.task.declareNodeTypeConstraints
 import ru.ifmo.fbsat.core.task.declareNoneTypeNodesConstraints
 import ru.ifmo.fbsat.core.task.declareNotNodesConstraints
-import ru.ifmo.fbsat.core.task.declareOutputEventConstraints
 import ru.ifmo.fbsat.core.task.declareParentAndChildrenConstraints
 import ru.ifmo.fbsat.core.task.declareTerminalsConstraints
-import ru.ifmo.fbsat.core.task.declareTransitionConstraints
-import ru.ifmo.fbsat.core.task.declareTransitionsOrderConstraints
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
 import java.io.File
@@ -58,7 +53,8 @@ interface ExtendedTask {
             outDir = outDir,
             solver = solverProvider(),
             autoFinalize = autoFinalize,
-            isEncodeReverseImplication = isEncodeReverseImplication
+            isEncodeReverseImplication = isEncodeReverseImplication,
+            basicTask = null
         )
     }
 }
@@ -72,15 +68,29 @@ private class ExtendedTaskImpl(
     override val outDir: File,
     private val solver: Solver,
     private val autoFinalize: Boolean,
-    private val isEncodeReverseImplication: Boolean
+    private val isEncodeReverseImplication: Boolean,
+    basicTask: BasicTask?
 ) : ExtendedTask {
+    @Suppress("JoinDeclarationAndAssignment")
+    private val basicTask: BasicTask
     private var isExecuted = false
     private var isReused = false
     private var isFinalized = false
 
     init {
+        this.basicTask = basicTask ?: BasicTask.create(
+            scenarioTree = scenarioTree,
+            numberOfStates = numberOfStates,
+            maxOutgoingTransitions = maxOutgoingTransitions,
+            maxTransitions = null,
+            outDir = outDir,
+            solverProvider = { solver },
+            autoFinalize = false,
+            isEncodeReverseImplication = isEncodeReverseImplication
+        )
+
         with(solver) {
-            declareBaseReduction()
+            declareExtendedReduction()
             declareCardinality()
         }
     }
@@ -118,45 +128,35 @@ private class ExtendedTaskImpl(
             outDir = this.outDir,
             solver = this.solver,
             autoFinalize = this.autoFinalize,
-            isEncodeReverseImplication = this.isEncodeReverseImplication
+            isEncodeReverseImplication = this.isEncodeReverseImplication,
+            basicTask = this.basicTask
         )
     }
 
     override fun finalize2() {
         check(!isFinalized) { "This task has already been finalized." }
         isFinalized = true
-        solver.finalize2()
+        basicTask.finalize2()
+        // Note: basicTask already finalizes solver, so it is not necessary to do it here again
+        // solver.finalize2()
     }
 
     @Suppress("LocalVariableName", "UNUSED_VARIABLE")
-    private fun Solver.declareBaseReduction() {
-        when (context["_isBaseReductionDeclared"] as Boolean?) {
+    private fun Solver.declareExtendedReduction() {
+        when (context["_isExtendedReductionDeclared"] as Boolean?) {
             true -> return
-            false -> error { "_isBaseReductionDeclared is false" }
-            null -> context["_isBaseReductionDeclared"] = true
+            false -> error { "_isExtendedReductionDeclared is false" }
+            null -> context["_isExtendedReductionDeclared"] = true
         }
 
         // Constants
-        context["scenarioTree"] = scenarioTree
-        val C: Int by context(numberOfStates)
-        val K: Int by context(maxOutgoingTransitions)
+        val C: Int by context
+        val K: Int by context
         val P: Int by context(maxGuardSize)
-        val V: Int by context(scenarioTree.size)
-        val E: Int by context(scenarioTree.inputEvents.size)
-        val O: Int by context(scenarioTree.outputEvents.size)
-        val X: Int by context(scenarioTree.inputNames.size)
-        val Z: Int by context(scenarioTree.outputNames.size)
-        val U: Int by context(scenarioTree.uniqueInputs.size)
+        val X: Int by context
+        val U: Int by context
 
         // Variables
-        val falseVariable: Int by context
-        val transition: IntMultiArray by context(newArray(C, K, C + 1))
-        val actualTransition: IntMultiArray by context(newArray(C, E, U, C + 1))
-        val inputEvent: IntMultiArray by context(newArray(C, K, E + 1))
-        val outputEvent: IntMultiArray by context(newArray(C, O))
-        val algorithm0: IntMultiArray by context(newArray(C, Z))
-        val algorithm1: IntMultiArray by context(newArray(C, Z))
-        val color: IntMultiArray by context(newArray(V, C))
         val nodeType: IntMultiArray by context(
             newArray(C, K, P, NodeType.values().size) { (_, _, _, nt) ->
                 if (Globals.IS_FORBID_OR && NodeType.from(nt - 1) == NodeType.OR) falseVariable else newVariable()
@@ -169,25 +169,12 @@ private class ExtendedTaskImpl(
         val child: IntMultiArray by context(newArray(C, K, P, P + 1) { (_, _, p, ch) ->
             if (ch >= p + 1 || ch == P + 1) newVariable() else falseVariable
         })
-        // val childLeft: IntMultiArray by context(newArray(C, K, P, P + 1) { (_, _, p, ch) ->
-        //     if (ch >= p + 1 || ch == P + 1) newVariable() else falseVariable
-        // })
-        // val childRight: IntMultiArray by context(newArray(C, K, P, P + 1) { (_, _, p, ch) ->
-        //     if (ch >= p + 2 || ch == P + 1) newVariable() else falseVariable
-        // })
-        val nodeValue: IntMultiArray by context(newArray(C, K, P, U))
-        val rootValue: IntMultiArray by context(newArray(C, K, U) { (c, k, u) -> nodeValue[c, k, 1, u] })
-        val firstFired: IntMultiArray by context(newArray(C, U, K + 1))
-        val notFired: IntMultiArray by context(newArray(C, U, K))
+        val rootValue: IntMultiArray by context
+        val nodeValue: IntMultiArray by context(newArray(C, K, P, U) { (c, k, p, u) ->
+            if (p == 1) rootValue[c, k, u] else newVariable()
+        })
 
         // Constraints
-        declareTransitionConstraints()
-        declareFiringConstraints()
-        declareOutputEventConstraints()
-        declareAlgorithmConstraints()
-        if (Globals.IS_BFS_AUTOMATON)
-            declareAutomatonBfsConstraints()
-        declareColorConstraints(isEncodeReverseImplication)
         declareNodeTypeConstraints()
         declareParentAndChildrenConstraints()
         declareNoneTypeNodesConstraints()
@@ -196,8 +183,6 @@ private class ExtendedTaskImpl(
         declareNotNodesConstraints()
         if (Globals.IS_BFS_GUARD)
             declareGuardBfsConstraints()
-        if (Globals.IS_ENCODE_TRANSITIONS_ORDER)
-            declareTransitionsOrderConstraints()
         // TODO: declareAdhocConstraints()
     }
 

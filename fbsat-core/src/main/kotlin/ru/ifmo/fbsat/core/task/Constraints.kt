@@ -3,19 +3,19 @@
 package ru.ifmo.fbsat.core.task
 
 import com.github.lipen.multiarray.IntMultiArray
+import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.Solver.Companion.falseVariable
 import ru.ifmo.fbsat.core.solver.exactlyOne
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.implyAnd
-import ru.ifmo.fbsat.core.solver.implyIff
 import ru.ifmo.fbsat.core.solver.implyIffAnd
-import ru.ifmo.fbsat.core.solver.implyIffOr
 import ru.ifmo.fbsat.core.solver.implyOr
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.exhaustive
@@ -158,13 +158,19 @@ fun Solver.declareTransitionConstraints() {
     // transition[k, 0] => transition[k+1, 0]
     for (c in 1..C)
         for (k in 1 until K)
-            imply(transition[c, k, C + 1], transition[c, k + 1, C + 1])
+            imply(
+                transition[c, k, C + 1],
+                transition[c, k + 1, C + 1]
+            )
 
     comment("2.3. Only null-transitions have no input event")
     // transition[k, 0] <=> input_event[k, 0]
     for (c in 1..C)
         for (k in 1..K)
-            iff(transition[c, k, C + 1], inputEvent[c, k, E + 1])
+            iff(
+                transition[c, k, C + 1],
+                inputEvent[c, k, E + 1]
+            )
 
     comment("+2.4. Ad-hoc: no transition to the first state")
     for (c in 1..C)
@@ -231,8 +237,8 @@ fun Solver.declareOutputEventConstraints() {
 
     comment("4. Output event constraints")
 
-    comment("4.0. ONE(output_event)_{1..O}")
-    for (c in 1..C)
+    comment("4.0. ONE(output_event)_{0..O} :: c > 1")
+    for (c in 2..C)
         exactlyOne {
             for (o in 1..O)
                 yield(outputEvent[c, o])
@@ -246,8 +252,12 @@ fun Solver.declareOutputEventConstraints() {
             imply(color[v, c], outputEvent[c, o])
     }
 
-    comment("4.2. Start state does INITO (root's output event)")
-    // clause(outputEvent[1, scenarioTree.outputEvent(1)])
+    comment("4.2. Only start state has epsilon output event")
+    clause(outputEvent[1, O + 1])
+    for (o in 1..O)
+        clause(-outputEvent[1, o])
+    for (c in 2..C)
+        clause(-outputEvent[c, O + 1])
 }
 
 fun Solver.declareAlgorithmConstraints() {
@@ -290,7 +300,6 @@ fun Solver.declareAlgorithmConstraints() {
 fun Solver.declareAutomatonBfsConstraints() {
     val C: Int by context
     val K: Int by context
-    val falseVariable: Int by context
     val transition: IntMultiArray by context
     val bfsTransitionAutomaton = newArray(C, C)
     val bfsParentAutomaton = newArray(C, C) { (j, i) ->
@@ -361,6 +370,7 @@ fun Solver.declareAutomatonBfsConstraints() {
     // EO_{i<j}( p[j,i] ) :: j>1
     for (j in 2..C)
         exactlyOne {
+            // atLeastOne {
             for (i in 1 until j)
                 yield(bfsParentAutomaton[j, i])
         }
@@ -377,7 +387,6 @@ fun Solver.declareGuardBfsConstraints() {
     val C: Int by context
     val K: Int by context
     val P: Int by context
-    val falseVariable: Int by context
     val parent: IntMultiArray by context
 
     comment("66. Guard BFS constraints")
@@ -386,7 +395,7 @@ fun Solver.declareGuardBfsConstraints() {
         for (k in 1..K) {
             // p[j, i] <=> parent[j, i]
             val bfsParentGuard = newArray(P, P + 1) { (j, i) ->
-                if (i < j) parent[c, k, j, i] else falseVariable
+                parent[c, k, j, i]
             }
 
             // // p_order[j, i] <=> p[j] >= i
@@ -410,22 +419,18 @@ fun Solver.declareGuardBfsConstraints() {
             // // p[j] < j  (same as)  ~p_order[j,j]  (Note: using monotonicity)
             // for (j in 1..P)
             //     clause(-bfsParentGuard_order[j, j])
-            // p[j, i] => p[j+1]>=i | p[j+1]=0
+            // // p[j, i] => p[j+1]>=i | p[j+1]=0
             // for (j in 1 until P)
             //     for (i in 1..P)
             //     // implyOr(bfsParentGuard[j, i], bfsParentGuard_order[j + 1, i], -bfsParentGuard_order[j + 1, 1])
             //         imply(bfsParentGuard[j, i], bfsParentGuard_order[j + 1, i])
 
-            // p[j] < j
-            for (j in 1..P)
-                for (i in j..P)
-                    clause(-bfsParentGuard[j, i])
-
+            comment("66.1. Propagate the absence of a parent")
             // p[j, 0] => p[j+1, 0] :: j>1
             for (j in 2 until P)
                 imply(bfsParentGuard[j, P + 1], bfsParentGuard[j + 1, P + 1])
 
-            comment("66.4. BFS(p)")
+            comment("66.2. BFS(p)")
             // p[j, i] => ~p[j+1, n] :: LB<=n<i<j<UB
             for (j in 3 until P)
                 for (i in 2 until j)
@@ -448,17 +453,18 @@ fun Solver.declareNodeTypeConstraints() {
         for (k in 1..K)
             for (p in 1..P)
                 exactlyOne {
-                    for (nt in NodeType.values()) {
-                        if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
+                    for (nt in NodeType.values())
                         yield(nodeType[c, k, p, nt.value])
-                    }
                 }
 
     comment("7.1. Only null-transitions have no guard")
     // transition[0] <=> nodetype[1, NONE]
     for (c in 1..C)
         for (k in 1..K)
-            iff(transition[c, k, C + 1], nodeType[c, k, 1, NodeType.NONE.value])
+            iff(
+                transition[c, k, C + 1],
+                nodeType[c, k, 1, NodeType.NONE.value]
+            )
 }
 
 fun Solver.declareParentAndChildrenConstraints() {
@@ -471,23 +477,21 @@ fun Solver.declareParentAndChildrenConstraints() {
 
     comment("8. Parent and children constraints")
 
-    comment("8.0a. ONE(parent)_{0..P} :: parent[p] < p")
+    comment("8.0a. ONE(parent)_{0..P}")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
                 exactlyOne {
-                    yield(parent[c, k, p, P + 1])
-                    for (par in 1 until p)
+                    for (par in 1..(P + 1))
                         yield(parent[c, k, p, par])
                 }
 
-    comment("8.0b. ONE(child)_{0..P} :: child[p] > p")
+    comment("8.0b. ONE(child)_{0..P}")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
                 exactlyOne {
-                    yield(child[c, k, p, P + 1])
-                    for (ch in (p + 1)..P)
+                    for (ch in 1..(P + 1))
                         yield(child[c, k, p, ch])
                 }
 
@@ -638,7 +642,7 @@ fun Solver.declareAndOrNodesConstraints() {
 
     comment("11. AND/OR nodes constraints")
 
-    comment("11.0. AND/OR nodes cannot have numbers P-1 or P")
+    comment("11.0a. AND/OR nodes cannot have numbers P-1 or P")
     for (c in 1..C)
         for (k in 1..K) {
             if (P >= 1) {
@@ -651,7 +655,7 @@ fun Solver.declareAndOrNodesConstraints() {
             }
         }
 
-    comment("11.1. AND/OR: left child cannot have number P")
+    comment("11.0b. AND/OR: left child cannot have number P")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 2))
@@ -663,7 +667,7 @@ fun Solver.declareAndOrNodesConstraints() {
                     )
                 }
 
-    comment("11.1+. AND/OR nodes have left child")
+    comment("11.1. AND/OR nodes have left child")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 2))
@@ -690,7 +694,23 @@ fun Solver.declareAndOrNodesConstraints() {
                         )
                     }
 
-    comment("11.5a. AND: value is calculated as a conjunction of children")
+    comment("11.3. AND/OR: hard to explain")
+    // parent[p, par] & nodetype[par, AND/OR] => child[par, p] | child[par, p-1]
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 3..P)
+                for (par in 1..(p - 2))
+                    for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
+                        if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
+                        clause(
+                            -parent[c, k, p, par],
+                            -nodeType[c, k, par, nt.value],
+                            child[c, k, par, p],
+                            child[c, k, par, p - 1]
+                        )
+                    }
+
+    comment("11.4a. AND: value is calculated as a conjunction of children")
     // nodetype[p, AND] & child[p, ch] => AND_u( value[p, u] <=> value[ch, u] & value[ch+1, u] )
     for (c in 1..C)
         for (k in 1..K)
@@ -708,7 +728,7 @@ fun Solver.declareAndOrNodesConstraints() {
                     }
 
     if (!Globals.IS_FORBID_OR) {
-        comment("11.5b. OR: value is calculated as a disjunction of children")
+        comment("11.4b. OR: value is calculated as a disjunction of children")
         // nodetype[p, OR] & child[p, ch] => AND_u( value[p, u] <=> value[ch, u] | value[ch+1, u] )
         for (c in 1..C)
             for (k in 1..K)
@@ -733,6 +753,7 @@ fun Solver.declareNotNodesConstraints() {
     val P: Int by context
     val U: Int by context
     val nodeType: IntMultiArray by context
+    val parent: IntMultiArray by context
     val child: IntMultiArray by context
     val nodeValue: IntMultiArray by context
 
@@ -743,7 +764,7 @@ fun Solver.declareNotNodesConstraints() {
         for (k in 1..K)
             clause(-nodeType[c, k, P, NodeType.NOT.value])
 
-    comment("12.0+. NOT nodes have left child")
+    comment("12.1. NOT nodes have left child")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 1))
@@ -752,7 +773,19 @@ fun Solver.declareNotNodesConstraints() {
                     -child[c, k, p, P + 1]
                 )
 
-    comment("12.5. NOT: value is calculated as a negation of child")
+    comment("12.2. NOT: parent's child is the current node")
+    // parent[p, par] & nodetype[par, NOT] => child[par, p]
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..P)
+                for (par in 1 until p)
+                    clause(
+                        -parent[c, k, p, par],
+                        -nodeType[c, k, p, NodeType.NOT.value],
+                        child[c, k, par, p]
+                    )
+
+    comment("12.3. NOT: value is calculated as a negation of child")
     // nodetype[p, NOT] & child[p, ch] => AND_u( value[p, u] <=> ~value[ch, u] )
     for (c in 1..C)
         for (k in 1..K)
@@ -1035,40 +1068,23 @@ fun Solver.declareNegativeGuardConstraints() {
     val K: Int by context
     val P: Int by context
     val X: Int by context
-    val negUIs: List<String> by context
+    val negUIs: List<InputValues> by context
     val newOnlyNegUs: List<Int> by context
     val nodeType: IntMultiArray by context
     val terminal: IntMultiArray by context
-    val childLeft: IntMultiArray by context
-    val childRight: IntMultiArray by context
+    val child: IntMultiArray by context
     val negNodeValue: IntMultiArray by context
-    val negChildValueLeft: IntMultiArray by context
-    val negChildValueRight: IntMultiArray by context
 
     comment("Neg. Guard constraints re-definition for CE unique inputs")
 
-    comment("Neg.9.3. None-type nodes have False value and child_values")
+    comment("Neg.9.3. None-type nodes have False value")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
                 for (u in newOnlyNegUs)
-                    implyAnd(
+                    imply(
                         nodeType[c, k, p, NodeType.NONE.value],
-                        -negNodeValue[c, k, p, u],
-                        -negChildValueLeft[c, k, p, u],
-                        -negChildValueRight[c, k, p, u]
-                    )
-
-    comment("Neg.10.3. Terminal: child_value_left and child_value_right are False")
-    // nodetype[p, TERMINAL] => AND_u( ~child_value_left[p, u] & ~child_value_right[p, u] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                for (u in newOnlyNegUs)
-                    implyAnd(
-                        nodeType[c, k, p, NodeType.TERMINAL.value],
-                        -negChildValueLeft[c, k, p, u],
-                        -negChildValueRight[c, k, p, u]
+                        -negNodeValue[c, k, p, u]
                     )
 
     comment("Neg.10.4. Terminals have value from associated input variable")
@@ -1078,109 +1094,59 @@ fun Solver.declareNegativeGuardConstraints() {
             for (p in 1..P)
                 for (u in newOnlyNegUs)
                     for (x in 1..X)
-                        when (val char = negUIs[u - 1][x - 1]) {
-                            '1' -> imply(terminal[c, k, p, x], negNodeValue[c, k, p, u])
-                            '0' -> imply(terminal[c, k, p, x], -negNodeValue[c, k, p, u])
-                            else -> error("Character $char for u = $u, x = $x is neither '1' nor '0'")
-                        }
+                        if (negUIs[u - 1][x - 1])
+                            imply(terminal[c, k, p, x], negNodeValue[c, k, p, u])
+                        else
+                            imply(terminal[c, k, p, x], -negNodeValue[c, k, p, u])
 
-    comment("Neg.11.4a. AND/OR: child_value_left is a value of left child")
-    // nodetype[p, AND/OR] & child_left[p, ch] => AND_u( child_value_left[p,u] <=> value[ch, u] )
+    comment("Neg.11.4a. AND: value is calculated as a conjunction of children")
+    // nodetype[p, AND] & child[p, ch] => AND_u( value[p, u] <=> value[ch, u] & value[ch+1, u] )
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 2))
-                for (ch in (p + 1)..(P - 1))
-                    for (u in newOnlyNegUs)
-                        for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
-                            if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
-                            val x1 = nodeType[c, k, p, nt.value]
-                            val x2 = childLeft[c, k, p, ch]
-                            val x3 = negChildValueLeft[c, k, p, u]
-                            val x4 = negNodeValue[c, k, ch, u]
-                            clause(-x1, -x2, -x3, x4)
-                            clause(-x1, -x2, x3, -x4)
-                        }
-
-    comment("Neg.11.4b. AND/OR: child_value_right is a value of right child")
-    // nodetype[p, AND/OR] & child_right[p, ch] => AND_u( child_value_right[p,u] <=> value[ch, u] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..(P - 2))
-                for (ch in (p + 2)..P)
-                    for (u in newOnlyNegUs)
-                        for (nt in sequenceOf(NodeType.AND, NodeType.OR)) {
-                            if (Globals.IS_FORBID_OR && nt == NodeType.OR) continue
-                            val x1 = nodeType[c, k, p, nt.value]
-                            val x2 = childRight[c, k, p, ch]
-                            val x3 = negChildValueRight[c, k, p, u]
-                            val x4 = negNodeValue[c, k, ch, u]
-                            clause(-x1, -x2, -x3, x4)
-                            clause(-x1, -x2, x3, -x4)
-                        }
-
-    comment("Neg.11.5a. AND: value is calculated as a conjunction of children")
-    // nodetype[p, AND] => AND_u(value[p, u] <=> (child_value_left[p, u] & child_value_right[p, u]))
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..(P - 2))
-                for (u in newOnlyNegUs)
-                    implyIffAnd(
-                        nodeType[c, k, p, NodeType.AND.value],
-                        negNodeValue[c, k, p, u],
-                        negChildValueLeft[c, k, p, u],
-                        negChildValueRight[c, k, p, u]
-                    )
+                for (ch in (p + 1) until P)
+                    for (u in newOnlyNegUs) {
+                        val x1 = nodeType[c, k, p, NodeType.AND.value]
+                        val x2 = child[c, k, p, ch]
+                        val x3 = negNodeValue[c, k, p, u]
+                        val x4 = negNodeValue[c, k, ch, u]
+                        val x5 = negNodeValue[c, k, ch + 1, u]
+                        clause(-x1, -x2, -x3, x4)
+                        clause(-x1, -x2, -x3, x5)
+                        clause(-x1, -x2, x3, -x4, -x5)
+                    }
 
     if (!Globals.IS_FORBID_OR) {
-        comment("Neg.11.5b. OR: value is calculated as a disjunction of children")
-        // nodetype[p, OR] => AND_u( value[p, u] <=> (child_value_left[p, u] | child_value_right[p, u]) )
+        comment("Neg.11.4b. OR: value is calculated as a disjunction of children")
+        // nodetype[p, OR] & child[p, ch] => AND_u( value[p, u] <=> value[ch, u] | value[ch+1, u] )
         for (c in 1..C)
             for (k in 1..K)
                 for (p in 1..(P - 2))
-                    for (u in newOnlyNegUs)
-                        implyIffOr(
-                            nodeType[c, k, p, NodeType.OR.value],
-                            negNodeValue[c, k, p, u],
-                            negChildValueLeft[c, k, p, u],
-                            negChildValueRight[c, k, p, u]
-                        )
+                    for (ch in (p + 1) until P)
+                        for (u in newOnlyNegUs) {
+                            val x1 = nodeType[c, k, p, NodeType.OR.value]
+                            val x2 = child[c, k, p, ch]
+                            val x3 = negNodeValue[c, k, p, u]
+                            val x4 = negNodeValue[c, k, ch, u]
+                            val x5 = negNodeValue[c, k, ch + 1, u]
+                            clause(-x1, -x2, -x3, x4, x5)
+                            clause(-x1, -x2, x3, -x4)
+                            clause(-x1, -x2, x3, -x5)
+                        }
     }
 
-    comment("Neg.12.4a. NOT: child_value_left is a value of left child")
-    // nodetype[p, NOT] & child_left[p, ch] => AND_u( child_value_left[p, u] <=> value[ch, u] )
+    comment("Neg.12.3. NOT: value is calculated as a negation of child")
+    // nodetype[p, NOT] & child[p, ch] => AND_u( value[p, u] <=> ~value[ch, u] )
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 1))
                 for (ch in (p + 1)..P)
                     for (u in newOnlyNegUs) {
                         val x1 = nodeType[c, k, p, NodeType.NOT.value]
-                        val x2 = childLeft[c, k, p, ch]
-                        val x3 = negChildValueLeft[c, k, p, u]
+                        val x2 = child[c, k, p, ch]
+                        val x3 = negNodeValue[c, k, p, u]
                         val x4 = negNodeValue[c, k, ch, u]
-                        clause(-x1, -x2, -x3, x4)
-                        clause(-x1, -x2, x3, -x4)
+                        clause(-x1, -x2, -x3, -x4)
+                        clause(-x1, -x2, x3, x4)
                     }
-
-    comment("Neg.12.4b. NOT: child_value_right is False")
-    // nodetype[p, NOT] => AND_u( ~child_value_right[p, u] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..(P - 1))
-                for (u in newOnlyNegUs)
-                    imply(
-                        nodeType[c, k, p, NodeType.NOT.value],
-                        -negChildValueRight[c, k, p, u]
-                    )
-
-    comment("Neg.12.5. NOT: value is calculated as a negation of child")
-    // nodetype[p, NOT] => AND_u( value[p, u] <=> ~child_value_left[p, u] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..(P - 1))
-                for (u in newOnlyNegUs)
-                    implyIff(
-                        nodeType[c, k, p, NodeType.NOT.value],
-                        negNodeValue[c, k, p, u],
-                        -negChildValueLeft[c, k, p, u]
-                    )
 }

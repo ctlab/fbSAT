@@ -68,7 +68,9 @@ class FbSAT : CliktCommand() {
         "-o", "--outdir",
         help = "Output directory [default: current directory]",
         metavar = "<path>"
-    ).file().defaultLazy { File(".") }
+    ).file().defaultLazy {
+        File(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")))
+    }
 
     // TODO: enum Method
     private val method by option(
@@ -110,6 +112,12 @@ class FbSAT : CliktCommand() {
     private val maxTotalGuardsSize by option(
         "-N",
         help = "Upper bound for the total size of guards",
+        metavar = "<int>"
+    ).int()
+
+    private val numberOfModules by option(
+        "-M",
+        help = "Number of modules",
         metavar = "<int>"
     ).int()
 

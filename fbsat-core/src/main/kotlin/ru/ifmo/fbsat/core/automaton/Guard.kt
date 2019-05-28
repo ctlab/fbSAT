@@ -82,11 +82,11 @@ class TruthTableGuard(
             "[${truthTable.values.take(3).toBinaryString()}${Typography.ellipsis}]"
 
     override fun toFbtString(): String {
-        TODO()
+        return "TRUTH_TABLE"
     }
 
     override fun toSmvString(): String {
-        TODO()
+        return "TRUTH_TABLE"
         // return truthTable
         //     .asIterable()
         //     .zip(uniqueInputs)

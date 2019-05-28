@@ -7,7 +7,6 @@ import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
-import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
@@ -86,7 +85,7 @@ class Automaton(
         return _states[id]!!
     }
 
-    fun addState(id: Int, outputEvent: OutputEvent, algorithm: Algorithm) {
+    fun addState(id: Int, outputEvent: OutputEvent?, algorithm: Algorithm) {
         require(id !in _states) { "Automaton already has state '$id'" }
         _states[id] = State(id, outputEvent, algorithm)
         lazyCache.invalidate()
@@ -186,11 +185,12 @@ class Automaton(
                 }
             }.joinToString("\n")
 
-            val tableBody = """
-                        <TR><TD align="center">$id / ${outputEvent?.name ?: 'ε'}</TD></TR>
-                        <HR/>
-                        %s
-                    """.trimIndent().format(vs)
+            val tableBody = if (vs.isNotBlank()) """
+                <TR><TD align="center">$id / ${outputEvent?.name ?: 'ε'}</TD></TR>
+                <HR/>
+                %s
+                """.trimIndent().format(vs)
+            else """<TR><TD align="center">$id / ${outputEvent?.name ?: 'ε'}</TD></TR>"""
 
             val html = """
                         <TABLE style="rounded" cellborder="0" cellspacing="0">
@@ -217,28 +217,19 @@ class Automaton(
 
     data class EvalResult(val destination: State, val outputAction: OutputAction)
 
-    private fun eval(scenario: Scenario): List<EvalResult?> {
-        val results: Array<EvalResult?> = arrayOfNulls(scenario.elements.size)
-
-        var currentState: State = initialState
-        var currentValues: OutputValues = OutputValues.zeros(outputNames.size)
-
-        for ((j, element) in scenario.elements.withIndex()) {
-            val inputAction = element.inputAction
-            val result = currentState.eval(inputAction, currentValues)
-            val (newState, outputAction) = result
-
-            if (outputAction == element.outputAction) {
-                results[j] = result
-            } else {
-                break
+    fun eval(
+        inputActions: Iterable<InputAction>,
+        startState: State = initialState,
+        startValues: OutputValues = OutputValues.zeros(outputNames.size)
+    ): List<EvalResult> {
+        var currentState = startState
+        var currentValues = startValues
+        return inputActions.map { inputAction ->
+            currentState.eval(inputAction, currentValues).also {
+                currentState = it.destination
+                currentValues = it.outputAction.values
             }
-
-            currentState = newState
-            currentValues = outputAction.values
         }
-
-        return results.asList()
     }
 
     /**
@@ -247,8 +238,21 @@ class Automaton(
      * @return `true` if [positiveScenario] is satisfied.
      */
     fun verify(positiveScenario: PositiveScenario): Boolean {
-        val results: List<EvalResult?> = eval(positiveScenario)
-        return results.last() != null
+        val elements = positiveScenario.elements
+        val results = eval(elements.map { it.inputAction })
+        for ((i, xxx) in elements.zip(results).withIndex()) {
+            val (element, result) = xxx
+            if (result.outputAction != element.outputAction) {
+                // Contradiction found => positive scenario is not satisfied => verify failure
+                println("Contradiction found => positive scenario is not satisfied")
+                println("xxx = $xxx")
+                println("i+1 = ${i + 1}")
+                println("result.outputAction != element.outputAction")
+                println("${result.outputAction} != ${element.outputAction}")
+                return false
+            }
+        }
+        return true
     }
 
     /**
@@ -256,30 +260,40 @@ class Automaton(
      *
      * @return `true` if [negativeScenario] is **not** satisfied.
      */
-    fun verify(negativeScenario: NegativeScenario, index: Int? = null): Boolean {
-        val results: List<State?> = eval(negativeScenario).map { it?.destination }
+    fun verify(negativeScenario: NegativeScenario): Boolean {
+        val elements = negativeScenario.elements
+        val results = eval(elements.map { it.inputAction })
+
+        for ((element, result) in elements.zip(results)) {
+            if (result.outputAction != element.outputAction) {
+                // Contradiction found => negative scenario is not satisfied => verify ok
+                return true
+            }
+        }
 
         if (negativeScenario.loopPosition != null) {
-            val loop = results[negativeScenario.loopPosition - 1]
+            val loop = results.elementAt(negativeScenario.loopPosition - 1)
             val last = results.last()
-            if (loop != null && last != null) {
-                if (last == loop) {
-                    println("[!] Negative scenario${index?.let { " ($index)" } ?: ""} is satisfied (last==loop)")
-                    println(">>> satisfyingStates = ${results.map { it?.id ?: 0 }} (size = ${results.size})")
-                    println(">>> something = ${negativeScenario.elements.map { it.nodeId }}")
-                    println(">>> loopPosition = ${negativeScenario.loopPosition}")
-                    println(">>> loop = $loop")
-                    println(">>> last = $last")
-                    println(">>> negativeScenario = $negativeScenario")
-                    return false
-                }
+            @Suppress("LiftReturnOrAssignment")
+            if (last.destination == loop.destination) {
+                log.error("Negative scenario is satisfied (last==loop)")
+                // println("[!] Negative scenario${index?.let { " ($index)" } ?: ""} is satisfied (last==loop)")
+                // println(">>> satisfyingStates = ${results.map { it?.id ?: 0 }} (size = ${results.size})")
+                // println(">>> something = ${negativeScenario.elements.map { it.nodeId }}")
+                // println(">>> loopPosition = ${negativeScenario.loopPosition}")
+                // println(">>> loop = $loop")
+                // println(">>> last = $last")
+                // println(">>> negativeScenario = $negativeScenario")
+                // Last and loop-back elements are satisfied by the same state
+                return false
+            } else {
+                // Last and loop-back elements are satisfied by different states
+                return true
             }
-        } else if (results.last() != null) {
+        } else {
             log.error("Terminal is satisfied")
             return false
         }
-
-        return true
     }
 
     /**
@@ -288,7 +302,7 @@ class Automaton(
      * @return `true` if **all** scenarios are satisfied.
      */
     fun verify(scenarioTree: ScenarioTree): Boolean =
-        scenarioTree.scenarios.all(this@Automaton::verify)
+        scenarioTree.scenarios.all(::verify)
 
     /**
      * Verify all negative scenarios in given [negativeScenarioTree].
@@ -296,7 +310,7 @@ class Automaton(
      * @return `true` if **all** scenarios are **not** satisfied.
      */
     fun verify(negativeScenarioTree: NegativeScenarioTree): Boolean =
-        negativeScenarioTree.negativeScenarios.mapIndexed { index, scenario -> verify(scenario, index + 1) }.all { it }
+        negativeScenarioTree.negativeScenarios.all(::verify)
 
     /**
      * Dump automaton in Graphviz, FBT and SMV formats to the [dir] directory using [name] as the file basename.
@@ -304,7 +318,7 @@ class Automaton(
     fun dump(dir: File, name: String = "automaton") {
         dir.mkdirs()
         dumpGv(dir.resolve("$name.gv"))
-        dumpFbt(dir.resolve("$name.fbt"))
+        dumpFbt(dir.resolve("$name.fbt"), name)
         dumpSmv(dir.resolve("$name.smv"))
     }
 
@@ -322,9 +336,9 @@ class Automaton(
     /**
      * Dump automaton in FBT format to [file].
      */
-    fun dumpFbt(file: File) {
+    fun dumpFbt(file: File, name: String? = null) {
         file.printWriter().use {
-            it.println(this.toFbtString())
+            it.println(this.toFbtString(name))
         }
     }
 
@@ -395,20 +409,19 @@ class Automaton(
     /**
      * Stringify automaton to FBT format.
      */
-    fun toFbtString(): String {
+    fun toFbtString(name: String? = null): String {
         fun r() = "%.3f".format((1.0..1000.0).random())
 
         return xml("FBType") {
+            if (name != null) {
+                attribute("Name", name)
+            }
             "Identification"("Standard" to "61499-2")
             "VersionInfo"(
                 "Organization" to "nxtControl GmbH",
                 "Version" to "0.0",
                 "Author" to "fbSAT",
-                "Date" to "2011-08-30",
-                "Remarks" to "Template",
-                "Namespace" to "Main",
-                "Name" to "CentralController",
-                "Comment" to "Basic Function Block Type"
+                "Date" to "2011-08-30"
             )
             "InterfaceList" {
                 "EventInputs" {
@@ -421,7 +434,6 @@ class Automaton(
                     }
                 }
                 "EventOutputs" {
-                    "Event"("Name" to "INITO")
                     for (outputEvent in outputEvents) {
                         "Event"("Name" to outputEvent.name) {
                             for (outputName in outputNames)
@@ -455,7 +467,11 @@ class Automaton(
                     "ECState"(
                         "Name" to "INIT",
                         "x" to r(), "y" to r()
-                    )
+                    ) {
+                        "ECAction"(
+                            "Algorithm" to "INIT"
+                        )
+                    }
                     for (state in states) {
                         "ECState"(
                             "Name" to state.toFbtString(),
@@ -465,8 +481,8 @@ class Automaton(
                             "ECAction"(
                                 "Algorithm" to "${state.id}_${state.algorithm.toFbtString()}"
                             ) {
-                                if (state.outputEvent != null)
-                                    attribute("Output", state.outputEvent)
+                                if (state.outputEvent != null && state.outputEvent.name != "INITO")
+                                    attribute("Output", state.outputEvent.name)
                             }
                         }
                     }
@@ -491,10 +507,24 @@ class Automaton(
                         )
                     }
                 }
+                "Algorithm"(
+                    "Name" to "INIT"
+                ) {
+                    "ST"(
+                        "Text" to (initialState.algorithm as BinaryAlgorithm).toST(outputNames)
+                    )
+                }
                 for (state in states) {
+                    if (state.outputEvent == null || state.outputEvent.name == "INITO")
+                        continue
+
                     val algorithm = state.algorithm as BinaryAlgorithm
-                    "Algorithm"("Name" to "${state.id}_${algorithm.toFbtString()}") {
-                        "ST"("Text" to algorithm.toST(outputNames))
+                    "Algorithm"(
+                        "Name" to "${state.id}_${algorithm.toFbtString()}"
+                    ) {
+                        "ST"(
+                            "Text" to algorithm.toST(outputNames)
+                        )
                     }
                 }
             }
@@ -505,7 +535,7 @@ class Automaton(
      * Stringify automaton to SMV format.
      */
     fun toSmvString(): String {
-        val module = "CONTROL(${inputEvents.joinToString(",")}, ${inputNames.joinToString(",")})"
+        val module = "CONTROL(${inputEvents.joinToString(",") { it.name }}, ${inputNames.joinToString(",")})"
 
         val definitions: MutableMap<String, String> = mutableMapOf(
             "_state" to "{${states.joinToString(", ") { it.toSmvString() }}}"

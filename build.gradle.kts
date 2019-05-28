@@ -14,8 +14,8 @@ plugins {
 allprojects {
     group = "ru.ifmo.fbsat"
     repositories {
-        jcenter()
         maven(url = "https://jitpack.io")
+        jcenter()
     }
 }
 

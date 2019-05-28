@@ -37,7 +37,8 @@ interface BasicTask {
             maxTransitions: Int? = null, // T, unconstrained if null
             outDir: File,
             solverProvider: () -> Solver,
-            autoFinalize: Boolean = true
+            autoFinalize: Boolean = true,
+            isEncodeReverseImplication: Boolean = true
         ): BasicTask = BasicTaskImpl(
             scenarioTree = scenarioTree,
             numberOfStates = numberOfStates,
@@ -45,7 +46,8 @@ interface BasicTask {
             maxTransitions = maxTransitions,
             outDir = outDir,
             solver = solverProvider(),
-            autoFinalize = autoFinalize
+            autoFinalize = autoFinalize,
+            isEncodeReverseImplication = isEncodeReverseImplication
         )
     }
 }
@@ -57,7 +59,8 @@ private class BasicTaskImpl(
     override val maxTransitions: Int?, // T, unconstrained if null
     override val outDir: File,
     private val solver: Solver,
-    private val autoFinalize: Boolean
+    private val autoFinalize: Boolean,
+    private val isEncodeReverseImplication: Boolean
 ) : BasicTask {
     private var isExecuted = false
     private var isReused = false
@@ -65,7 +68,7 @@ private class BasicTaskImpl(
 
     init {
         with(solver) {
-            declareBaseReduction()
+            declareBasicReduction()
             declareCardinality()
         }
     }
@@ -101,7 +104,8 @@ private class BasicTaskImpl(
             maxTransitions = newMaxTransitions,
             outDir = this.outDir,
             solver = this.solver,
-            autoFinalize = this.autoFinalize
+            autoFinalize = this.autoFinalize,
+            isEncodeReverseImplication = this.isEncodeReverseImplication
         )
     }
 
@@ -112,11 +116,11 @@ private class BasicTaskImpl(
     }
 
     @Suppress("LocalVariableName", "UNUSED_VARIABLE")
-    private fun Solver.declareBaseReduction() {
-        when (context["_isBaseReductionDeclared"] as Boolean?) {
+    private fun Solver.declareBasicReduction() {
+        when (context["_isBasicReductionDeclared"] as Boolean?) {
             true -> return
-            false -> error { "_isBaseReductionDeclared is false" }
-            null -> context["_isBaseReductionDeclared"] = true
+            false -> error { "_isBasicReductionDeclared is false" }
+            null -> context["_isBasicReductionDeclared"] = true
         }
 
         // Constants
@@ -134,7 +138,7 @@ private class BasicTaskImpl(
         val transition: IntMultiArray by context(newArray(C, K, C + 1))
         val actualTransition: IntMultiArray by context(newArray(C, E, U, C + 1))
         val inputEvent: IntMultiArray by context(newArray(C, K, E + 1))
-        val outputEvent: IntMultiArray by context(newArray(C, O))
+        val outputEvent: IntMultiArray by context(newArray(C, O + 1))
         val algorithm0: IntMultiArray by context(newArray(C, Z))
         val algorithm1: IntMultiArray by context(newArray(C, Z))
         val color: IntMultiArray by context(newArray(V, C))
@@ -143,12 +147,13 @@ private class BasicTaskImpl(
         val notFired: IntMultiArray by context(newArray(C, U, K))
 
         // Constraints
-        declareColorConstraints()
+        declareColorConstraints(isEncodeReverseImplication)
         declareTransitionConstraints()
         declareFiringConstraints()
         declareOutputEventConstraints()
         declareAlgorithmConstraints()
-        declareAutomatonBfsConstraints()
+        if (Globals.IS_BFS_AUTOMATON)
+            declareAutomatonBfsConstraints()
         if (Globals.IS_ENCODE_TRANSITIONS_ORDER)
             declareTransitionsOrderConstraints()
         // TODO: declareAdhocConstraints()

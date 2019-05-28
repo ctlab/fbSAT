@@ -1,6 +1,10 @@
 package ru.ifmo.fbsat.core.automaton
 
 inline class InputEvent(val name: String) {
+    // override fun toString(): String {
+    //     return name
+    // }
+
     companion object {
         // @JvmStatic
         // val empty: InputEvent = InputEvent("ε")
@@ -11,6 +15,10 @@ inline class InputEvent(val name: String) {
 }
 
 inline class OutputEvent(val name: String) {
+    // override fun toString(): String {
+    //     return name
+    // }
+
     companion object {
         // @JvmStatic
         // val empty: OutputEvent = OutputEvent("ε")
@@ -21,12 +29,13 @@ inline class OutputEvent(val name: String) {
 }
 
 inline class InputValues(val values: List<Boolean>) {
-    // constructor(s: String) : this(s.toBooleanList())
-    // constructor(s: BooleanArray) : this(s.toList())
-
     operator fun get(index: Int): Boolean {
         return values[index]
     }
+
+    // override fun toString(): String {
+    //     return values.toString()
+    // }
 
     companion object {
         fun empty(): InputValues = InputValues(emptyList())
@@ -35,12 +44,13 @@ inline class InputValues(val values: List<Boolean>) {
 }
 
 inline class OutputValues(val values: List<Boolean>) {
-    // constructor(s: String) : this(s.toBooleanList())
-    // constructor(s: BooleanArray) : this(s.toList())
-
     operator fun get(index: Int): Boolean {
         return values[index]
     }
+
+    // override fun toString(): String {
+    //     return values.toString()
+    // }
 
     companion object {
         fun empty(): OutputValues = OutputValues(emptyList())

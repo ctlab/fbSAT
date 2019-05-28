@@ -6,6 +6,8 @@ import okio.Buffer
 import okio.buffer
 import okio.sink
 import okio.source
+import ru.ifmo.fbsat.core.solver.Solver.Companion.falseVariable
+import ru.ifmo.fbsat.core.solver.Solver.Companion.trueVariable
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeIt
 import kotlin.math.absoluteValue
@@ -41,7 +43,11 @@ class RawAssignment(
         vararg shape: Int
     ) = BooleanMultiArray.create(shape) { index ->
         @Suppress("ReplaceGetOrSet")
-        this[variable.get(*index)]
+        when (val v = variable.get(*index)) {
+            trueVariable -> true
+            falseVariable -> false
+            else -> this[v]
+        }
     }
 
     fun intArray(
@@ -50,9 +56,14 @@ class RawAssignment(
         domain: Iterable<Int>,
         onAbsence: (index: IntArray) -> Int /*= { error("variable[index = $it] is undefined") }*/
     ) = IntMultiArray.create(shape) { index ->
-        @Suppress("ReplaceGetOrSet")
-        domain.firstOrNull { last -> this[variable.get(*index, last)] }
-            ?: onAbsence(index)
+        domain.firstOrNull { last ->
+            @Suppress("ReplaceGetOrSet")
+            when (val v = variable.get(*index, last)) {
+                trueVariable -> true
+                falseVariable -> false
+                else -> this[v]
+            }
+        } ?: onAbsence(index)
     }
 }
 
@@ -65,17 +76,20 @@ interface Solver {
     fun newArray(vararg shape: Int, init: (IntArray) -> Int = { newVariable() }): IntMultiArray =
         IntMultiArray.create(shape, init)
 
+    fun comment(comment: String)
+
     fun clause(literals: List<Int>)
     fun clause(vararg literals: Int) = clause(literals.asList())
     fun clause(literals: Sequence<Int>) = clause(literals.toList())
     fun clause(block: suspend SequenceScope<Int>.() -> Unit) = clause(sequence(block).constrainOnce())
 
-    fun comment(comment: String)
-
     fun solve(): RawAssignment?
     fun finalize2()
 
     companion object {
+        const val trueVariable: Int = Int.MAX_VALUE
+        const val falseVariable: Int = -trueVariable
+
         fun default(command: String): Solver = DefaultSolver(command)
         fun incremental(command: String): Solver = IncrementalSolver(command)
     }
@@ -86,9 +100,21 @@ private abstract class AbstractSolver : Solver {
         protected set
     final override var numberOfClauses = 0
         protected set
-    final override val context: SolverContext by lazy { SolverContext(this) }
+    final override val context: SolverContext = SolverContext(this)
 
     final override fun newVariable(): Int = ++numberOfVariables
+
+    @Suppress("FunctionName")
+    protected abstract fun _clause(literals: List<Int>)
+
+    final override fun clause(literals: List<Int>) {
+        if (trueVariable in literals) return
+        if (falseVariable in literals) return clause(literals.filter { it != falseVariable })
+
+        ++numberOfClauses
+
+        _clause(literals)
+    }
 
     @Suppress("FunctionName")
     protected abstract fun _solve(): BooleanArray?
@@ -98,26 +124,16 @@ private abstract class AbstractSolver : Solver {
 
 private class DefaultSolver(private val command: String) : AbstractSolver() {
     private val buffer = Buffer()
-    private val falseVariable: Int by context(newVariable())
-
-    init {
-        // Note: cannot just use "clause(-falseVariable)" because it drops clauses with -falseVariable
-        buffer.writeUtf8("${-falseVariable} 0\n")
-    }
-
-    override fun clause(literals: List<Int>) {
-        if (-falseVariable in literals) return
-        if (falseVariable in literals) return clause(literals.filter { it != falseVariable })
-
-        ++numberOfClauses
-        for (x in literals)
-            buffer.writeUtf8(x.toString()).writeUtf8(" ")
-        buffer.writeUtf8("0\n")
-    }
 
     override fun comment(comment: String) {
         log.debug { "// $comment" }
         buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
+    }
+
+    override fun _clause(literals: List<Int>) {
+        for (x in literals)
+            buffer.writeUtf8(x.toString()).writeUtf8(" ")
+        buffer.writeUtf8("0\n")
     }
 
     override fun _solve(): BooleanArray? {
@@ -190,22 +206,14 @@ private class IncrementalSolver(command: String) : AbstractSolver() {
     private val processInput = process.outputStream.sink().buffer()
     private val processOutput = process.inputStream.source().buffer()
     private val buffer = Buffer()
-    private val falseVariable: Int by context(newVariable())
 
-    init {
-        // Note: cannot just use "clause(-falseVariable)" because it drops clauses with -falseVariable
-        processInput.writeUtf8("${-falseVariable} 0\n")
-        buffer.writeUtf8("${-falseVariable} 0\n")
+    override fun comment(comment: String) {
+        log.debug { "// $comment" }
+        processInput.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
+        buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
     }
 
-    override fun clause(literals: List<Int>) {
-        if (-falseVariable in literals) return
-        if (falseVariable in literals) return clause(literals.filter { it != falseVariable })
-        // require(literals.isNotEmpty())
-        // literals.forEach { check(it != 0) }
-
-        ++numberOfClauses
-
+    override fun _clause(literals: List<Int>) {
         for (x in literals)
             processInput.writeUtf8(x.toString()).writeUtf8(" ")
         processInput.writeUtf8("0\n")
@@ -215,13 +223,9 @@ private class IncrementalSolver(command: String) : AbstractSolver() {
         buffer.writeUtf8("0\n")
     }
 
-    override fun comment(comment: String) {
-        log.debug { "// $comment" }
-        processInput.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
-        buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
-    }
-
     override fun _solve(): BooleanArray? {
+        // clause(newVariable())
+
         // measureNanoTime {
         //     println("[*] Dumping cnf to file...")
         //     File("cnf").outputStream().use {

@@ -26,6 +26,7 @@ interface BasicMinTask {
             initialMaxTransitions: Int? = null, // T_init, unconstrained if null
             outDir: File,
             solverProvider: () -> Solver,
+            isEncodeReverseImplication: Boolean = true,
             isOnlyC: Boolean = false
         ): BasicMinTask = BasicMinTaskImpl(
             scenarioTree = scenarioTree,
@@ -34,6 +35,7 @@ interface BasicMinTask {
             initialMaxTransitions = initialMaxTransitions,
             outDir = outDir,
             solverProvider = solverProvider,
+            isEncodeReverseImplication = isEncodeReverseImplication,
             isOnlyC = isOnlyC
         )
     }
@@ -46,6 +48,7 @@ private class BasicMinTaskImpl(
     override val initialMaxTransitions: Int?, // T_init, unconstrained if null
     override val outDir: File,
     private val solverProvider: () -> Solver,
+    private val isEncodeReverseImplication: Boolean,
     private val isOnlyC: Boolean
 ) : BasicMinTask {
     init {
@@ -69,7 +72,8 @@ private class BasicMinTaskImpl(
                     maxTransitions = initialMaxTransitions,
                     outDir = outDir,
                     solverProvider = solverProvider,
-                    autoFinalize = false
+                    autoFinalize = false,
+                    isEncodeReverseImplication = isEncodeReverseImplication
                 )
                 val (automaton, runningTime) = timeIt { task.infer() }
                 if (automaton != null) {
@@ -92,7 +96,8 @@ private class BasicMinTaskImpl(
                 maxTransitions = initialMaxTransitions,
                 outDir = outDir,
                 solverProvider = solverProvider,
-                autoFinalize = false
+                autoFinalize = false,
+                isEncodeReverseImplication = isEncodeReverseImplication
             )
             val (automaton, runningTime) = timeIt { task.infer() }
             if (automaton != null)

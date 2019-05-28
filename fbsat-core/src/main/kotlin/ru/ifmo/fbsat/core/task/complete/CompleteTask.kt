@@ -131,7 +131,7 @@ private class CompleteTaskImpl(
             outDir = this.outDir,
             solver = this.solver,
             autoFinalize = this.autoFinalize,
-            extendedTask = this.extendedTask.reuse(newMaxTotalGuardsSize)
+            extendedTask = this.extendedTask
         )
     }
 
@@ -159,9 +159,6 @@ private class CompleteTaskImpl(
         val K: Int by context
         val P: Int by context
         val E: Int by context
-        val O: Int by context
-        val X: Int by context
-        val Z: Int by context
         val oldNegV: Int = (context["negV"] as Int?) ?: 0
         val negV: Int by context(negativeScenarioTree.size)
         val newNegVs: IntRange by context((oldNegV + 1)..negV)
@@ -182,22 +179,8 @@ private class CompleteTaskImpl(
         context.computeIfAbsent("forbiddenLoops") { mutableSetOf<Pair<Int, Int>>() }
 
         // Variables
-        val transition: IntMultiArray by context
         val actualTransition: IntMultiArray by context
-        val inputEvent: IntMultiArray by context
-        val outputEvent: IntMultiArray by context
-        val algorithm0: IntMultiArray by context
-        val algorithm1: IntMultiArray by context
-        val color: IntMultiArray by context
-        val nodeType: IntMultiArray by context
-        val terminal: IntMultiArray by context
-        val parent: IntMultiArray by context
-        val childLeft: IntMultiArray by context
-        val childRight: IntMultiArray by context
         val nodeValue: IntMultiArray by context
-        val rootValue: IntMultiArray by context
-        val childValueLeft: IntMultiArray by context
-        val childValueRight: IntMultiArray by context
         val firstFired: IntMultiArray by context
         val notFired: IntMultiArray by context
         val oldNegActualTransition: IntMultiArray = context.getForce("negActualTransition")
@@ -230,26 +213,6 @@ private class CompleteTaskImpl(
         val negRootValue: IntMultiArray by context(
             newArray(C, K, negU) { (c, k, u) ->
                 negNodeValue[c, k, 1, u]
-            }
-        )
-        val oldNegChildValueLeft: IntMultiArray = context.getForce("negChildValueLeft")
-        val negChildValueLeft: IntMultiArray by context(
-            newArray(C, K, P, negU) { (c, k, p, u) ->
-                when (val input = negUIs[u - 1]) {
-                    in newOnlyNegUIs -> newVariable()
-                    in oldNegUIs -> oldNegChildValueLeft[c, k, p, getOldNegU(input)]
-                    else -> childValueLeft[c, k, p, getPosU(input)]
-                }
-            }
-        )
-        val oldNegChildValueRight: IntMultiArray = context.getForce("negChildValueRight")
-        val negChildValueRight: IntMultiArray by context(
-            newArray(C, K, P, negU) { (c, k, p, u) ->
-                when (val input = negUIs[u - 1]) {
-                    in newOnlyNegUIs -> newVariable()
-                    in oldNegUIs -> oldNegChildValueRight[c, k, p, getOldNegU(input)]
-                    else -> childValueRight[c, k, p, getPosU(input)]
-                }
             }
         )
         val oldNegFirstFired: IntMultiArray = context.getForce("negFirstFired")

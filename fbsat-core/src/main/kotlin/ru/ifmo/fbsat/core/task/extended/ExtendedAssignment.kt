@@ -10,9 +10,8 @@ import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.automaton.ParseTreeGuard
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
-import ru.ifmo.multiarray.BooleanMultiArray
-import ru.ifmo.multiarray.IntMultiArray
-import ru.ifmo.multiarray.MultiArray
+import ru.ifmo.fbsat.core.solver.Solver.Companion.falseVariable
+import ru.ifmo.fbsat.core.solver.Solver.Companion.trueVariable
 
 @Suppress("PropertyName")
 internal class ExtendedAssignment(
@@ -24,7 +23,7 @@ internal class ExtendedAssignment(
     val transition: IntMultiArray, // [C, K] : 0..C
     val actualTransition: IntMultiArray, // [C, E, U] : 0..C
     val inputEvent: IntMultiArray, // [C, K] : 0..E
-    val outputEvent: IntMultiArray, // [C] : 1..O
+    val outputEvent: IntMultiArray, // [C] : 0..O
     val algorithm: MultiArray<Algorithm>, // [C]: Algorithm
     val nodeType: MultiArray<NodeType>, // [C, K, P] : NodeType
     val terminal: IntMultiArray, // [C, K, P] : 0..X
@@ -86,9 +85,7 @@ internal class ExtendedAssignment(
                 transition = raw.intArray(transition, C, K, domain = 1..C) { 0 },
                 actualTransition = raw.intArray(actualTransition, C, E, U, domain = 1..C) { 0 },
                 inputEvent = raw.intArray(inputEvent, C, K, domain = 1..E) { 0 },
-                outputEvent = raw.intArray(outputEvent, C, domain = 1..O) { (c) ->
-                    error("outputEvent[c = $c] is undefined")
-                },
+                outputEvent = raw.intArray(outputEvent, C, domain = 1..O) { 0 },
                 algorithm = MultiArray.create(C) { (c) ->
                     BinaryAlgorithm(
                         // Note: c is 1-based, z is 0-based
@@ -98,7 +95,13 @@ internal class ExtendedAssignment(
                 },
                 nodeType = MultiArray.create(C, K, P) { (c, k, p) ->
                     NodeType.values().firstOrNull { nt ->
-                        nodeType[c, k, p, nt.value].let { t -> if (t == 0) false else raw[t] }
+                        nodeType[c, k, p, nt.value].let { t ->
+                            when (t) {
+                                trueVariable -> true
+                                falseVariable -> false
+                                else -> raw[t]
+                            }
+                        }
                     } ?: error("nodeType[c,k,p = $c,$k,$p] is undefined")
                 },
                 terminal = raw.intArray(terminal, C, K, P, domain = 1..X) { 0 },
@@ -120,7 +123,9 @@ internal fun ExtendedAssignment.toAutomaton(): Automaton {
     for (c in 1..C)
         automaton.addState(
             id = c,
-            outputEvent = scenarioTree.outputEvents[outputEvent[c] - 1],
+            outputEvent = outputEvent[c].let {
+                if (it == 0) null else scenarioTree.outputEvents[it - 1]
+            },
             algorithm = algorithm[c]
         )
 

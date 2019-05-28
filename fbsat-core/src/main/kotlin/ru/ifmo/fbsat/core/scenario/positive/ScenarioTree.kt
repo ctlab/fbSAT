@@ -86,6 +86,21 @@ class ScenarioTree(
         val outputValues: OutputValues = outputAction.values
 
         init {
+            if (id > 1) {
+                require(element.inputEvent == null || element.inputEvent in this@ScenarioTree.inputEvents) {
+                    "Unexpected input event '${element.inputEvent}'"
+                }
+                require(element.outputEvent == null || element.outputEvent in this@ScenarioTree.outputEvents) {
+                    "Unexpected output event '${element.outputEvent}'"
+                }
+                require(element.inputValues.values.size == this@ScenarioTree.inputNames.size) {
+                    "Unexpected number of input values (element: ${element.inputValues.values.size}, tree: ${this@ScenarioTree.inputNames.size})"
+                }
+                require(element.outputValues.values.size == this@ScenarioTree.outputNames.size) {
+                    "Unexpected number of output values (element: ${element.outputValues.values.size}, tree: ${this@ScenarioTree.outputNames.size})"
+                }
+            }
+
             this@ScenarioTree._nodes.add(this)
             this@ScenarioTree.lazyCache.invalidate()
             parent?._children?.add(this)
@@ -105,6 +120,7 @@ class ScenarioTree(
                 ),
                 OutputAction(
                     event = null,
+                    // event = OutputEvent("INITO"),
                     values = OutputValues.zeros(scenario.elements.first().outputValues.values.size)
                 )
             ),
@@ -117,7 +133,12 @@ class ScenarioTree(
             if (isTrie) {
                 for (child in current.children) {
                     if (child.inputAction == element.inputAction) {
-                        check(child.element == element) { "ScenarioTree is not deterministic!" }
+                        check(child.element == element) {
+                            println("current = $current")
+                            println("element = $element")
+                            println("child = $child")
+                            "ScenarioTree is not deterministic!"
+                        }
                         current = child
                         continue@meow
                     }
@@ -158,13 +179,15 @@ class ScenarioTree(
             scenarios: List<PositiveScenario>,
             inputNames: List<String>,
             outputNames: List<String>,
+            inputEvents: List<InputEvent>? = null,
+            outputEvents: List<OutputEvent>? = null,
             isTrie: Boolean = true
         ): ScenarioTree {
             return ScenarioTree(
-                inputEvents = scenarios.flatMap { scenario ->
+                inputEvents = inputEvents ?: scenarios.flatMap { scenario ->
                     scenario.elements.mapNotNull { element -> element.inputAction.event }
                 }.distinct(),
-                outputEvents = scenarios.flatMap { scenario ->
+                outputEvents = outputEvents ?: scenarios.flatMap { scenario ->
                     scenario.elements.mapNotNull { element -> element.outputAction.event }
                 }.distinct(),
                 inputNames = inputNames,
@@ -179,10 +202,19 @@ class ScenarioTree(
             file: File,
             inputNames: List<String>,
             outputNames: List<String>,
+            inputEvents: List<InputEvent>? = null,
+            outputEvents: List<OutputEvent>? = null,
             isTrie: Boolean = true
         ): ScenarioTree {
             val scenarios: List<PositiveScenario> = PositiveScenario.fromFile(file)
-            return fromScenarios(scenarios, inputNames, outputNames, isTrie)
+            return fromScenarios(
+                scenarios = scenarios,
+                inputNames = inputNames,
+                outputNames = outputNames,
+                inputEvents = inputEvents,
+                outputEvents = outputEvents,
+                isTrie = isTrie
+            )
         }
     }
 }

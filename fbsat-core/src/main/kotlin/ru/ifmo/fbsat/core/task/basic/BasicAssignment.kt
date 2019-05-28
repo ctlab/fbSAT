@@ -56,15 +56,13 @@ internal class BasicAssignment(
                 scenarioTree = scenarioTree,
                 C = C,
                 K = K,
-                color = raw.intArray(color, V, domain = 1..C) {
-                    error("color[index = $it] is undefined")
+                color = raw.intArray(color, V, domain = 1..C) { (v) ->
+                    error("color[v = $v] is undefined")
                 },
                 transition = raw.intArray(transition, C, K, domain = 1..C) { 0 },
                 actualTransition = raw.intArray(actualTransition, C, E, U, domain = 1..C) { 0 },
                 inputEvent = raw.intArray(inputEvent, C, K, domain = 1..E) { 0 },
-                outputEvent = raw.intArray(outputEvent, C, domain = 1..O) {
-                    error("outputEvent[index = $it] is undefined")
-                },
+                outputEvent = raw.intArray(outputEvent, C, domain = 1..O) { 0 },
                 algorithm = MultiArray.create(C) { (c) ->
                     BinaryAlgorithm(
                         // Note: c is 1-based, z is 0-based
@@ -84,16 +82,14 @@ internal class BasicAssignment(
 internal fun BasicAssignment.toAutomaton(): Automaton {
     val automaton = Automaton(scenarioTree)
 
-    val C = C
-    val K = K
-
-    for (c in 1..C) {
+    for (c in 1..C)
         automaton.addState(
-            c,
-            scenarioTree.outputEvents[outputEvent[c] - 1],
-            algorithm[c]
+            id = c,
+            outputEvent = outputEvent[c].let {
+                if (it == 0) null else scenarioTree.outputEvents[it - 1]
+            },
+            algorithm = algorithm[c]
         )
-    }
 
     for (c in 1..C)
         for (k in 1..K)

@@ -6,6 +6,8 @@ import okio.buffer
 import okio.gzip
 import okio.sink
 import okio.source
+import ru.ifmo.fbsat.core.automaton.InputEvent
+import ru.ifmo.fbsat.core.automaton.OutputEvent
 import java.io.File
 import kotlin.random.Random
 
@@ -56,22 +58,26 @@ fun <T> randomChoice(vararg choices: T): T {
     return choices.random()
 }
 
-fun ClosedRange<Double>.random(): Double {
-    return random(Random)
+fun randomBooleanList(size: Int): List<Boolean> {
+    return List(size) { randomChoice(true, false) }
 }
 
 fun ClosedRange<Double>.random(random: Random): Double {
     return start + random.nextDouble() * (endInclusive - start)
 }
 
+fun ClosedRange<Double>.random(): Double {
+    return random(Random)
+}
+
 /**
  * Pick-and-Place manipulator input events.
  */
-val inputEventsPnP = listOf("REQ")
+val inputEventsPnP = listOf("REQ").map(::InputEvent)
 /**
  * Pick-and-Place manipulator output events.
  */
-val outputEventsPnP = listOf("CNF")
+val outputEventsPnP = listOf("CNF").map(::OutputEvent)
 /**
  * Pick-and-Place manipulator input variables names.
  */
@@ -123,3 +129,10 @@ fun <K, V, T> Map<K, V>.getForce(key: K): T {
 
 val <T> T.exhaustive: T
     get() = this
+
+inline fun <reified T> mutableListOfNulls(size: Int): MutableList<T?> = MutableList(size) { null }
+
+fun <T> Iterable<T>.firstIndexed(predicate: (Int, T) -> Boolean): T =
+    withIndex().first { (index, value) -> predicate(index, value) }.value
+
+fun Iterable<Boolean>.all(): Boolean = all { it }

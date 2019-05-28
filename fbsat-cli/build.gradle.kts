@@ -6,6 +6,7 @@ plugins {
 dependencies {
     implementation(project(":core"))
     implementation(Libs.clikt)
+    implementation(Libs.multiarray)
 }
 
 application {
