@@ -1,5 +1,5 @@
 all:
-	@echo "Specify target [model counterexamples]"
+	@echo "Specify target [model counterexamples clean]"
 
 .PHONY: model
 model: control.smv extra.smv plant.smv main.smv spec.smv
@@ -14,3 +14,9 @@ counterexamples: commands model.smv
 
 	NuSMV -source commands model.smv
 	@echo "Found $(shell grep LTL counterexamples | wc -l) counterexample(s)"
+
+.PHONY: clean
+clean:
+	rm -f ltl
+	rm -f counterexamples
+	rm -f model.smv

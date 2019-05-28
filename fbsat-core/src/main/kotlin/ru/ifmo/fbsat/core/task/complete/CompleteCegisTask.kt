@@ -178,7 +178,7 @@ fun Automaton.verifyWithNuSMV(dir: File): List<Counterexample> {
     dumpSmv(dir.resolve("control.smv"))
 
     // Perform formal verification using NuSMV, generate counterexamples to given ltl-spec
-    val cmd = "make model counterexamples"
+    val cmd = "make clean model counterexamples"
     log.debug { "Running '$cmd'..." }
     val exitcode = Runtime.getRuntime().exec(cmd, null, dir).waitFor()
     check(exitcode == 0) { "NuSMV exitcode: $exitcode" }
