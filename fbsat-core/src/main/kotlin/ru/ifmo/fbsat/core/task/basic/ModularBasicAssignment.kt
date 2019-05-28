@@ -21,7 +21,7 @@ internal class ModularBasicAssignment(
     val transition: IntMultiArray, // [M, C, K] : 0..C
     val actualTransition: IntMultiArray, // [M, C, E, U] : 0..C
     val inputEvent: IntMultiArray, // [M, C, K] : 0..E
-    val outputEvent: IntMultiArray, // [M, C] : 1..O
+    val outputEvent: IntMultiArray, // [M, C] : 0..O
     val outputVariableModule: IntMultiArray, // [Z] : 1..M
     val algorithm: MultiArray<Algorithm>, // [M, C]: Algorithm
     val rootValue: BooleanMultiArray, // [M, C, K, U] : Boolean
@@ -80,9 +80,7 @@ internal class ModularBasicAssignment(
                 transition = raw.intArray(transition, M, C, K, domain = 1..C) { 0 },
                 actualTransition = raw.intArray(actualTransition, M, C, E, U, domain = 1..C) { 0 },
                 inputEvent = raw.intArray(inputEvent, M, C, K, domain = 1..E) { 0 },
-                outputEvent = raw.intArray(outputEvent, M, C, domain = 1..O) { (m, c) ->
-                    error("outputEvent[m = $m, c = $c] is undefined")
-                },
+                outputEvent = raw.intArray(outputEvent, M, C, domain = 1..O) { 0 },
                 outputVariableModule = raw.intArray(outputVariableModule, Z, domain = 1..M) { (z) ->
                     error("outputVariableModule[z = $z] is undefined")
                 },
@@ -113,9 +111,11 @@ internal fun ModularBasicAssignment.toAutomaton(): ModularAutomaton {
 
         for (c in 1..C)
             automaton.addState(
-                c,
-                scenarioTree.outputEvents[outputEvent[m, c] - 1],
-                algorithm[m, c].let { algo ->
+                id = c,
+                outputEvent = outputEvent[m, c].let { o ->
+                    if (o == 0) null else scenarioTree.outputEvents[o - 1]
+                },
+                algorithm = algorithm[m, c].let { algo ->
                     algo as BinaryAlgorithm
                     val algo0 = moduleOutputVariables[m].map { z -> algo.algorithm0[z - 1] }
                     val algo1 = moduleOutputVariables[m].map { z -> algo.algorithm1[z - 1] }

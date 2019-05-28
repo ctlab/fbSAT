@@ -66,7 +66,7 @@ private class ModularBasicTaskImpl(
 
     init {
         with(solver) {
-            declareBaseReduction()
+            declareModularBasicReduction()
             declareCardinality()
         }
     }
@@ -114,11 +114,11 @@ private class ModularBasicTaskImpl(
     }
 
     @Suppress("LocalVariableName", "UNUSED_VARIABLE")
-    private fun Solver.declareBaseReduction() {
-        when (context["_isBaseReductionDeclared"] as Boolean?) {
+    private fun Solver.declareModularBasicReduction() {
+        when (context["_isModularBasicReductionDeclared"] as Boolean?) {
             true -> return
-            false -> error { "_isBaseReductionDeclared is false" }
-            null -> context["_isBaseReductionDeclared"] = true
+            false -> error { "_isModularBasicReductionDeclared is false" }
+            null -> context["_isModularBasicReductionDeclared"] = true
         }
 
         // Constants
@@ -137,7 +137,7 @@ private class ModularBasicTaskImpl(
         val transition by context(newArray(M, C, K, C + 1))
         val actualTransition by context(newArray(M, C, E, U, C + 1))
         val inputEvent by context(newArray(M, C, K, E + 1))
-        val outputEvent by context(newArray(M, C, O))
+        val outputEvent by context(newArray(M, C, O + 1))
         val outputVariableModule by context(newArray(Z, M))
         val algorithm0 by context(newArray(M, C, Z))
         val algorithm1 by context(newArray(M, C, Z))

@@ -85,8 +85,8 @@ internal fun BasicAssignment.toAutomaton(): Automaton {
     for (c in 1..C)
         automaton.addState(
             id = c,
-            outputEvent = outputEvent[c].let {
-                if (it == 0) null else scenarioTree.outputEvents[it - 1]
+            outputEvent = outputEvent[c].let { o ->
+                if (o == 0) null else scenarioTree.outputEvents[o - 1]
             },
             algorithm = algorithm[c]
         )
