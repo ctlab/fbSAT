@@ -248,7 +248,7 @@ fun Solver.declareModularOutputEventConstraints() {
 
     comment("4.0. ONE(output_event)_{1..O}")
     for (m in 1..M)
-        for (c in 1..C)
+        for (c in 2..C)
             exactlyOne {
                 for (o in 1..O)
                     yield(outputEvent[m, c, o])
@@ -263,9 +263,14 @@ fun Solver.declareModularOutputEventConstraints() {
                 imply(color[m, v, c], outputEvent[m, c, o])
         }
 
-    comment("4.2. Start state does INITO (root's output event)")
-    for (m in 1..M)
-        clause(outputEvent[m, 1, scenarioTree.outputEvent(1)])
+    comment("4.2. Only start states have epsilon output events")
+    for (m in 1..M) {
+        clause(outputEvent[m, 1, O + 1])
+        for (o in 1..O)
+            clause(-outputEvent[m, 1, o])
+        for (c in 2..C)
+            clause(-outputEvent[m, c, O + 1])
+    }
 }
 
 fun Solver.declareModularAlgorithmConstraints() {
@@ -324,7 +329,7 @@ fun Solver.declareModularAlgorithmConstraints() {
 
     for (m in 1..M)
         for (z in 1..Z)
-            for (c in 1..C) {
+            for (c in 2..C) {
                 implyAnd(-outputVariableModule[z, m], -algorithm0[m, c, z])
                 implyAnd(-outputVariableModule[z, m], -algorithm1[m, c, z])
             }
