@@ -411,6 +411,7 @@ class Automaton(
      */
     fun toFbtString(name: String? = null): String {
         fun r() = "%.3f".format((1.0..1000.0).random())
+        val Z = outputNames.size
 
         return xml("FBType") {
             if (name != null) {
@@ -425,6 +426,7 @@ class Automaton(
             )
             "InterfaceList" {
                 "EventInputs" {
+                    // Note: INIT input event has no associated variables
                     "Event"("Name" to "INIT")
                     for (inputEvent in inputEvents) {
                         "Event"("Name" to inputEvent.name) {
@@ -434,7 +436,8 @@ class Automaton(
                     }
                 }
                 "EventOutputs" {
-                    for (outputEvent in outputEvents) {
+                    // Note: INITO output event has the same associated variables as all output events
+                    for (outputEvent in outputEvents + OutputEvent("INITO")) {
                         "Event"("Name" to outputEvent.name) {
                             for (outputName in outputNames)
                                 "With"("Var" to outputName)
@@ -461,15 +464,16 @@ class Automaton(
             "BasicFB" {
                 "ECC" {
                     "ECState"(
-                        "Name" to "START",
+                        "Name" to "START", // START state
                         "x" to r(), "y" to r()
                     )
                     "ECState"(
-                        "Name" to "INIT",
+                        "Name" to "INIT", // INIT state
                         "x" to r(), "y" to r()
                     ) {
                         "ECAction"(
-                            "Algorithm" to "INIT"
+                            "Algorithm" to "INIT", // INIT algorithm
+                            "Output" to "INITO" // INITO output event
                         )
                     }
                     for (state in states) {
@@ -481,19 +485,19 @@ class Automaton(
                             "ECAction"(
                                 "Algorithm" to "${state.id}_${state.algorithm.toFbtString()}"
                             ) {
-                                if (state.outputEvent != null && state.outputEvent.name != "INITO")
+                                if (state.outputEvent != null)
                                     attribute("Output", state.outputEvent.name)
                             }
                         }
                     }
                     "ECTransition"(
-                        "Source" to "START",
-                        "Destination" to "INIT",
-                        "Condition" to "INIT",
+                        "Source" to "START", // START state
+                        "Destination" to "INIT", // INIT state
+                        "Condition" to "INIT", // INIT input event
                         "x" to r(), "y" to r()
                     )
                     "ECTransition"(
-                        "Source" to "INIT",
+                        "Source" to "INIT", // INIT state
                         "Destination" to initialState.toFbtString(),
                         "Condition" to "1",
                         "x" to r(), "y" to r()
@@ -508,14 +512,18 @@ class Automaton(
                     }
                 }
                 "Algorithm"(
-                    "Name" to "INIT"
+                    "Name" to "INIT" // INIT algorithm
                 ) {
+                    // Note: INIT algorithm zeroes out all variables
                     "ST"(
-                        "Text" to (initialState.algorithm as BinaryAlgorithm).toST(outputNames)
+                        "Text" to BinaryAlgorithm(
+                            BooleanArray(Z) { false },
+                            BooleanArray(Z) { false }
+                        ).toST(outputNames)
                     )
                 }
                 for (state in states) {
-                    if (state.outputEvent == null || state.outputEvent.name == "INITO")
+                    if (state.outputEvent == null)
                         continue
 
                     val algorithm = state.algorithm as BinaryAlgorithm
