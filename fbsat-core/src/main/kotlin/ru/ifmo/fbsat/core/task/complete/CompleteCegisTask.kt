@@ -107,7 +107,7 @@ private class CompleteCegisTaskImpl(
         check(!isFinalized) { "This task has already been finalized and can't be executed." }
         isExecuted = true
 
-        for (iterationNumber in 1..10000) {
+        for (iterationNumber in 1 until 10000) {
             log.info("CEGIS iteration #$iterationNumber")
             // Update reduction to take into account possible negative scenario tree extension
             update()
@@ -117,6 +117,10 @@ private class CompleteCegisTaskImpl(
                 if (autoFinalize) finalize2()
                 return null
             }
+            // ==============
+            // Dump intermediate automaton
+            automaton.dump(outDir, "_automaton_iter%04d".format(iterationNumber))
+            // ==============
             // Verify automaton with NuSMV
             val counterexamples = automaton.verifyWithNuSMV(outDir)
             if (counterexamples.isEmpty()) {
