@@ -293,11 +293,11 @@ fun Solver.declareModularAlgorithmConstraints() {
 
     comment("5. Algorithm constraints")
 
-    comment("5.1. Start state produces zero outputs")
+    comment("5.1. Start state does nothing")
     for (m in 1..M)
         for (z in 1..Z) {
             clause(-algorithm0[m, 1, z])
-            clause(-algorithm1[m, 1, z])
+            clause(algorithm1[m, 1, z])
         }
 
     comment("5.2. Algorithms definition")
