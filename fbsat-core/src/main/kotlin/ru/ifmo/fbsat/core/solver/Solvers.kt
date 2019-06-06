@@ -102,6 +102,7 @@ private abstract class AbstractSolver : Solver {
         protected set
     final override var numberOfClauses = 0
         protected set
+    @Suppress("LeakingThis")
     final override val context: SolverContext = SolverContext(this)
 
     final override fun newVariable(): Int = ++numberOfVariables
