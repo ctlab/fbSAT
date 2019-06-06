@@ -184,6 +184,7 @@ private class ExtendedTaskImpl(
         if (Globals.IS_BFS_GUARD)
             declareGuardBfsConstraints()
         // TODO: declareAdhocConstraints()
+        declareAdhocConstraints()
     }
 
     @Suppress("LocalVariableName")
@@ -200,41 +201,45 @@ private class ExtendedTaskImpl(
                             yield(-nodeType[c, k, p, NodeType.NONE.value])
             }
         } as IntArray
+
+        if (maxTotalGuardsSize == null) return
+
+        val N: Int by context(maxTotalGuardsSize)
         val declaredN: Int? = context["_declaredN"] as Int?
         solver.declareComparatorLessThanOrEqual(totalizer, N, declaredN)
         context["_declaredN"] = N
     }
 
-    //    private fun Solver.declareAdhocConstraints() {
-    //         // val C: Int by context
-    //         // val K: Int by context
-    //         // val P: Int by context
-    //         // val nodeType: IntMultiArray by context
-    //         // val childLeft: IntMultiArray by context
-    //
-    //         comment("A. AD-HOCs")
-    //
-    //         comment("A.1. Forbid double negation")
-    //         // nodetype[p, NOT] & child_left[p, ch] => ~nodetype[ch, NOT]
-    //         for (c in 1..C)
-    //             for (k in 1..K)
-    //                 for (p in 1..(P - 1))
-    //                     for (ch in (p + 1)..P)
-    //                         clause(
-    //                             -nodeType[c, k, p, NodeType.NOT.value],
-    //                             -childLeft[c, k, p, ch],
-    //                             -nodeType[c, k, ch, NodeType.NOT.value]
-    //                         )
-    //
-    //         comment("A.2. Distinct transitions")
-    //         // TODO: Distinct transitions
-    //
-    //         if (Globals.IS_FORBID_OR) {
-    //             comment("A.3. Forbid ORs")
-    //             for (c in 1..C)
-    //                 for (k in 1..K)
-    //                     for (p in 1..P)
-    //                         clause(-nodeType[c, k, p, NodeType.OR.value])
-    //         }
-    //     }
+    private fun Solver.declareAdhocConstraints() {
+        val C: Int by context
+        val K: Int by context
+        val P: Int by context
+        val nodeType: IntMultiArray by context
+        val child: IntMultiArray by context
+
+        comment("A. AD-HOCs")
+
+        comment("A.1. Forbid double negation")
+        // nodetype[p, NOT] & child_left[p, ch] => ~nodetype[ch, NOT]
+        for (c in 1..C)
+            for (k in 1..K)
+                for (p in 1 until P)
+                    for (ch in (p + 1)..P)
+                        clause(
+                            -nodeType[c, k, p, NodeType.NOT.value],
+                            -child[c, k, p, ch],
+                            -nodeType[c, k, ch, NodeType.NOT.value]
+                        )
+
+        comment("A.2. Distinct transitions")
+        // TODO: Distinct transitions
+
+        if (Globals.IS_FORBID_OR) {
+            comment("A.3. Forbid ORs")
+            for (c in 1..C)
+                for (k in 1..K)
+                    for (p in 1..P)
+                        clause(-nodeType[c, k, p, NodeType.OR.value])
+        }
+    }
 }
