@@ -2,7 +2,7 @@ package ru.ifmo.fbsat.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.context
-import com.github.ajalt.clikt.output.PlaintextHelpFormatter
+import com.github.ajalt.clikt.output.CliktHelpFormatter
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.defaultLazy
 import com.github.ajalt.clikt.parameters.options.flag
@@ -220,7 +220,14 @@ class FbSAT : CliktCommand() {
     )
 
     init {
-        context { helpFormatter = PlaintextHelpFormatter(maxWidth = 999) }
+        context {
+            helpFormatter = CliktHelpFormatter(
+                maxWidth = 999,
+                requiredOptionMarker = "*",
+                showDefaultValues = true,
+                showRequiredTag = true
+            )
+        }
     }
 
     override fun run() {
