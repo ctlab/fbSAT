@@ -161,9 +161,8 @@ private class BasicTaskImpl(
 
     @Suppress("LocalVariableName")
     private fun Solver.declareCardinality() {
-        if (maxTransitions == null) return
+        if (maxTransitions == null && !Globals.IS_ENCODE_TOTALIZER) return
 
-        val T: Int by context(maxTransitions)
         val totalizer: IntArray = context.computeIfAbsent("_totalizerBasic") {
             val transition: IntMultiArray by context
             declareTotalizer(sequence {
@@ -173,6 +172,10 @@ private class BasicTaskImpl(
                         yield(-transition[c, k, C + 1])
             })
         } as IntArray
+
+        if (maxTransitions == null) return
+
+        val T: Int by context(maxTransitions)
         val declaredT: Int? = context["_declaredT"] as Int?
         solver.declareComparatorLessThanOrEqual(totalizer, T, declaredT)
         context["_declaredT"] = T

@@ -188,9 +188,8 @@ private class ExtendedTaskImpl(
 
     @Suppress("LocalVariableName")
     private fun Solver.declareCardinality() {
-        if (maxTotalGuardsSize == null) return
+        if (maxTotalGuardsSize == null && !Globals.IS_ENCODE_TOTALIZER) return
 
-        val N: Int by context(maxTotalGuardsSize)
         val totalizer: IntArray = context.computeIfAbsent("_totalizerExtended") {
             val nodeType: IntMultiArray by context
             declareTotalizer {
