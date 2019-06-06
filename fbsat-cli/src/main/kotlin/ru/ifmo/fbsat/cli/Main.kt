@@ -11,6 +11,8 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.ISO8601
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
@@ -71,7 +73,7 @@ class FbSAT : CliktCommand() {
         help = "Output directory [default: current directory]",
         metavar = "<path>"
     ).file().defaultLazy {
-        File(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")))
+        File("out/${DateTime.now().format(ISO8601.DATETIME_COMPLETE)}")
     }
 
     // TODO: enum Method

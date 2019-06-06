@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.utils
 
+import com.soywiz.klock.DateTime
 import okio.BufferedSource
 import okio.Source
 import okio.buffer
@@ -108,10 +109,12 @@ fun copyFile(source: File, destination: File) {
  * @return [Pair] of [block] execution result and running time (in seconds).
  */
 inline fun <T> timeIt(block: () -> T): Pair<T, Double> {
-    val timeStart = System.currentTimeMillis()
+    val timeStart = DateTime.now()
     val result = block()
-    return result to (System.currentTimeMillis() - timeStart) / 1000.0
+    return result to secondsSince(timeStart)
 }
+
+fun secondsSince(timeStart: DateTime): Double = (DateTime.now() - timeStart).seconds
 
 fun File.sourceAutoGzip(): Source =
     if (extension == "gz")

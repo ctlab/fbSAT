@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.solver
 
 import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.IntMultiArray
+import com.soywiz.klock.DateTime
 import okio.Buffer
 import okio.buffer
 import okio.sink
@@ -9,6 +10,7 @@ import okio.source
 import ru.ifmo.fbsat.core.solver.Solver.Companion.falseVariable
 import ru.ifmo.fbsat.core.solver.Solver.Companion.trueVariable
 import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.secondsSince
 import ru.ifmo.fbsat.core.utils.timeIt
 import kotlin.math.absoluteValue
 import kotlin.properties.ReadOnlyProperty
@@ -151,7 +153,7 @@ private class DefaultSolver(private val command: String) : AbstractSolver() {
         buffer.copyTo(processInput.buffer)
 
         log.debug { "Solving..." }
-        val timeSolveStart = System.currentTimeMillis()
+        val timeSolveStart = DateTime.now()
         processInput.close()
 
         var isSat: Boolean? = null
@@ -162,12 +164,12 @@ private class DefaultSolver(private val command: String) : AbstractSolver() {
                 // if (!line.startsWith("v ")) println(line)
                 when {
                     line == "s SATISFIABLE" -> {
-                        val timeSolve = (System.currentTimeMillis() - timeSolveStart) / 1000.0
+                        val timeSolve = secondsSince(timeSolveStart)
                         log.success("SAT in %.2f seconds".format(timeSolve))
                         isSat = true
                     }
                     line == "s UNSATISFIABLE" -> {
-                        val timeSolve = (System.currentTimeMillis() - timeSolveStart) / 1000.0
+                        val timeSolve = secondsSince(timeSolveStart)
                         log.failure("[-] UNSAT in %.2f seconds".format(timeSolve))
                         isSat = false
                         continue@label

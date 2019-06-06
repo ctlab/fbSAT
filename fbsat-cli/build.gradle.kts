@@ -7,6 +7,7 @@ dependencies {
     implementation(project(":core"))
     implementation(Libs.clikt)
     implementation(Libs.multiarray)
+    implementation(Libs.klock)
 }
 
 application {

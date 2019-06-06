@@ -8,6 +8,7 @@ dependencies {
     implementation(Libs.mordant)
     implementation(Libs.okio)
     implementation(Libs.lazycache)
+    implementation(Libs.klock)
 
     testImplementation(Libs.junit_jupiter_api)
     testRuntimeOnly(Libs.junit_jupiter_engine)

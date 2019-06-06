@@ -14,6 +14,7 @@ object Versions {
     const val mordant = "1.2.1"
     const val kotlin_xml_builder = "1.5.1"
     const val lazycache = "0.3.0"
+    const val klock = "1.4.0"
 }
 
 object Libs {
@@ -26,4 +27,5 @@ object Libs {
     const val mordant = "com.github.ajalt:mordant:${Versions.mordant}"
     const val kotlin_xml_builder = "org.redundent:kotlin-xml-builder:${Versions.kotlin_xml_builder}"
     const val lazycache = "com.github.Lipen:kotlin-lazycache:${Versions.lazycache}"
+    const val klock = "com.soywiz.korlibs.klock:klock-jvm:${Versions.klock}"
 }
