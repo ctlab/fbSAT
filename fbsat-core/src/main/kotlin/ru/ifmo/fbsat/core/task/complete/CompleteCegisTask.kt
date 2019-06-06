@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.task.complete
 
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.Counterexample
+import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.negative.toNegativeScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
@@ -107,9 +108,11 @@ private class CompleteCegisTaskImpl(
         check(!isFinalized) { "This task has already been finalized and can't be executed." }
         isExecuted = true
 
+        lateinit var lastNegativeScenarios: List<NegativeScenario>
+
         for (iterationNumber in 1 until 10000) {
             log.info("CEGIS iteration #$iterationNumber")
-            // Update reduction to take into account possible negative scenario tree extension
+            // Update to take into account possible extension of the negative scenario tree
             update()
             // Infer update
             val automaton: Automaton? = completeTask.infer()
@@ -138,7 +141,14 @@ private class CompleteCegisTaskImpl(
                 )
             }
             // Populate negTree with new negative scenarios
+            val treeSize = negativeScenarioTree.size
             negativeScenarios.forEach(negativeScenarioTree::addNegativeScenario)
+            val treeSizeDiff = negativeScenarioTree.size - treeSize
+            // Note: it is suffice to check just `negSc == lastNegSc`, but it may be costy,
+            // so check it only in a specific case - when negative tree does not change its size
+            if (treeSizeDiff == 0 && negativeScenarios == lastNegativeScenarios)
+                error("Stale")
+            lastNegativeScenarios = negativeScenarios
         }
         if (autoFinalize) finalize2()
         return null
