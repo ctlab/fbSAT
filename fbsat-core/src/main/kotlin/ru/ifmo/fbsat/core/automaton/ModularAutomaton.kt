@@ -147,6 +147,7 @@ class ModularAutomaton(
             )
             "InterfaceList" {
                 "EventInputs" {
+                    // Note: INIT input event has no associated variables
                     "Event"("Name" to "INIT")
                     for (inputEvent in inputEvents) {
                         "Event"("Name" to inputEvent.name) {
@@ -157,8 +158,8 @@ class ModularAutomaton(
                     }
                 }
                 "EventOutputs" {
-                    "Event"("Name" to "INITO")
-                    for (outputEvent in outputEvents) {
+                    // Note: INITO output event has the same associated variables as all output events
+                    for (outputEvent in outputEvents + OutputEvent("INITO")) {
                         "Event"("Name" to outputEvent.name) {
                             for (outputName in outputNames) {
                                 "With"("Var" to outputName)
