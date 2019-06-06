@@ -28,6 +28,7 @@ import ru.ifmo.fbsat.core.task.extended.ExtendedMinTask
 import ru.ifmo.fbsat.core.task.extended.ExtendedMinUBTask
 import ru.ifmo.fbsat.core.task.extended.ExtendedTask
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.outputNamesPnP
@@ -201,6 +202,17 @@ class FbSAT : CliktCommand() {
         readable = true
     )
 
+    val startStateAlgorithms: StartStateAlgorithms by option(
+        "--start-state-algorithms",
+        help = "Start state algorithms"
+    ).choice(
+        "nothing" to StartStateAlgorithms.NOTHING,
+        "zero" to StartStateAlgorithms.ZERO,
+        "arbitrary" to StartStateAlgorithms.ARBITRARY
+    ).default(
+        StartStateAlgorithms.NOTHING
+    )
+
     val isEncodeTransitionsOrder: Boolean by option(
         "--encode-transitions-order",
         help = "[DEBUG] Encode transitions lexicographic order"
@@ -248,6 +260,7 @@ class FbSAT : CliktCommand() {
     }
 
     override fun run() {
+        Globals.START_STATE_ALGORITHMS = startStateAlgorithms
         Globals.IS_FORBID_OR = isForbidOr
         Globals.IS_BFS_AUTOMATON = isBfsAutomaton
         Globals.IS_BFS_GUARD = isBfsGuard

@@ -18,6 +18,7 @@ import ru.ifmo.fbsat.core.solver.implyAnd
 import ru.ifmo.fbsat.core.solver.implyIffAnd
 import ru.ifmo.fbsat.core.solver.implyOr
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.exhaustive
 
 fun Solver.declareColorConstraints(isEncodeReverseImplication: Boolean = true) {
@@ -270,10 +271,22 @@ fun Solver.declareAlgorithmConstraints() {
 
     comment("5. Algorithm constraints")
 
-    comment("5.1. Start state does nothing")
-    for (z in 1..Z) {
-        clause(-algorithm0[1, z])
-        clause(algorithm1[1, z])
+    when (Globals.START_STATE_ALGORITHMS) {
+        StartStateAlgorithms.NOTHING -> {
+            comment("5.1. Start state does nothing")
+            for (z in 1..Z) {
+                clause(-algorithm0[1, z])
+                clause(algorithm1[1, z])
+            }
+        }
+        StartStateAlgorithms.ZERO -> {
+            comment("5.1. Start state produces zeros")
+            for (z in 1..Z) {
+                clause(-algorithm0[1, z])
+                clause(-algorithm1[1, z])
+            }
+        }
+        StartStateAlgorithms.ARBITRARY -> TODO("Arbitrary start state algorithms")
     }
 
     comment("5.2. Algorithms definition")
