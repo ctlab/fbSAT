@@ -36,12 +36,25 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.system.measureTimeMillis
 
-private const val SAT_SOLVER_DEFAULT = "incremental-cryptominisat"
+enum class Method(val s: String) {
+    Basic("basic"),
+    BasicMin("basic-min"),
+    Extended("extended"),
+    ExtendedMin("extended-min"),
+    ExtendedMinUb("extended-min-ub"),
+    Complete("complete"),
+    CompleteMin("complete-min"),
+    CompleteCegis("complete-cegis"),
+    CompleteMinCegis("complete-min-cegis"),
+    ModularBasic("modular-basic"),
+    ModularBasicMin("modular-basic-min")
+}
 
+@Suppress("MemberVisibilityCanBePrivate")
 class FbSAT : CliktCommand() {
-    private val fileScenarios by option(
+    val fileScenarios: File by option(
         "-i", "--scenarios",
-        help = "File with scenarios [required]",
+        help = "File with scenarios",
         metavar = "<path>"
     ).file(
         exists = true,
@@ -49,7 +62,7 @@ class FbSAT : CliktCommand() {
         readable = true
     ).required()
 
-    private val fileCounterexamples by option(
+    val fileCounterexamples: File? by option(
         "-ce", "--counterexamples",
         help = "File with counter-examples",
         metavar = "<path>"
@@ -59,131 +72,127 @@ class FbSAT : CliktCommand() {
         readable = true
     )
 
-    private val smvDir by option(
+    val smvDir: File by option(
         "--smvdir",
         help = "Directory with SMV files/scripts for verification",
         metavar = "<path>"
     ).file(
         exists = true,
         fileOkay = false
-    ).defaultLazy { File("data/pnp/smv") }
+    ).defaultLazy {
+        File("data/pnp/smv")
+    }
 
-    private val outDir by option(
+    val outDir: File by option(
         "-o", "--outdir",
-        help = "Output directory [default: current directory]",
+        help = "Output directory",
         metavar = "<path>"
     ).file().defaultLazy {
         File("out/${DateTime.now().format(ISO8601.DATETIME_COMPLETE)}")
     }
 
-    // TODO: enum Method
-    private val method by option(
+    val method: Method by option(
         "-m", "--method",
-        help = "Method to use [required]",
+        help = "Method to use",
         metavar = "<method>"
     ).choice(
-        "basic", "basic-min",
-        "extended", "extended-min", "extended-min-ub",
-        "extended-ce", "extended-min-ce",
-        "complete", "complete-min",
-        "complete-cegis", "complete-min-cegis",
-        "modular-basic", "modular-basic-min"
+        Method.values().associate { it.s to it }
     ).required()
 
-    private val numberOfStates by option(
+    val numberOfStates: Int? by option(
         "-C",
         help = "Number of automaton states",
         metavar = "<int>"
     ).int()
 
-    private val maxOutgoingTransitions by option(
+    val maxOutgoingTransitions: Int? by option(
         "-K",
         help = "Maximum number of transitions from each state",
         metavar = "<int>"
     ).int()
 
-    private val maxGuardSize by option(
+    val maxGuardSize: Int? by option(
         "-P",
         help = "Maximum guard size (number of parse tree nodes)",
         metavar = "<int>"
     ).int()
 
-    private val maxTransitions by option(
+    val maxTransitions: Int? by option(
         "-T",
         help = "Upper bound for the total number of transitions",
         metavar = "<int>"
     ).int()
 
-    private val maxTotalGuardsSize by option(
+    val maxTotalGuardsSize: Int? by option(
         "-N",
         help = "Upper bound for the total size of guards",
         metavar = "<int>"
     ).int()
 
-    private val numberOfModules by option(
-        "-M",
-        help = "Number of modules",
-        metavar = "<int>"
-    ).int()
-
-    private val maxPlateauWidth by option(
+    val maxPlateauWidth: Int? by option(
         "-w",
         help = "Maximum plateau width",
         metavar = "<int>"
     ).int()
 
-    private val solverCmd by option(
-        "--solver",
-        help = "SAT-solver [default: $SAT_SOLVER_DEFAULT]",
-        metavar = "<cmd>"
-    ).default(SAT_SOLVER_DEFAULT)
+    val numberOfModules: Int? by option(
+        "-M",
+        help = "Number of modules",
+        metavar = "<int>"
+    ).int()
 
-    private val isIncrementalSolver by option(
+    val solverCmd: String by option(
+        "--solver",
+        help = "SAT-solver",
+        metavar = "<cmd>"
+    ).default("incremental-cryptominisat")
+
+    val isIncrementalSolver: Boolean by option(
         "--incremental",
-        help = "Use IncrementalSolver backend [default: true]"
+        help = "Use IncrementalSolver backend"
     ).flag(
         "--no-incremental",
         default = true
     )
 
-    private val isForbidOr by option(
+    val isForbidOr: Boolean by option(
         "--forbid-or"
     ).flag(
         "--no-forbid-or",
         default = false
     )
 
-    private val isBfsAutomaton by option(
+    val isBfsAutomaton: Boolean by option(
         "--bfs-automaton"
     ).flag(
         "--no-bfs-automaton",
         default = true
     )
 
-    private val isBfsGuard by option(
+    val isBfsGuard: Boolean by option(
         "--bfs-guard"
     ).flag(
         "--no-bfs-guard",
         default = false
     )
 
-    private val failIfSTVerifyFailed by option(
+    val failIfSTVerifyFailed: Boolean by option(
         "--fail-verify-st",
-        help = "Halt if verification of scenario tree has failed [default: true]"
+        help = "Halt if verification of scenario tree has failed"
     ).flag(
         "--no-fail-verify-st",
         default = true
     )
 
-    private val failIfCEVerifyFailed by option(
+    val failIfCEVerifyFailed: Boolean by option(
         "--fail-verify-ce",
-        help = "Halt if verification of negative scenarios has failed [default: true]"
+        help = "Halt if verification of negative scenarios has failed"
     ).flag(
         "--no-fail-verify-ce",
         default = true
     )
 
-    private val fileVis by option(
+    val fileVis: File? by option(
         "--vis",
         help = "[DEBUG] Visualize given counterexamples via graphviz"
     ).file(
@@ -192,29 +201,37 @@ class FbSAT : CliktCommand() {
         readable = true
     )
 
-    private val isEncodeTransitionsOrder by option(
+    val isEncodeTransitionsOrder: Boolean by option(
         "--encode-transitions-order",
-        help = "[DEBUG] Encode transitions lexicographic order [default: false]"
+        help = "[DEBUG] Encode transitions lexicographic order"
     ).flag(
         "--no-encode-transitions-order",
         default = false
     )
 
-    private val isEncodeTerminalsOrder by option(
+    val isEncodeTerminalsOrder: Boolean by option(
         "--encode-terminals-order",
-        help = "[DEBUG] Encode terminal numbers lexicographic order [default: true]"
+        help = "[DEBUG] Encode terminal numbers lexicographic order"
     ).flag(
         "--no-encode-terminals-order",
         default = true
     )
 
-    private val fileVerifyCE by option(
+    val isEncodeTotalizer: Boolean by option(
+        "--encode-totalizer",
+        help = "Encode totalizer when upper bound is null"
+    ).flag(
+        "--no-encode-totalizer",
+        default = true
+    )
+
+    val fileVerifyCE: File? by option(
         "--verify-ce"
     ).file()
 
-    private val isDebug by option(
+    val isDebug: Boolean by option(
         "--debug",
-        help = "Debug mode [default: false]"
+        help = "Debug mode"
     ).flag(
         default = false
     )
@@ -236,6 +253,7 @@ class FbSAT : CliktCommand() {
         Globals.IS_BFS_GUARD = isBfsGuard
         Globals.IS_ENCODE_TRANSITIONS_ORDER = isEncodeTransitionsOrder
         Globals.IS_ENCODE_TERMINALS_ORDER = isEncodeTerminalsOrder
+        Globals.IS_ENCODE_TOTALIZER = isEncodeTotalizer
         Globals.IS_DEBUG = isDebug
 
         // outDir.deleteRecursively()
@@ -301,7 +319,7 @@ class FbSAT : CliktCommand() {
         }
 
         val automaton: Automaton? = when (method) {
-            "basic" -> {
+            Method.Basic -> {
                 val task = BasicTask.create(
                     scenarioTree = tree,
                     numberOfStates = numberOfStates!!,
@@ -312,7 +330,7 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "basic-min" -> {
+            Method.BasicMin -> {
                 val task = BasicMinTask.create(
                     scenarioTree = tree,
                     numberOfStates = numberOfStates,
@@ -323,7 +341,7 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "extended" -> {
+            Method.Extended -> {
                 val task = ExtendedTask.create(
                     scenarioTree = tree,
                     numberOfStates = requireNotNull(numberOfStates),
@@ -335,7 +353,7 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "extended-min" -> {
+            Method.ExtendedMin -> {
                 val task = ExtendedMinTask.create(
                     scenarioTree = tree,
                     numberOfStates = numberOfStates,
@@ -347,7 +365,7 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "extended-min-ub" -> {
+            Method.ExtendedMinUb -> {
                 val task = ExtendedMinUBTask.create(
                     scenarioTree = tree,
                     initialMaxTotalGuardsSize = maxTotalGuardsSize,
@@ -357,7 +375,7 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "complete" -> {
+            Method.Complete -> {
                 val task = CompleteTask.create(
                     scenarioTree = tree,
                     negativeScenarioTree = negTree,
@@ -370,7 +388,8 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "complete-cegis" -> {
+            Method.CompleteMin -> TODO("complete-min method")
+            Method.CompleteCegis -> {
                 val task = CompleteCegisTask.create(
                     scenarioTree = tree,
                     negativeScenarioTree = negTree,
@@ -384,7 +403,7 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "complete-min-cegis" -> {
+            Method.CompleteMinCegis -> {
                 val task = CompleteMinCegisTask.create(
                     scenarioTree = tree,
                     initialNegativeScenarioTree = negTree,
@@ -398,7 +417,7 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "modular-basic" -> {
+            Method.ModularBasic -> {
                 val task = ModularBasicTask.create(
                     scenarioTree = tree,
                     numberOfModules = numberOfModules!!,
@@ -435,7 +454,7 @@ class FbSAT : CliktCommand() {
                 log.br()
                 null
             }
-            "modular-basic-min" -> {
+            Method.ModularBasicMin -> {
                 val task = ModularBasicMinTask.create(
                     scenarioTree = tree,
                     numberOfModules = numberOfModules!!,
