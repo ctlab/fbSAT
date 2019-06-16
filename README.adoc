@@ -10,10 +10,10 @@ To build fbSAT, use shipped gradle wrapper:
 
 ----
 ## on Unix:
-$ ./gradlew
+./gradlew
 
 ## on Windows:
-$ gradlew.bat
+gradlew.bat
 ----
 
 By default, it runs `clean build installDist` gradle tasks.
@@ -24,50 +24,114 @@ Gradle task `installDist` produces fbSAT binaries in `fbsat-cli/build/install/fb
 
 ----
 ## on Unix:
-$ ./fbsat-cli/build/install/cli/bin/fbSAT -h
+./fbsat-cli/build/install/cli/bin/fbSAT -h
 
 ## on Windows:
-$ fbsat-cli\build\install\cli\bin\fbSAT.bat -h
+fbsat-cli\build\install\cli\bin\fbSAT.bat -h
 ----
 
-== Command-line interface
+== CLI
 
 ----
-$ fbSAT -h
+fbSAT -h
 
 Usage: fbsat [OPTIONS]
 
 Options:
-  -i, --scenarios <path>             File with scenarios [required]
-  -ce, --counterexamples <path>      File with counter-examples
-  --smvdir <path>                    Directory with SMV files/scripts for verification
-  -o, --outdir <path>                Output directory [default: current directory]
-  -m, --method <method>              Method to use [required]
+* -i, --scenarios <path>             File with scenarios (required)
+  --smvdir <path>                    Directory with SMV files (default: data/pnp/smv)
+  -o, --outdir <path>                Output directory (default: out/2019-06-16THH:06:SS)
+* -m, --method <method>              Method to use (required)
   -C <int>                           Number of automaton states
   -K <int>                           Maximum number of transitions from each state
   -P <int>                           Maximum guard size (number of parse tree nodes)
   -T <int>                           Upper bound for the total number of transitions
   -N <int>                           Upper bound for the total size of guards
   -w <int>                           Maximum plateau width
-  --solver <cmd>                     SAT-solver [default: incremental-cryptominisat]
-  --incremental / --no-incremental   Use IncrementalSolver backend [default: true]
+  -M <int>                           Number of modules
+  --solver <cmd>                     SAT-solver (default: incremental-cryptominisat)
+  --incremental / --no-incremental   Use IncrementalSolver backend
+  --bfs-automaton / --no-bfs-automat
+  --bfs-guard / --no-bfs-guard
   -h, --help                         Show this message and exit
 ----
 
-=== Example usage
+== SAT solver
+
+fbSAT is able to use any SAT solver, supporting link:http://www.domagoj-babic.com/uploads/ResearchProjects/Spear/dimacs-cnf.pdf[DIMACS] input. You can specify it with `--solver <cmd>` flag.
+
+If you already have your favorite SAT solver, use it. If not, check out link:https://github.com/msoos/cryptominisat[cryptominisat], link:http://www.labri.fr/perso/lsimon/glucose[glucose], link:http://fmv.jku.at/cadical[cadical], link:http://fmv.jku.at/lingeling[lingeling], or any other.
+
+Note, that you have to specify the `--no-incremental` flag, if your SAT solver is not able to process incremental problems via stdin.
+This is true for all standard SAT solvers, which are only able to read the single one non-incremental SAT problem written in DIMACS format.
+
+=== TL;DR
+
+Add link:scripts[`scripts`] folder to your PATH and execute link:scripts/start-icms[`start-icms`]. After this you will be able to use fbSAT without any specific solver-related arguments.
+
+=== Cryptominisat
+
+In order to get cryptominisat, simply download one of the link:https://github.com/msoos/cryptominisat/releases[release binaries] for Linux/Windows.
+
+[source,bash]
+----
+fbsat ... --solver="cryptominisat5" --no-incremental
+----
+
+Also, you may use link:https://hub.docker.com/r/msoos/cryptominisat[docker container]:
+
+[source,bash]
+----
+## Pull cryptominisat image
+docker pull msoos/cryptominisat
+## Specify solver cmd to fbSAT
+fbsat ... --solver="docker run --rm -i msoos/cryptominisat" --no-incremental
+----
+
+However, a relatively large launch time of the container (up to 2 seconds on Windows) can lead to undesirable large total execution time, since fbSAT makes multiple calls to the SAT solver.
+The solution is to spawn a container only once, in link:https://docs.docker.com/engine/reference/run/#detached--d[detached mode], and later link:https://docs.docker.com/engine/reference/commandline/exec[exec] cryptominisat inside it:
+
+[source,bash]
+----
+## Run cryptominisat in detached mode:
+docker run -d -i --name cms --entrypoint="/bin/sh" msoos/cryptominisat
+## Specify solver cmd to fbSAT:
+fbsat ... --solver "docker exec -i cms /usr/local/bin/cryptominisat5 --verb=0" --no-incremental
+## When finished, do not forget to stop and remove the spawned container:
+docker rm -f cms
+----
+
+=== Incremental Cryptominisat
+
+During inferring minimal models and performing the CEGIS, the fbSAT heavily relies on the ability of SAT solvers to solve _incrementally_ -- continue solving the SAT problem after adding new constraints (tighter upper bound during minimization; new counterexamples to forbid during CEGIS).
+However, such feature is only available via the native interface, and not via the standard input in some format for CNF similar to DIMACS.
+Hence, we developed link:https://github.com/lipen/incremental-cryptominisat[a small wrapper] around the cryptominisat library, which is able to process the incremental SAT problems written in iCNF format via stdin.
+In order to enforce fbSAT to use it, specify path to wrapper  via `--solver` and use `--incremental` flag (which is turned on by default).
+
+[source,bash]
+----
+## Run incremental-cryptominisat in detached mode:
+docker run -d -i --name icms --entrypoint="/bin/sh" lipen/incremental-cryptominisat
+## Specify solver cmd to fbSAT:
+fbsat ... --solver="docker exec -i icms /usr/local/bin/incremental-cryptominisat"
+## When finished, do not forget to stop and remove the spawned container:
+docker rm -f icms
+----
+
+== Usage example
 
 * Minimize `tests-1` using `extended` method:
 
- $ fbsat -i data/tests-1.gz -o out/tests-1-min -m extended-min -P 3
+ fbsat -i data/tests-1.gz -o out/tests-1-min -m extended-min -P 3
 
 * Minimize `tests-4` using `extended` method with automatic search of `P` (until first SAT: w=0):
 
- $ fbsat -i data/tests-4.gz -o out/tests-4-min-ub-w0 -m extended-min-ub -w 0
+ fbsat -i data/tests-4.gz -o out/tests-4-min-ub-w0 -m extended-min-ub -w 0
 
 * Minimize `tests-4` using `extended` method with automatic search of `P` (up to an upper bound with plateau heuristic: w=2):
 
- $ fbsat -i data/tests-4.gz -o out/tests-4-min-ub-w2 -m extended-min-ub -w 2
+ fbsat -i data/tests-4.gz -o out/tests-4-min-ub-w2 -m extended-min-ub -w 2
 
 * Run CEGIS loop, maintaining the minimal model on `tests-1`:
 
- $ fbsat -i data/tests-1.gz -o out/tests-1-complete-min-cegis -m complete-min-cegis -P 3
+ fbsat -i data/tests-1.gz -o out/tests-1-complete-min-cegis -m complete-min-cegis -P 3
