@@ -31,6 +31,6 @@ tasks.shadowJar {
     archiveClassifier.set(null as String?)
     archiveVersion.set(null as String?)
     minimize {
-        exclude(dependency("org.jetbrains.kotlin:kotlin-reflect"))
+        // exclude(dependency("org.jetbrains.kotlin:kotlin-reflect"))
     }
 }
