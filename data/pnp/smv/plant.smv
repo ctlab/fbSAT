@@ -40,14 +40,14 @@ ASSIGN
 
     init(st3) := st3_1;
     next(st3) := case
-        next(CNF & vcExtend) & st3 = st3_1 : st3_2;
-        next(vcExtend) & st3 = st3_2 : st3_5;
-        next(vcExtend) & st3 = st3_5 : st3_4;
-        next(CNF & vcExtend) & st3 = st3_3 : st3_4;
-        next(CNF & !vcExtend) & st3 = st3_2 : st3_1;
-        next(!vcExtend) & st3 = st3_3 : st3_6;
-        next(!vcExtend) & st3 = st3_6 : st3_1;
-        next(CNF & !vcExtend) & st3 = st3_4 : st3_3;
+        st3 = st3_1 & next(CNF & vcExtend) : st3_2;
+        st3 = st3_2 & next(vcExtend) : st3_5;
+        st3 = st3_5 & next(vcExtend) : st3_4;
+        st3 = st3_3 & next(CNF & vcExtend) : st3_4;
+        st3 = st3_2 & next(CNF & !vcExtend) : st3_1;
+        st3 = st3_3 & next(!vcExtend) : st3_6;
+        st3 = st3_6 & next(!vcExtend) : st3_1;
+        st3 = st3_4 & next(CNF & !vcExtend) : st3_3;
         TRUE : st3;
     esac;
 
