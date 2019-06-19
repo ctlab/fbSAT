@@ -1,14 +1,14 @@
 package ru.ifmo.fbsat.core.task.basic
 
+import com.github.lipen.multiarray.BooleanMultiArray
+import com.github.lipen.multiarray.IntMultiArray
+import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.Algorithm
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.core.automaton.TruthTableGuard
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
-import ru.ifmo.multiarray.BooleanMultiArray
-import ru.ifmo.multiarray.IntMultiArray
-import ru.ifmo.multiarray.MultiArray
 
 internal class BasicAssignment(
     val scenarioTree: ScenarioTree,
@@ -56,25 +56,23 @@ internal class BasicAssignment(
                 scenarioTree = scenarioTree,
                 C = C,
                 K = K,
-                color = raw.intArrayOf(color, V, domain = 1..C) {
-                    error("color[index = $it] is undefined")
+                color = raw.intArray(color, V, domain = 1..C) { (v) ->
+                    error("color[v = $v] is undefined")
                 },
-                transition = raw.intArrayOf(transition, C, K, domain = 1..C) { 0 },
-                actualTransition = raw.intArrayOf(actualTransition, C, E, U, domain = 1..C) { 0 },
-                inputEvent = raw.intArrayOf(inputEvent, C, K, domain = 1..E) { 0 },
-                outputEvent = raw.intArrayOf(outputEvent, C, domain = 1..O) {
-                    error("outputEvent[index = $it] is undefined")
-                },
-                algorithm = MultiArray.new<Algorithm>(C) { (c) ->
+                transition = raw.intArray(transition, C, K, domain = 1..C) { 0 },
+                actualTransition = raw.intArray(actualTransition, C, E, U, domain = 1..C) { 0 },
+                inputEvent = raw.intArray(inputEvent, C, K, domain = 1..E) { 0 },
+                outputEvent = raw.intArray(outputEvent, C, domain = 1..O) { 0 },
+                algorithm = MultiArray.create(C) { (c) ->
                     BinaryAlgorithm(
                         // Note: c is 1-based, z is 0-based
                         algorithm0 = BooleanArray(Z) { z -> raw[algorithm0[c, z + 1]] },
                         algorithm1 = BooleanArray(Z) { z -> raw[algorithm1[c, z + 1]] }
                     )
                 },
-                rootValue = raw.booleanArrayOf(rootValue, C, K, U),
-                firstFired = raw.intArrayOf(firstFired, C, U, domain = 1..K) { 0 },
-                notFired = raw.booleanArrayOf(notFired, C, U, K)
+                rootValue = raw.booleanArray(rootValue, C, K, U),
+                firstFired = raw.intArray(firstFired, C, U, domain = 1..K) { 0 },
+                notFired = raw.booleanArray(notFired, C, U, K)
             )
         }
     }
@@ -84,16 +82,14 @@ internal class BasicAssignment(
 internal fun BasicAssignment.toAutomaton(): Automaton {
     val automaton = Automaton(scenarioTree)
 
-    val C = C
-    val K = K
-
-    for (c in 1..C) {
+    for (c in 1..C)
         automaton.addState(
-            c,
-            scenarioTree.outputEvents[outputEvent[c] - 1],
-            algorithm[c]
+            id = c,
+            outputEvent = outputEvent[c].let { o ->
+                if (o == 0) null else scenarioTree.outputEvents[o - 1]
+            },
+            algorithm = algorithm[c]
         )
-    }
 
     for (c in 1..C)
         for (k in 1..K)
@@ -105,12 +101,15 @@ internal fun BasicAssignment.toAutomaton(): Automaton {
                     guard = TruthTableGuard(
                         truthTable = (1..scenarioTree.uniqueInputs.size)
                             .asSequence()
-                            .joinToString("") { u ->
+                            .associateWith { u ->
                                 when {
-                                    notFired[c, u, k] -> "0"
-                                    firstFired[c, u] == k -> "1"
-                                    else -> "x"
+                                    notFired[c, u, k] -> false
+                                    firstFired[c, u] == k -> true
+                                    else -> null
                                 }
+                            }
+                            .mapKeys { (u, _) ->
+                                scenarioTree.uniqueInputs[u - 1]
                             },
                         inputNames = scenarioTree.inputNames,
                         uniqueInputs = scenarioTree.uniqueInputs

@@ -1,7 +1,8 @@
 = fbSAT: Automatic Inference of Minimal Finite-State Models of Function Blocks from Execution Scenarios and Temporal Properties
-Konstantin Chukharev <kchukharev@corp.ifmo.ru>
 
 image:https://travis-ci.org/ctlab/fbSAT.svg?branch=master["Build Status", link="https://travis-ci.org/ctlab/fbSAT"]
+image:https://api.codacy.com/project/badge/Grade/7d2a6633604c4d04be079015afa6e30f["Codacy code quality", link="https://app.codacy.com/app/Lipen/fbSAT"]
+image:https://hitsofcode.com/github/ctlab/fbSAT["Hits-of-Code", link="https://hitsofcode.com/view/github/ctlab/fbSAT"]
 
 == Build
 

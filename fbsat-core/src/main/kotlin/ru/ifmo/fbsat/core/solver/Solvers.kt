@@ -1,13 +1,17 @@
 package ru.ifmo.fbsat.core.solver
 
+import com.github.lipen.multiarray.BooleanMultiArray
+import com.github.lipen.multiarray.IntMultiArray
+import com.soywiz.klock.DateTime
 import okio.Buffer
 import okio.buffer
 import okio.sink
 import okio.source
+import ru.ifmo.fbsat.core.solver.Solver.Companion.falseVariable
+import ru.ifmo.fbsat.core.solver.Solver.Companion.trueVariable
 import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.secondsSince
 import ru.ifmo.fbsat.core.utils.timeIt
-import ru.ifmo.multiarray.BooleanMultiArray
-import ru.ifmo.multiarray.IntMultiArray
 import kotlin.math.absoluteValue
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -36,23 +40,32 @@ class RawAssignment(
 ) : Map<String, Any> by context {
     operator fun get(index: Int): Boolean = data[index - 1]
 
-    fun booleanArrayOf(
+    fun booleanArray(
         variable: IntMultiArray,
         vararg shape: Int
-    ) = BooleanMultiArray(shape) { index ->
+    ) = BooleanMultiArray.create(shape) { index ->
         @Suppress("ReplaceGetOrSet")
-        this[variable.get(*index)]
+        when (val v = variable.get(*index)) {
+            trueVariable -> true
+            falseVariable -> false
+            else -> this[v]
+        }
     }
 
-    fun intArrayOf(
+    fun intArray(
         variable: IntMultiArray,
         vararg shape: Int,
         domain: Iterable<Int>,
         onAbsence: (index: IntArray) -> Int /*= { error("variable[index = $it] is undefined") }*/
-    ) = IntMultiArray(shape) { index ->
-        @Suppress("ReplaceGetOrSet")
-        domain.firstOrNull { last -> this[variable.get(*index, last)] }
-            ?: onAbsence(index)
+    ) = IntMultiArray.create(shape) { index ->
+        domain.firstOrNull { last ->
+            @Suppress("ReplaceGetOrSet")
+            when (val v = variable.get(*index, last)) {
+                trueVariable -> true
+                falseVariable -> false
+                else -> this[v]
+            }
+        } ?: onAbsence(index)
     }
 }
 
@@ -62,19 +75,23 @@ interface Solver {
     val context: SolverContext
 
     fun newVariable(): Int
-    fun newArray(vararg shape: Int, init: (IntArray) -> Int = { newVariable() }) = IntMultiArray(shape, init)
+    fun newArray(vararg shape: Int, init: (IntArray) -> Int = { newVariable() }): IntMultiArray =
+        IntMultiArray.create(shape, init)
+
+    fun comment(comment: String)
 
     fun clause(literals: List<Int>)
     fun clause(vararg literals: Int) = clause(literals.asList())
     fun clause(literals: Sequence<Int>) = clause(literals.toList())
-    fun clause(block: suspend SequenceScope<Int>.() -> Unit) = clause(sequence(block))
-
-    fun comment(comment: String)
+    fun clause(block: suspend SequenceScope<Int>.() -> Unit) = clause(sequence(block).constrainOnce())
 
     fun solve(): RawAssignment?
     fun finalize2()
 
     companion object {
+        const val trueVariable: Int = Int.MAX_VALUE
+        const val falseVariable: Int = -trueVariable
+
         fun default(command: String): Solver = DefaultSolver(command)
         fun incremental(command: String): Solver = IncrementalSolver(command)
     }
@@ -85,9 +102,22 @@ private abstract class AbstractSolver : Solver {
         protected set
     final override var numberOfClauses = 0
         protected set
-    final override val context: SolverContext by lazy { SolverContext(this) }
+    @Suppress("LeakingThis")
+    final override val context: SolverContext = SolverContext(this)
 
     final override fun newVariable(): Int = ++numberOfVariables
+
+    @Suppress("FunctionName")
+    protected abstract fun _clause(literals: List<Int>)
+
+    final override fun clause(literals: List<Int>) {
+        if (trueVariable in literals) return
+        if (falseVariable in literals) return clause(literals.filter { it != falseVariable })
+
+        ++numberOfClauses
+
+        _clause(literals)
+    }
 
     @Suppress("FunctionName")
     protected abstract fun _solve(): BooleanArray?
@@ -97,26 +127,16 @@ private abstract class AbstractSolver : Solver {
 
 private class DefaultSolver(private val command: String) : AbstractSolver() {
     private val buffer = Buffer()
-    private val falseVariable: Int by context(newVariable())
-
-    init {
-        // Note: cannot just use "clause(-falseVariable)" because it drops clauses with -falseVariable
-        buffer.writeUtf8("${-falseVariable} 0\n")
-    }
-
-    override fun clause(literals: List<Int>) {
-        if (-falseVariable in literals) return
-        if (falseVariable in literals) return clause(literals - falseVariable)
-
-        ++numberOfClauses
-        for (x in literals)
-            buffer.writeUtf8(x.toString()).writeUtf8(" ")
-        buffer.writeUtf8("0\n")
-    }
 
     override fun comment(comment: String) {
         log.debug { "// $comment" }
         buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
+    }
+
+    override fun _clause(literals: List<Int>) {
+        for (x in literals)
+            buffer.writeUtf8(x.toString()).writeUtf8(" ")
+        buffer.writeUtf8("0\n")
     }
 
     override fun _solve(): BooleanArray? {
@@ -134,7 +154,7 @@ private class DefaultSolver(private val command: String) : AbstractSolver() {
         buffer.copyTo(processInput.buffer)
 
         log.debug { "Solving..." }
-        val timeSolveStart = System.currentTimeMillis()
+        val timeSolveStart = DateTime.now()
         processInput.close()
 
         var isSat: Boolean? = null
@@ -145,12 +165,12 @@ private class DefaultSolver(private val command: String) : AbstractSolver() {
                 // if (!line.startsWith("v ")) println(line)
                 when {
                     line == "s SATISFIABLE" -> {
-                        val timeSolve = (System.currentTimeMillis() - timeSolveStart) / 1000.0
+                        val timeSolve = secondsSince(timeSolveStart)
                         log.success("SAT in %.2f seconds".format(timeSolve))
                         isSat = true
                     }
                     line == "s UNSATISFIABLE" -> {
-                        val timeSolve = (System.currentTimeMillis() - timeSolveStart) / 1000.0
+                        val timeSolve = secondsSince(timeSolveStart)
                         log.failure("[-] UNSAT in %.2f seconds".format(timeSolve))
                         isSat = false
                         continue@label
@@ -189,22 +209,14 @@ private class IncrementalSolver(command: String) : AbstractSolver() {
     private val processInput = process.outputStream.sink().buffer()
     private val processOutput = process.inputStream.source().buffer()
     private val buffer = Buffer()
-    private val falseVariable: Int by context(newVariable())
 
-    init {
-        // Note: cannot just use "clause(-falseVariable)" because it drops clauses with -falseVariable
-        processInput.writeUtf8("${-falseVariable} 0\n")
-        buffer.writeUtf8("${-falseVariable} 0\n")
+    override fun comment(comment: String) {
+        log.debug { "// $comment" }
+        processInput.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
+        buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
     }
 
-    override fun clause(literals: List<Int>) {
-        if (-falseVariable in literals) return
-        if (falseVariable in literals) return clause(literals - falseVariable)
-        // require(literals.isNotEmpty())
-        // literals.forEach { check(it != 0) }
-
-        ++numberOfClauses
-
+    override fun _clause(literals: List<Int>) {
         for (x in literals)
             processInput.writeUtf8(x.toString()).writeUtf8(" ")
         processInput.writeUtf8("0\n")
@@ -214,13 +226,9 @@ private class IncrementalSolver(command: String) : AbstractSolver() {
         buffer.writeUtf8("0\n")
     }
 
-    override fun comment(comment: String) {
-        log.debug { "// $comment" }
-        processInput.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
-        buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
-    }
-
     override fun _solve(): BooleanArray? {
+        // clause(newVariable())
+
         // measureNanoTime {
         //     println("[*] Dumping cnf to file...")
         //     File("cnf").outputStream().use {

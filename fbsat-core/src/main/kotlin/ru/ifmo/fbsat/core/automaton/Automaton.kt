@@ -1,39 +1,29 @@
+@file:Suppress("LocalVariableName", "MemberVisibilityCanBePrivate")
+
 package ru.ifmo.fbsat.core.automaton
 
+import com.github.lipen.lazycache.LazyCache
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
-import ru.ifmo.fbsat.core.scenario.Scenario
+import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.utils.LazyCache
+import ru.ifmo.fbsat.core.utils.graph
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.random
-import ru.ifmo.fbsat.core.utils.toBinaryString
-import ru.ifmo.fbsat.core.utils.toBooleanArray
 import java.io.File
 
 class Automaton(
-    /**
-     * Zero-based list of input events.
-     */
-    val inputEvents: List<String>,
-    /**
-     * Zero-based list of output events.
-     */
-    val outputEvents: List<String>,
-    /**
-     * List of input variables names.
-     */
+    val inputEvents: List<InputEvent>,
+    val outputEvents: List<OutputEvent>,
     val inputNames: List<String>,
-    /**
-     * List of output variables names.
-     */
     val outputNames: List<String>
 ) {
-    private var _states: MutableMap<Int, State> = mutableMapOf()
     private val lazyCache = LazyCache()
+    private val _states: MutableMap<Int, State> = mutableMapOf()
 
     /**
      * Automaton states.
@@ -42,41 +32,47 @@ class Automaton(
         _states.values
     }
     /**
-     * Initial automaton state.
-     */
-    val initialState: State
-        get() = _states[1]!!
-    /**
-     * Number of automaton states **C**.
-     */
-    val numberOfStates: Int
-        get() = states.size
-    /**
-     * Maximum number of outgoing transitions **K**.
-     */
-    val maxOutgoingTransitions: Int
-        get() = states.map { it.transitions.size }.max() ?: 0
-    /**
-     * Maximal guard size **P**.
-     */
-    val maxGuardSize: Int
-        get() = transitions.map { it.guard.size }.max()!!
-    /**
      * Automaton transitions.
      */
     val transitions: Collection<State.Transition> by lazyCache {
         states.flatMap { it.transitions }
     }
     /**
+     * Initial automaton state.
+     */
+    val initialState: State by lazyCache {
+        getState(1)
+    }
+    /**
+     * Number of automaton states **C**.
+     */
+    val numberOfStates: Int by lazyCache {
+        states.size
+    }
+    /**
+     * Maximum number of outgoing transitions **K**.
+     */
+    val maxOutgoingTransitions: Int by lazyCache {
+        states.map { it.transitions.size }.max() ?: 0
+    }
+    /**
+     * Maximal guard size **P**.
+     */
+    val maxGuardSize: Int by lazyCache {
+        transitions.map { it.guard.size }.max()!!
+    }
+    /**
      * Number of automaton transitions **T**.
      */
-    val numberOfTransitions: Int
-        get() = transitions.size
+    val numberOfTransitions: Int by lazyCache {
+        transitions.size
+    }
     /**
      * Total guards size **N**.
      */
-    val totalGuardsSize: Int
-        get() = transitions.sumBy { it.guard.size }
+    val totalGuardsSize: Int by lazyCache {
+        transitions.sumBy { it.guard.size }
+    }
 
     constructor(scenarioTree: ScenarioTree) : this(
         scenarioTree.inputEvents,
@@ -85,17 +81,17 @@ class Automaton(
         scenarioTree.outputNames
     )
 
-    fun addState(id: Int, outputEvent: String, algorithm: Algorithm) {
+    fun getState(id: Int): State {
+        return _states[id]!!
+    }
+
+    fun addState(id: Int, outputEvent: OutputEvent?, algorithm: Algorithm) {
         require(id !in _states) { "Automaton already has state '$id'" }
         _states[id] = State(id, outputEvent, algorithm)
         lazyCache.invalidate()
     }
 
-    fun getState(id: Int): State {
-        return _states[id]!!
-    }
-
-    fun addTransition(sourceId: Int, destinationId: Int, inputEvent: String, guard: Guard) {
+    fun addTransition(sourceId: Int, destinationId: Int, inputEvent: InputEvent, guard: Guard) {
         val source = getState(sourceId)
         val destination = getState(destinationId)
         source.addTransition(destination, inputEvent, guard)
@@ -103,77 +99,83 @@ class Automaton(
 
     inner class State(
         val id: Int,
-        val outputEvent: String,
+        val outputEvent: OutputEvent?,
         val algorithm: Algorithm
     ) {
         private val _transitions: MutableList<Transition> = mutableListOf()
         val transitions: List<Transition> = _transitions
 
-        fun addTransition(destination: State, inputEvent: String, guard: Guard) {
+        fun addTransition(destination: State, inputEvent: InputEvent, guard: Guard) {
             _transitions.add(Transition(destination, inputEvent, guard))
+            this@Automaton.lazyCache.invalidate()
         }
 
         inner class Transition(
             val destination: State,
-            val inputEvent: String,
+            val inputEvent: InputEvent?,
             val guard: Guard
         ) {
             val source: State = this@State
             val k: Int = this@State.transitions.size + 1 // Note: 1-based
 
-            fun eval(inputValues: String): Boolean {
-                return guard.eval(inputValues.toBooleanArray())
+            fun eval(inputAction: InputAction): Boolean {
+                return inputAction.event == inputEvent && guard.eval(inputAction.values)
             }
 
             fun toSimpleString(): String {
-                return "${source.id} to ${destination.id} on $inputEvent if ${guard.toSimpleString()}"
+                return "${source.id} to ${destination.id} on ${inputEvent?.name ?: 'ε'} if ${guard.toSimpleString()}"
             }
 
             fun toGraphvizString(): String {
-                return "${source.id} -> ${destination.id} [label=\"$k:$inputEvent/${guard.toGraphvizString()}\"]"
+                return "$k:${inputEvent?.name ?: 'ε'}/${guard.toGraphvizString()}"
             }
 
             fun toFbtString(): String {
-                return "$inputEvent&${guard.toFbtString()}"
+                return "${inputEvent?.name ?: 'ε'}&${guard.toFbtString()}"
             }
 
             fun toSmvString(): String {
-                return "_state=${source.toSmvString()} & $inputEvent & (${guard.toSmvString()})"
+                return if (inputEvent != null)
+                    "_state=${source.toSmvString()} & ${inputEvent.name} & (${guard.toSmvString()})"
+                else
+                    "_state=${source.toSmvString()} & (${guard.toSmvString()})"
             }
 
             override fun toString(): String {
-                return "Transition(k=$k, source=${source.id}, destination=${destination.id}, $inputEvent=$inputEvent, guard=$guard)"
+                return "Transition(k=$k, source=${source.id}, destination=${destination.id}, $inputEvent=${inputEvent?.name
+                    ?: 'ε'}, guard=$guard)"
             }
         }
 
-        fun eval(outputValues: String): String {
-            return algorithm.eval(outputValues.toBooleanArray()).toBinaryString()
+        fun eval(currentValues: OutputValues): OutputAction {
+            return OutputAction(outputEvent, algorithm.eval(currentValues))
         }
 
-        fun go(inputEvent: String, inputValues: String, outputValues: String): GoResult {
+        fun eval(inputAction: InputAction, currentValues: OutputValues): EvalResult {
             for (transition in transitions) {
-                if (transition.inputEvent == inputEvent && transition.eval(inputValues)) {
+                if (transition.eval(inputAction)) {
                     val destination = transition.destination
-                    val outputEvent = destination.outputEvent
-                    val newValues = destination.eval(outputValues)
-                    return GoResult(destination, outputEvent, newValues)
+                    val outputAction = destination.eval(currentValues)
+                    return EvalResult(destination, outputAction)
                 }
             }
-            return GoResult(this, null, outputValues)
+            return EvalResult(this, OutputAction(null, currentValues))
         }
 
         fun toSimpleString(): String {
-            return "$id/$outputEvent(${algorithm.toSimpleString()})"
+            return "$id/${outputEvent?.name ?: 'ε'}(${algorithm.toSimpleString()})"
         }
 
         fun toGraphvizString(): String {
-            algorithm as BinaryAlgorithm
-            val X = outputNames.size
+            // Note: returns html-like label
 
-            val vs = (1..X).mapNotNull { x ->
-                val name = outputNames[x - 1]
-                val d0 = algorithm.algorithm0[x - 1]
-                val d1 = algorithm.algorithm1[x - 1]
+            algorithm as BinaryAlgorithm
+            val Z = outputNames.size
+
+            val vs = (1..Z).mapNotNull { z ->
+                val name = outputNames[z - 1]
+                val d0 = algorithm.algorithm0[z - 1]
+                val d1 = algorithm.algorithm1[z - 1]
                 when (d0 to d1) {
                     true to true -> """<TR><TD align="left">$name &rarr; 1</TD></TR>"""
                     false to false -> """<TR><TD align="left">$name &rarr; 0</TD></TR>"""
@@ -183,19 +185,20 @@ class Automaton(
                 }
             }.joinToString("\n")
 
-            val tableBody = """
-                <TR><TD align="center">$id / $outputEvent</TD></TR>
+            val tableBody = if (vs.isNotBlank()) """
+                <TR><TD align="center">$id / ${outputEvent?.name ?: 'ε'}</TD></TR>
                 <HR/>
                 %s
-            """.trimIndent().format(vs)
+                """.trimIndent().format(vs)
+            else """<TR><TD align="center">$id / ${outputEvent?.name ?: 'ε'}</TD></TR>"""
 
             val html = """
-                <TABLE style="rounded" cellborder="0" cellspacing="0">
-                %s
-                </TABLE>
-            """.trimIndent().format(tableBody.prependIndent())
+                        <TABLE style="rounded" cellborder="0" cellspacing="0">
+                        %s
+                        </TABLE>
+                    """.trimIndent().format(tableBody.prependIndent())
 
-            return "$id [label=<\n${html.prependIndent()}> shape=plaintext]"
+            return "<\n${html.prependIndent()}>"
         }
 
         fun toFbtString(): String {
@@ -207,44 +210,26 @@ class Automaton(
         }
 
         override fun toString(): String {
-            return "State(id=$id, outputEvent=$outputEvent, algorithm=$algorithm, transitions=${transitions.map { it.destination.id }})"
+            return "State(id=$id, outputEvent=${outputEvent?.name
+                ?: 'ε'}, algorithm=$algorithm, transitions=${transitions.map { it.destination.id }})"
         }
     }
 
-    data class GoResult(val destination: State, val outputEvent: String?, val newValues: String)
+    data class EvalResult(val destination: State, val outputAction: OutputAction)
 
-    fun go(source: State, inputEvent: String, inputValues: String, outputValues: String): GoResult {
-        return source.go(inputEvent, inputValues, outputValues)
-    }
-
-    /**
-     * Evaluate given [scenario].
-     *
-     * @return list of satisfying automaton states (i.e. states, by which each scenario element is satisfied).
-     */
-    private fun eval(scenario: Scenario): List<State?> {
-        val satisfyingStates = Array<State?>(scenario.elements.size) { null }
-
-        var currentState = initialState
-        var currentValues = "0".repeat(outputNames.size)
-
-        for ((j, element) in scenario.elements.withIndex()) {
-            val inputEvent = element.inputEvent
-            val inputValues = element.inputValues
-            val (newState, outputEvent, newValues) =
-                go(currentState, inputEvent, inputValues, currentValues)
-
-            if (outputEvent == element.outputEvent && newValues == element.outputValues) {
-                satisfyingStates[j] = newState
-            } else {
-                break
+    fun eval(
+        inputActions: Iterable<InputAction>,
+        startState: State = initialState,
+        startValues: OutputValues = OutputValues.zeros(outputNames.size)
+    ): List<EvalResult> {
+        var currentState = startState
+        var currentValues = startValues
+        return inputActions.map { inputAction ->
+            currentState.eval(inputAction, currentValues).also {
+                currentState = it.destination
+                currentValues = it.outputAction.values
             }
-
-            currentState = newState
-            currentValues = newValues
         }
-
-        return satisfyingStates.asList()
     }
 
     /**
@@ -253,8 +238,21 @@ class Automaton(
      * @return `true` if [positiveScenario] is satisfied.
      */
     fun verify(positiveScenario: PositiveScenario): Boolean {
-        val satisfyingStates = eval(positiveScenario)
-        return satisfyingStates.last() != null
+        val elements = positiveScenario.elements
+        val results = eval(elements.map { it.inputAction })
+        for ((i, xxx) in elements.zip(results).withIndex()) {
+            val (element, result) = xxx
+            if (result.outputAction != element.outputAction) {
+                // Contradiction found => positive scenario is not satisfied => verify failure
+                println("Contradiction found => positive scenario is not satisfied")
+                println("xxx = $xxx")
+                println("i+1 = ${i + 1}")
+                println("result.outputAction != element.outputAction")
+                println("${result.outputAction} != ${element.outputAction}")
+                return false
+            }
+        }
+        return true
     }
 
     /**
@@ -262,32 +260,40 @@ class Automaton(
      *
      * @return `true` if [negativeScenario] is **not** satisfied.
      */
-    fun verify(negativeScenario: NegativeScenario, index: Int? = null): Boolean {
-        val satisfyingStates = eval(negativeScenario)
+    fun verify(negativeScenario: NegativeScenario): Boolean {
+        val elements = negativeScenario.elements
+        val results = eval(elements.map { it.inputAction })
+
+        for ((element, result) in elements.zip(results)) {
+            if (result.outputAction != element.outputAction) {
+                // Contradiction found => negative scenario is not satisfied => verify ok
+                return true
+            }
+        }
 
         if (negativeScenario.loopPosition != null) {
-            val loop = satisfyingStates[negativeScenario.loopPosition - 1]
-            val last = satisfyingStates.last()
-            if (loop != null && last != null) {
-                if (last == loop) {
-                    println("[!] Negative scenario${index?.let { " ($index)" } ?: ""} is satisfied (last==loop)")
-                    println(">>> satisfyingStates = ${satisfyingStates.map {
-                        it?.id ?: 0
-                    }} (size = ${satisfyingStates.size})")
-                    println(">>> something = ${negativeScenario.elements.map { it.nodeId }}")
-                    println(">>> loopPosition = ${negativeScenario.loopPosition}")
-                    println(">>> loop = $loop")
-                    println(">>> last = $last")
-                    println(">>> negativeScenario = $negativeScenario")
-                    return false
-                }
+            val loop = results.elementAt(negativeScenario.loopPosition - 1)
+            val last = results.last()
+            @Suppress("LiftReturnOrAssignment")
+            if (last.destination == loop.destination) {
+                log.error("Negative scenario is satisfied (last==loop)")
+                // println("[!] Negative scenario${index?.let { " ($index)" } ?: ""} is satisfied (last==loop)")
+                // println(">>> satisfyingStates = ${results.map { it?.id ?: 0 }} (size = ${results.size})")
+                // println(">>> something = ${negativeScenario.elements.map { it.nodeId }}")
+                // println(">>> loopPosition = ${negativeScenario.loopPosition}")
+                // println(">>> loop = $loop")
+                // println(">>> last = $last")
+                // println(">>> negativeScenario = $negativeScenario")
+                // Last and loop-back elements are satisfied by the same state
+                return false
+            } else {
+                // Last and loop-back elements are satisfied by different states
+                return true
             }
-        } else if (satisfyingStates.last() != null) {
+        } else {
             log.error("Terminal is satisfied")
             return false
         }
-
-        return true
     }
 
     /**
@@ -296,7 +302,7 @@ class Automaton(
      * @return `true` if **all** scenarios are satisfied.
      */
     fun verify(scenarioTree: ScenarioTree): Boolean =
-        scenarioTree.scenarios.all(this@Automaton::verify)
+        scenarioTree.scenarios.all(::verify)
 
     /**
      * Verify all negative scenarios in given [negativeScenarioTree].
@@ -304,7 +310,7 @@ class Automaton(
      * @return `true` if **all** scenarios are **not** satisfied.
      */
     fun verify(negativeScenarioTree: NegativeScenarioTree): Boolean =
-        negativeScenarioTree.negativeScenarios.mapIndexed { index, scenario -> verify(scenario, index + 1) }.all { it }
+        negativeScenarioTree.negativeScenarios.all(::verify)
 
     /**
      * Dump automaton in Graphviz, FBT and SMV formats to the [dir] directory using [name] as the file basename.
@@ -312,7 +318,7 @@ class Automaton(
     fun dump(dir: File, name: String = "automaton") {
         dir.mkdirs()
         dumpGv(dir.resolve("$name.gv"))
-        dumpFbt(dir.resolve("$name.fbt"))
+        dumpFbt(dir.resolve("$name.fbt"), name)
         dumpSmv(dir.resolve("$name.smv"))
     }
 
@@ -330,9 +336,9 @@ class Automaton(
     /**
      * Dump automaton in FBT format to [file].
      */
-    fun dumpFbt(file: File) {
+    fun dumpFbt(file: File, name: String? = null) {
         file.printWriter().use {
-            it.println(this.toFbtString())
+            it.println(this.toFbtString(name))
         }
     }
 
@@ -375,58 +381,69 @@ class Automaton(
      * Stringify automaton to Graphviz format.
      */
     fun toGraphvizString(): String {
-        val fontSettings = """fontname="Source Code Pro,monospace" fontsize="12""""
-        val setupBlock = """
-            graph [$fontSettings]
-            node  [$fontSettings]
-            edge  [$fontSettings]
-        """.trimIndent()
+        return graph("Automaton") {
+            setup(
+                "fontname" to "Source Code Pro,monospace",
+                "fontsize" to "12"
+            )
+            nodeSetup(
+                "margin" to "0.05,0.01",
+                "shape" to "plaintext"
+            )
 
-        val nodesBlock = """
-            // States
-            { node [margin="0.05,0.01"]
-            %s
-            }
-        """.trimIndent().format(
-            states
-                .joinToString("\n") { it.toGraphvizString() }
-                .prependIndent("  ")
-        )
+            for (state in states)
+                node(
+                    state.id,
+                    "label" to state.toGraphvizString()
+                )
 
-        val transitionsBlock = """
-            // Transitions
-            %s
-        """.trimIndent().format(
-            transitions.joinToString("\n") { it.toGraphvizString() }
-        )
-
-        val body = "%s\n\n%s\n\n%s".format(
-            setupBlock,
-            nodesBlock,
-            transitionsBlock
-        )
-        return "digraph {\n${body.prependIndent()}\n}"
+            for (transition in transitions)
+                edge(
+                    transition.source.id,
+                    transition.destination.id,
+                    "label" to transition.toGraphvizString()
+                )
+        }.toGraphvisString()
     }
 
     /**
      * Stringify automaton to FBT format.
      */
-    fun toFbtString(): String {
+    fun toFbtString(name: String? = null): String {
         fun r() = "%.3f".format((1.0..1000.0).random())
+        val Z = outputNames.size
 
         return xml("FBType") {
+            if (name != null) {
+                attribute("Name", name)
+            }
             "Identification"("Standard" to "61499-2")
             "VersionInfo"(
                 "Organization" to "nxtControl GmbH",
                 "Version" to "0.0",
                 "Author" to "fbSAT",
-                "Date" to "2011-08-30",
-                "Remarks" to "Template",
-                "Namespace" to "Main",
-                "Name" to "CentralController",
-                "Comment" to "Basic Function Block Type"
+                "Date" to "2011-08-30"
             )
             "InterfaceList" {
+                "EventInputs" {
+                    // Note: INIT input event has no associated variables
+                    "Event"("Name" to "INIT")
+                    for (inputEvent in inputEvents) {
+                        "Event"("Name" to inputEvent.name) {
+                            for (inputName in inputNames)
+                                "With"("Var" to inputName)
+                        }
+                    }
+                }
+                "EventOutputs" {
+                    // Note: INITO output event has the same associated variables as all output events
+                    for (outputEvent in outputEvents + OutputEvent("INITO")) {
+                        "Event"("Name" to outputEvent.name) {
+                            for (outputName in outputNames)
+                                "With"("Var" to outputName)
+                        }
+                    }
+                }
                 "InputVars" {
                     for (inputName in inputNames) {
                         "VarDeclaration"(
@@ -443,59 +460,79 @@ class Automaton(
                         )
                     }
                 }
-                "EventInputs" {
-                    "Event"("Name" to "INIT")
-                    for (inputEvent in listOf("INIT") + inputEvents) {
-                        "Event"("Name" to inputEvent) {
-                            if (inputEvent != "INIT") {
-                                for (inputName in inputNames)
-                                    "With"("Var" to inputName)
-                            }
-                        }
-                    }
-                }
-                "EventOutputs" {
-                    for (outputEvent in outputEvents) {
-                        "Event"("Name" to outputEvent) {
-                            if (outputEvent != "INITO")
-                                for (outputName in outputNames)
-                                    "With"("Var" to outputName)
-                        }
-                    }
-                }
             }
             "BasicFB" {
                 "ECC" {
                     "ECState"(
-                        "Name" to "START",
-                        "x" to r(),
-                        "y" to r()
+                        "Name" to "START", // START state
+                        "x" to r(), "y" to r()
                     )
+                    "ECState"(
+                        "Name" to "INIT", // INIT state
+                        "x" to r(), "y" to r()
+                    ) {
+                        "ECAction"(
+                            "Algorithm" to "INIT", // INIT algorithm
+                            "Output" to "INITO" // INITO output event
+                        )
+                    }
                     for (state in states) {
                         "ECState"(
                             "Name" to state.toFbtString(),
-                            "x" to r(),
-                            "y" to r()
+                            "x" to r(), "y" to r()
                         ) {
+                            state.algorithm as BinaryAlgorithm
                             "ECAction"(
-                                "Algorithm" to (state.algorithm as BinaryAlgorithm).toFbtString(),
-                                "Output" to state.outputEvent
-                            )
+                                "Algorithm" to "${state.id}_${state.algorithm.toFbtString()}"
+                            ) {
+                                if (state.outputEvent != null)
+                                    attribute("Output", state.outputEvent.name)
+                            }
                         }
                     }
+                    "ECTransition"(
+                        "Source" to "START", // START state
+                        "Destination" to "INIT", // INIT state
+                        "Condition" to "INIT", // INIT input event
+                        "x" to r(), "y" to r()
+                    )
+                    "ECTransition"(
+                        "Source" to "INIT", // INIT state
+                        "Destination" to initialState.toFbtString(),
+                        "Condition" to "1",
+                        "x" to r(), "y" to r()
+                    )
                     for (transition in transitions) {
                         "ECTransition"(
-                            "x" to r(),
-                            "y" to r(),
                             "Source" to transition.source.toFbtString(),
                             "Destination" to transition.destination.toFbtString(),
-                            "Condition" to transition.toFbtString()
+                            "Condition" to transition.toFbtString(),
+                            "x" to r(), "y" to r()
                         )
                     }
                 }
-                for (algorithm in states.map { it.algorithm as BinaryAlgorithm }.toSet()) {
-                    "Algorithm"("Name" to algorithm.toFbtString()) {
-                        "ST"("Text" to algorithm.toST(outputNames))
+                "Algorithm"(
+                    "Name" to "INIT" // INIT algorithm
+                ) {
+                    // Note: INIT algorithm zeroes out all variables
+                    "ST"(
+                        "Text" to BinaryAlgorithm(
+                            BooleanArray(Z) { false },
+                            BooleanArray(Z) { false }
+                        ).toST(outputNames)
+                    )
+                }
+                for (state in states) {
+                    if (state.outputEvent == null)
+                        continue
+
+                    val algorithm = state.algorithm as BinaryAlgorithm
+                    "Algorithm"(
+                        "Name" to "${state.id}_${algorithm.toFbtString()}"
+                    ) {
+                        "ST"(
+                            "Text" to algorithm.toST(outputNames)
+                        )
                     }
                 }
             }
@@ -506,12 +543,13 @@ class Automaton(
      * Stringify automaton to SMV format.
      */
     fun toSmvString(): String {
-        val module = "CONTROL(${inputEvents.joinToString(",")}, ${inputNames.joinToString(",")})"
+        val module = "CONTROL(${inputEvents.joinToString(",") { it.name }}, ${inputNames.joinToString(",")})"
 
-        val definitions: MutableMap<String, String> = mutableMapOf()
-        definitions["_state"] = "{${states.joinToString(", ") { it.toSmvString() }}}"
-        for (outputEvent in outputEvents.filter { it != "INITO" })
-            definitions[outputEvent] = "boolean"
+        val definitions: MutableMap<String, String> = mutableMapOf(
+            "_state" to "{${states.joinToString(", ") { it.toSmvString() }}}"
+        )
+        for (outputEvent in outputEvents)
+            definitions[outputEvent.name] = "boolean"
         for (outputName in outputNames)
             definitions[outputName] = "boolean"
 
@@ -519,7 +557,6 @@ class Automaton(
             var s = "case\n"
             for ((lhs, rhs) in cases)
                 s += "    $lhs : $rhs;\n"
-            // if (default != null)
             s += "    TRUE : $default;\n"
             return s + "esac"
         }
@@ -532,13 +569,12 @@ class Automaton(
         declarations["_state"] = initialState.toSmvString() to buildCase(stateNextCases, default = "_state")
 
         // Output events declarations
-        for (outputEvent in outputEvents.filter { it != "INITO" }) {
+        for (outputEvent in outputEvents) {
             val outputEventNextCases = states
                 .flatMap { it.transitions }
                 .filter { it.destination.outputEvent == outputEvent }
                 .map { it.toSmvString() to "TRUE" }
-
-            declarations[outputEvent] = "FALSE" to buildCase(outputEventNextCases, default = "FALSE")
+            declarations[outputEvent.name] = "FALSE" to buildCase(outputEventNextCases, default = "FALSE")
         }
 
         // Output variables declarations
@@ -546,11 +582,11 @@ class Automaton(
             val outputName = outputNames[z - 1]
             val outputVariableNextCases = transitions
                 .flatMap {
-                    val guard = "_state=${it.source.toSmvString()} & ${it.inputEvent} & (${it.guard.toSmvString()})"
+                    val condition = it.toSmvString()
                     val algo = it.destination.algorithm as BinaryAlgorithm
                     listOf(
-                        "$guard & !$outputName" to algo.algorithm0[z - 1].toString().toUpperCase(),
-                        "$guard & $outputName" to algo.algorithm1[z - 1].toString().toUpperCase()
+                        "$condition & !$outputName" to algo.algorithm0[z - 1].toString().toUpperCase(),
+                        "$condition & $outputName" to algo.algorithm1[z - 1].toString().toUpperCase()
                     )
                 }
             declarations[outputName] = "FALSE" to buildCase(outputVariableNextCases, default = outputName)

@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.task.complete
 
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.Counterexample
+import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.negative.toNegativeScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
@@ -41,7 +42,12 @@ interface CompleteCegisTask {
         ): CompleteCegisTask = CompleteCegisTaskImpl(
             scenarioTree = scenarioTree,
             negativeScenarioTree = negativeScenarioTree
-                ?: NegativeScenarioTree.empty(scenarioTree.inputNames, scenarioTree.outputNames),
+                ?: NegativeScenarioTree(
+                    inputEvents = scenarioTree.inputEvents,
+                    outputEvents = scenarioTree.outputEvents,
+                    inputNames = scenarioTree.inputNames,
+                    outputNames = scenarioTree.outputNames
+                ),
             numberOfStates = numberOfStates,
             maxOutgoingTransitions = maxOutgoingTransitions ?: numberOfStates,
             maxGuardSize = maxGuardSize,
@@ -102,9 +108,11 @@ private class CompleteCegisTaskImpl(
         check(!isFinalized) { "This task has already been finalized and can't be executed." }
         isExecuted = true
 
-        for (iterationNumber in 1..10000) {
+        lateinit var lastNegativeScenarios: List<NegativeScenario>
+
+        for (iterationNumber in 1 until 10000) {
             log.info("CEGIS iteration #$iterationNumber")
-            // Update reduction to take into account possible negative scenario tree extension
+            // Update to take into account possible extension of the negative scenario tree
             update()
             // Infer update
             val automaton: Automaton? = completeTask.infer()
@@ -112,6 +120,10 @@ private class CompleteCegisTaskImpl(
                 if (autoFinalize) finalize2()
                 return null
             }
+            // ==============
+            // Dump intermediate automaton
+            automaton.dump(outDir, "_automaton_iter%04d".format(iterationNumber))
+            // ==============
             // Verify automaton with NuSMV
             val counterexamples = automaton.verifyWithNuSMV(outDir)
             if (counterexamples.isEmpty()) {
@@ -129,7 +141,14 @@ private class CompleteCegisTaskImpl(
                 )
             }
             // Populate negTree with new negative scenarios
+            val treeSize = negativeScenarioTree.size
             negativeScenarios.forEach(negativeScenarioTree::addNegativeScenario)
+            val treeSizeDiff = negativeScenarioTree.size - treeSize
+            // Note: it is suffice to check just `negSc == lastNegSc`, but it may be costy,
+            // so check it only in a specific case - when negative tree does not change its size
+            if (treeSizeDiff == 0 && negativeScenarios == lastNegativeScenarios)
+                error("Stale")
+            lastNegativeScenarios = negativeScenarios
         }
         if (autoFinalize) finalize2()
         return null
@@ -173,7 +192,7 @@ fun Automaton.verifyWithNuSMV(dir: File): List<Counterexample> {
     dumpSmv(dir.resolve("control.smv"))
 
     // Perform formal verification using NuSMV, generate counterexamples to given ltl-spec
-    val cmd = "make model counterexamples"
+    val cmd = "make clean model counterexamples"
     log.debug { "Running '$cmd'..." }
     val exitcode = Runtime.getRuntime().exec(cmd, null, dir).waitFor()
     check(exitcode == 0) { "NuSMV exitcode: $exitcode" }

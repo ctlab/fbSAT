@@ -1,79 +1,77 @@
 package ru.ifmo.fbsat.core.task.basic
 
 import com.github.lipen.multiarray.IntMultiArray
-import ru.ifmo.fbsat.core.automaton.Automaton
+import ru.ifmo.fbsat.core.automaton.ModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareComparatorLessThanOrEqual
 import ru.ifmo.fbsat.core.solver.declareTotalizer
-import ru.ifmo.fbsat.core.task.declareAlgorithmConstraints
-import ru.ifmo.fbsat.core.task.declareAutomatonBfsConstraints
-import ru.ifmo.fbsat.core.task.declareColorConstraints
-import ru.ifmo.fbsat.core.task.declareFiringConstraints
-import ru.ifmo.fbsat.core.task.declareOutputEventConstraints
-import ru.ifmo.fbsat.core.task.declareTransitionConstraints
-import ru.ifmo.fbsat.core.task.declareTransitionsOrderConstraints
-import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.task.declareModularAlgorithmConstraints
+import ru.ifmo.fbsat.core.task.declareModularColorConstraints
+import ru.ifmo.fbsat.core.task.declareModularFiringConstraints
+import ru.ifmo.fbsat.core.task.declareModularOutputEventConstraints
+import ru.ifmo.fbsat.core.task.declareModularTransitionConstraints
 import ru.ifmo.fbsat.core.utils.log
 import java.io.File
 
-interface BasicTask {
+interface ModularBasicTask {
     val scenarioTree: ScenarioTree
+    val numberOfModules: Int // M
     val numberOfStates: Int // C
     val maxOutgoingTransitions: Int // K
     val maxTransitions: Int? // T, unconstrained if null
     val outDir: File
 
-    fun infer(): Automaton?
-    fun reuse(newMaxTransitions: Int): BasicTask
+    fun infer(): ModularAutomaton?
+    fun reuse(newMaxTransitions: Int): ModularBasicTask
     fun finalize2()
 
     companion object {
         @JvmStatic
         fun create(
             scenarioTree: ScenarioTree,
+            numberOfModules: Int, // M
             numberOfStates: Int, // C
             maxOutgoingTransitions: Int? = null, // K, K=C if null
             maxTransitions: Int? = null, // T, unconstrained if null
             outDir: File,
             solverProvider: () -> Solver,
-            autoFinalize: Boolean = true,
-            isEncodeReverseImplication: Boolean = true
-        ): BasicTask = BasicTaskImpl(
+            autoFinalize: Boolean = true
+        ): ModularBasicTask = ModularBasicTaskImpl(
             scenarioTree = scenarioTree,
+            numberOfModules = numberOfModules,
             numberOfStates = numberOfStates,
             maxOutgoingTransitions = maxOutgoingTransitions ?: numberOfStates,
             maxTransitions = maxTransitions,
             outDir = outDir,
             solver = solverProvider(),
-            autoFinalize = autoFinalize,
-            isEncodeReverseImplication = isEncodeReverseImplication
+            autoFinalize = autoFinalize
         )
     }
 }
 
-private class BasicTaskImpl(
+private class ModularBasicTaskImpl(
     override val scenarioTree: ScenarioTree,
+    override val numberOfModules: Int, // M
     override val numberOfStates: Int, // C
     override val maxOutgoingTransitions: Int, // K
     override val maxTransitions: Int?, // T, unconstrained if null
     override val outDir: File,
     private val solver: Solver,
-    private val autoFinalize: Boolean,
-    private val isEncodeReverseImplication: Boolean
-) : BasicTask {
+    private val autoFinalize: Boolean
+) : ModularBasicTask {
     private var isExecuted = false
     private var isReused = false
     private var isFinalized = false
 
     init {
         with(solver) {
-            declareBasicReduction()
+            declareModularBasicReduction()
             declareCardinality()
         }
     }
 
-    override fun infer(): Automaton? {
+    override fun infer(): ModularAutomaton? {
         check(!isExecuted) { "This task has already been executed. Try using the `reuse()` method." }
         check(!isReused) { "This task has already been reused and can't be executed." }
         check(!isFinalized) { "This task has already been finalized and can't be executed." }
@@ -84,28 +82,28 @@ private class BasicTaskImpl(
         if (rawAssignment == null)
             return null
 
-        val assignment = BasicAssignment.fromRaw(rawAssignment)
+        val assignment = ModularBasicAssignment.fromRaw(rawAssignment)
         @Suppress("UnnecessaryVariable")
         val automaton = assignment.toAutomaton()
         return automaton
     }
 
-    override fun reuse(newMaxTransitions: Int): BasicTask {
+    override fun reuse(newMaxTransitions: Int): ModularBasicTask {
         check(!isReused) { "This task has already been reused." }
         check(!isFinalized) { "This task has already been finalized and can't be reused." }
         if (!isExecuted)
             log.warn("Reusing the task that has not been executed yet.")
         isReused = true
 
-        return BasicTaskImpl(
+        return ModularBasicTaskImpl(
             scenarioTree = this.scenarioTree,
+            numberOfModules = this.numberOfModules,
             numberOfStates = this.numberOfStates,
             maxOutgoingTransitions = this.maxOutgoingTransitions,
             maxTransitions = newMaxTransitions,
             outDir = this.outDir,
             solver = this.solver,
-            autoFinalize = this.autoFinalize,
-            isEncodeReverseImplication = this.isEncodeReverseImplication
+            autoFinalize = this.autoFinalize
         )
     }
 
@@ -116,66 +114,65 @@ private class BasicTaskImpl(
     }
 
     @Suppress("LocalVariableName", "UNUSED_VARIABLE")
-    private fun Solver.declareBasicReduction() {
-        when (context["_isBasicReductionDeclared"] as Boolean?) {
+    private fun Solver.declareModularBasicReduction() {
+        when (context["_isModularBasicReductionDeclared"] as Boolean?) {
             true -> return
-            false -> error { "_isBasicReductionDeclared is false" }
-            null -> context["_isBasicReductionDeclared"] = true
+            false -> error { "_isModularBasicReductionDeclared is false" }
+            null -> context["_isModularBasicReductionDeclared"] = true
         }
 
         // Constants
-        val scenarioTree: ScenarioTree by context(scenarioTree)
-        val C: Int by context(numberOfStates)
-        val K: Int by context(maxOutgoingTransitions)
-        val V: Int by context(scenarioTree.size)
-        val E: Int by context(scenarioTree.inputEvents.size)
-        val O: Int by context(scenarioTree.outputEvents.size)
-        val X: Int by context(scenarioTree.inputNames.size)
-        val Z: Int by context(scenarioTree.outputNames.size)
-        val U: Int by context(scenarioTree.uniqueInputs.size)
+        val scenarioTree by context(scenarioTree)
+        val M by context(numberOfModules)
+        val C by context(numberOfStates)
+        val K by context(maxOutgoingTransitions)
+        val V by context(scenarioTree.size)
+        val E by context(scenarioTree.inputEvents.size)
+        val O by context(scenarioTree.outputEvents.size)
+        val X by context(scenarioTree.inputNames.size)
+        val Z by context(scenarioTree.outputNames.size)
+        val U by context(scenarioTree.uniqueInputs.size)
 
         // Variables
-        val transition: IntMultiArray by context(newArray(C, K, C + 1))
-        val actualTransition: IntMultiArray by context(newArray(C, E, U, C + 1))
-        val inputEvent: IntMultiArray by context(newArray(C, K, E + 1))
-        val outputEvent: IntMultiArray by context(newArray(C, O + 1))
-        val algorithm0: IntMultiArray by context(newArray(C, Z))
-        val algorithm1: IntMultiArray by context(newArray(C, Z))
-        val color: IntMultiArray by context(newArray(V, C))
-        val rootValue: IntMultiArray by context(newArray(C, K, U))
-        val firstFired: IntMultiArray by context(newArray(C, U, K + 1))
-        val notFired: IntMultiArray by context(newArray(C, U, K))
+        val transition by context(newArray(M, C, K, C + 1))
+        val actualTransition by context(newArray(M, C, E, U, C + 1))
+        val inputEvent by context(newArray(M, C, K, E + 1))
+        val outputEvent by context(newArray(M, C, O + 1))
+        val outputVariableModule by context(newArray(Z, M))
+        val algorithm0 by context(newArray(M, C, Z))
+        val algorithm1 by context(newArray(M, C, Z))
+        val color by context(newArray(M, V, C))
+        val rootValue by context(newArray(M, C, K, U))
+        val firstFired by context(newArray(M, C, U, K + 1))
+        val notFired by context(newArray(M, C, U, K))
 
         // Constraints
-        declareColorConstraints(isEncodeReverseImplication)
-        declareTransitionConstraints()
-        declareFiringConstraints()
-        declareOutputEventConstraints()
-        declareAlgorithmConstraints()
-        if (Globals.IS_BFS_AUTOMATON)
-            declareAutomatonBfsConstraints()
-        if (Globals.IS_ENCODE_TRANSITIONS_ORDER)
-            declareTransitionsOrderConstraints()
+        declareModularColorConstraints()
+        declareModularTransitionConstraints()
+        declareModularFiringConstraints()
+        declareModularOutputEventConstraints()
+        declareModularAlgorithmConstraints()
+        // declareModularAutomatonBfsConstraints()
+        // if (Globals.IS_ENCODE_TRANSITIONS_ORDER)
+        //     declareModularTransitionsOrderConstraints()
         // TODO: declareAdhocConstraints()
     }
 
     @Suppress("LocalVariableName")
     private fun Solver.declareCardinality() {
-        if (maxTransitions == null && !Globals.IS_ENCODE_TOTALIZER) return
-
-        val totalizer: IntArray = context.computeIfAbsent("_totalizerBasic") {
-            val transition: IntMultiArray by context
-            declareTotalizer(sequence {
-                val (C, K, _) = transition.shape
-                for (c in 1..C)
-                    for (k in 1..K)
-                        yield(-transition[c, k, C + 1])
-            })
-        } as IntArray
-
         if (maxTransitions == null) return
 
         val T: Int by context(maxTransitions)
+        val totalizer: IntArray = context.computeIfAbsent("_totalizerBasic") {
+            val transition: IntMultiArray by context
+            declareTotalizer(sequence {
+                val (M, C, K, _) = transition.shape
+                for (m in 1..M)
+                    for (c in 1..C)
+                        for (k in 1..K)
+                            yield(-transition[m, c, k, C + 1])
+            })
+        } as IntArray
         val declaredT: Int? = context["_declaredT"] as Int?
         solver.declareComparatorLessThanOrEqual(totalizer, T, declaredT)
         context["_declaredT"] = T

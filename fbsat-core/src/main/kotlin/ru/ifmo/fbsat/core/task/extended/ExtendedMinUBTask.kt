@@ -4,6 +4,7 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.basic.BasicMinTask
+import ru.ifmo.fbsat.core.utils.log
 import java.io.File
 
 interface ExtendedMinUBTask {
@@ -60,15 +61,15 @@ private class ExtendedMinUBTaskImpl(
         var N: Int? = initialMaxTotalGuardsSize
 
         for (P in (1..100)) {
-            println("Trying P = $P")
+            log.info("Trying P = $P")
 
             if (best != null && P > (best.totalGuardsSize - Tmin)) {
-                println("[!] Reached upper bound: P = $P, Nbest = ${best.totalGuardsSize}, Tmin = $Tmin")
+                log.warn("Reached upper bound: P = $P, Plow = $Plow, Nbest = ${best.totalGuardsSize}, Tmin = $Tmin")
                 break
             }
 
             if (Plow != null && maxPlateauWidth != null && (P - Plow) > maxPlateauWidth) {
-                println("[!] Reached maximum plateau width: P = $P, Plow = $Plow, w = $maxPlateauWidth")
+                log.warn("Reached maximum plateau width: P = $P, Plow = $Plow, w = $maxPlateauWidth")
                 break
             }
 

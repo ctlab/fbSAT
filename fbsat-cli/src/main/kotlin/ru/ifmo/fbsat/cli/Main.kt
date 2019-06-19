@@ -2,7 +2,7 @@ package ru.ifmo.fbsat.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.context
-import com.github.ajalt.clikt.output.PlaintextHelpFormatter
+import com.github.ajalt.clikt.output.CliktHelpFormatter
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.defaultLazy
 import com.github.ajalt.clikt.parameters.options.flag
@@ -11,16 +11,16 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
-import ru.ifmo.fbsat.core.automaton.Algorithm
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.ISO8601
 import ru.ifmo.fbsat.core.automaton.Automaton
-import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
-import ru.ifmo.fbsat.core.automaton.StringGuard
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
-import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.basic.BasicMinTask
 import ru.ifmo.fbsat.core.task.basic.BasicTask
+import ru.ifmo.fbsat.core.task.basic.ModularBasicMinTask
+import ru.ifmo.fbsat.core.task.basic.ModularBasicTask
 import ru.ifmo.fbsat.core.task.complete.CompleteCegisTask
 import ru.ifmo.fbsat.core.task.complete.CompleteMinCegisTask
 import ru.ifmo.fbsat.core.task.complete.CompleteTask
@@ -28,6 +28,7 @@ import ru.ifmo.fbsat.core.task.extended.ExtendedMinTask
 import ru.ifmo.fbsat.core.task.extended.ExtendedMinUBTask
 import ru.ifmo.fbsat.core.task.extended.ExtendedTask
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.outputNamesPnP
@@ -36,12 +37,25 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.system.measureTimeMillis
 
-private const val SAT_SOLVER_DEFAULT = "incremental-cryptominisat"
+enum class Method(val s: String) {
+    Basic("basic"),
+    BasicMin("basic-min"),
+    Extended("extended"),
+    ExtendedMin("extended-min"),
+    ExtendedMinUb("extended-min-ub"),
+    Complete("complete"),
+    CompleteMin("complete-min"),
+    CompleteCegis("complete-cegis"),
+    CompleteMinCegis("complete-min-cegis"),
+    ModularBasic("modular-basic"),
+    ModularBasicMin("modular-basic-min")
+}
 
+@Suppress("MemberVisibilityCanBePrivate")
 class FbSAT : CliktCommand() {
-    private val fileScenarios by option(
+    val fileScenarios: File by option(
         "-i", "--scenarios",
-        help = "File with scenarios [required]",
+        help = "File with scenarios",
         metavar = "<path>"
     ).file(
         exists = true,
@@ -49,7 +63,7 @@ class FbSAT : CliktCommand() {
         readable = true
     ).required()
 
-    private val fileCounterexamples by option(
+    val fileCounterexamples: File? by option(
         "-ce", "--counterexamples",
         help = "File with counter-examples",
         metavar = "<path>"
@@ -59,122 +73,127 @@ class FbSAT : CliktCommand() {
         readable = true
     )
 
-    private val smvDir by option(
+    val smvDir: File by option(
         "--smvdir",
         help = "Directory with SMV files/scripts for verification",
         metavar = "<path>"
     ).file(
         exists = true,
         fileOkay = false
-    ).defaultLazy { File("data/pnp/smv") }
+    ).defaultLazy {
+        File("data/pnp/smv")
+    }
 
-    private val outDir by option(
+    val outDir: File by option(
         "-o", "--outdir",
-        help = "Output directory [default: current directory]",
+        help = "Output directory",
         metavar = "<path>"
-    ).file().defaultLazy { File(".") }
+    ).file().defaultLazy {
+        File("out/${DateTime.now().format(ISO8601.DATETIME_COMPLETE)}")
+    }
 
-    // TODO: enum Method
-    private val method by option(
+    val method: Method by option(
         "-m", "--method",
-        help = "Method to use [required]",
+        help = "Method to use",
         metavar = "<method>"
     ).choice(
-        "basic", "basic-min",
-        "extended", "extended-min", "extended-min-ub",
-        "extended-ce", "extended-min-ce",
-        "complete", "complete-min",
-        "complete-cegis", "complete-min-cegis"
+        Method.values().associate { it.s to it }
     ).required()
 
-    private val numberOfStates by option(
+    val numberOfStates: Int? by option(
         "-C",
         help = "Number of automaton states",
         metavar = "<int>"
     ).int()
 
-    private val maxOutgoingTransitions by option(
+    val maxOutgoingTransitions: Int? by option(
         "-K",
         help = "Maximum number of transitions from each state",
         metavar = "<int>"
     ).int()
 
-    private val maxGuardSize by option(
+    val maxGuardSize: Int? by option(
         "-P",
         help = "Maximum guard size (number of parse tree nodes)",
         metavar = "<int>"
     ).int()
 
-    private val maxTransitions by option(
+    val maxTransitions: Int? by option(
         "-T",
         help = "Upper bound for the total number of transitions",
         metavar = "<int>"
     ).int()
 
-    private val maxTotalGuardsSize by option(
+    val maxTotalGuardsSize: Int? by option(
         "-N",
         help = "Upper bound for the total size of guards",
         metavar = "<int>"
     ).int()
 
-    private val maxPlateauWidth by option(
+    val maxPlateauWidth: Int? by option(
         "-w",
         help = "Maximum plateau width",
         metavar = "<int>"
     ).int()
 
-    private val solverCmd by option(
-        "--solver",
-        help = "SAT-solver [default: $SAT_SOLVER_DEFAULT]",
-        metavar = "<cmd>"
-    ).default(SAT_SOLVER_DEFAULT)
+    val numberOfModules: Int? by option(
+        "-M",
+        help = "Number of modules",
+        metavar = "<int>"
+    ).int()
 
-    private val isIncrementalSolver by option(
+    val solverCmd: String by option(
+        "--solver",
+        help = "SAT-solver",
+        metavar = "<cmd>"
+    ).default("incremental-cryptominisat")
+
+    val isIncrementalSolver: Boolean by option(
         "--incremental",
-        help = "Use IncrementalSolver backend [default: true]"
+        help = "Use IncrementalSolver backend"
     ).flag(
         "--no-incremental",
         default = true
     )
 
-    private val isForbidOr by option(
+    val isForbidOr: Boolean by option(
         "--forbid-or"
     ).flag(
         "--no-forbid-or",
         default = false
     )
 
-    private val isBfsAutomaton by option(
+    val isBfsAutomaton: Boolean by option(
         "--bfs-automaton"
     ).flag(
         "--no-bfs-automaton",
         default = true
     )
 
-    private val isBfsGuard by option(
+    val isBfsGuard: Boolean by option(
         "--bfs-guard"
     ).flag(
         "--no-bfs-guard",
         default = false
     )
 
-    private val failIfSTVerifyFailed by option(
+    val failIfSTVerifyFailed: Boolean by option(
         "--fail-verify-st",
-        help = "Halt if verification of scenario tree has failed [default: true]"
+        help = "Halt if verification of scenario tree has failed"
     ).flag(
         "--no-fail-verify-st",
         default = true
     )
 
-    private val failIfCEVerifyFailed by option(
+    val failIfCEVerifyFailed: Boolean by option(
         "--fail-verify-ce",
-        help = "Halt if verification of negative scenarios has failed [default: true]"
+        help = "Halt if verification of negative scenarios has failed"
     ).flag(
         "--no-fail-verify-ce",
         default = true
     )
 
-    private val fileVis by option(
+    val fileVis: File? by option(
         "--vis",
         help = "[DEBUG] Visualize given counterexamples via graphviz"
     ).file(
@@ -183,70 +202,80 @@ class FbSAT : CliktCommand() {
         readable = true
     )
 
-    private val isEncodeAutomaton by option(
-        "--encode-automaton",
-        help = "[DEBUG] Encode Daniil's automaton [default: false]"
-    ).flag(
-        default = false
+    val startStateAlgorithms: StartStateAlgorithms by option(
+        "--start-state-algorithms",
+        help = "Start state algorithms"
+    ).choice(
+        "nothing" to StartStateAlgorithms.NOTHING,
+        "zero" to StartStateAlgorithms.ZERO,
+        "arbitrary" to StartStateAlgorithms.ARBITRARY
+    ).default(
+        StartStateAlgorithms.NOTHING
     )
 
-    private val isEncodeTransitionsOrder by option(
+    val isEncodeTransitionsOrder: Boolean by option(
         "--encode-transitions-order",
-        help = "[DEBUG] Encode transitions lexicographic order [default: false]"
+        help = "[DEBUG] Encode transitions lexicographic order"
     ).flag(
         "--no-encode-transitions-order",
         default = false
     )
 
-    private val isEncodeTerminalsOrder by option(
+    val isEncodeTerminalsOrder: Boolean by option(
         "--encode-terminals-order",
-        help = "[DEBUG] Encode terminal numbers lexicographic order [default: true]"
+        help = "[DEBUG] Encode terminal numbers lexicographic order"
     ).flag(
         "--no-encode-terminals-order",
         default = true
     )
 
-    private val isOnlyAutomaton2 by option(
-        "--only-automaton2"
-    ).flag()
+    val isEncodeTotalizer: Boolean by option(
+        "--encode-totalizer",
+        help = "Encode totalizer when upper bound is null"
+    ).flag(
+        "--no-encode-totalizer",
+        default = true
+    )
 
-    private val fileVerifyCE by option(
+    val fileVerifyCE: File? by option(
         "--verify-ce"
     ).file()
 
-    private val isDebug by option(
+    val isDebug: Boolean by option(
         "--debug",
-        help = "Debug mode [default: false]"
+        help = "Debug mode"
     ).flag(
         default = false
     )
 
     init {
-        context { helpFormatter = PlaintextHelpFormatter(maxWidth = 999) }
+        context {
+            helpFormatter = CliktHelpFormatter(
+                maxWidth = 999,
+                requiredOptionMarker = "*",
+                showDefaultValues = true,
+                showRequiredTag = true
+            )
+        }
     }
 
     override fun run() {
+        Globals.START_STATE_ALGORITHMS = startStateAlgorithms
         Globals.IS_FORBID_OR = isForbidOr
         Globals.IS_BFS_AUTOMATON = isBfsAutomaton
         Globals.IS_BFS_GUARD = isBfsGuard
-        Globals.IS_ENCODE_AUTOMATON = isEncodeAutomaton
         Globals.IS_ENCODE_TRANSITIONS_ORDER = isEncodeTransitionsOrder
         Globals.IS_ENCODE_TERMINALS_ORDER = isEncodeTerminalsOrder
+        Globals.IS_ENCODE_TOTALIZER = isEncodeTotalizer
         Globals.IS_DEBUG = isDebug
 
         // outDir.deleteRecursively()
         // outDir.walkBottomUp().forEach { if (it != outDir) it.delete() }
         outDir.mkdirs()
 
-        val scenarios = PositiveScenario.fromFile(fileScenarios)
-        println("[*] Scenarios: ${scenarios.size}")
-        println("[*] Elements: ${scenarios.sumBy { it.elements.size }}")
-
-        val tree = ScenarioTree(
-            scenarios,
-            inputNames = inputNamesPnP,
-            outputNames = outputNamesPnP
-        )
+        val tree = ScenarioTree.fromFile(fileScenarios, inputNamesPnP, outputNamesPnP)
+        println("[*] Scenarios: ${tree.scenarios.size}")
+        println("[*] Elements: ${tree.scenarios.sumBy { it.elements.size }}")
 
         val negTree = fileCounterexamples?.let {
             NegativeScenarioTree.fromFile(
@@ -302,124 +331,8 @@ class FbSAT : CliktCommand() {
             { Solver.default(solverCmd) }
         }
 
-        if (isOnlyAutomaton2) {
-            val scenarios4 = PositiveScenario.fromFile(File("data/tests-4"))
-            val tree4 =
-                ScenarioTree(scenarios4, tree.inputNames, tree.outputNames)
-
-            val automaton2 = Automaton(tree4)
-            fun magic(algo: String): Algorithm {
-                return BinaryAlgorithm(
-                    algorithm0 = algo.map {
-                        when (it) {
-                            '0', 'x' -> '0'
-                            '1' -> '1'
-                            else -> error("Bad char '$it'")
-                        }
-                    }.joinToString(""),
-                    algorithm1 = algo.map {
-                        when (it) {
-                            '0' -> '0'
-                            '1', 'x' -> '1'
-                            else -> error("Bad char '$it'")
-                        }
-                    }.joinToString("")
-                )
-            }
-            automaton2.addState(1, "INITO", magic("0000000"))
-            automaton2.addState(2, "CNF", magic("1x1xxxx"))
-            automaton2.addState(3, "CNF", magic("xx1x0xx"))
-            automaton2.addState(4, "CNF", magic("10x00x0"))
-            automaton2.addState(5, "CNF", magic("xxxx1xx"))
-            automaton2.addState(6, "CNF", magic("01010xx"))
-            automaton2.addState(7, "CNF", magic("xxxxx1x"))
-            automaton2.addState(8, "CNF", magic("xxxxx01"))
-
-            automaton2.addTransition(
-                1, 2, "REQ",
-                StringGuard("pp3", tree.inputNames)
-            )
-            automaton2.addTransition(
-                1, 3, "REQ",
-                StringGuard("pp2", tree.inputNames)
-            )
-            automaton2.addTransition(
-                1, 4, "REQ",
-                StringGuard("pp1", tree.inputNames)
-            )
-            automaton2.addTransition(
-                2, 5, "REQ",
-                StringGuard("c2End", tree.inputNames)
-            )
-            automaton2.addTransition(
-                3, 5, "REQ",
-                StringGuard("c2End & !vac", tree.inputNames)
-            )
-            automaton2.addTransition(
-                3, 6, "REQ",
-                StringGuard("vcHome & !pp2", tree.inputNames)
-            )
-            automaton2.addTransition(
-                4, 5, "REQ",
-                StringGuard("c1End & !vac", tree.inputNames)
-            )
-            automaton2.addTransition(
-                4, 6, "REQ",
-                StringGuard("vcHome & vac", tree.inputNames)
-            )
-            automaton2.addTransition(
-                5, 7, "REQ",
-                StringGuard("vcEnd & !vac", tree.inputNames)
-            )
-            automaton2.addTransition(
-                5, 8, "REQ",
-                StringGuard("vcEnd", tree.inputNames)
-            )
-            automaton2.addTransition(
-                6, 4, "REQ",
-                StringGuard("!vcEnd & pp1 & !vac", tree.inputNames)
-            )
-            automaton2.addTransition(
-                6, 5, "REQ",
-                StringGuard("c1Home & c2Home & vac", tree.inputNames)
-            )
-            automaton2.addTransition(
-                7, 3, "REQ",
-                StringGuard("!pp1", tree.inputNames)
-            )
-            automaton2.addTransition(
-                7, 4, "REQ",
-                StringGuard("!pp3", tree.inputNames)
-            )
-            automaton2.addTransition(
-                8, 6, "REQ",
-                StringGuard("!vac", tree.inputNames)
-            )
-
-            println("[+] Automaton2:")
-            automaton2.pprint()
-            println("[+] Automaton2 has ${automaton2.numberOfStates} states, ${automaton2.numberOfTransitions} transitions and ${automaton2.totalGuardsSize} nodes")
-
-            if (automaton2.verify(tree4))
-                println("[+] Verify automaton2 on tests-4: OK")
-            else
-                println("[-] Verify automaton2 on tests-4: FAILED")
-
-            if (automaton2.verify(tree))
-                println("[+] Verify automaton2 on $fileScenarios: OK")
-            else
-                println("[-] Verify automaton2 on $fileScenarios: FAILED")
-
-            if (negTree != null)
-                if (automaton2.verify(negTree))
-                    println("[+] Verify(CE) automaton2 on $fileCounterexamples: OK")
-                else
-                    println("[-] Verify(CE) automaton2 on $fileCounterexamples: FAILED")
-            return
-        }
-
         val automaton: Automaton? = when (method) {
-            "basic" -> {
+            Method.Basic -> {
                 val task = BasicTask.create(
                     scenarioTree = tree,
                     numberOfStates = numberOfStates!!,
@@ -430,7 +343,7 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "basic-min" -> {
+            Method.BasicMin -> {
                 val task = BasicMinTask.create(
                     scenarioTree = tree,
                     numberOfStates = numberOfStates,
@@ -441,7 +354,7 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "extended" -> {
+            Method.Extended -> {
                 val task = ExtendedTask.create(
                     scenarioTree = tree,
                     numberOfStates = requireNotNull(numberOfStates),
@@ -453,7 +366,7 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "extended-min" -> {
+            Method.ExtendedMin -> {
                 val task = ExtendedMinTask.create(
                     scenarioTree = tree,
                     numberOfStates = numberOfStates,
@@ -465,7 +378,7 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "extended-min-ub" -> {
+            Method.ExtendedMinUb -> {
                 val task = ExtendedMinUBTask.create(
                     scenarioTree = tree,
                     initialMaxTotalGuardsSize = maxTotalGuardsSize,
@@ -475,7 +388,7 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "complete" -> {
+            Method.Complete -> {
                 val task = CompleteTask.create(
                     scenarioTree = tree,
                     negativeScenarioTree = negTree,
@@ -488,7 +401,8 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "complete-cegis" -> {
+            Method.CompleteMin -> TODO("complete-min method")
+            Method.CompleteCegis -> {
                 val task = CompleteCegisTask.create(
                     scenarioTree = tree,
                     negativeScenarioTree = negTree,
@@ -502,7 +416,7 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            "complete-min-cegis" -> {
+            Method.CompleteMinCegis -> {
                 val task = CompleteMinCegisTask.create(
                     scenarioTree = tree,
                     initialNegativeScenarioTree = negTree,
@@ -515,6 +429,80 @@ class FbSAT : CliktCommand() {
                     solverProvider = solverProvider
                 )
                 task.infer()
+            }
+            Method.ModularBasic -> {
+                val task = ModularBasicTask.create(
+                    scenarioTree = tree,
+                    numberOfModules = numberOfModules!!,
+                    numberOfStates = numberOfStates!!,
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    maxTransitions = maxTransitions,
+                    solverProvider = solverProvider,
+                    outDir = outDir
+                )
+                val modularAutomaton = task.infer()
+
+                if (modularAutomaton == null) {
+                    log.failure("Modular automaton not found")
+                } else {
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules:")
+                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
+                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                        automaton.pprint()
+                        automaton.dump(outDir, "the_module-$m")
+                    }
+                    modularAutomaton.dumpFbt(
+                        outDir.resolve("modularAutomaton.fbt"),
+                        name = "ModularController"
+                    )
+                    if (modularAutomaton.verify(tree))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                    }
+                }
+
+                log.br()
+                log.br("The following messages - lies.")
+                log.br()
+                null
+            }
+            Method.ModularBasicMin -> {
+                val task = ModularBasicMinTask.create(
+                    scenarioTree = tree,
+                    numberOfModules = numberOfModules!!,
+                    numberOfStates = numberOfStates,
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    initialMaxTransitions = maxTransitions,
+                    solverProvider = solverProvider,
+                    outDir = outDir
+                )
+                val modularAutomaton = task.infer()
+
+                if (modularAutomaton == null) {
+                    log.failure("Modular automaton not found")
+                } else {
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules:")
+                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
+                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                        automaton.pprint()
+                        automaton.dump(outDir, "the_module-$m")
+                    }
+                    modularAutomaton.dumpFbt(
+                        outDir.resolve("modularAutomaton.fbt"),
+                        name = "ModularController"
+                    )
+                    if (modularAutomaton.verify(tree))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                    }
+                }
+
+                log.br()
+                log.br("The following messages - lies.")
+                log.br()
+                null
             }
             else -> TODO("method '$method'")
         }

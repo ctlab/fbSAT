@@ -35,7 +35,12 @@ interface CompleteMinCegisTask {
         ): CompleteMinCegisTask = CompleteMinCegisTaskImpl(
             scenarioTree = scenarioTree,
             negativeScenarioTree = initialNegativeScenarioTree
-                ?: NegativeScenarioTree.empty(scenarioTree.inputNames, scenarioTree.outputNames),
+                ?: NegativeScenarioTree(
+                    inputEvents = scenarioTree.inputEvents,
+                    outputEvents = scenarioTree.outputEvents,
+                    inputNames = scenarioTree.inputNames,
+                    outputNames = scenarioTree.outputNames
+                ),
             numberOfStates = numberOfStates,
             maxOutgoingTransitions = maxOutgoingTransitions,
             maxGuardSize = maxGuardSize,
@@ -79,7 +84,9 @@ private class CompleteMinCegisTaskImpl(
         val automatonExtendedMin = extendedMinTask.infer()
             ?: error("ExtendedMinTask could not infer an automaton")
         val C = automatonExtendedMin.numberOfStates
-        val K = maxOutgoingTransitions
+        // val K = maxOutgoingTransitions
+        val K = automatonExtendedMin.maxOutgoingTransitions
+        log.info("Reusing K = $K")
         val P = maxGuardSize
         var N = automatonExtendedMin.totalGuardsSize
 

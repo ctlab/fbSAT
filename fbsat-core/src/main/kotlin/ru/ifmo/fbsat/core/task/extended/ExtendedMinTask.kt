@@ -68,6 +68,7 @@ private class ExtendedMinTaskImpl(
                 scenarioTree = scenarioTree,
                 outDir = outDir,
                 solverProvider = solverProvider,
+                isEncodeReverseImplication = true,
                 isOnlyC = true
             )
             val automaton = task.infer() ?: return null
@@ -75,6 +76,7 @@ private class ExtendedMinTaskImpl(
         }
 
         log.info("ExtMinTask: searching for minimal N...")
+        // TODO: (`reuse`) pass through the last BasicTask (Note: only if isEncodeReverseImplication is true, because if is false, then BasicTask can't be reused)
         var task = ExtendedTask.create(
             scenarioTree = scenarioTree,
             numberOfStates = C,

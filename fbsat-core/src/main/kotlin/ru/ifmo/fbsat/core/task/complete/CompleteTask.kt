@@ -1,6 +1,8 @@
 package ru.ifmo.fbsat.core.task.complete
 
+import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.automaton.Automaton
+import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
@@ -13,7 +15,6 @@ import ru.ifmo.fbsat.core.task.extended.ExtendedTask
 import ru.ifmo.fbsat.core.task.extended.toAutomaton
 import ru.ifmo.fbsat.core.utils.getForce
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.multiarray.IntMultiArray
 import java.io.File
 
 interface CompleteTask {
@@ -45,7 +46,12 @@ interface CompleteTask {
         ): CompleteTask = CompleteTaskImpl(
             scenarioTree = scenarioTree,
             negativeScenarioTree = negativeScenarioTree
-                ?: NegativeScenarioTree.empty(scenarioTree.inputNames, scenarioTree.outputNames),
+                ?: NegativeScenarioTree(
+                    inputEvents = scenarioTree.inputEvents,
+                    outputEvents = scenarioTree.outputEvents,
+                    inputNames = scenarioTree.inputNames,
+                    outputNames = scenarioTree.outputNames
+                ),
             numberOfStates = numberOfStates,
             maxOutgoingTransitions = maxOutgoingTransitions ?: numberOfStates,
             maxGuardSize = maxGuardSize,
@@ -125,7 +131,7 @@ private class CompleteTaskImpl(
             outDir = this.outDir,
             solver = this.solver,
             autoFinalize = this.autoFinalize,
-            extendedTask = this.extendedTask.reuse(newMaxTotalGuardsSize)
+            extendedTask = this.extendedTask
         )
     }
 
@@ -153,9 +159,6 @@ private class CompleteTaskImpl(
         val K: Int by context
         val P: Int by context
         val E: Int by context
-        val O: Int by context
-        val X: Int by context
-        val Z: Int by context
         val oldNegV: Int = (context["negV"] as Int?) ?: 0
         val negV: Int by context(negativeScenarioTree.size)
         val newNegVs: IntRange by context((oldNegV + 1)..negV)
@@ -163,35 +166,21 @@ private class CompleteTaskImpl(
         val newNegVsPassive: List<Int> by context(newNegVs.filter { it in negativeScenarioTree.passiveVertices })
         // val negU: Int by context(negativeScenarioTree.uniqueInputs.size)
         val negU: Int = negativeScenarioTree.uniqueInputs.size
-        val oldNegUIs: List<String> = context.getForce("negUIs") ?: emptyList()
-        val negUIs: List<String> by context(negativeScenarioTree.uniqueInputs)
-        val posUIs: List<String> = scenarioTree.uniqueInputs
-        fun getNegU(input: String): Int = negUIs.indexOf(input) + 1
-        fun getOldNegU(input: String): Int = oldNegUIs.indexOf(input) + 1
-        fun getPosU(input: String): Int = posUIs.indexOf(input) + 1
-        val oldOnlyNegUIs: List<String> = context.getForce("onlyNegUIs") ?: emptyList()
-        val onlyNegUIs: List<String> by context(negUIs - posUIs)
-        val newOnlyNegUIs: List<String> = onlyNegUIs - oldOnlyNegUIs
+        val oldNegUIs: List<InputValues> = context.getForce("negUIs") ?: emptyList()
+        val negUIs: List<InputValues> by context(negativeScenarioTree.uniqueInputs)
+        val posUIs: List<InputValues> = scenarioTree.uniqueInputs
+        fun getNegU(input: InputValues): Int = negUIs.indexOf(input) + 1
+        fun getOldNegU(input: InputValues): Int = oldNegUIs.indexOf(input) + 1
+        fun getPosU(input: InputValues): Int = posUIs.indexOf(input) + 1
+        val oldOnlyNegUIs: List<InputValues> = context.getForce("onlyNegUIs") ?: emptyList()
+        val onlyNegUIs: List<InputValues> by context(negUIs - posUIs)
+        val newOnlyNegUIs: List<InputValues> = onlyNegUIs - oldOnlyNegUIs
         val newOnlyNegUs: List<Int> by context(newOnlyNegUIs.map(::getNegU))
         context.computeIfAbsent("forbiddenLoops") { mutableSetOf<Pair<Int, Int>>() }
 
         // Variables
-        val transition: IntMultiArray by context
         val actualTransition: IntMultiArray by context
-        val inputEvent: IntMultiArray by context
-        val outputEvent: IntMultiArray by context
-        val algorithm0: IntMultiArray by context
-        val algorithm1: IntMultiArray by context
-        val color: IntMultiArray by context
-        val nodeType: IntMultiArray by context
-        val terminal: IntMultiArray by context
-        val parent: IntMultiArray by context
-        val childLeft: IntMultiArray by context
-        val childRight: IntMultiArray by context
         val nodeValue: IntMultiArray by context
-        val rootValue: IntMultiArray by context
-        val childValueLeft: IntMultiArray by context
-        val childValueRight: IntMultiArray by context
         val firstFired: IntMultiArray by context
         val notFired: IntMultiArray by context
         val oldNegActualTransition: IntMultiArray = context.getForce("negActualTransition")
@@ -224,26 +213,6 @@ private class CompleteTaskImpl(
         val negRootValue: IntMultiArray by context(
             newArray(C, K, negU) { (c, k, u) ->
                 negNodeValue[c, k, 1, u]
-            }
-        )
-        val oldNegChildValueLeft: IntMultiArray = context.getForce("negChildValueLeft")
-        val negChildValueLeft: IntMultiArray by context(
-            newArray(C, K, P, negU) { (c, k, p, u) ->
-                when (val input = negUIs[u - 1]) {
-                    in newOnlyNegUIs -> newVariable()
-                    in oldNegUIs -> oldNegChildValueLeft[c, k, p, getOldNegU(input)]
-                    else -> childValueLeft[c, k, p, getPosU(input)]
-                }
-            }
-        )
-        val oldNegChildValueRight: IntMultiArray = context.getForce("negChildValueRight")
-        val negChildValueRight: IntMultiArray by context(
-            newArray(C, K, P, negU) { (c, k, p, u) ->
-                when (val input = negUIs[u - 1]) {
-                    in newOnlyNegUIs -> newVariable()
-                    in oldNegUIs -> oldNegChildValueRight[c, k, p, getOldNegU(input)]
-                    else -> childValueRight[c, k, p, getPosU(input)]
-                }
             }
         )
         val oldNegFirstFired: IntMultiArray = context.getForce("negFirstFired")

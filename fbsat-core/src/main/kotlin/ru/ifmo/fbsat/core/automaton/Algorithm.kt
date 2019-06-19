@@ -1,17 +1,14 @@
 package ru.ifmo.fbsat.core.automaton
 
 import ru.ifmo.fbsat.core.utils.toBinaryString
-import ru.ifmo.fbsat.core.utils.toBooleanArray
 
 interface Algorithm {
-    fun eval(outputValues: BooleanArray): BooleanArray
+    fun eval(outputValues: OutputValues): OutputValues
     fun toSimpleString(): String
 }
 
-class BinaryAlgorithm(val algorithm0: BooleanArray, val algorithm1: BooleanArray) :
-    Algorithm {
-
-    constructor(algorithm0: String, algorithm1: String) :
+class BinaryAlgorithm(val algorithm0: BooleanArray, val algorithm1: BooleanArray) : Algorithm {
+    constructor(algorithm0: Collection<Boolean>, algorithm1: Collection<Boolean>) :
         this(algorithm0.toBooleanArray(), algorithm1.toBooleanArray())
 
     init {
@@ -20,11 +17,9 @@ class BinaryAlgorithm(val algorithm0: BooleanArray, val algorithm1: BooleanArray
         }
     }
 
-    override fun eval(outputValues: BooleanArray): BooleanArray {
-        require(outputValues.size == algorithm0.size) { "Number (${outputValues.size}) of output values (${outputValues.toList()}) and algorithm size (${algorithm0.size}) mismatch" }
-        return outputValues
-            .mapIndexed { i, b -> if (b) algorithm1[i] else algorithm0[i] }
-            .toBooleanArray()
+    override fun eval(outputValues: OutputValues): OutputValues {
+        require(outputValues.values.size == algorithm0.size) { "Number (${outputValues.values.size}) of output values (${outputValues.values.toList()}) and algorithm size (${algorithm0.size}) mismatch" }
+        return OutputValues(outputValues.values.mapIndexed { i, b -> if (b) algorithm1[i] else algorithm0[i] })
     }
 
     override fun toSimpleString(): String {
@@ -36,14 +31,14 @@ class BinaryAlgorithm(val algorithm0: BooleanArray, val algorithm1: BooleanArray
     }
 
     fun toST(outputNames: List<String>): String {
-        require(outputNames.size == algorithm0.size) { "Wrong number of names" }
+        require(outputNames.size == algorithm0.size) { "Wrong number of output names" }
 
         return outputNames.indices.joinToString("") { i ->
             val name = outputNames[i]
             val a0 = algorithm0[i]
             val a1 = algorithm1[i]
             if (a0 == a1)
-                "$name:=${if (a0) "TRUE" else "FALSE"};"
+                "$name:=${a0.toString().toUpperCase()};"
             else
                 "$name:=~$name;"
         }
