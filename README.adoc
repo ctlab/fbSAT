@@ -1,8 +1,16 @@
-= fbSAT: Automatic Inference of Minimal Finite-State Models of Function Blocks from Execution Scenarios and Temporal Properties
+= fbSAT
+ifdef::env-github[]
+:note-caption: :information_source:
+endif::[]
+:toc: macro
+
+Automatic Inference of Minimal Finite-State Models of Function Blocks from Execution Scenarios and Temporal Properties
 
 image:https://travis-ci.org/ctlab/fbSAT.svg?branch=master["Build Status", link="https://travis-ci.org/ctlab/fbSAT"]
 image:https://api.codacy.com/project/badge/Grade/7d2a6633604c4d04be079015afa6e30f["Codacy code quality", link="https://app.codacy.com/app/Lipen/fbSAT"]
 image:https://hitsofcode.com/github/ctlab/fbSAT["Hits-of-Code", link="https://hitsofcode.com/view/github/ctlab/fbSAT"]
+
+toc::[]
 
 == Build
 
@@ -65,10 +73,6 @@ If you already have your favorite SAT solver, use it. If not, check out link:htt
 Note, that you have to specify the `--no-incremental` flag, if your SAT solver is not able to process incremental problems via stdin.
 This is true for all standard SAT solvers, which are only able to read the single one non-incremental SAT problem written in DIMACS format.
 
-=== TL;DR
-
-Add link:scripts[`scripts`] folder to your PATH and execute link:scripts/start-icms[`start-icms`]. After this you will be able to use fbSAT without any specific solver-related arguments.
-
 === Cryptominisat
 
 In order to get cryptominisat, simply download one of the link:https://github.com/msoos/cryptominisat/releases[release binaries] for Linux/Windows.
@@ -117,6 +121,10 @@ fbsat ... --solver="docker exec -i icms /usr/local/bin/incremental-cryptominisat
 ## When finished, do not forget to stop and remove the spawned container:
 docker rm -f icms
 ----
+
+=== TL;DR
+
+NOTE: Add link:scripts[`scripts`] folder to your PATH and execute link:scripts/start-icms[`start-icms`]. After this you will be able to use fbSAT without any specific solver-related arguments.
 
 == Usage example
 
