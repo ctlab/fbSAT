@@ -4,7 +4,6 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.context
 import com.github.ajalt.clikt.output.CliktHelpFormatter
 import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.defaultLazy
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
@@ -75,22 +74,22 @@ class FbSAT : CliktCommand() {
 
     val smvDir: File by option(
         "--smvdir",
-        help = "Directory with SMV files/scripts for verification",
+        help = "Directory with SMV files",
         metavar = "<path>"
     ).file(
         exists = true,
         fileOkay = false
-    ).defaultLazy {
+    ).default(
         File("data/pnp/smv")
-    }
+    )
 
     val outDir: File by option(
         "-o", "--outdir",
         help = "Output directory",
         metavar = "<path>"
-    ).file().defaultLazy {
+    ).file().default(
         File("out/${DateTime.now().format(ISO8601.DATETIME_COMPLETE)}")
-    }
+    )
 
     val method: Method by option(
         "-m", "--method",
@@ -146,7 +145,9 @@ class FbSAT : CliktCommand() {
         "--solver",
         help = "SAT-solver",
         metavar = "<cmd>"
-    ).default("incremental-cryptominisat")
+    ).default(
+        "incremental-cryptominisat"
+    )
 
     val isIncrementalSolver: Boolean by option(
         "--incremental",
