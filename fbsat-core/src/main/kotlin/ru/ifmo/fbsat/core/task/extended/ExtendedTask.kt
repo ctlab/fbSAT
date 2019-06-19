@@ -95,52 +95,6 @@ private class ExtendedTaskImpl(
         }
     }
 
-    override fun infer(): Automaton? {
-        check(!isExecuted) { "This task has already been executed. Try using the `reuse()` method." }
-        check(!isReused) { "This task has already been reused and can't be executed." }
-        check(!isFinalized) { "This task has already been finalized and can't be executed." }
-        isExecuted = true
-
-        val rawAssignment = solver.solve()
-        if (autoFinalize) finalize2()
-        if (rawAssignment == null)
-            return null
-
-        val assignment = ExtendedAssignment.fromRaw(rawAssignment)
-        @Suppress("UnnecessaryVariable")
-        val automaton = assignment.toAutomaton()
-        return automaton
-    }
-
-    override fun reuse(newMaxTotalGuardsSize: Int): ExtendedTask {
-        check(!isReused) { "This task has already been reused." }
-        check(!isFinalized) { "This task has already been finalized and can't be reused." }
-        if (!isExecuted)
-            log.warn("Reusing the task that has not been executed yet.")
-        isReused = true
-
-        return ExtendedTaskImpl(
-            scenarioTree = this.scenarioTree,
-            numberOfStates = this.numberOfStates,
-            maxOutgoingTransitions = this.maxOutgoingTransitions,
-            maxGuardSize = this.maxGuardSize,
-            maxTotalGuardsSize = newMaxTotalGuardsSize,
-            outDir = this.outDir,
-            solver = this.solver,
-            autoFinalize = this.autoFinalize,
-            isEncodeReverseImplication = this.isEncodeReverseImplication,
-            basicTask = this.basicTask
-        )
-    }
-
-    override fun finalize2() {
-        check(!isFinalized) { "This task has already been finalized." }
-        isFinalized = true
-        basicTask.finalize2()
-        // Note: basicTask already finalizes solver, so it is not necessary to do it here again
-        // solver.finalize2()
-    }
-
     @Suppress("LocalVariableName", "UNUSED_VARIABLE")
     private fun Solver.declareExtendedReduction() {
         when (context["_isExtendedReductionDeclared"] as Boolean?) {
@@ -241,5 +195,51 @@ private class ExtendedTaskImpl(
                     for (p in 1..P)
                         clause(-nodeType[c, k, p, NodeType.OR.value])
         }
+    }
+
+    override fun infer(): Automaton? {
+        check(!isExecuted) { "This task has already been executed. Try using the `reuse()` method." }
+        check(!isReused) { "This task has already been reused and can't be executed." }
+        check(!isFinalized) { "This task has already been finalized and can't be executed." }
+        isExecuted = true
+
+        val rawAssignment = solver.solve()
+        if (autoFinalize) finalize2()
+        if (rawAssignment == null)
+            return null
+
+        val assignment = ExtendedAssignment.fromRaw(rawAssignment)
+        @Suppress("UnnecessaryVariable")
+        val automaton = assignment.toAutomaton()
+        return automaton
+    }
+
+    override fun reuse(newMaxTotalGuardsSize: Int): ExtendedTask {
+        check(!isReused) { "This task has already been reused." }
+        check(!isFinalized) { "This task has already been finalized and can't be reused." }
+        if (!isExecuted)
+            log.warn("Reusing the task that has not been executed yet.")
+        isReused = true
+
+        return ExtendedTaskImpl(
+            scenarioTree = this.scenarioTree,
+            numberOfStates = this.numberOfStates,
+            maxOutgoingTransitions = this.maxOutgoingTransitions,
+            maxGuardSize = this.maxGuardSize,
+            maxTotalGuardsSize = newMaxTotalGuardsSize,
+            outDir = this.outDir,
+            solver = this.solver,
+            autoFinalize = this.autoFinalize,
+            isEncodeReverseImplication = this.isEncodeReverseImplication,
+            basicTask = this.basicTask
+        )
+    }
+
+    override fun finalize2() {
+        check(!isFinalized) { "This task has already been finalized." }
+        isFinalized = true
+        basicTask.finalize2()
+        // Note: basicTask already finalizes solver, so it is not necessary to do it here again
+        // solver.finalize2()
     }
 }

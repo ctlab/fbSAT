@@ -49,6 +49,9 @@ interface BasicTask {
             autoFinalize = autoFinalize,
             isEncodeReverseImplication = isEncodeReverseImplication
         )
+
+        // TODO: `createAsSubtask` factory method, which passes `isSubtask=true` to the constructor.
+        // `isSubtask` flag prevents task from being used/reused (`.infer()`/`.reuse()`)
     }
 }
 
@@ -71,6 +74,72 @@ private class BasicTaskImpl(
             declareBasicReduction()
             declareCardinality()
         }
+    }
+
+    @Suppress("LocalVariableName", "UNUSED_VARIABLE")
+    private fun Solver.declareBasicReduction() {
+        when (context["_isBasicReductionDeclared"] as Boolean?) {
+            true -> return
+            false -> error { "_isBasicReductionDeclared is false" }
+            null -> context["_isBasicReductionDeclared"] = true
+        }
+
+        // Constants
+        val scenarioTree: ScenarioTree by context(scenarioTree)
+        val C: Int by context(numberOfStates)
+        val K: Int by context(maxOutgoingTransitions)
+        val V: Int by context(scenarioTree.size)
+        val E: Int by context(scenarioTree.inputEvents.size)
+        val O: Int by context(scenarioTree.outputEvents.size)
+        val X: Int by context(scenarioTree.inputNames.size)
+        val Z: Int by context(scenarioTree.outputNames.size)
+        val U: Int by context(scenarioTree.uniqueInputs.size)
+
+        // Variables
+        val transition: IntMultiArray by context(newArray(C, K, C + 1))
+        val actualTransition: IntMultiArray by context(newArray(C, E, U, C + 1))
+        val inputEvent: IntMultiArray by context(newArray(C, K, E + 1))
+        val outputEvent: IntMultiArray by context(newArray(C, O + 1))
+        val algorithm0: IntMultiArray by context(newArray(C, Z))
+        val algorithm1: IntMultiArray by context(newArray(C, Z))
+        val color: IntMultiArray by context(newArray(V, C))
+        val rootValue: IntMultiArray by context(newArray(C, K, U))
+        val firstFired: IntMultiArray by context(newArray(C, U, K + 1))
+        val notFired: IntMultiArray by context(newArray(C, U, K))
+
+        // Constraints
+        declareColorConstraints(isEncodeReverseImplication = isEncodeReverseImplication)
+        declareTransitionConstraints()
+        declareFiringConstraints()
+        declareOutputEventConstraints()
+        declareAlgorithmConstraints()
+        if (Globals.IS_BFS_AUTOMATON)
+            declareAutomatonBfsConstraints()
+        if (Globals.IS_ENCODE_TRANSITIONS_ORDER)
+            declareTransitionsOrderConstraints()
+        // TODO: declareAdhocConstraints()
+    }
+
+    @Suppress("LocalVariableName")
+    private fun Solver.declareCardinality() {
+        if (maxTransitions == null && !Globals.IS_ENCODE_TOTALIZER) return
+
+        val totalizer: IntArray = context.computeIfAbsent("_totalizerBasic") {
+            val transition: IntMultiArray by context
+            declareTotalizer(sequence {
+                val (C, K, _) = transition.shape
+                for (c in 1..C)
+                    for (k in 1..K)
+                        yield(-transition[c, k, C + 1])
+            })
+        } as IntArray
+
+        if (maxTransitions == null) return
+
+        val T: Int by context(maxTransitions)
+        val declaredT: Int? = context["_declaredT"] as Int?
+        solver.declareComparatorLessThanOrEqual(totalizer, T, declaredT)
+        context["_declaredT"] = T
     }
 
     override fun infer(): Automaton? {
@@ -113,71 +182,5 @@ private class BasicTaskImpl(
         check(!isFinalized) { "This task has already been finalized." }
         isFinalized = true
         solver.finalize2()
-    }
-
-    @Suppress("LocalVariableName", "UNUSED_VARIABLE")
-    private fun Solver.declareBasicReduction() {
-        when (context["_isBasicReductionDeclared"] as Boolean?) {
-            true -> return
-            false -> error { "_isBasicReductionDeclared is false" }
-            null -> context["_isBasicReductionDeclared"] = true
-        }
-
-        // Constants
-        val scenarioTree: ScenarioTree by context(scenarioTree)
-        val C: Int by context(numberOfStates)
-        val K: Int by context(maxOutgoingTransitions)
-        val V: Int by context(scenarioTree.size)
-        val E: Int by context(scenarioTree.inputEvents.size)
-        val O: Int by context(scenarioTree.outputEvents.size)
-        val X: Int by context(scenarioTree.inputNames.size)
-        val Z: Int by context(scenarioTree.outputNames.size)
-        val U: Int by context(scenarioTree.uniqueInputs.size)
-
-        // Variables
-        val transition: IntMultiArray by context(newArray(C, K, C + 1))
-        val actualTransition: IntMultiArray by context(newArray(C, E, U, C + 1))
-        val inputEvent: IntMultiArray by context(newArray(C, K, E + 1))
-        val outputEvent: IntMultiArray by context(newArray(C, O + 1))
-        val algorithm0: IntMultiArray by context(newArray(C, Z))
-        val algorithm1: IntMultiArray by context(newArray(C, Z))
-        val color: IntMultiArray by context(newArray(V, C))
-        val rootValue: IntMultiArray by context(newArray(C, K, U))
-        val firstFired: IntMultiArray by context(newArray(C, U, K + 1))
-        val notFired: IntMultiArray by context(newArray(C, U, K))
-
-        // Constraints
-        declareColorConstraints(isEncodeReverseImplication)
-        declareTransitionConstraints()
-        declareFiringConstraints()
-        declareOutputEventConstraints()
-        declareAlgorithmConstraints()
-        if (Globals.IS_BFS_AUTOMATON)
-            declareAutomatonBfsConstraints()
-        if (Globals.IS_ENCODE_TRANSITIONS_ORDER)
-            declareTransitionsOrderConstraints()
-        // TODO: declareAdhocConstraints()
-    }
-
-    @Suppress("LocalVariableName")
-    private fun Solver.declareCardinality() {
-        if (maxTransitions == null && !Globals.IS_ENCODE_TOTALIZER) return
-
-        val totalizer: IntArray = context.computeIfAbsent("_totalizerBasic") {
-            val transition: IntMultiArray by context
-            declareTotalizer(sequence {
-                val (C, K, _) = transition.shape
-                for (c in 1..C)
-                    for (k in 1..K)
-                        yield(-transition[c, k, C + 1])
-            })
-        } as IntArray
-
-        if (maxTransitions == null) return
-
-        val T: Int by context(maxTransitions)
-        val declaredT: Int? = context["_declaredT"] as Int?
-        solver.declareComparatorLessThanOrEqual(totalizer, T, declaredT)
-        context["_declaredT"] = T
     }
 }
