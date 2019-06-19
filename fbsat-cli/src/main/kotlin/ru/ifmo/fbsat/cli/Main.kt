@@ -178,6 +178,11 @@ class FbSAT : CliktCommand() {
         default = false
     )
 
+    val isOnlyC: Boolean by option(
+        "--only-C",
+        help = "[basic-min] Minimize only C, without T"
+    ).flag()
+
     val failIfSTVerifyFailed: Boolean by option(
         "--fail-verify-st",
         help = "Halt if verification of scenario tree has failed"
@@ -351,7 +356,8 @@ class FbSAT : CliktCommand() {
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     initialMaxTransitions = maxTransitions,
                     solverProvider = solverProvider,
-                    outDir = outDir
+                    outDir = outDir,
+                    isOnlyC = isOnlyC
                 )
                 task.infer()
             }
