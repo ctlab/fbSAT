@@ -10,6 +10,8 @@ image:https://travis-ci.org/ctlab/fbSAT.svg?branch=master["Build Status", link="
 image:https://api.codacy.com/project/badge/Grade/7d2a6633604c4d04be079015afa6e30f["Codacy code quality", link="https://app.codacy.com/app/Lipen/fbSAT"]
 image:https://hitsofcode.com/github/ctlab/fbSAT["Hits-of-Code", link="https://hitsofcode.com/view/github/ctlab/fbSAT"]
 
+https://arxiv.org/abs/1907.03285[Paper on arXiv]
+
 toc::[]
 
 == Build
