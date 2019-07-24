@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.core.task.extended
+package ru.ifmo.fbsat.core.task.extended.single
 
 import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.automaton.Automaton
@@ -6,7 +6,7 @@ import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.Solver.Companion.falseVariable
-import ru.ifmo.fbsat.core.task.basic.BasicTask
+import ru.ifmo.fbsat.core.task.basic.single.BasicTask
 import ru.ifmo.fbsat.core.task.declareAndOrNodesConstraints
 import ru.ifmo.fbsat.core.task.declareGuardBfsConstraints
 import ru.ifmo.fbsat.core.task.declareNodeTypeConstraints
@@ -29,16 +29,17 @@ class ExtendedTask(
     val autoFinalize: Boolean = true,
     isEncodeReverseImplication: Boolean = true
 ) {
-    private val basicTask: BasicTask = BasicTask(
-        scenarioTree = scenarioTree,
-        numberOfStates = numberOfStates,
-        maxOutgoingTransitions = maxOutgoingTransitions,
-        maxTransitions = null,
-        outDir = outDir,
-        solver = solver,
-        autoFinalize = false,
-        isEncodeReverseImplication = isEncodeReverseImplication
-    )
+    private val basicTask: BasicTask =
+        BasicTask(
+            scenarioTree = scenarioTree,
+            numberOfStates = numberOfStates,
+            maxOutgoingTransitions = maxOutgoingTransitions,
+            maxTransitions = null,
+            outDir = outDir,
+            solver = solver,
+            autoFinalize = false,
+            isEncodeReverseImplication = isEncodeReverseImplication
+        )
 
     val vars: ExtendedVariables
 

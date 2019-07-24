@@ -1,9 +1,9 @@
-package ru.ifmo.fbsat.core.task.extended
+package ru.ifmo.fbsat.core.task.extended.single
 
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.basic.BasicMinTask
+import ru.ifmo.fbsat.core.task.basic.single.BasicMinTask
 import ru.ifmo.fbsat.core.utils.log
 import java.io.File
 

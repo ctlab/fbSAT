@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.core.task.complete
+package ru.ifmo.fbsat.core.task.complete.single
 
 import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.automaton.InputValues
@@ -9,7 +9,7 @@ import ru.ifmo.fbsat.core.task.declareNegativeColorConstraints
 import ru.ifmo.fbsat.core.task.declareNegativeFiringConstraints
 import ru.ifmo.fbsat.core.task.declareNegativeGuardConstraints
 import ru.ifmo.fbsat.core.task.declareNegativeTransitionConstraints
-import ru.ifmo.fbsat.core.task.extended.ExtendedVariables
+import ru.ifmo.fbsat.core.task.extended.single.ExtendedVariables
 
 @Suppress("MemberVisibilityCanBePrivate", "PropertyName")
 class CompleteVariables(

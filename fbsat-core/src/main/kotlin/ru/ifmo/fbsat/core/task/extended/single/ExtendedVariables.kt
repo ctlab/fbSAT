@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.core.task.extended
+package ru.ifmo.fbsat.core.task.extended.single
 
 import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.automaton.NodeType
@@ -6,7 +6,7 @@ import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareComparatorLessThanOrEqual
 import ru.ifmo.fbsat.core.solver.declareTotalizer
-import ru.ifmo.fbsat.core.task.basic.BasicVariables
+import ru.ifmo.fbsat.core.task.basic.single.BasicVariables
 import ru.ifmo.fbsat.core.utils.Globals
 
 class ExtendedVariables(

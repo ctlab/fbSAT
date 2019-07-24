@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.core.task.basic
+package ru.ifmo.fbsat.core.task.basic.single
 
 import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree

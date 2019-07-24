@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.core.task.basic
+package ru.ifmo.fbsat.core.task.basic.modular.parallel
 
 import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.IntMultiArray

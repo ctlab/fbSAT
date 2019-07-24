@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.core.task.complete
+package ru.ifmo.fbsat.core.task.complete.single
 
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.Counterexample
