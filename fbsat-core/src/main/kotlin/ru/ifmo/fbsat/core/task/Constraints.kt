@@ -21,15 +21,16 @@ import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.exhaustive
 
-fun Solver.declareColorConstraints(isEncodeReverseImplication: Boolean = true) {
-    val scenarioTree: ScenarioTree by context
-    val C: Int by context
-    val K: Int by context
-    val V: Int by context
-    val color: IntMultiArray by context
-    val transition: IntMultiArray by context
-    val actualTransition: IntMultiArray by context
-
+fun Solver.declareColorConstraints(
+    scenarioTree: ScenarioTree,
+    C: Int,
+    K: Int,
+    V: Int,
+    color: IntMultiArray,
+    transition: IntMultiArray,
+    actualTransition: IntMultiArray,
+    isEncodeReverseImplication: Boolean = true
+) {
     comment("1. Color constraints")
 
     comment("1.0. ONE(color)_{1..C}")
@@ -98,16 +99,16 @@ fun Solver.declareColorConstraints(isEncodeReverseImplication: Boolean = true) {
     clause(color[1, 1])
 }
 
-fun Solver.declareTransitionConstraints() {
-    val C: Int by context
-    val K: Int by context
-    val E: Int by context
-    val U: Int by context
-    val transition: IntMultiArray by context
-    val actualTransition: IntMultiArray by context
-    val inputEvent: IntMultiArray by context
-    val firstFired: IntMultiArray by context
-
+fun Solver.declareTransitionConstraints(
+    C: Int,
+    K: Int,
+    E: Int,
+    U: Int,
+    transition: IntMultiArray,
+    actualTransition: IntMultiArray,
+    inputEvent: IntMultiArray,
+    firstFired: IntMultiArray
+) {
     comment("2. Transition constraints")
 
     comment("2.0a. ONE(transition)_{0..C}")
@@ -179,14 +180,14 @@ fun Solver.declareTransitionConstraints() {
             clause(-transition[c, k, 1])
 }
 
-fun Solver.declareFiringConstraints() {
-    val C: Int by context
-    val K: Int by context
-    val U: Int by context
-    val rootValue: IntMultiArray by context
-    val firstFired: IntMultiArray by context
-    val notFired: IntMultiArray by context
-
+fun Solver.declareFiringConstraints(
+    C: Int,
+    K: Int,
+    U: Int,
+    rootValue: IntMultiArray,
+    firstFired: IntMultiArray,
+    notFired: IntMultiArray
+) {
     comment("3. Firing constraints")
 
     comment("3.0. ONE(first_fired)_{0..K}")
@@ -229,13 +230,13 @@ fun Solver.declareFiringConstraints() {
             iff(firstFired[c, u, K + 1], notFired[c, u, K])
 }
 
-fun Solver.declareOutputEventConstraints() {
-    val scenarioTree: ScenarioTree by context
-    val C: Int by context
-    val O: Int by context
-    val color: IntMultiArray by context
-    val outputEvent: IntMultiArray by context
-
+fun Solver.declareOutputEventConstraints(
+    scenarioTree: ScenarioTree,
+    C: Int,
+    O: Int,
+    color: IntMultiArray,
+    outputEvent: IntMultiArray
+) {
     comment("4. Output event constraints")
 
     comment("4.0. ONE(output_event)_{0..O} :: c > 1")
@@ -261,14 +262,14 @@ fun Solver.declareOutputEventConstraints() {
         clause(-outputEvent[c, O + 1])
 }
 
-fun Solver.declareAlgorithmConstraints() {
-    val scenarioTree: ScenarioTree by context
-    val C: Int by context
-    val Z: Int by context
-    val color: IntMultiArray by context
-    val algorithm0: IntMultiArray by context
-    val algorithm1: IntMultiArray by context
-
+fun Solver.declareAlgorithmConstraints(
+    scenarioTree: ScenarioTree,
+    C: Int,
+    Z: Int,
+    color: IntMultiArray,
+    algorithm0: IntMultiArray,
+    algorithm1: IntMultiArray
+) {
     comment("5. Algorithm constraints")
 
     when (Globals.START_STATE_ALGORITHMS) {
@@ -310,10 +311,11 @@ fun Solver.declareAlgorithmConstraints() {
     }
 }
 
-fun Solver.declareAutomatonBfsConstraints() {
-    val C: Int by context
-    val K: Int by context
-    val transition: IntMultiArray by context
+fun Solver.declareAutomatonBfsConstraints(
+    C: Int,
+    K: Int,
+    transition: IntMultiArray
+) {
     val bfsTransitionAutomaton = newArray(C, C)
     val bfsParentAutomaton = newArray(C, C) { (j, i) ->
         if (i < j) newVariable() else falseVariable
@@ -396,12 +398,12 @@ fun Solver.declareAutomatonBfsConstraints() {
                 imply(bfsParentAutomaton[j, i], -bfsParentAutomaton[j + 1, k])
 }
 
-fun Solver.declareGuardBfsConstraints() {
-    val C: Int by context
-    val K: Int by context
-    val P: Int by context
-    val parent: IntMultiArray by context
-
+fun Solver.declareGuardBfsConstraints(
+    C: Int,
+    K: Int,
+    P: Int,
+    parent: IntMultiArray
+) {
     comment("66. Guard BFS constraints")
 
     for (c in 1..C)
@@ -452,13 +454,13 @@ fun Solver.declareGuardBfsConstraints() {
         }
 }
 
-fun Solver.declareNodeTypeConstraints() {
-    val C: Int by context
-    val K: Int by context
-    val P: Int by context
-    val transition: IntMultiArray by context
-    val nodeType: IntMultiArray by context
-
+fun Solver.declareNodeTypeConstraints(
+    C: Int,
+    K: Int,
+    P: Int,
+    transition: IntMultiArray,
+    nodeType: IntMultiArray
+) {
     comment("7. Nodetype constraints")
 
     comment("7.0. ONE(nodetype)_{all nodetypes}")
@@ -480,14 +482,14 @@ fun Solver.declareNodeTypeConstraints() {
             )
 }
 
-fun Solver.declareParentAndChildrenConstraints() {
-    val C: Int by context
-    val K: Int by context
-    val P: Int by context
-    val nodeType: IntMultiArray by context
-    val parent: IntMultiArray by context
-    val child: IntMultiArray by context
-
+fun Solver.declareParentAndChildrenConstraints(
+    C: Int,
+    K: Int,
+    P: Int,
+    nodeType: IntMultiArray,
+    parent: IntMultiArray,
+    child: IntMultiArray
+) {
     comment("8. Parent and children constraints")
 
     comment("8.0a. ONE(parent)_{0..P}")
@@ -530,16 +532,16 @@ fun Solver.declareParentAndChildrenConstraints() {
                 )
 }
 
-fun Solver.declareNoneTypeNodesConstraints() {
-    val C: Int by context
-    val K: Int by context
-    val P: Int by context
-    val U: Int by context
-    val nodeType: IntMultiArray by context
-    val parent: IntMultiArray by context
-    val child: IntMultiArray by context
-    val nodeValue: IntMultiArray by context
-
+fun Solver.declareNoneTypeNodesConstraints(
+    C: Int,
+    K: Int,
+    P: Int,
+    U: Int,
+    nodeType: IntMultiArray,
+    parent: IntMultiArray,
+    child: IntMultiArray,
+    nodeValue: IntMultiArray
+) {
     comment("9. None-type nodes constraints")
 
     comment("9.1. None-type nodes have largest numbers")
@@ -573,18 +575,18 @@ fun Solver.declareNoneTypeNodesConstraints() {
                     )
 }
 
-fun Solver.declareTerminalsConstraints() {
-    val scenarioTree: ScenarioTree by context
-    val C: Int by context
-    val K: Int by context
-    val P: Int by context
-    val U: Int by context
-    val X: Int by context
-    val nodeType: IntMultiArray by context
-    val terminal: IntMultiArray by context
-    val child: IntMultiArray by context
-    val nodeValue: IntMultiArray by context
-
+fun Solver.declareTerminalsConstraints(
+    scenarioTree: ScenarioTree,
+    C: Int,
+    K: Int,
+    P: Int,
+    U: Int,
+    X: Int,
+    nodeType: IntMultiArray,
+    terminal: IntMultiArray,
+    child: IntMultiArray,
+    nodeValue: IntMultiArray
+) {
     comment("10. Terminals constraints")
 
     comment("10.0. ONE(terminal)_{0..X}")
@@ -643,16 +645,16 @@ fun Solver.declareTerminalsConstraints() {
     }
 }
 
-fun Solver.declareAndOrNodesConstraints() {
-    val C: Int by context
-    val K: Int by context
-    val P: Int by context
-    val U: Int by context
-    val nodeType: IntMultiArray by context
-    val parent: IntMultiArray by context
-    val child: IntMultiArray by context
-    val nodeValue: IntMultiArray by context
-
+fun Solver.declareAndOrNodesConstraints(
+    C: Int,
+    K: Int,
+    P: Int,
+    U: Int,
+    nodeType: IntMultiArray,
+    parent: IntMultiArray,
+    child: IntMultiArray,
+    nodeValue: IntMultiArray
+) {
     comment("11. AND/OR nodes constraints")
 
     comment("11.0a. AND/OR nodes cannot have numbers P-1 or P")
@@ -760,16 +762,16 @@ fun Solver.declareAndOrNodesConstraints() {
     }
 }
 
-fun Solver.declareNotNodesConstraints() {
-    val C: Int by context
-    val K: Int by context
-    val P: Int by context
-    val U: Int by context
-    val nodeType: IntMultiArray by context
-    val parent: IntMultiArray by context
-    val child: IntMultiArray by context
-    val nodeValue: IntMultiArray by context
-
+fun Solver.declareNotNodesConstraints(
+    C: Int,
+    K: Int,
+    P: Int,
+    U: Int,
+    nodeType: IntMultiArray,
+    parent: IntMultiArray,
+    child: IntMultiArray,
+    nodeValue: IntMultiArray
+) {
     comment("12. NOT nodes constraints")
 
     comment("12.0. NOT nodes cannot have number P")
@@ -814,11 +816,11 @@ fun Solver.declareNotNodesConstraints() {
                     }
 }
 
-fun Solver.declareTransitionsOrderConstraints() {
-    val C: Int by context
-    val K: Int by context
-    val transition: IntMultiArray by context
-
+fun Solver.declareTransitionsOrderConstraints(
+    C: Int,
+    K: Int,
+    transition: IntMultiArray
+) {
     comment("+++. Transitions order constraints")
 
     // transition[i,k,j] => AND_{k'<k, j'>j}( ~transition[i,k',j'] )
@@ -842,21 +844,21 @@ fun Solver.declareTransitionsOrderConstraints() {
                     })
 }
 
-fun Solver.declareNegativeColorConstraints() {
-    val negativeScenarioTree: NegativeScenarioTree by context
-    val C: Int by context
-    val Z: Int by context
-    val negV: Int by context
-    val newNegVs: IntRange by context
-    val newNegVsActive: List<Int> by context
-    val newNegVsPassive: List<Int> by context
-    val outputEvent: IntMultiArray by context
-    val algorithm0: IntMultiArray by context
-    val algorithm1: IntMultiArray by context
-    val satisfaction: IntMultiArray by context
-    val negActualTransition: IntMultiArray by context
-    val forbiddenLoops: MutableSet<Pair<Int, Int>> by context
-
+fun Solver.declareNegativeColorConstraints(
+    negativeScenarioTree: NegativeScenarioTree,
+    C: Int,
+    Z: Int,
+    negV: Int,
+    newNegVs: IntRange,
+    newNegVsActive: List<Int>,
+    newNegVsPassive: List<Int>,
+    outputEvent: IntMultiArray,
+    algorithm0: IntMultiArray,
+    algorithm1: IntMultiArray,
+    satisfaction: IntMultiArray,
+    negActualTransition: IntMultiArray,
+    forbiddenLoops: MutableSet<Pair<Int, Int>>
+) {
     comment("Neg.1. Satisfaction (color-like) constrains")
 
     comment("Neg.1.0. ONE(satisfaction)_{0..C}")
@@ -984,16 +986,16 @@ fun Solver.declareNegativeColorConstraints() {
         clause(satisfaction[1, 1])
 }
 
-fun Solver.declareNegativeTransitionConstraints() {
-    val C: Int by context
-    val K: Int by context
-    val E: Int by context
-    val newOnlyNegUs: List<Int> by context
-    val transition: IntMultiArray by context
-    val inputEvent: IntMultiArray by context
-    val negActualTransition: IntMultiArray by context
-    val negFirstFired: IntMultiArray by context
-
+fun Solver.declareNegativeTransitionConstraints(
+    C: Int,
+    K: Int,
+    E: Int,
+    newOnlyNegUs: List<Int>,
+    transition: IntMultiArray,
+    inputEvent: IntMultiArray,
+    negActualTransition: IntMultiArray,
+    negFirstFired: IntMultiArray
+) {
     comment("Neg.2. Transition constraints")
 
     comment("Neg.2.0b. ONE(actual_transition)_{0..C}")
@@ -1026,14 +1028,14 @@ fun Solver.declareNegativeTransitionConstraints() {
                     })
 }
 
-fun Solver.declareNegativeFiringConstraints() {
-    val C: Int by context
-    val K: Int by context
-    val newOnlyNegUs: List<Int> by context
-    val negRootValue: IntMultiArray by context
-    val negFirstFired: IntMultiArray by context
-    val negNotFired: IntMultiArray by context
-
+fun Solver.declareNegativeFiringConstraints(
+    C: Int,
+    K: Int,
+    newOnlyNegUs: List<Int>,
+    negRootValue: IntMultiArray,
+    negFirstFired: IntMultiArray,
+    negNotFired: IntMultiArray
+) {
     comment("Neg.3. Firing constraints")
 
     comment("Neg.3.0. ONE(first_fired)_{0..K}")
@@ -1076,18 +1078,18 @@ fun Solver.declareNegativeFiringConstraints() {
             iff(negFirstFired[c, u, K + 1], negNotFired[c, u, K])
 }
 
-fun Solver.declareNegativeGuardConstraints() {
-    val C: Int by context
-    val K: Int by context
-    val P: Int by context
-    val X: Int by context
-    val negUIs: List<InputValues> by context
-    val newOnlyNegUs: List<Int> by context
-    val nodeType: IntMultiArray by context
-    val terminal: IntMultiArray by context
-    val child: IntMultiArray by context
-    val negNodeValue: IntMultiArray by context
-
+fun Solver.declareNegativeGuardConstraints(
+    C: Int,
+    K: Int,
+    P: Int,
+    X: Int,
+    negUIs: List<InputValues>,
+    newOnlyNegUs: List<Int>,
+    nodeType: IntMultiArray,
+    terminal: IntMultiArray,
+    child: IntMultiArray,
+    negNodeValue: IntMultiArray
+) {
     comment("Neg. Guard constraints re-definition for CE unique inputs")
 
     comment("Neg.9.3. None-type nodes have False value")

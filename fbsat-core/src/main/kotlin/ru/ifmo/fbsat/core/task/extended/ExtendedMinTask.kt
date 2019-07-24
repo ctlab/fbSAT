@@ -8,63 +8,27 @@ import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeIt
 import java.io.File
 
-interface ExtendedMinTask {
-    val scenarioTree: ScenarioTree
-    val numberOfStates: Int? // C, search if null
-    val maxOutgoingTransitions: Int? // K, =C if null
-    val maxGuardSize: Int // P
-    val initialMaxTotalGuardsSize: Int? // N_init, unconstrained if null
-    val outDir: File
-
-    fun infer(): Automaton?
-
-    companion object {
-        @JvmStatic
-        fun create(
-            scenarioTree: ScenarioTree,
-            numberOfStates: Int?, // C, search if null
-            maxOutgoingTransitions: Int?, // K, K=C if null
-            maxGuardSize: Int, // P
-            initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
-            outDir: File,
-            solverProvider: () -> Solver,
-            isEncodeReverseImplication: Boolean = true
-        ): ExtendedMinTask = ExtendedMinTaskImpl(
-            scenarioTree = scenarioTree,
-            numberOfStates = numberOfStates,
-            maxOutgoingTransitions = maxOutgoingTransitions,
-            maxGuardSize = maxGuardSize,
-            initialMaxTotalGuardsSize = initialMaxTotalGuardsSize,
-            outDir = outDir,
-            solverProvider = solverProvider,
-            isEncodeReverseImplication = isEncodeReverseImplication
-        )
-    }
-}
-
-private class ExtendedMinTaskImpl(
-    override val scenarioTree: ScenarioTree,
-    override val numberOfStates: Int?, // C, search if null
-    override val maxOutgoingTransitions: Int?, // K, K=C if null
-    override val maxGuardSize: Int, // P
-    override val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
-    override val outDir: File,
-    private val solverProvider: () -> Solver,
-    private val isEncodeReverseImplication: Boolean
-) : ExtendedMinTask {
+class ExtendedMinTask(
+    val scenarioTree: ScenarioTree,
+    val numberOfStates: Int?, // C, search if null
+    val maxOutgoingTransitions: Int?, // K, K=C if null
+    val maxGuardSize: Int, // P
+    val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
+    val outDir: File,
+    val solverProvider: () -> Solver,
+    val isEncodeReverseImplication: Boolean = true
+) {
     init {
-        require(!(numberOfStates == null && maxOutgoingTransitions != null)) {
-            "do not specify only K"
-        }
+        require(!(numberOfStates == null && maxOutgoingTransitions != null)) { "do not specify only K" }
     }
 
     @Suppress("LocalVariableName")
-    override fun infer(): Automaton? {
+    fun infer(): Automaton? {
         log.debug { "ExtendedMinTask::infer()" }
 
         val C = numberOfStates ?: run {
             log.info("ExtMinTask: delegating to BasicMinTask to search for minimal number of states C...")
-            val task = BasicMinTask.create(
+            val task = BasicMinTask(
                 scenarioTree = scenarioTree,
                 outDir = outDir,
                 solverProvider = solverProvider,
@@ -77,14 +41,14 @@ private class ExtendedMinTaskImpl(
 
         log.info("ExtMinTask: searching for minimal N...")
         // TODO: (`reuse`) pass through the last BasicTask (Note: only if isEncodeReverseImplication is true, because if is false, then BasicTask can't be reused)
-        var task = ExtendedTask.create(
+        val task = ExtendedTask(
             scenarioTree = scenarioTree,
             numberOfStates = C,
             maxOutgoingTransitions = maxOutgoingTransitions,
             maxGuardSize = maxGuardSize,
             maxTotalGuardsSize = initialMaxTotalGuardsSize,
             outDir = outDir,
-            solverProvider = solverProvider,
+            solver = solverProvider(),
             autoFinalize = false,
             isEncodeReverseImplication = isEncodeReverseImplication
         )
@@ -102,7 +66,7 @@ private class ExtendedMinTaskImpl(
             while (true) {
                 // val N = best!!.totalGuardsSize - 1
                 val N = best!!.totalGuardsSize - 1
-                task = task.reuse(N)
+                task.updateCardinality(N)
                 val (automaton, runningTime) = timeIt { task.infer() }
                 if (automaton != null) {
                     log.success("ExtMinTask: N = $N -> ${automaton.totalGuardsSize} in %.2f s".format(runningTime))

@@ -35,8 +35,8 @@ class SolverContext internal constructor(val solver: Solver) : MutableMap<String
 }
 
 class RawAssignment(
-    private val data: BooleanArray,
-    private val context: SolverContext
+    internal val data: BooleanArray,
+    internal val context: SolverContext
 ) : Map<String, Any> by context {
     operator fun get(index: Int): Boolean = data[index - 1]
 
@@ -68,6 +68,8 @@ class RawAssignment(
         } ?: onAbsence(index)
     }
 }
+
+// TODO: make solver able to reset
 
 interface Solver {
     val numberOfVariables: Int

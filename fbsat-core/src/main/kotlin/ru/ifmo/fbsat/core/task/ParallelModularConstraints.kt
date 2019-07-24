@@ -3,6 +3,7 @@
 package ru.ifmo.fbsat.core.task
 
 import com.github.lipen.multiarray.IntMultiArray
+import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.atLeastOne
@@ -13,91 +14,29 @@ import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.implyAnd
 
-fun Solver.declareModularColorConstraints(isEncodeReverseImplication: Boolean = true) {
-    val scenarioTree: ScenarioTree by context
-    val M: Int by context
-    val C: Int by context
-    val K: Int by context
-    val V: Int by context
-    val color: IntMultiArray by context
-    val transition: IntMultiArray by context
-    val actualTransition: IntMultiArray by context
-
-    comment("1. Color constraints")
-
-    comment("1.0. ONE(color)_{1..C}")
+fun Solver.declareParallelModularColorConstraints(
+    scenarioTree: ScenarioTree,
+    M: Int,
+    C: Int,
+    K: Int,
+    V: Int,
+    colorModular: MultiArray<IntMultiArray>,
+    transitionModular: MultiArray<IntMultiArray>,
+    actualTransitionModular: MultiArray<IntMultiArray>,
+    isEncodeReverseImplication: Boolean = true
+) {
     for (m in 1..M)
-        for (v in 1..V)
-            exactlyOne {
-                for (c in 1..C)
-                    yield(color[m, v, c])
-            }
-
-    comment("1.1. Color of active vertices")
-    // color[tp(v), i] & color[v, j] => actual_transition[i,tie(v),tin(v),j]
-    for (m in 1..M)
-        for (v in scenarioTree.activeVertices) {
-            val p = scenarioTree.parent(v)
-            val e = scenarioTree.inputEvent(v)
-            val u = scenarioTree.inputNumber(v)
-            for (i in 1..C)
-                for (j in 1..C)
-                    clause(
-                        -color[m, p, i],
-                        -color[m, v, j],
-                        actualTransition[m, i, e, u, j]
-                    )
-        }
-    if (isEncodeReverseImplication) {
-        // OR_k(transition[i,k,j]) <=> OR_{v|active}( color[tp(v), i] & color[v, j] )
-        for (m in 1..M)
-            for (i in 1..C)
-                for (j in 1..C) {
-                    val lhsAux = newVariable()
-                    iffOr(lhsAux, sequence {
-                        for (k in 1..K)
-                            yield(transition[m, i, k, j])
-                    })
-
-                    val rhsAux = newVariable()
-                    iffOr(rhsAux, sequence {
-                        for (v in scenarioTree.activeVertices) {
-                            val p = scenarioTree.parent(v)
-                            val aux = newVariable()
-                            iffAnd(aux, color[m, p, i], color[m, v, j])
-                            yield(aux)
-                        }
-                    })
-
-                    imply(lhsAux, rhsAux)
-                }
-    }
-    comment("1.2. Color of passive vertices")
-    // color[tp(v), c] => actual_transition[c,tie(v),tin(v),0]
-    for (m in 1..M)
-        for (v in scenarioTree.passiveVertices) {
-            val p = scenarioTree.parent(v)
-            val e = scenarioTree.inputEvent(v)
-            val u = scenarioTree.inputNumber(v)
-            for (c in 1..C)
-                imply(color[m, p, c], actualTransition[m, c, e, u, C + 1])
-        }
-
-    comment("1.3. Color propagation for passive vertices")
-    // color[tp(v), c] => color[v, c]
-    for (m in 1..M)
-        for (v in scenarioTree.passiveVertices) {
-            val p = scenarioTree.parent(v)
-            for (c in 1..C)
-                imply(color[m, p, c], color[m, v, c])
-        }
-
-    comment("1.4. Root corresponds to start state")
-    for (m in 1..M)
-        clause(color[m, 1, 1])
+        declareColorConstraints(
+            scenarioTree = scenarioTree,
+            C = C, K = K, V = V,
+            color = colorModular[m],
+            transition = transitionModular[m],
+            actualTransition = actualTransitionModular[m],
+            isEncodeReverseImplication = isEncodeReverseImplication
+        )
 }
 
-fun Solver.declareModularTransitionConstraints() {
+fun Solver.declareParallelModularTransitionConstraints() {
     val M: Int by context
     val C: Int by context
     val K: Int by context
@@ -180,7 +119,7 @@ fun Solver.declareModularTransitionConstraints() {
                 clause(-transition[m, c, k, 1])
 }
 
-fun Solver.declareModularFiringConstraints() {
+fun Solver.declareParallelModularFiringConstraints() {
     val M: Int by context
     val C: Int by context
     val K: Int by context
@@ -236,7 +175,7 @@ fun Solver.declareModularFiringConstraints() {
                 iff(firstFired[m, c, u, K + 1], notFired[m, c, u, K])
 }
 
-fun Solver.declareModularOutputEventConstraints() {
+fun Solver.declareParallelModularOutputEventConstraints() {
     val scenarioTree: ScenarioTree by context
     val M: Int by context
     val C: Int by context
@@ -273,7 +212,7 @@ fun Solver.declareModularOutputEventConstraints() {
     }
 }
 
-fun Solver.declareModularAlgorithmConstraints() {
+fun Solver.declareParallelModularAlgorithmConstraints() {
     val scenarioTree: ScenarioTree by context
     val M: Int by context
     val C: Int by context

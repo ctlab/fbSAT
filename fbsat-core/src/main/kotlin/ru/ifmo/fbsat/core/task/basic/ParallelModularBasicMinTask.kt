@@ -1,18 +1,19 @@
 package ru.ifmo.fbsat.core.task.basic
 
-import ru.ifmo.fbsat.core.automaton.Automaton
+import ru.ifmo.fbsat.core.automaton.ModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeIt
 import java.io.File
+import kotlin.properties.Delegates
 
-@Suppress("MemberVisibilityCanBePrivate")
-class BasicMinTask(
+class ParallelModularBasicMinTask(
+    val numberOfModules: Int, // M
     val scenarioTree: ScenarioTree,
     val numberOfStates: Int? = null, // C, search if null
     val maxOutgoingTransitions: Int? = null, // K, =C if null
-    val initialMaxTransitions: Int? = null, // T_init, unconstrained if null
+    private val initialMaxTransitions: Int? = null, // T_init, unconstrained if null
     val outDir: File,
     val solverProvider: () -> Solver,
     val isEncodeReverseImplication: Boolean = true,
@@ -23,17 +24,18 @@ class BasicMinTask(
     }
 
     @Suppress("LocalVariableName")
-    fun infer(): Automaton? {
-        var best: Automaton? = null
-        lateinit var task: BasicTask
+    fun infer(): ModularAutomaton? {
+        var best: ModularAutomaton? = null
+        var task: ParallelModularBasicTask by Delegates.notNull()
 
         if (numberOfStates == null) {
-            log.info("BasicMinTask: searching for minimal C...")
+            log.info("ParallelModularBasicMinTask: searching for minimal C...")
             for (C in 1..50) {
-                task = BasicTask(
+                task = ParallelModularBasicTask(
                     scenarioTree = scenarioTree,
+                    numberOfModules = numberOfModules,
                     numberOfStates = C,
-                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    maxOutgoingTransitions = maxOutgoingTransitions ?: C,
                     maxTransitions = initialMaxTransitions,
                     outDir = outDir,
                     solver = solverProvider(),
@@ -42,22 +44,23 @@ class BasicMinTask(
                 )
                 val (automaton, runningTime) = timeIt { task.infer() }
                 if (automaton != null) {
-                    log.success("BasicMinTask: C = $C -> SAT in %.2f s".format(runningTime))
-                    log.info("BasicMinTask: minimal C = $C")
+                    log.success("ParallelModularBasicMinTask: C = $C -> SAT in %.2f s".format(runningTime))
+                    log.info("ParallelModularBasicMinTask: minimal C = $C")
                     best = automaton
                     break
                 } else {
-                    log.failure("BasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
+                    log.failure("ParallelModularBasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
                     task.finalize2()
                 }
             }
         } else {
-            val C: Int = numberOfStates
-            log.info("BasicMinTask: using provided C = $C")
-            task = BasicTask(
+            val C = numberOfStates
+            log.info("ParallelModularBasicMinTask: using provided C = $C")
+            task = ParallelModularBasicTask(
                 scenarioTree = scenarioTree,
+                numberOfModules = numberOfModules,
                 numberOfStates = C,
-                maxOutgoingTransitions = maxOutgoingTransitions,
+                maxOutgoingTransitions = maxOutgoingTransitions ?: C,
                 maxTransitions = initialMaxTransitions,
                 outDir = outDir,
                 solver = solverProvider(),
@@ -66,27 +69,27 @@ class BasicMinTask(
             )
             val (automaton, runningTime) = timeIt { task.infer() }
             if (automaton != null)
-                log.success("BasicMinTask: C = $C -> SAT in %.2f s".format(runningTime))
+                log.success("ParallelModularBasicMinTask: C = $C -> SAT in %.2f s".format(runningTime))
             else
-                log.failure("BasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
+                log.failure("ParallelModularBasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
             best = automaton
         }
 
         if (!isOnlyC && best != null) {
-            log.info("BasicMinTask: searching for minimal T...")
+            log.info("ParallelModularBasicMinTask: searching for minimal T...")
             while (true) {
                 val T = best!!.numberOfTransitions - 1
                 task.updateCardinality(T)
                 val (automaton, runningTime) = timeIt { task.infer() }
                 if (automaton != null) {
                     log.success(
-                        "BasicMinTask: T = $T -> ${automaton.numberOfTransitions} in %.2f s"
+                        "ParallelModularBasicMinTask: T = $T -> ${automaton.numberOfTransitions} in %.2f s"
                             .format(runningTime)
                     )
                     best = automaton
                 } else {
-                    log.failure("BasicMinTask: T = $T -> UNSAT in %.2f".format(runningTime))
-                    log.info("BasicMinTask: minimal T = ${best.numberOfTransitions}")
+                    log.failure("ParallelModularBasicMinTask: T = $T -> UNSAT in %.2f".format(runningTime))
+                    log.info("ParallelModularBasicMinTask: minimal T = ${best.numberOfTransitions}")
                     break
                 }
             }

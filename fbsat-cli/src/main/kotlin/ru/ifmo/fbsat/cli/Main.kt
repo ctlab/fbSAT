@@ -18,8 +18,8 @@ import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.basic.BasicMinTask
 import ru.ifmo.fbsat.core.task.basic.BasicTask
-import ru.ifmo.fbsat.core.task.basic.ModularBasicMinTask
-import ru.ifmo.fbsat.core.task.basic.ModularBasicTask
+import ru.ifmo.fbsat.core.task.basic.ParallelModularBasicMinTask
+import ru.ifmo.fbsat.core.task.basic.ParallelModularBasicTask
 import ru.ifmo.fbsat.core.task.complete.CompleteCegisTask
 import ru.ifmo.fbsat.core.task.complete.CompleteMinCegisTask
 import ru.ifmo.fbsat.core.task.complete.CompleteTask
@@ -339,18 +339,18 @@ class FbSAT : CliktCommand() {
 
         val automaton: Automaton? = when (method) {
             Method.Basic -> {
-                val task = BasicTask.create(
+                val task = BasicTask(
                     scenarioTree = tree,
                     numberOfStates = numberOfStates!!,
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxTransitions = maxTransitions,
-                    solverProvider = solverProvider,
+                    solver = solverProvider(),
                     outDir = outDir
                 )
                 task.infer()
             }
             Method.BasicMin -> {
-                val task = BasicMinTask.create(
+                val task = BasicMinTask(
                     scenarioTree = tree,
                     numberOfStates = numberOfStates,
                     maxOutgoingTransitions = maxOutgoingTransitions,
@@ -362,19 +362,19 @@ class FbSAT : CliktCommand() {
                 task.infer()
             }
             Method.Extended -> {
-                val task = ExtendedTask.create(
+                val task = ExtendedTask(
                     scenarioTree = tree,
                     numberOfStates = requireNotNull(numberOfStates),
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxGuardSize = requireNotNull(maxGuardSize),
                     maxTotalGuardsSize = maxTotalGuardsSize,
                     outDir = outDir,
-                    solverProvider = solverProvider
+                    solver = solverProvider()
                 )
                 task.infer()
             }
             Method.ExtendedMin -> {
-                val task = ExtendedMinTask.create(
+                val task = ExtendedMinTask(
                     scenarioTree = tree,
                     numberOfStates = numberOfStates,
                     maxOutgoingTransitions = maxOutgoingTransitions,
@@ -386,7 +386,7 @@ class FbSAT : CliktCommand() {
                 task.infer()
             }
             Method.ExtendedMinUb -> {
-                val task = ExtendedMinUBTask.create(
+                val task = ExtendedMinUBTask(
                     scenarioTree = tree,
                     initialMaxTotalGuardsSize = maxTotalGuardsSize,
                     maxPlateauWidth = maxPlateauWidth,
@@ -396,7 +396,7 @@ class FbSAT : CliktCommand() {
                 task.infer()
             }
             Method.Complete -> {
-                val task = CompleteTask.create(
+                val task = CompleteTask(
                     scenarioTree = tree,
                     negativeScenarioTree = negTree,
                     numberOfStates = requireNotNull(numberOfStates),
@@ -404,13 +404,13 @@ class FbSAT : CliktCommand() {
                     maxGuardSize = requireNotNull(maxGuardSize),
                     maxTotalGuardsSize = maxTotalGuardsSize,
                     outDir = outDir,
-                    solverProvider = solverProvider
+                    solver = solverProvider()
                 )
                 task.infer()
             }
             Method.CompleteMin -> TODO("complete-min method")
             Method.CompleteCegis -> {
-                val task = CompleteCegisTask.create(
+                val task = CompleteCegisTask(
                     scenarioTree = tree,
                     negativeScenarioTree = negTree,
                     numberOfStates = requireNotNull(numberOfStates),
@@ -419,12 +419,12 @@ class FbSAT : CliktCommand() {
                     maxTotalGuardsSize = maxTotalGuardsSize,
                     smvDir = smvDir,
                     outDir = outDir,
-                    solverProvider = solverProvider
+                    solver = solverProvider()
                 )
                 task.infer()
             }
             Method.CompleteMinCegis -> {
-                val task = CompleteMinCegisTask.create(
+                val task = CompleteMinCegisTask(
                     scenarioTree = tree,
                     initialNegativeScenarioTree = negTree,
                     numberOfStates = numberOfStates,
@@ -438,14 +438,14 @@ class FbSAT : CliktCommand() {
                 task.infer()
             }
             Method.ModularBasic -> {
-                val task = ModularBasicTask.create(
+                val task = ParallelModularBasicTask(
                     scenarioTree = tree,
                     numberOfModules = numberOfModules!!,
                     numberOfStates = numberOfStates!!,
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxTransitions = maxTransitions,
-                    solverProvider = solverProvider,
-                    outDir = outDir
+                    outDir = outDir,
+                    solver = solverProvider()
                 )
                 val modularAutomaton = task.infer()
 
@@ -475,7 +475,7 @@ class FbSAT : CliktCommand() {
                 null
             }
             Method.ModularBasicMin -> {
-                val task = ModularBasicMinTask.create(
+                val task = ParallelModularBasicMinTask(
                     scenarioTree = tree,
                     numberOfModules = numberOfModules!!,
                     numberOfStates = numberOfStates,

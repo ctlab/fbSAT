@@ -11,85 +11,31 @@ import ru.ifmo.fbsat.core.utils.copyFile
 import ru.ifmo.fbsat.core.utils.log
 import java.io.File
 
-interface CompleteCegisTask {
-    val scenarioTree: ScenarioTree
-    val negativeScenarioTree: NegativeScenarioTree
-    val numberOfStates: Int
-    val maxOutgoingTransitions: Int
-    val maxGuardSize: Int
-    val maxTotalGuardsSize: Int?
-    val smvDir: File
-    val outDir: File
-
-    fun infer(): Automaton?
-    fun reuse(newMaxTotalGuardsSize: Int): CompleteCegisTask
-    fun update()
-    fun finalize2()
-
-    companion object {
-        @JvmStatic
-        fun create(
-            scenarioTree: ScenarioTree,
-            negativeScenarioTree: NegativeScenarioTree? = null, // empty if null
-            numberOfStates: Int, // C
-            maxOutgoingTransitions: Int? = null, // K, K=C if null
-            maxGuardSize: Int, // P
-            maxTotalGuardsSize: Int? = null, // N, unconstrained if null
-            smvDir: File,
-            outDir: File,
-            solverProvider: () -> Solver,
-            autoFinalize: Boolean = true
-        ): CompleteCegisTask = CompleteCegisTaskImpl(
-            scenarioTree = scenarioTree,
-            negativeScenarioTree = negativeScenarioTree
-                ?: NegativeScenarioTree(
-                    inputEvents = scenarioTree.inputEvents,
-                    outputEvents = scenarioTree.outputEvents,
-                    inputNames = scenarioTree.inputNames,
-                    outputNames = scenarioTree.outputNames
-                ),
-            numberOfStates = numberOfStates,
-            maxOutgoingTransitions = maxOutgoingTransitions ?: numberOfStates,
-            maxGuardSize = maxGuardSize,
-            maxTotalGuardsSize = maxTotalGuardsSize,
-            smvDir = smvDir,
-            outDir = outDir,
-            solverProvider = solverProvider,
-            autoFinalize = autoFinalize
-        )
-    }
-}
-
-private class CompleteCegisTaskImpl(
-    override val scenarioTree: ScenarioTree,
-    override val negativeScenarioTree: NegativeScenarioTree,
-    override val numberOfStates: Int, // C
-    override val maxOutgoingTransitions: Int, // K
-    override val maxGuardSize: Int, // P
-    override val maxTotalGuardsSize: Int?, // N, unconstrained if null
-    override val smvDir: File,
-    override val outDir: File,
-    private val solverProvider: () -> Solver,
-    private val autoFinalize: Boolean
-) : CompleteCegisTask {
-    @Suppress("JoinDeclarationAndAssignment")
-    private val completeTask: CompleteTask
-    private var isExecuted = false
-    private var isReused = false
-    private var isFinalized = false
+class CompleteCegisTask(
+    scenarioTree: ScenarioTree,
+    negativeScenarioTree: NegativeScenarioTree? = null,
+    numberOfStates: Int, // C
+    maxOutgoingTransitions: Int? = null, // K, =C if null
+    maxGuardSize: Int, // P
+    maxTotalGuardsSize: Int? = null, // N, unconstrained if null
+    val smvDir: File,
+    val outDir: File,
+    val solver: Solver,
+    val autoFinalize: Boolean = true
+) {
+    private val completeTask = CompleteTask(
+        scenarioTree = scenarioTree,
+        negativeScenarioTree = negativeScenarioTree,
+        numberOfStates = numberOfStates,
+        maxOutgoingTransitions = maxOutgoingTransitions,
+        maxGuardSize = maxGuardSize,
+        maxTotalGuardsSize = maxTotalGuardsSize,
+        outDir = outDir,
+        solver = solver,
+        autoFinalize = false
+    )
 
     init {
-        this.completeTask = CompleteTask.create(
-            scenarioTree = scenarioTree,
-            negativeScenarioTree = negativeScenarioTree,
-            numberOfStates = numberOfStates,
-            maxOutgoingTransitions = maxOutgoingTransitions,
-            maxGuardSize = maxGuardSize,
-            maxTotalGuardsSize = maxTotalGuardsSize,
-            outDir = outDir,
-            solverProvider = solverProvider,
-            autoFinalize = false
-        )
         prepareSmvFiles()
     }
 
@@ -102,12 +48,9 @@ private class CompleteCegisTaskImpl(
         }
     }
 
-    override fun infer(): Automaton? {
-        check(!isExecuted) { "This task has already been executed. Try using the `reuse()` method." }
-        check(!isReused) { "This task has already been reused and can't be executed." }
-        check(!isFinalized) { "This task has already been finalized and can't be executed." }
-        isExecuted = true
-
+    fun infer(): Automaton? {
+        val scenarioTree = completeTask.vars.scenarioTree
+        val negativeScenarioTree = completeTask.vars.negativeScenarioTree
         lateinit var lastNegativeScenarios: List<NegativeScenario>
 
         for (iterationNumber in 1 until 10000) {
@@ -154,35 +97,11 @@ private class CompleteCegisTaskImpl(
         return null
     }
 
-    override fun reuse(newMaxTotalGuardsSize: Int): CompleteCegisTaskImpl {
-        // check(!isReused) { "This task has already been reused." }
-        // check(!isFinalized) { "This task has already been finalized and can't be reused." }
-        // if (!isExecuted)
-        //     log.warn("Reusing the task that has not been executed yet.")
-        // isReused = true
-        //
-        // return CompleteCegisTask(
-        //     scenarioTree = this.scenarioTree,
-        //     negativeScenarioTree = this.negativeScenarioTree,
-        //     numberOfStates = this.numberOfStates,
-        //     maxOutgoingTransitions = this.maxOutgoingTransitions,
-        //     maxGuardSize = this.maxGuardSize,
-        //     maxTotalGuardsSize = newMaxTotalGuardsSize,
-        //     outDir = this.outDir,
-        //     solver = this.solver,
-        //     autoFinalize = this.autoFinalize,
-        //     extendedTask = this.extendedTask.reuse(newMaxTotalGuardsSize)
-        // )
-        TODO()
-    }
-
-    override fun update() {
+    fun update() {
         completeTask.update()
     }
 
-    override fun finalize2() {
-        check(!isFinalized) { "This task has already been finalized." }
-        isFinalized = true
+    fun finalize2() {
         completeTask.finalize2()
     }
 }

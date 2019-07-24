@@ -7,46 +7,17 @@ import ru.ifmo.fbsat.core.task.basic.BasicMinTask
 import ru.ifmo.fbsat.core.utils.log
 import java.io.File
 
-interface ExtendedMinUBTask {
-    val scenarioTree: ScenarioTree
-    val initialMaxTotalGuardsSize: Int? // N_init, unconstrained if null
-    val maxPlateauWidth: Int? // w, unconstrained (=Inf) if null
-    val outDir: File
-
-    fun infer(): Automaton?
-
-    companion object {
-        @JvmStatic
-        fun create(
-            scenarioTree: ScenarioTree,
-            initialMaxTotalGuardsSize: Int? = null, // N_init, unconstrained if null
-            maxPlateauWidth: Int?, // w, unconstrained (=Inf) if null
-            outDir: File,
-            solverProvider: () -> Solver,
-            isEncodeReverseImplication: Boolean = true
-        ): ExtendedMinUBTask = ExtendedMinUBTaskImpl(
-            scenarioTree = scenarioTree,
-            initialMaxTotalGuardsSize = initialMaxTotalGuardsSize,
-            maxPlateauWidth = maxPlateauWidth,
-            outDir = outDir,
-            solverProvider = solverProvider,
-            isEncodeReverseImplication = isEncodeReverseImplication
-        )
-    }
-}
-
-private class ExtendedMinUBTaskImpl(
-    override val scenarioTree: ScenarioTree,
-    // FIXME: seems like N_init support is not needed
-    override val initialMaxTotalGuardsSize: Int?, // N_init, unconstrained if null
-    override val maxPlateauWidth: Int?, // w, unconstrained (=Inf) if null
-    override val outDir: File,
-    private val solverProvider: () -> Solver,
-    private val isEncodeReverseImplication: Boolean
-) : ExtendedMinUBTask {
+class ExtendedMinUBTask(
+    val scenarioTree: ScenarioTree,
+    val initialMaxTotalGuardsSize: Int? = null, // N_init, unconstrained if null
+    val maxPlateauWidth: Int?, // w, unconstrained (=Inf) if null
+    val outDir: File,
+    val solverProvider: () -> Solver,
+    val isEncodeReverseImplication: Boolean = true
+) {
     @Suppress("LocalVariableName")
-    override fun infer(): Automaton? {
-        val taskBasicMin = BasicMinTask.create(
+    fun infer(): Automaton? {
+        val taskBasicMin = BasicMinTask(
             scenarioTree = scenarioTree,
             outDir = outDir,
             solverProvider = solverProvider
@@ -73,7 +44,7 @@ private class ExtendedMinUBTaskImpl(
                 break
             }
 
-            val task = ExtendedMinTask.create(
+            val task = ExtendedMinTask(
                 scenarioTree = scenarioTree,
                 numberOfStates = C,
                 maxOutgoingTransitions = null,
