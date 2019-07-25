@@ -97,7 +97,7 @@ class FbSAT : CliktCommand() {
         help = "Method to use",
         metavar = "<method>"
     ).choice(
-        Method.values().associate { it.s to it }
+        Method.values().associateBy { it.s }
     ).required()
 
     val numberOfStates: Int? by option(
