@@ -4,9 +4,9 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.extended.ExtendedAssignment
-import ru.ifmo.fbsat.core.task.extended.ExtendedTask
-import ru.ifmo.fbsat.core.task.extended.toAutomaton
+import ru.ifmo.fbsat.core.task.extended.single.ExtendedAssignment
+import ru.ifmo.fbsat.core.task.extended.single.ExtendedTask
+import ru.ifmo.fbsat.core.task.extended.single.toAutomaton
 import java.io.File
 
 @Suppress("MemberVisibilityCanBePrivate", "LocalVariableName")
