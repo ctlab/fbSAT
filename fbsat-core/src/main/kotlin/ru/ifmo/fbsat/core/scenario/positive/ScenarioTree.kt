@@ -10,6 +10,7 @@ import ru.ifmo.fbsat.core.automaton.OutputValues
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
+import ru.ifmo.fbsat.core.utils.toBinaryString
 import java.io.File
 
 class ScenarioTree(
@@ -35,10 +36,10 @@ class ScenarioTree(
     // Note: all public lists are zero-based
 
     val uniqueInputs: List<InputValues> by lazyCache {
-        nodes.asSequence().drop(1).map { it.inputValues }.toSet().toList()
+        nodes.asSequence().drop(1).map { it.inputValues }.toSet().toList().sortedBy { it.values.toBinaryString() }
     }
     val uniqueOutputs: List<OutputValues> by lazyCache {
-        nodes.asSequence().drop(1).map { it.outputValues }.toSet().toList()
+        nodes.asSequence().drop(1).map { it.outputValues }.toSet().toList().sortedBy { it.values.toBinaryString() }
     }
     /**
      * List of **active** vertices, i.e. vertices with **non-null** output event.
