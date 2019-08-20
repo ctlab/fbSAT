@@ -50,14 +50,37 @@ class ParallelModularBasicTask(
                 actualTransitionModular = actualTransitionModular,
                 isEncodeReverseImplication = isEncodeReverseImplication
             )
-            declareParallelModularTransitionConstraints()
-            declareParallelModularFiringConstraints()
-            declareParallelModularOutputEventConstraints()
-            declareParallelModularAlgorithmConstraints()
+            declareParallelModularTransitionConstraints(
+                M = M, C = C, K = K, E = E, U = U,
+                transitionModular = transitionModular,
+                actualTransitionModular = actualTransitionModular,
+                inputEventModular = inputEventModular,
+                firstFiredModular = firstFiredModular
+            )
+            declareParallelModularFiringConstraints(
+                M = M, C = C, K = K, U = U,
+                rootValueModular = rootValueModular,
+                firstFiredModular = firstFiredModular,
+                notFiredModular = notFiredModular
+            )
+            declareParallelModularOutputEventConstraints(
+                scenarioTree = scenarioTree,
+                M = M, C = C, O = O,
+                colorModular = colorModular,
+                outputEventModular = outputEventModular
+            )
+            declareParallelModularAlgorithmConstraints(
+                scenarioTree = scenarioTree,
+                M = M, C = C, Z = Z,
+                outputVariableModule = outputVariableModule,
+                algorithm0Modular = algorithm0Modular,
+                algorithm1Modular = algorithm1Modular,
+                colorModular = colorModular
+            )
             // declareModularAutomatonBfsConstraints()
             // if (Globals.IS_ENCODE_TRANSITIONS_ORDER)
             //     declareModularTransitionsOrderConstraints()
-            // TODO: declareAdhocConstraints()
+            // declareAdhocConstraints()
         }
     }
 

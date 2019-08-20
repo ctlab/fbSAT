@@ -8,11 +8,9 @@ import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.atLeastOne
 import ru.ifmo.fbsat.core.solver.exactlyOne
-import ru.ifmo.fbsat.core.solver.iff
-import ru.ifmo.fbsat.core.solver.iffAnd
-import ru.ifmo.fbsat.core.solver.iffOr
-import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.implyAnd
+import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 
 fun Solver.declareParallelModularColorConstraints(
     scenarioTree: ScenarioTree,
@@ -36,191 +34,72 @@ fun Solver.declareParallelModularColorConstraints(
         )
 }
 
-fun Solver.declareParallelModularTransitionConstraints() {
-    val M: Int by context
-    val C: Int by context
-    val K: Int by context
-    val E: Int by context
-    val U: Int by context
-    val transition: IntMultiArray by context
-    val actualTransition: IntMultiArray by context
-    val inputEvent: IntMultiArray by context
-    val firstFired: IntMultiArray by context
-
-    comment("2. Transition constraints")
-
-    comment("2.0a. ONE(transition)_{0..C}")
+fun Solver.declareParallelModularTransitionConstraints(
+    M: Int,
+    C: Int,
+    K: Int,
+    E: Int,
+    U: Int,
+    transitionModular: MultiArray<IntMultiArray>,
+    actualTransitionModular: MultiArray<IntMultiArray>,
+    inputEventModular: MultiArray<IntMultiArray>,
+    firstFiredModular: MultiArray<IntMultiArray>
+) {
     for (m in 1..M)
-        for (i in 1..C)
-            for (k in 1..K)
-                exactlyOne {
-                    for (j in 1..(C + 1))
-                        yield(transition[m, i, k, j])
-                }
-
-    comment("2.0b. ONE(actual_transition)_{0..C}")
-    for (m in 1..M)
-        for (i in 1..C)
-            for (e in 1..E)
-                for (u in 1..U)
-                    exactlyOne {
-                        for (j in 1..(C + 1))
-                            yield(actualTransition[m, i, e, u, j])
-                    }
-
-    comment("2.0c. ONE(input_event)_{0..E}")
-    for (m in 1..M)
-        for (c in 1..C)
-            for (k in 1..K)
-                exactlyOne {
-                    for (e in 1..(E + 1))
-                        yield(inputEvent[m, c, k, e])
-                }
-
-    comment("2.1. Active transition definition")
-    // actual_transition[i,e,u,j] <=> OR_k( transition[i,k,j] & input_event[i,k,e] & first_fired[i,u,k] )
-    for (m in 1..M)
-        for (i in 1..C)
-            for (e in 1..E)
-                for (u in 1..U)
-                    for (j in 1..C)
-                        iffOr(actualTransition[m, i, e, u, j], sequence {
-                            for (k in 1..K) {
-                                // aux <=> transition[i,k,j] & input_event[i,k,e] & first_fired[i,u,k]
-                                val aux = newVariable()
-                                iffAnd(
-                                    aux,
-                                    transition[m, i, k, j],
-                                    inputEvent[m, i, k, e],
-                                    firstFired[m, i, u, k]
-                                )
-                                yield(aux)
-                            }
-                        })
-
-    comment("2.2. Null-transitions are last")
-    // transition[k, 0] => transition[k+1, 0]
-    for (m in 1..M)
-        for (c in 1..C)
-            for (k in 1 until K)
-                imply(transition[m, c, k, C + 1], transition[m, c, k + 1, C + 1])
-
-    comment("2.3. Only null-transitions have no input event")
-    // transition[k, 0] <=> input_event[k, 0]
-    for (m in 1..M)
-        for (c in 1..C)
-            for (k in 1..K)
-                iff(transition[m, c, k, C + 1], inputEvent[m, c, k, E + 1])
-
-    comment("+2.4. Ad-hoc: no transition to the first state")
-    for (m in 1..M)
-        for (c in 1..C)
-            for (k in 1..K)
-                clause(-transition[m, c, k, 1])
+        declareTransitionConstraints(
+            C = C, K = K, E = E, U = U,
+            transition = transitionModular[m],
+            actualTransition = actualTransitionModular[m],
+            inputEvent = inputEventModular[m],
+            firstFired = firstFiredModular[m]
+        )
 }
 
-fun Solver.declareParallelModularFiringConstraints() {
-    val M: Int by context
-    val C: Int by context
-    val K: Int by context
-    val U: Int by context
-    val rootValue: IntMultiArray by context
-    val firstFired: IntMultiArray by context
-    val notFired: IntMultiArray by context
-
-    comment("3. Firing constraints")
-
-    comment("3.0. ONE(first_fired)_{0..K}")
+fun Solver.declareParallelModularFiringConstraints(
+    M: Int,
+    C: Int,
+    K: Int,
+    U: Int,
+    rootValueModular: MultiArray<IntMultiArray>,
+    firstFiredModular: MultiArray<IntMultiArray>,
+    notFiredModular: MultiArray<IntMultiArray>
+) {
     for (m in 1..M)
-        for (c in 1..C)
-            for (u in 1..U)
-                exactlyOne {
-                    for (k in 1..(K + 1))
-                        yield(firstFired[m, c, u, k])
-                }
-
-    comment("3.1. first_fired definition")
-    // first_fired[k] <=> root_value[k] & not_fired[k-1]
-    for (m in 1..M)
-        for (c in 1..C)
-            for (u in 1..U) {
-                iff(firstFired[m, c, u, 1], rootValue[m, c, 1, u])
-                for (k in 2..K)
-                    iffAnd(firstFired[m, c, u, k], rootValue[m, c, k, u], notFired[m, c, u, k - 1])
-            }
-
-    comment("3.2. not_fired definition")
-    // not_fired[k] <=> ~root_value[k] & not_fired[k-1]
-    for (m in 1..M)
-        for (c in 1..C)
-            for (u in 1..U) {
-                iff(notFired[m, c, u, 1], -rootValue[m, c, 1, u])
-                for (k in 2..K)
-                    iffAnd(notFired[m, c, u, k], -rootValue[m, c, k, u], notFired[m, c, u, k - 1])
-            }
-
-    comment("3.3. Propagation of not-not_fired (maybe redundant)")
-    // ~not_fired[k] => ~not_fired[k+1]
-    for (m in 1..M)
-        for (c in 1..C)
-            for (u in 1..U)
-                for (k in 1 until K)
-                    imply(-notFired[m, c, u, k], -notFired[m, c, u, k + 1])
-
-    comment("3.4. first_fired[0] <=> not_fired[K] (shortcut)")
-    // first_fired[0] <=> not_fired[K]
-    for (m in 1..M)
-        for (c in 1..C)
-            for (u in 1..U)
-                iff(firstFired[m, c, u, K + 1], notFired[m, c, u, K])
+        declareFiringConstraints(
+            C = C, K = K, U = U,
+            rootValue = rootValueModular[m],
+            firstFired = firstFiredModular[m],
+            notFired = notFiredModular[m]
+        )
 }
 
-fun Solver.declareParallelModularOutputEventConstraints() {
-    val scenarioTree: ScenarioTree by context
-    val M: Int by context
-    val C: Int by context
-    val O: Int by context
-    val color: IntMultiArray by context
-    val outputEvent: IntMultiArray by context
-
-    comment("4. Output event constraints")
-
-    comment("4.0. ONE(output_event)_{1..O}")
+fun Solver.declareParallelModularOutputEventConstraints(
+    scenarioTree: ScenarioTree,
+    M: Int,
+    C: Int,
+    O: Int,
+    colorModular: MultiArray<IntMultiArray>,
+    outputEventModular: MultiArray<IntMultiArray>
+) {
     for (m in 1..M)
-        for (c in 2..C)
-            exactlyOne {
-                for (o in 1..O)
-                    yield(outputEvent[m, c, o])
-            }
-
-    comment("4.1. output_event definition")
-    // color[v, c] => output_event[c, toe(v)]
-    for (m in 1..M)
-        for (v in scenarioTree.activeVertices) {
-            val o = scenarioTree.outputEvent(v)
-            for (c in 1..C)
-                imply(color[m, v, c], outputEvent[m, c, o])
-        }
-
-    comment("4.2. Only start states have epsilon output events")
-    for (m in 1..M) {
-        clause(outputEvent[m, 1, O + 1])
-        for (o in 1..O)
-            clause(-outputEvent[m, 1, o])
-        for (c in 2..C)
-            clause(-outputEvent[m, c, O + 1])
-    }
+        declareOutputEventConstraints(
+            scenarioTree = scenarioTree,
+            C = C, O = O,
+            color = colorModular[m],
+            outputEvent = outputEventModular[m]
+        )
 }
 
-fun Solver.declareParallelModularAlgorithmConstraints() {
-    val scenarioTree: ScenarioTree by context
-    val M: Int by context
-    val C: Int by context
-    val Z: Int by context
-    val outputVariableModule: IntMultiArray by context
-    val algorithm0: IntMultiArray by context
-    val algorithm1: IntMultiArray by context
-    val color: IntMultiArray by context
+fun Solver.declareParallelModularAlgorithmConstraints(
+    scenarioTree: ScenarioTree,
+    M: Int,
+    C: Int,
+    Z: Int,
+    outputVariableModule: IntMultiArray,
+    algorithm0Modular: MultiArray<IntMultiArray>,
+    algorithm1Modular: MultiArray<IntMultiArray>,
+    colorModular: MultiArray<IntMultiArray>
+) {
 
     // EO
     for (z in 1..Z)
@@ -237,12 +116,25 @@ fun Solver.declareParallelModularAlgorithmConstraints() {
 
     comment("5. Algorithm constraints")
 
-    comment("5.1. Start state does nothing")
-    for (m in 1..M)
-        for (z in 1..Z) {
-            clause(-algorithm0[m, 1, z])
-            clause(algorithm1[m, 1, z])
+    when (Globals.START_STATE_ALGORITHMS) {
+        StartStateAlgorithms.NOTHING -> {
+            comment("5.1. Start state does nothing")
+            for (m in 1..M)
+                for (z in 1..Z) {
+                    clause(-algorithm0Modular[m][1, z])
+                    clause(algorithm1Modular[m][1, z])
+                }
         }
+        StartStateAlgorithms.ZERO -> {
+            comment("5.1. Start state produces zeros")
+            for (m in 1..M)
+                for (z in 1..Z) {
+                    clause(-algorithm0Modular[m][1, z])
+                    clause(-algorithm1Modular[m][1, z])
+                }
+        }
+        StartStateAlgorithms.ARBITRARY -> TODO("Arbitrary start state algorithms")
+    }
 
     comment("5.2. Algorithms definition")
     for (v in scenarioTree.activeVertices) {
@@ -254,12 +146,12 @@ fun Solver.declareParallelModularAlgorithmConstraints() {
                 for (c in 1..C)
                     clause(
                         -outputVariableModule[z, m],
-                        -color[m, v, c],
+                        -colorModular[m][v, c],
                         when (val values = oldValue to newValue) {
-                            false to false -> -algorithm0[m, c, z]
-                            false to true -> algorithm0[m, c, z]
-                            true to false -> -algorithm1[m, c, z]
-                            true to true -> algorithm1[m, c, z]
+                            false to false -> -algorithm0Modular[m][c, z]
+                            false to true -> algorithm0Modular[m][c, z]
+                            true to false -> -algorithm1Modular[m][c, z]
+                            true to true -> algorithm1Modular[m][c, z]
                             else -> error("Weird combination of values: $values")
                         }
                     )
@@ -269,7 +161,7 @@ fun Solver.declareParallelModularAlgorithmConstraints() {
     for (m in 1..M)
         for (z in 1..Z)
             for (c in 2..C) {
-                implyAnd(-outputVariableModule[z, m], -algorithm0[m, c, z])
-                implyAnd(-outputVariableModule[z, m], -algorithm1[m, c, z])
+                implyAnd(-outputVariableModule[z, m], -algorithm0Modular[m][c, z])
+                implyAnd(-outputVariableModule[z, m], -algorithm1Modular[m][c, z])
             }
 }
