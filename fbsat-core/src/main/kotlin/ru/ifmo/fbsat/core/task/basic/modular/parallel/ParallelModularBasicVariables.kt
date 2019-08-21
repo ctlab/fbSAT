@@ -4,6 +4,9 @@ import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.declareComparatorLessThanOrEqual
+import ru.ifmo.fbsat.core.solver.declareTotalizer
+import ru.ifmo.fbsat.core.utils.Globals
 
 class ParallelModularBasicVariables private constructor(
     val scenarioTree: ScenarioTree,
@@ -37,9 +40,23 @@ class ParallelModularBasicVariables private constructor(
         private set
 
     fun Solver.updateCardinality(newMaxTransitions: Int?) {
-        totalizer
-        maxTransitions
-        TODO()
+        maxTransitions?.let { T ->
+            check(newMaxTransitions != null && newMaxTransitions <= T) { "Cannot soften UB" }
+        }
+
+        if (newMaxTransitions == null && !Globals.IS_ENCODE_TOTALIZER) return
+        if (totalizer == null) {
+            totalizer = declareTotalizer {
+                for (m in 1..M)
+                    for (c in 1..C)
+                        for (k in 1..K)
+                            yield(-transitionModular[m][c, k, C + 1])
+            }
+        }
+        if (newMaxTransitions == null) return
+
+        declareComparatorLessThanOrEqual(totalizer!!, newMaxTransitions, maxTransitions)
+        maxTransitions = newMaxTransitions
     }
 
     companion object {
