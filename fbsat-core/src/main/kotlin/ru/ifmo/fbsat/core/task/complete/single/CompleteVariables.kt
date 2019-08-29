@@ -5,10 +5,10 @@ import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.declareNegativeColorConstraints
-import ru.ifmo.fbsat.core.task.declareNegativeFiringConstraints
-import ru.ifmo.fbsat.core.task.declareNegativeGuardConstraints
-import ru.ifmo.fbsat.core.task.declareNegativeTransitionConstraints
+import ru.ifmo.fbsat.core.constraints.declareNegativeColorConstraints
+import ru.ifmo.fbsat.core.constraints.declareNegativeFiringConstraints
+import ru.ifmo.fbsat.core.constraints.declareNegativeGuardConstraints
+import ru.ifmo.fbsat.core.constraints.declareNegativeTransitionConstraints
 import ru.ifmo.fbsat.core.task.extended.single.ExtendedVariables
 
 @Suppress("MemberVisibilityCanBePrivate", "PropertyName")

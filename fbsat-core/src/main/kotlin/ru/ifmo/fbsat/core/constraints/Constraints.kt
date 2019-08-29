@@ -1,6 +1,6 @@
 @file:Suppress("LocalVariableName", "ReplaceRangeToWithUntil")
 
-package ru.ifmo.fbsat.core.task
+package ru.ifmo.fbsat.core.constraints
 
 import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.automaton.InputValues

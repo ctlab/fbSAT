@@ -1,15 +1,15 @@
 package ru.ifmo.fbsat.core.task.basic.single
 
 import ru.ifmo.fbsat.core.automaton.Automaton
+import ru.ifmo.fbsat.core.constraints.declareAlgorithmConstraints
+import ru.ifmo.fbsat.core.constraints.declareAutomatonBfsConstraints
+import ru.ifmo.fbsat.core.constraints.declareColorConstraints
+import ru.ifmo.fbsat.core.constraints.declareFiringConstraints
+import ru.ifmo.fbsat.core.constraints.declareOutputEventConstraints
+import ru.ifmo.fbsat.core.constraints.declareTransitionConstraints
+import ru.ifmo.fbsat.core.constraints.declareTransitionsOrderConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.declareAlgorithmConstraints
-import ru.ifmo.fbsat.core.task.declareAutomatonBfsConstraints
-import ru.ifmo.fbsat.core.task.declareColorConstraints
-import ru.ifmo.fbsat.core.task.declareFiringConstraints
-import ru.ifmo.fbsat.core.task.declareOutputEventConstraints
-import ru.ifmo.fbsat.core.task.declareTransitionConstraints
-import ru.ifmo.fbsat.core.task.declareTransitionsOrderConstraints
 import ru.ifmo.fbsat.core.utils.Globals
 import java.io.File
 

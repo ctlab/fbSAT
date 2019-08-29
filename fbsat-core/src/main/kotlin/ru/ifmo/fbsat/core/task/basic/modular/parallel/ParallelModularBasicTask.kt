@@ -1,13 +1,13 @@
 package ru.ifmo.fbsat.core.task.basic.modular.parallel
 
 import ru.ifmo.fbsat.core.automaton.ModularAutomaton
+import ru.ifmo.fbsat.core.constraints.declareParallelModularAlgorithmConstraints
+import ru.ifmo.fbsat.core.constraints.declareParallelModularColorConstraints
+import ru.ifmo.fbsat.core.constraints.declareParallelModularFiringConstraints
+import ru.ifmo.fbsat.core.constraints.declareParallelModularOutputEventConstraints
+import ru.ifmo.fbsat.core.constraints.declareParallelModularTransitionConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.declareParallelModularAlgorithmConstraints
-import ru.ifmo.fbsat.core.task.declareParallelModularColorConstraints
-import ru.ifmo.fbsat.core.task.declareParallelModularFiringConstraints
-import ru.ifmo.fbsat.core.task.declareParallelModularOutputEventConstraints
-import ru.ifmo.fbsat.core.task.declareParallelModularTransitionConstraints
 import java.io.File
 
 @Suppress("MemberVisibilityCanBePrivate")

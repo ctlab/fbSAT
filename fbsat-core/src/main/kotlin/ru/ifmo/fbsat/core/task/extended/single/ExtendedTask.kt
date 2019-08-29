@@ -7,13 +7,13 @@ import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.Solver.Companion.falseVariable
 import ru.ifmo.fbsat.core.task.basic.single.BasicTask
-import ru.ifmo.fbsat.core.task.declareAndOrNodesConstraints
-import ru.ifmo.fbsat.core.task.declareGuardBfsConstraints
-import ru.ifmo.fbsat.core.task.declareNodeTypeConstraints
-import ru.ifmo.fbsat.core.task.declareNoneTypeNodesConstraints
-import ru.ifmo.fbsat.core.task.declareNotNodesConstraints
-import ru.ifmo.fbsat.core.task.declareParentAndChildrenConstraints
-import ru.ifmo.fbsat.core.task.declareTerminalsConstraints
+import ru.ifmo.fbsat.core.constraints.declareAndOrNodesConstraints
+import ru.ifmo.fbsat.core.constraints.declareGuardBfsConstraints
+import ru.ifmo.fbsat.core.constraints.declareNodeTypeConstraints
+import ru.ifmo.fbsat.core.constraints.declareNoneTypeNodesConstraints
+import ru.ifmo.fbsat.core.constraints.declareNotNodesConstraints
+import ru.ifmo.fbsat.core.constraints.declareParentAndChildrenConstraints
+import ru.ifmo.fbsat.core.constraints.declareTerminalsConstraints
 import ru.ifmo.fbsat.core.utils.Globals
 import java.io.File
 
