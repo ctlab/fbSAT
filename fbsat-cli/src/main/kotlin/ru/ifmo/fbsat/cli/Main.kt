@@ -220,6 +220,14 @@ class FbSAT : CliktCommand() {
         StartStateAlgorithms.NOTHING
     )
 
+    val isEncodeReverseImplication: Boolean by option(
+        "--encode-reverse-implication",
+        help="Encode reverse implication"
+    ).flag(
+        "--no-encode-reverse-implication",
+        default = true
+    )
+
     val isEncodeTransitionsOrder: Boolean by option(
         "--encode-transitions-order",
         help = "[DEBUG] Encode transitions lexicographic order"
@@ -346,7 +354,8 @@ class FbSAT : CliktCommand() {
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxTransitions = maxTransitions,
                     solver = solverProvider(),
-                    outDir = outDir
+                    outDir = outDir,
+                    isEncodeReverseImplication = isEncodeReverseImplication
                 )
                 task.infer()
             }
@@ -358,7 +367,8 @@ class FbSAT : CliktCommand() {
                     initialMaxTransitions = maxTransitions,
                     solverProvider = solverProvider,
                     outDir = outDir,
-                    isOnlyC = isOnlyC
+                    isOnlyC = isOnlyC,
+                    isEncodeReverseImplication = isEncodeReverseImplication
                 )
                 task.infer()
             }
@@ -370,7 +380,8 @@ class FbSAT : CliktCommand() {
                     maxGuardSize = requireNotNull(maxGuardSize),
                     maxTotalGuardsSize = maxTotalGuardsSize,
                     outDir = outDir,
-                    solver = solverProvider()
+                    solver = solverProvider(),
+                    isEncodeReverseImplication = isEncodeReverseImplication
                 )
                 task.infer()
             }
@@ -382,7 +393,8 @@ class FbSAT : CliktCommand() {
                     maxGuardSize = requireNotNull(maxGuardSize),
                     initialMaxTotalGuardsSize = maxTotalGuardsSize,
                     outDir = outDir,
-                    solverProvider = solverProvider
+                    solverProvider = solverProvider,
+                    isEncodeReverseImplication = isEncodeReverseImplication
                 )
                 task.infer()
             }
@@ -392,7 +404,8 @@ class FbSAT : CliktCommand() {
                     initialMaxTotalGuardsSize = maxTotalGuardsSize,
                     maxPlateauWidth = maxPlateauWidth,
                     outDir = outDir,
-                    solverProvider = solverProvider
+                    solverProvider = solverProvider,
+                    isEncodeReverseImplication = isEncodeReverseImplication
                 )
                 task.infer()
             }
