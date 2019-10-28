@@ -221,7 +221,7 @@ class FbSAT : CliktCommand() {
 
     val isEncodeReverseImplication: Boolean by option(
         "--encode-reverse-implication",
-        help="Encode reverse implication"
+        help = "Encode reverse implication"
     ).flag(
         "--no-encode-reverse-implication",
         default = true
