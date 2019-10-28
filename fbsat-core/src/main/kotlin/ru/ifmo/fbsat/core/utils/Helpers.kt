@@ -139,3 +139,15 @@ fun <T> Iterable<T>.firstIndexed(predicate: (Int, T) -> Boolean): T =
     withIndex().first { (index, value) -> predicate(index, value) }.value
 
 fun Iterable<Boolean>.all(): Boolean = all { it }
+
+fun <T> Iterable<T>.pairs(): Sequence<Pair<T, T>> = sequence {
+    for ((i, v) in withIndex()) {
+        yieldAll(drop(i + 1).map { v to it })
+    }
+}
+
+fun <T> Iterable<T>.pairsWithReplacement(): Sequence<Pair<T, T>> = sequence {
+    for ((i, v) in withIndex()) {
+        yieldAll(drop(i).map { v to it })
+    }
+}
