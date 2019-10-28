@@ -101,7 +101,7 @@ interface Solver {
 
     fun comment(comment: String)
 
-    fun clause(literals: List<Int>)
+    fun clause(literals: Iterable<Int>)
     fun clause(vararg literals: Int) = clause(literals.asList())
     fun clause(literals: Sequence<Int>) = clause(literals.toList())
     fun clause(block: suspend SequenceScope<Int>.() -> Unit) = clause(sequence(block).constrainOnce())
@@ -129,9 +129,9 @@ private abstract class AbstractSolver : Solver {
     final override fun newVariable(): Int = ++numberOfVariables
 
     @Suppress("FunctionName")
-    protected abstract fun _clause(literals: List<Int>)
+    protected abstract fun _clause(literals: Iterable<Int>)
 
-    final override fun clause(literals: List<Int>) {
+    final override fun clause(literals: Iterable<Int>) {
         if (trueVariable in literals) return
         if (falseVariable in literals) return clause(literals.filter { it != falseVariable })
 
@@ -154,7 +154,7 @@ private class DefaultSolver(private val command: String) : AbstractSolver() {
         buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
     }
 
-    override fun _clause(literals: List<Int>) {
+    override fun _clause(literals: Iterable<Int>) {
         for (x in literals)
             buffer.writeUtf8(x.toString()).writeUtf8(" ")
         buffer.writeUtf8("0\n")
@@ -237,7 +237,7 @@ private class IncrementalSolver(command: String) : AbstractSolver() {
         buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
     }
 
-    override fun _clause(literals: List<Int>) {
+    override fun _clause(literals: Iterable<Int>) {
         for (x in literals)
             processInput.writeUtf8(x.toString()).writeUtf8(" ")
         processInput.writeUtf8("0\n")
