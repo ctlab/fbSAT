@@ -160,3 +160,5 @@ fun <T> Iterable<T>.pairsWithReplacement(): Sequence<Pair<T, T>> = sequence {
         yieldAll(drop(i).map { v to it })
     }
 }
+
+fun boolToSign(b: Boolean): Int = if (b) 1 else -1
