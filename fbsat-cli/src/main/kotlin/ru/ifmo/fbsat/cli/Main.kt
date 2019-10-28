@@ -286,6 +286,7 @@ class FbSAT : CliktCommand() {
         // outDir.deleteRecursively()
         // outDir.walkBottomUp().forEach { if (it != outDir) it.delete() }
         outDir.mkdirs()
+        check(outDir.exists()) { "Output directory does not exist" }
 
         val tree = ScenarioTree.fromFile(fileScenarios, inputNamesPnP, outputNamesPnP)
         println("[*] Scenarios: ${tree.scenarios.size}")
