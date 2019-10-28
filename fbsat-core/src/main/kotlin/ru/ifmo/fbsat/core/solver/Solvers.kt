@@ -9,6 +9,7 @@ import okio.sink
 import okio.source
 import ru.ifmo.fbsat.core.solver.Solver.Companion.falseVariable
 import ru.ifmo.fbsat.core.solver.Solver.Companion.trueVariable
+import ru.ifmo.fbsat.core.utils.cartesianProduct
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.secondsSince
 import ru.ifmo.fbsat.core.utils.timeIt
@@ -77,8 +78,26 @@ interface Solver {
     val context: SolverContext
 
     fun newVariable(): Int
-    fun newArray(vararg shape: Int, init: (IntArray) -> Int = { newVariable() }): IntMultiArray =
-        IntMultiArray.create(shape, init)
+    fun newArray(
+        vararg shape: Int,
+        one: Boolean = false,
+        init: (IntArray) -> Int = { newVariable() }
+    ): IntMultiArray {
+        val array = IntMultiArray.create(shape, init)
+
+        if (one) {
+            check(shape.size > 1)
+            for (index in cartesianProduct(shape.dropLast(1).map { 1..it })) {
+                exactlyOne {
+                    for (last in 1..shape.last())
+                        @Suppress("ReplaceGetOrSet")
+                        yield(array.get(*(index + last).toIntArray()))
+                }
+            }
+        }
+
+        return array
+    }
 
     fun comment(comment: String)
 
