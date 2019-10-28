@@ -4,7 +4,7 @@ import kotlin.properties.Delegates
 
 // TODO: move to a more suitable place
 enum class StartStateAlgorithms {
-    NOTHING, ZERO, ARBITRARY;
+    NOTHING, ZERO, ANY;
 }
 
 object Globals {

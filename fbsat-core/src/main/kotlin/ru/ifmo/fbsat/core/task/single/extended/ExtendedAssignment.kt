@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.core.task.extended.single
+package ru.ifmo.fbsat.core.task.single.extended
 
 import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.IntMultiArray
@@ -10,7 +10,6 @@ import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.automaton.ParseTreeGuard
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.complete.single.CompleteVariables
 import ru.ifmo.fbsat.core.utils.TheAssignment
 
 class ExtendedAssignment(
@@ -18,7 +17,7 @@ class ExtendedAssignment(
     val C: Int,
     val K: Int,
     val P: Int,
-    val color: IntMultiArray, // [V] : 1..C
+    val mapping: IntMultiArray, // [V] : 1..C
     val transition: IntMultiArray, // [C, K] : 0..C
     val actualTransition: IntMultiArray, // [C, E, U] : 0..C
     val inputEvent: IntMultiArray, // [C, K] : 0..E
@@ -52,18 +51,18 @@ class ExtendedAssignment(
                     C = C,
                     K = K,
                     P = P,
-                    color = raw.convertIntArray(color, V, domain = 1..C) { (v) ->
-                        error("color[v = $v] is undefined")
+                    mapping = raw.convertIntArray(mapping, V, domain = 1..C) { (v) ->
+                        error("mapping[v = $v] is undefined")
                     },
-                    transition = raw.convertIntArray(transition, C, K, domain = 1..C) { 0 },
-                    actualTransition = raw.convertIntArray(actualTransition, C, E, U, domain = 1..C) { 0 },
-                    inputEvent = raw.convertIntArray(inputEvent, C, K, domain = 1..E) { 0 },
-                    outputEvent = raw.convertIntArray(outputEvent, C, domain = 1..O) { 0 },
+                    transition = raw.convertIntArray(transitionDestination, C, K, domain = 1..C) { 0 },
+                    actualTransition = raw.convertIntArray(actualTransitionFunction, C, E, U, domain = 1..C) { 0 },
+                    inputEvent = raw.convertIntArray(transitionInputEvent, C, K, domain = 1..E) { 0 },
+                    outputEvent = raw.convertIntArray(stateOutputEvent, C, domain = 1..O) { 0 },
                     algorithm = MultiArray.create(C) { (c) ->
                         BinaryAlgorithm(
                             // Note: c is 1-based, z is 0-based
-                            algorithm0 = BooleanArray(Z) { z -> raw[algorithm0[c, z + 1] - 1] },
-                            algorithm1 = BooleanArray(Z) { z -> raw[algorithm1[c, z + 1] - 1] }
+                            algorithm0 = BooleanArray(Z) { z -> raw[stateAlgorithmBot[c, z + 1] - 1] },
+                            algorithm1 = BooleanArray(Z) { z -> raw[stateAlgorithmTop[c, z + 1] - 1] }
                         )
                     },
                     nodeType = MultiArray.create(C, K, P) { (c, k, p) ->
@@ -77,20 +76,14 @@ class ExtendedAssignment(
                             }
                         } ?: error("nodeType[c,k,p = $c,$k,$p] is undefined")
                     },
-                    terminal = raw.convertIntArray(terminal, C, K, P, domain = 1..X) { 0 },
-                    parent = raw.convertIntArray(parent, C, K, P, domain = 1..P) { 0 },
-                    child = raw.convertIntArray(child, C, K, P, domain = 1..P) { 0 },
+                    terminal = raw.convertIntArray(nodeInputVariable, C, K, P, domain = 1..X) { 0 },
+                    parent = raw.convertIntArray(nodeParent, C, K, P, domain = 1..P) { 0 },
+                    child = raw.convertIntArray(nodeChild, C, K, P, domain = 1..P) { 0 },
                     nodeValue = raw.convertBooleanArray(nodeValue, C, K, P, U),
-                    rootValue = raw.convertBooleanArray(rootValue, C, K, U),
+                    rootValue = raw.convertBooleanArray(transitionFiring, C, K, U),
                     firstFired = raw.convertIntArray(firstFired, C, U, domain = 1..K) { 0 },
                     notFired = raw.convertBooleanArray(notFired, C, U, K)
                 )
-            }
-        }
-
-        fun fromRaw(raw: BooleanArray, vars: CompleteVariables): ExtendedAssignment {
-            with(vars) {
-                return fromRaw(raw, extVars)
             }
         }
     }

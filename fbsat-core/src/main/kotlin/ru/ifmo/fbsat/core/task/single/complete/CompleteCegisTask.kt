@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.core.task.complete.single
+package ru.ifmo.fbsat.core.task.single.complete
 
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.Counterexample
@@ -98,7 +98,7 @@ class CompleteCegisTask(
     }
 
     fun update() {
-        completeTask.update()
+        completeTask.updateNegativeReduction()
     }
 
     fun finalize2() {

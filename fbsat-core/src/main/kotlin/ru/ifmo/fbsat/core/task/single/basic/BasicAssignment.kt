@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.core.task.basic.single
+package ru.ifmo.fbsat.core.task.single.basic
 
 import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.IntMultiArray
@@ -14,7 +14,7 @@ class BasicAssignment(
     val scenarioTree: ScenarioTree,
     val C: Int,
     val K: Int,
-    val color: IntMultiArray, // [V] : 1..C
+    val mapping: IntMultiArray, // [V] : 1..C
     val transition: IntMultiArray, // [C, K] : 0..C
     val actualTransition: IntMultiArray, // [C, E, U] : 0..C
     val inputEvent: IntMultiArray, // [C, K] : 0..E
@@ -34,21 +34,21 @@ class BasicAssignment(
                     scenarioTree = scenarioTree,
                     C = C,
                     K = K,
-                    color = raw.convertIntArray(color, V, domain = 1..C) { (v) ->
-                        error("color[v = $v] is undefined")
+                    mapping = raw.convertIntArray(mapping, V, domain = 1..C) { (v) ->
+                        error("mapping[v = $v] is undefined")
                     },
-                    transition = raw.convertIntArray(transition, C, K, domain = 1..C) { 0 },
-                    actualTransition = raw.convertIntArray(actualTransition, C, E, U, domain = 1..C) { 0 },
-                    inputEvent = raw.convertIntArray(inputEvent, C, K, domain = 1..E) { 0 },
-                    outputEvent = raw.convertIntArray(outputEvent, C, domain = 1..O) { 0 },
+                    transition = raw.convertIntArray(transitionDestination, C, K, domain = 1..C) { 0 },
+                    actualTransition = raw.convertIntArray(actualTransitionFunction, C, E, U, domain = 1..C) { 0 },
+                    inputEvent = raw.convertIntArray(transitionInputEvent, C, K, domain = 1..E) { 0 },
+                    outputEvent = raw.convertIntArray(stateOutputEvent, C, domain = 1..O) { 0 },
                     algorithm = MultiArray.create(C) { (c) ->
                         BinaryAlgorithm(
                             // Note: c is 1-based, z is 0-based
-                            algorithm0 = BooleanArray(Z) { z -> raw[algorithm0[c, z + 1] - 1] },
-                            algorithm1 = BooleanArray(Z) { z -> raw[algorithm1[c, z + 1] - 1] }
+                            algorithm0 = BooleanArray(Z) { z -> raw[stateAlgorithmBot[c, z + 1] - 1] },
+                            algorithm1 = BooleanArray(Z) { z -> raw[stateAlgorithmTop[c, z + 1] - 1] }
                         )
                     },
-                    rootValue = raw.convertBooleanArray(rootValue, C, K, U),
+                    rootValue = raw.convertBooleanArray(transitionFiring, C, K, U),
                     firstFired = raw.convertIntArray(firstFired, C, U, domain = 1..K) { 0 },
                     notFired = raw.convertBooleanArray(notFired, C, U, K)
                 )
@@ -80,15 +80,14 @@ fun BasicAssignment.toAutomaton(): Automaton {
                     guard = TruthTableGuard(
                         truthTable = (1..scenarioTree.uniqueInputs.size)
                             .asSequence()
-                            .associateWith { u ->
-                                when {
-                                    notFired[c, u, k] -> false
-                                    firstFired[c, u] == k -> true
-                                    else -> null
-                                }
-                            }
-                            .mapKeys { (u, _) ->
-                                scenarioTree.uniqueInputs[u - 1]
+                            .associate { u ->
+                                scenarioTree.uniqueInputs[u - 1] to
+                                    // rootValue[c, k, u]
+                                    when {
+                                        notFired[c, u, k] -> false
+                                        firstFired[c, u] == k -> true
+                                        else -> null
+                                    }
                             },
                         inputNames = scenarioTree.inputNames,
                         uniqueInputs = scenarioTree.uniqueInputs

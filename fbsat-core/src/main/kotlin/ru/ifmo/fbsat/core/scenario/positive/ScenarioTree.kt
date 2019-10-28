@@ -13,13 +13,32 @@ import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import java.io.File
 
+interface ScenarioTreeInterface {
+    val size: Int
+    val inputEvents: List<InputEvent>
+    val outputEvents: List<OutputEvent>
+    val inputNames: List<String>
+    val outputNames: List<String>
+    val uniqueInputs: List<InputValues>
+    val uniqueOutputs: List<OutputValues>
+
+    fun parent(v: Int): Int
+    fun previousActive(v: Int): Int
+    fun inputEvent(v: Int): Int
+    fun outputEvent(v: Int): Int
+    fun inputNumber(v: Int): Int
+    fun outputNumber(v: Int): Int
+    fun inputValue(v: Int, x: Int): Boolean
+    fun outputValue(v: Int, z: Int): Boolean
+}
+
 class ScenarioTree(
-    val inputEvents: List<InputEvent>,
-    val outputEvents: List<OutputEvent>,
-    val inputNames: List<String>,
-    val outputNames: List<String>,
+    override val inputEvents: List<InputEvent>,
+    override val outputEvents: List<OutputEvent>,
+    override val inputNames: List<String>,
+    override val outputNames: List<String>,
     private val isTrie: Boolean = true
-) {
+) : ScenarioTreeInterface {
     private val lazyCache = LazyCache()
     private val _scenarios: MutableList<PositiveScenario> = mutableListOf()
     private val _nodes: MutableList<Node> = mutableListOf()
@@ -29,16 +48,16 @@ class ScenarioTree(
     val root: Node? by lazyCache {
         nodes.firstOrNull()
     }
-    val size: Int by lazyCache {
+    override val size: Int by lazyCache {
         nodes.size
     }
 
     // Note: all public lists are zero-based
 
-    val uniqueInputs: List<InputValues> by lazyCache {
+    override val uniqueInputs: List<InputValues> by lazyCache {
         nodes.asSequence().drop(1).map { it.inputValues }.toSet().toList().sortedBy { it.values.toBinaryString() }
     }
-    val uniqueOutputs: List<OutputValues> by lazyCache {
+    override val uniqueOutputs: List<OutputValues> by lazyCache {
         nodes.asSequence().drop(1).map { it.outputValues }.toSet().toList().sortedBy { it.values.toBinaryString() }
     }
     /**
@@ -162,14 +181,14 @@ class ScenarioTree(
 
     // Note: all property-like functions are one-based and one-valued
 
-    fun parent(v: Int): Int = nodes[v - 1].parent?.id ?: 0
-    fun previousActive(v: Int): Int = nodes[v - 1].previousActive?.id ?: 0
-    fun inputEvent(v: Int): Int = inputEvents.indexOf(nodes[v - 1].inputEvent) + 1
-    fun outputEvent(v: Int): Int = outputEvents.indexOf(nodes[v - 1].outputEvent) + 1
-    fun inputNumber(v: Int): Int = uniqueInputs.indexOf(nodes[v - 1].inputValues) + 1
-    fun outputNumber(v: Int): Int = uniqueOutputs.indexOf(nodes[v - 1].outputValues) + 1
-    fun inputValue(v: Int, x: Int): Boolean = nodes[v - 1].inputValues[x - 1]
-    fun outputValue(v: Int, z: Int): Boolean = nodes[v - 1].outputValues[z - 1]
+    override fun parent(v: Int): Int = nodes[v - 1].parent?.id ?: 0
+    override fun previousActive(v: Int): Int = nodes[v - 1].previousActive?.id ?: 0
+    override fun inputEvent(v: Int): Int = inputEvents.indexOf(nodes[v - 1].inputEvent) + 1
+    override fun outputEvent(v: Int): Int = outputEvents.indexOf(nodes[v - 1].outputEvent) + 1
+    override fun inputNumber(v: Int): Int = uniqueInputs.indexOf(nodes[v - 1].inputValues) + 1
+    override fun outputNumber(v: Int): Int = uniqueOutputs.indexOf(nodes[v - 1].outputValues) + 1
+    override fun inputValue(v: Int, x: Int): Boolean = nodes[v - 1].inputValues[x - 1]
+    override fun outputValue(v: Int, z: Int): Boolean = nodes[v - 1].outputValues[z - 1]
 
     override fun toString(): String {
         return "ScenarioTree(size=$size, scenarios=${scenarios.size}, inputEvents=$inputEvents, outputEvents=$outputEvents, inputNames=$inputNames, outputNames=$outputNames)"

@@ -10,15 +10,16 @@ import ru.ifmo.fbsat.core.automaton.OutputValues
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
+import ru.ifmo.fbsat.core.scenario.positive.ScenarioTreeInterface
 import java.io.File
 
 class NegativeScenarioTree(
-    val inputEvents: List<InputEvent>,
-    val outputEvents: List<OutputEvent>,
-    val inputNames: List<String>,
-    val outputNames: List<String>,
+    override val inputEvents: List<InputEvent>,
+    override val outputEvents: List<OutputEvent>,
+    override val inputNames: List<String>,
+    override val outputNames: List<String>,
     private val isTrie: Boolean = true
-) {
+) : ScenarioTreeInterface {
     private val lazyCache = LazyCache()
     private val _negativeScenarios: MutableList<NegativeScenario> = mutableListOf()
     private val _nodes: MutableList<Node> = mutableListOf()
@@ -27,15 +28,15 @@ class NegativeScenarioTree(
     val nodes: List<Node> = _nodes
     val root: Node?
         get() = nodes.firstOrNull()
-    val size: Int
+    override val size: Int
         get() = nodes.size
 
     // Note: all public lists are zero-based
 
-    val uniqueInputs: List<InputValues> by lazyCache {
+    override val uniqueInputs: List<InputValues> by lazyCache {
         nodes.asSequence().drop(1).map { it.inputValues }.toSet().toList()
     }
-    val uniqueOutputs: List<OutputValues> by lazyCache {
+    override val uniqueOutputs: List<OutputValues> by lazyCache {
         nodes.asSequence().drop(1).map { it.outputValues }.toSet().toList()
     }
     val activeVertices: List<Int> by lazyCache {
@@ -212,14 +213,14 @@ class NegativeScenarioTree(
 
     // Note: all property-like functions are one-based and one-valued
 
-    fun parent(v: Int): Int = nodes[v - 1].parent?.id ?: 0
-    fun previousActive(v: Int): Int = nodes[v - 1].previousActive?.id ?: 0
-    fun inputEvent(v: Int): Int = inputEvents.indexOf(nodes[v - 1].inputEvent) + 1
-    fun outputEvent(v: Int): Int = outputEvents.indexOf(nodes[v - 1].outputEvent) + 1
-    fun inputNumber(v: Int): Int = uniqueInputs.indexOf(nodes[v - 1].inputValues) + 1
-    fun outputNumber(v: Int): Int = uniqueOutputs.indexOf(nodes[v - 1].outputValues) + 1
-    fun inputValue(v: Int, x: Int): Boolean = nodes[v - 1].inputValues[x - 1]
-    fun outputValue(v: Int, z: Int): Boolean = nodes[v - 1].outputValues[z - 1]
+    override fun parent(v: Int): Int = nodes[v - 1].parent?.id ?: 0
+    override fun previousActive(v: Int): Int = nodes[v - 1].previousActive?.id ?: 0
+    override fun inputEvent(v: Int): Int = inputEvents.indexOf(nodes[v - 1].inputEvent) + 1
+    override fun outputEvent(v: Int): Int = outputEvents.indexOf(nodes[v - 1].outputEvent) + 1
+    override fun inputNumber(v: Int): Int = uniqueInputs.indexOf(nodes[v - 1].inputValues) + 1
+    override fun outputNumber(v: Int): Int = uniqueOutputs.indexOf(nodes[v - 1].outputValues) + 1
+    override fun inputValue(v: Int, x: Int): Boolean = nodes[v - 1].inputValues[x - 1]
+    override fun outputValue(v: Int, z: Int): Boolean = nodes[v - 1].outputValues[z - 1]
     fun isLoopBack(v: Int): Boolean = nodes[v - 1].isLoopBack
     fun isTerminal(v: Int): Boolean = nodes[v - 1].isTerminal
     fun loopBacks(v: Int): List<Int> = nodes[v - 1].loopBacks.map { it.id }

@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.core.task.basic.single
+package ru.ifmo.fbsat.core.task.single.basic
 
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree

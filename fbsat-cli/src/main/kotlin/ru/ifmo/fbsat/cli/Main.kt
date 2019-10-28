@@ -17,14 +17,14 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.basic.single.BasicMinTask
-import ru.ifmo.fbsat.core.task.basic.single.BasicTask
-import ru.ifmo.fbsat.core.task.complete.single.CompleteCegisTask
-import ru.ifmo.fbsat.core.task.complete.single.CompleteMinCegisTask
-import ru.ifmo.fbsat.core.task.complete.single.CompleteTask
-import ru.ifmo.fbsat.core.task.extended.single.ExtendedMinTask
-import ru.ifmo.fbsat.core.task.extended.single.ExtendedMinUBTask
-import ru.ifmo.fbsat.core.task.extended.single.ExtendedTask
+import ru.ifmo.fbsat.core.task.single.basic.BasicMinTask
+import ru.ifmo.fbsat.core.task.single.basic.BasicTask
+import ru.ifmo.fbsat.core.task.single.complete.CompleteCegisTask
+import ru.ifmo.fbsat.core.task.single.complete.CompleteMinCegisTask
+import ru.ifmo.fbsat.core.task.single.complete.CompleteTask
+import ru.ifmo.fbsat.core.task.single.extended.ExtendedMinTask
+import ru.ifmo.fbsat.core.task.single.extended.ExtendedMinUBTask
+import ru.ifmo.fbsat.core.task.single.extended.ExtendedTask
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
@@ -214,7 +214,7 @@ class FbSAT : CliktCommand() {
     ).choice(
         "nothing" to StartStateAlgorithms.NOTHING,
         "zero" to StartStateAlgorithms.ZERO,
-        "arbitrary" to StartStateAlgorithms.ARBITRARY
+        "any" to StartStateAlgorithms.ANY
     ).default(
         StartStateAlgorithms.NOTHING
     )

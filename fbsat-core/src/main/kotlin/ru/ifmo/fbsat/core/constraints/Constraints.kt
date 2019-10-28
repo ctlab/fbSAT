@@ -287,7 +287,7 @@ fun Solver.declareAlgorithmConstraints(
                 clause(-algorithm1[1, z])
             }
         }
-        StartStateAlgorithms.ARBITRARY -> TODO("Arbitrary start state algorithms")
+        StartStateAlgorithms.ANY -> TODO("Arbitrary start state algorithms")
     }
 
     comment("5.2. Algorithms definition")
