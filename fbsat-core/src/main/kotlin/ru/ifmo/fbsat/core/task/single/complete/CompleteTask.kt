@@ -33,7 +33,7 @@ class CompleteTask(
         numberOfStates = numberOfStates,
         maxOutgoingTransitions = maxOutgoingTransitions,
         maxGuardSize = maxGuardSize,
-        maxTotalGuardsSize = maxTotalGuardsSize,
+        maxTotalGuardsSize = null,
         outDir = outDir,
         solver = solver,
         autoFinalize = false,
@@ -51,9 +51,7 @@ class CompleteTask(
             )
         )
 
-        // No need to update cardinality, because ExtendedTask already does it.
-        // updateCardinality(maxTotalGuardsSize)
-
+        updateCardinality(maxTotalGuardsSize)
         updateNegativeReduction()
     }
 
