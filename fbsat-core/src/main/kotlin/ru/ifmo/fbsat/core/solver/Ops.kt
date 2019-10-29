@@ -6,38 +6,14 @@ fun Solver.atLeastOne(literals: Iterable<Int>) {
     clause(literals)
 }
 
-fun Solver.atLeastOne(literals: Sequence<Int>) {
-    clause(literals)
-}
-
-fun Solver.atLeastOne(block: suspend SequenceScope<Int>.() -> Unit) {
-    atLeastOne(sequence(block).constrainOnce())
-}
-
 fun Solver.atMostOne(literals: Iterable<Int>) {
     for ((a, b) in literals.pairs())
         clause(-a, -b)
 }
 
-fun Solver.atMostOne(literals: Sequence<Int>) {
-    atMostOne(literals.toList())
-}
-
-fun Solver.atMostOne(block: suspend SequenceScope<Int>.() -> Unit) {
-    atMostOne(sequence(block).constrainOnce())
-}
-
 fun Solver.exactlyOne(literals: Iterable<Int>) {
     atLeastOne(literals)
     atMostOne(literals)
-}
-
-fun Solver.exactlyOne(literals: Sequence<Int>) {
-    exactlyOne(literals.toList())
-}
-
-fun Solver.exactlyOne(block: suspend SequenceScope<Int>.() -> Unit) {
-    exactlyOne(sequence(block).constrainOnce())
 }
 
 /**
@@ -56,16 +32,6 @@ fun Solver.implyAnd(lhs: Int, rhs: Iterable<Int>) {
 }
 
 /**
- * [lhs] => AND([rhs])
- */
-fun Solver.implyAnd(lhs: Int, rhs: Sequence<Int>) = implyAnd(lhs, rhs.toList())
-
-/**
- * [lhs] => AND([rhs])
- */
-fun Solver.implyAnd(lhs: Int, vararg rhs: Int) = implyAnd(lhs, rhs.asIterable())
-
-/**
  * [lhs] => OR([rhs])
  */
 fun Solver.implyOr(lhs: Int, rhs: Iterable<Int>) {
@@ -77,98 +43,86 @@ fun Solver.implyOr(lhs: Int, rhs: Iterable<Int>) {
 }
 
 /**
- * [lhs] => OR([rhs])
+ * [x1] => ([x2] => [x3])
  */
-fun Solver.implyOr(lhs: Int, rhs: Sequence<Int>) = implyOr(lhs, rhs.toList())
+fun Solver.implyImply(x1: Int, x2: Int, x3: Int) {
+    clause()
+}
+
 
 /**
- * [lhs] => OR([rhs])
+ * [x1] => ([x2] <=> [x3])
  */
-fun Solver.implyOr(lhs: Int, vararg rhs: Int) = implyOr(lhs, rhs.asIterable())
-
-/**
- * [lhs] => ([base] <=> [rhs])
- */
-fun Solver.implyIff(lhs: Int, base: Int, rhs: Int) {
-    clause(-lhs, -base, rhs)
-    clause(-lhs, base, -rhs)
+fun Solver.implyIff(x1: Int, x2: Int, x3: Int) {
+    clause(-x1, -x2, x3)
+    clause(-x1, x2, -x3)
 }
 
 /**
- * [lhs] => ([base] <=> AND([rhs]))
+ * [x1] => ([x2] => ([x3] <=> [x4]))
  */
-fun Solver.implyIffAnd(lhs: Int, base: Int, rhs: Iterable<Int>) {
+fun Solver.implyImplyIff(x1: Int, x2: Int, x3: Int, x4: Int) {
+    clause(-x1, -x2, -x3, x4)
+    clause(-x1, -x2, x3, -x4)
+}
+
+/**
+ * [x1] => ([x2] => ([x3] <=> AND([xs]))
+ */
+fun Solver.implyImplyIffAnd(x1: Int, x2: Int, x3: Int, xs: Iterable<Int>) {
     clause {
-        yield(-lhs)
-        yield(base)
-        for (x in rhs) {
-            clause(-lhs, -base, x)
+        yield(-x1)
+        yield(-x2)
+        yield(x3)
+        for (x in xs) {
+            clause(-x1, -x2, -x3, x)
             yield(-x)
         }
     }
 }
 
 /**
- * [lhs] => ([base] <=> AND([rhs]))
+ * [x1] => ([x2] => ([x3] <=> OR([xs])))
  */
-fun Solver.implyIffAnd(lhs: Int, base: Int, rhs: Sequence<Int>) = implyIffAnd(lhs, base, rhs.toList())
-
-/**
- * [lhs] => ([base] <=> AND([rhs]))
- */
-fun Solver.implyIffAnd(lhs: Int, base: Int, vararg rhs: Int) = implyIffAnd(lhs, base, rhs.asIterable())
-
-/**
- * [lhs] => ([base] <=> OR([rhs]))
- */
-fun Solver.implyIffOr(lhs: Int, base: Int, rhs: Iterable<Int>) {
+fun Solver.implyImplyIffOr(x1: Int, x2: Int, x3: Int, xs: Iterable<Int>) {
     clause {
-        yield(-lhs)
-        yield(-base)
-        for (x in rhs) {
-            clause(-lhs, base, -x)
+        yield(-x1)
+        yield(-x2)
+        yield(-x3)
+        for (x in xs) {
+            clause(-x1, -x2, x3, -x)
             yield(x)
         }
     }
 }
 
 /**
- * [lhs] => ([base] <=> OR([rhs]))
+ * [x1] => ([x2] <=> AND([xs]))
  */
-fun Solver.implyIffOr(lhs: Int, base: Int, rhs: Sequence<Int>) = implyIffOr(lhs, base, rhs.toList())
-
-/**
- * [lhs] => ([base] <=> OR([rhs]))
- */
-fun Solver.implyIffOr(lhs: Int, base: Int, vararg rhs: Int) = implyIffOr(lhs, base, rhs.asIterable())
-
-/**
- * [lhs] <= [rhs]
- */
-fun Solver.impliedBy(lhs: Int, rhs: Int) {
-    imply(rhs, lhs)
-}
-
-/**
- * [lhs] <= AND([rhs])
- */
-fun Solver.impliedByAnd(lhs: Int, rhs: Iterable<Int>) {
+fun Solver.implyIffAnd(x1: Int, x2: Int, xs: Iterable<Int>) {
     clause {
-        yield(lhs)
-        for (x in rhs)
+        yield(-x1)
+        yield(x2)
+        for (x in xs) {
+            clause(-x1, -x2, x)
             yield(-x)
+        }
     }
 }
 
 /**
- * [lhs] <= AND([rhs])
+ * [x1] => ([x2] <=> OR([xs]))
  */
-fun Solver.impliedByAnd(lhs: Int, rhs: Sequence<Int>) = impliedByAnd(lhs, rhs.toList())
-
-/**
- * [lhs] <= AND([rhs])
- */
-fun Solver.impliedByAnd(lhs: Int, vararg rhs: Int) = impliedByAnd(lhs, rhs.asIterable())
+fun Solver.implyIffOr(x1: Int, x2: Int, xs: Iterable<Int>) {
+    clause {
+        yield(-x1)
+        yield(-x2)
+        for (x in xs) {
+            clause(-x1, x2, -x)
+            yield(x)
+        }
+    }
+}
 
 /**
  * [lhs] <=> [rhs]
@@ -192,16 +146,6 @@ fun Solver.iffAnd(lhs: Int, rhs: Iterable<Int>) {
 }
 
 /**
- * [lhs] <=> AND([rhs])
- */
-fun Solver.iffAnd(lhs: Int, rhs: Sequence<Int>) = iffAnd(lhs, rhs.toList())
-
-/**
- * [lhs] <=> AND([rhs])
- */
-fun Solver.iffAnd(lhs: Int, vararg rhs: Int) = iffAnd(lhs, rhs.asIterable())
-
-/**
  * [lhs] <=> OR([rhs])
  */
 fun Solver.iffOr(lhs: Int, rhs: Iterable<Int>) {
@@ -215,28 +159,10 @@ fun Solver.iffOr(lhs: Int, rhs: Iterable<Int>) {
 }
 
 /**
- * [lhs] <=> OR([rhs])
- */
-fun Solver.iffOr(lhs: Int, rhs: Sequence<Int>) = iffOr(lhs, rhs.toList())
-
-/**
- * [lhs] <=> OR([rhs])
- */
-fun Solver.iffOr(lhs: Int, vararg rhs: Int) = iffOr(lhs, rhs.asIterable())
-
-/**
  * [aux] <=> ([lhs] => [rhs])
  */
 fun Solver.iffImply(aux: Int, lhs: Int, rhs: Int) {
     clause(-aux, -lhs, rhs)
     clause(aux, lhs)
     clause(aux, -rhs)
-}
-
-/**
- * [x1] => ([x2] => (x3 <=> x4))
- */
-fun Solver.implyImplyIff(x1: Int, x2: Int, x3: Int, x4: Int) {
-    clause(-x1, -x2, -x3, x4)
-    clause(-x1, -x2, x3, -x4)
 }
