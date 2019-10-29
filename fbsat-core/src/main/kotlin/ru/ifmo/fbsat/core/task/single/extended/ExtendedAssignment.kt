@@ -82,7 +82,7 @@ class ExtendedAssignment(
                     nodeValue = raw.convertBooleanArray(nodeValue, C, K, P, U),
                     rootValue = raw.convertBooleanArray(transitionFiring, C, K, U),
                     firstFired = raw.convertIntArray(firstFired, C, U, domain = 1..K) { 0 },
-                    notFired = raw.convertBooleanArray(notFired, C, U, K)
+                    notFired = raw.convertBooleanArray(notFired, C, K, U)
                 )
             }
         }

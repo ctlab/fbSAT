@@ -19,10 +19,10 @@ class BasicAssignment(
     val actualTransition: IntMultiArray, // [C, E, U] : 0..C
     val inputEvent: IntMultiArray, // [C, K] : 0..E
     val outputEvent: IntMultiArray, // [C] : 1..O
-    val algorithm: MultiArray<Algorithm>, // [C]: Algorithm
-    val rootValue: BooleanMultiArray, // [C, K, U] : Boolean
+    val stateAlgorithm: MultiArray<Algorithm>, // [C]: Algorithm
+    val transitionFiring: BooleanMultiArray, // [C, K, U] : Boolean
     val firstFired: IntMultiArray, // [C, U] : 0..K
-    val notFired: BooleanMultiArray // [C, U, K] : Boolean
+    val notFired: BooleanMultiArray // [C, K, U] : Boolean
 ) {
     @Suppress("PropertyName")
     val T: Int = transition.values.count { it != 0 }
@@ -41,16 +41,16 @@ class BasicAssignment(
                     actualTransition = raw.convertIntArray(actualTransitionFunction, C, E, U, domain = 1..C) { 0 },
                     inputEvent = raw.convertIntArray(transitionInputEvent, C, K, domain = 1..E) { 0 },
                     outputEvent = raw.convertIntArray(stateOutputEvent, C, domain = 1..O) { 0 },
-                    algorithm = MultiArray.create(C) { (c) ->
+                    stateAlgorithm = MultiArray.create(C) { (c) ->
                         BinaryAlgorithm(
                             // Note: c is 1-based, z is 0-based
                             algorithm0 = BooleanArray(Z) { z -> raw[stateAlgorithmBot[c, z + 1] - 1] },
                             algorithm1 = BooleanArray(Z) { z -> raw[stateAlgorithmTop[c, z + 1] - 1] }
                         )
                     },
-                    rootValue = raw.convertBooleanArray(transitionFiring, C, K, U),
+                    transitionFiring = raw.convertBooleanArray(transitionFiring, C, K, U),
                     firstFired = raw.convertIntArray(firstFired, C, U, domain = 1..K) { 0 },
-                    notFired = raw.convertBooleanArray(notFired, C, U, K)
+                    notFired = raw.convertBooleanArray(notFired, C, K, U)
                 )
             }
         }
@@ -67,7 +67,7 @@ fun BasicAssignment.toAutomaton(): Automaton {
             outputEvent = outputEvent[c].let { o ->
                 if (o == 0) null else scenarioTree.outputEvents[o - 1]
             },
-            algorithm = algorithm[c]
+            algorithm = stateAlgorithm[c]
         )
 
     for (c in 1..C)
@@ -84,7 +84,7 @@ fun BasicAssignment.toAutomaton(): Automaton {
                                 scenarioTree.uniqueInputs[u - 1] to
                                     // rootValue[c, k, u]
                                     when {
-                                        notFired[c, u, k] -> false
+                                        notFired[c, k, u] -> false
                                         firstFired[c, u] == k -> true
                                         else -> null
                                     }

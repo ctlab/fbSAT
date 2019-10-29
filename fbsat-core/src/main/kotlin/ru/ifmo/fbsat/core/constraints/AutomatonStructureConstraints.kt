@@ -174,14 +174,14 @@ fun Solver.declareAutomatonStructureConstraintsForInput(
     // not_fired[k] <=> ~transitionFiring[k] & notFired[k-1]
     for (c in 1..C) {
         iff(
-            notFired[c, u, 1],
+            notFired[c, 1, u],
             -transitionFiring[c, 1, u]
         )
         for (k in 2..K)
             iffAnd(
-                notFired[c, u, k],
+                notFired[c, k, u],
                 -transitionFiring[c, k, u],
-                notFired[c, u, k - 1]
+                notFired[c, k - 1, u]
             )
     }
 
@@ -190,7 +190,7 @@ fun Solver.declareAutomatonStructureConstraintsForInput(
     for (c in 1..C)
         iff(
             firstFired[c, u, K + 1],
-            notFired[c, u, K]
+            notFired[c, K, u]
         )
 
     comment("Propagation of not-notFired (maybe redundant)")
@@ -198,8 +198,8 @@ fun Solver.declareAutomatonStructureConstraintsForInput(
     for (c in 1..C)
         for (k in 1 until K)
             imply(
-                -notFired[c, u, k],
-                -notFired[c, u, k + 1]
+                -notFired[c, k, u],
+                -notFired[c, k + 1, u]
             )
 
     comment("Actual transition function definition for u = $u")

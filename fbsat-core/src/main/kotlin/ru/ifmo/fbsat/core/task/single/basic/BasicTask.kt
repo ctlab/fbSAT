@@ -54,7 +54,7 @@ class BasicTask(
             val transitionDestination = newArray(C, K, C + 1, one = true)
             val transitionInputEvent = newArray(C, K, E + 1, one = true)
             val transitionFiring = newArray(C, K, U)
-            val firstFired = newArray(C, U, K + 1, one = true)
+            val firstFired = newArray(C, U, K + 1)
             val notFired = newArray(C, K, U)
             val stateOutputEvent = newArray(C, O + 1, one = true)
             val stateAlgorithmBot = newArray(C, Z)
