@@ -225,18 +225,18 @@ fun Solver.iffOr(lhs: Int, rhs: Sequence<Int>) = iffOr(lhs, rhs.toList())
 fun Solver.iffOr(lhs: Int, vararg rhs: Int) = iffOr(lhs, rhs.asIterable())
 
 /**
- * [x1] => ([x2] => (x3 <=> x4))
- */
-fun Solver.implyImplyIff(x1: Int, x2: Int, x3: Int, x4: Int) {
-    clause(-x1, -x2, -x3, x4)
-    clause(-x1, -x2, x3, -x4)
-}
-
-/**
  * [aux] <=> ([lhs] => [rhs])
  */
 fun Solver.iffImply(aux: Int, lhs: Int, rhs: Int) {
     clause(-aux, -lhs, rhs)
     clause(aux, lhs)
     clause(aux, -rhs)
+}
+
+/**
+ * [x1] => ([x2] => (x3 <=> x4))
+ */
+fun Solver.implyImplyIff(x1: Int, x2: Int, x3: Int, x4: Int) {
+    clause(-x1, -x2, -x3, x4)
+    clause(-x1, -x2, x3, -x4)
 }
