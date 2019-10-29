@@ -46,7 +46,7 @@ fun Solver.implyOr(lhs: Int, rhs: Iterable<Int>) {
  * [x1] => ([x2] => [x3])
  */
 fun Solver.implyImply(x1: Int, x2: Int, x3: Int) {
-    clause()
+    clause(-x1, -x2, x3)
 }
 
 /**
