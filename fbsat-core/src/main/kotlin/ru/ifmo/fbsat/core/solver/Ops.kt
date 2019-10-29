@@ -49,7 +49,6 @@ fun Solver.implyImply(x1: Int, x2: Int, x3: Int) {
     clause()
 }
 
-
 /**
  * [x1] => ([x2] <=> [x3])
  */

@@ -86,7 +86,6 @@ fun Solver.declareGuardConditionsConstraintsInputless(
                     nodeType[c, k, p + 1, NodeType.NONE.value]
                 )
 
-
     comment("Only terminal nodes have associated input variables")
     // (nodeType[p] = TERMINAL) <=> (nodeInputVariable[p] != 0)
     for (c in 1..C)

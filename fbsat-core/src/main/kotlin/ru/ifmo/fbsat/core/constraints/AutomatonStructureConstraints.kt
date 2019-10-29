@@ -134,7 +134,6 @@ fun Solver.declareAutomatonStructureConstraintsInputless(
             )
 }
 
-
 fun Solver.declareAutomatonStructureConstraintsForInput(
     u: Int,
     C: Int,
@@ -190,7 +189,7 @@ fun Solver.declareAutomatonStructureConstraintsForInput(
     // firstFired[0] <=> notFired[K}
     for (c in 1..C)
         iff(
-            firstFired[c, u, 0],
+            firstFired[c, u, K + 1],
             notFired[c, u, K]
         )
 
