@@ -40,10 +40,10 @@ class ExtendedTask(
     init {
         with(solver) {
             with(basicTask.vars) {
-                // Constants
+                /* Constants */
                 val P = maxGuardSize
 
-                // Guard conditions variables
+                /* Guard conditions variables */
                 val nodeType = newArray(C, K, P, NodeType.values().size, one = true)
                 val nodeInputVariable = newArray(C, K, P, X + 1, one = true)
                 val nodeParent = newArray(C, K, P, P + 1, one = true)
