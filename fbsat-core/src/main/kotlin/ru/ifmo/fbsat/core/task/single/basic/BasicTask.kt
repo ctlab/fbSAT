@@ -91,7 +91,7 @@ class BasicTask(
             /* Constraints */
             declareAutomatonStructureConstraints(vars)
             declareAutomatonBfsConstraints(vars)
-            declarePositiveMappingConstraints(vars)
+            declarePositiveMappingConstraints(vars, isEncodeReverseImplication = isEncodeReverseImplication)
             declareAdhocConstraints()
         }
 

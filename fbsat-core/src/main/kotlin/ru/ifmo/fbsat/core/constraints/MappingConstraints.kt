@@ -3,13 +3,19 @@
 package ru.ifmo.fbsat.core.constraints
 
 import com.github.lipen.multiarray.IntMultiArray
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTreeInterface
+import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.imply
+import ru.ifmo.fbsat.core.solver.implyIff
 import ru.ifmo.fbsat.core.solver.implyIffAnd
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
+import ru.ifmo.fbsat.core.utils.log
 
-fun Solver.declarePositiveMappingConstraints(basicVariables: BasicVariables) {
+fun Solver.declarePositiveMappingConstraints(
+    basicVariables: BasicVariables,
+    isEncodeReverseImplication: Boolean = true
+) {
     comment("Positive mapping constraints")
     with(basicVariables) {
         comment("Positive mapping constraints: for root")
