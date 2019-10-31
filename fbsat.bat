@@ -1,2 +1,1 @@
-@call gradlew.bat -q installDist
-@call fbsat-cli\build\install\cli\bin\fbSAT.bat %*
+@call gradlew.bat -q installDist && fbsat-cli\build\install\cli\bin\fbSAT.bat %*
