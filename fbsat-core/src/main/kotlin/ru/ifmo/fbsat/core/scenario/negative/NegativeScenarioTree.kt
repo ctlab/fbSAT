@@ -10,7 +10,7 @@ import ru.ifmo.fbsat.core.automaton.OutputValues
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTreeInterface
+import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
 import java.io.File
 
 class NegativeScenarioTree(
