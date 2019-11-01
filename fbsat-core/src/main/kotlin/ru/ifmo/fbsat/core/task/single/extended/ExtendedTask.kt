@@ -8,6 +8,7 @@ import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.Solver.Companion.falseVariable
 import ru.ifmo.fbsat.core.solver.declareComparatorLessThanOrEqual
 import ru.ifmo.fbsat.core.solver.declareTotalizer
+import ru.ifmo.fbsat.core.solver.implyAnd
 import ru.ifmo.fbsat.core.solver.implyImply
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.utils.Globals
@@ -105,6 +106,20 @@ class ExtendedTask(
                     for (k in 1..K)
                         for (p in 1..P)
                             clause(-nodeType[c, k, p, NodeType.OR.value])
+            }
+
+            if (Globals.IS_ENCODE_TERMINALS_ORDER) {
+                comment("A.4. Terminals order")
+                // terminal[p, x] => AND_{p'<p, x'>=x}( ~terminal[r_, x_] )
+                for (c in 1..C)
+                    for (k in 1..K)
+                        for (p in 1..P)
+                            for (x in 1..X)
+                                implyAnd(nodeInputVariable[c, k, p, x], sequence {
+                                    for (p_ in 1 until p)
+                                        for (x_ in x..X)
+                                            yield(-nodeInputVariable[c, k, p_, x_])
+                                })
             }
         }
     }
