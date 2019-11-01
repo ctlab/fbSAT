@@ -111,20 +111,6 @@ fun Solver.declareGuardConditionsConstraintsInputless(
                         nodeParent[c, k, ch, p]
                     )
 
-    comment("Parent has lesser number")
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                for (par in p..P)
-                    clause(-nodeParent[c, k, p, par])
-
-    comment("Child has greater number")
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                for (ch in 1..p)
-                    clause(-nodeChild[c, k, p, ch])
-
     comment("Only typed nodes, except the root, have parents")
     for (c in 1..C)
         for (k in 1..K)
