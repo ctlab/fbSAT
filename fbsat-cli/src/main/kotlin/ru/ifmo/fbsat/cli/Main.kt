@@ -347,6 +347,8 @@ class FbSAT : CliktCommand() {
             { Solver.default(solverCmd) }
         }
 
+        // TODO: warn about ignored specified parameters
+
         val automaton: Automaton? = when (method) {
             Method.Basic -> {
                 val task = BasicTask(
