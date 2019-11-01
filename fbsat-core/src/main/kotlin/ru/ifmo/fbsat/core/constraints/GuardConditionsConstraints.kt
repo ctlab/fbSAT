@@ -194,14 +194,14 @@ fun Solver.declareGuardConditionsConstraintsInputless(
     // parent[p, par] & nodetype[par, AND/OR] => child[par, p] | child[par, p-1]
     for (c in 1..C)
         for (k in 1..K)
-            for (p in 3..P)
-                for (par in 1..(p - 2))
+            for (par in 1..P)
+                for (ch in (par + 1) until P)
                     for (nt in listOf(NodeType.AND, NodeType.OR))
                         clause(
-                            -nodeParent[c, k, p, par],
                             -nodeType[c, k, par, nt.value],
-                            nodeChild[c, k, par, p],
-                            nodeChild[c, k, par, p - 1]
+                            -nodeParent[c, k, ch, par],
+                            nodeChild[c, k, par, ch],
+                            nodeChild[c, k, par, ch - 1]
                         )
 
     comment("Right child of binary operators follows the left one")
@@ -238,12 +238,12 @@ fun Solver.declareGuardConditionsConstraintsInputless(
     // parent[p, par] & nodetype[par, NOT] => child[par, p]
     for (c in 1..C)
         for (k in 1..K)
-            for (p in 1..P)
-                for (par in 1 until p)
+            for (par in 1..P)
+                for (ch in (par + 1)..P)
                     implyImply(
-                        nodeParent[c, k, p, par],
                         nodeType[c, k, par, NodeType.NOT.value],
-                        nodeChild[c, k, par, p]
+                        nodeParent[c, k, ch, par],
+                        nodeChild[c, k, par, ch]
                     )
 
     // NONE-TYPE NODES CONSTRAINTS
