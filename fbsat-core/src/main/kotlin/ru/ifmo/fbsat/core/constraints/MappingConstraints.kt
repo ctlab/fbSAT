@@ -9,7 +9,6 @@ import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.implyIff
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
-import ru.ifmo.fbsat.core.utils.log
 
 fun Solver.declarePositiveMappingConstraints(
     basicVariables: BasicVariables,
@@ -20,18 +19,30 @@ fun Solver.declarePositiveMappingConstraints(
         comment("Positive mapping constraints: for root")
         declareMappingConstraintsForRoot(mapping)
 
-        for (v in 2..V) {
-            comment("Positive mapping constraints: for v = $v")
-            declareMappingConstraintsForNode(
+        for (v in scenarioTree.activeVertices) {
+            comment("Positive mapping constraints: for active node v = $v")
+            declareMappingConstraintsForActiveNode(
                 v = v,
                 tree = scenarioTree,
-                C = C, O = O, Z = Z,
+                C = C, Z = Z,
                 transitionFunction = transitionFunction,
                 outputEventFunction = outputEventFunction,
                 algorithmFunctionTop = algorithmFunctionTop,
                 algorithmFunctionBot = algorithmFunctionBot,
                 mapping = mapping,
-                isEncodeReverseImplication = isEncodeReverseImplication
+                isEncodeReverseImplication = false
+            )
+        }
+
+        for (v in scenarioTree.passiveVertices) {
+            comment("Positive mapping constraints: for passive node v = $v")
+            declareMappingConstraintsForPassiveNode(
+                v = v,
+                tree = scenarioTree,
+                C = C, O = O,
+                transitionFunction = transitionFunction,
+                outputEventFunction = outputEventFunction,
+                mapping = mapping
             )
         }
     }
@@ -49,19 +60,32 @@ fun Solver.declareNegativeMappingConstraints(
             declareMappingConstraintsForRoot(negMapping)
         }
 
-        for (v in Vs.filter { it != 1 }) {
-            // Note: be very careful with positive/negative variables!
-            comment("Negative mapping constraints: for node v = $v")
-            declareMappingConstraintsForNode(
+        // Note: be very careful with positive/negative variables!
+        for (v in negativeScenarioTree.activeVertices) {
+            comment("Negative mapping constraints: for active node v = $v")
+            declareMappingConstraintsForActiveNode(
                 v = v,
-                tree = scenarioTree,
-                C = C, O = O, Z = Z,
+                tree = negativeScenarioTree,
+                C = C, Z = Z,
                 transitionFunction = negTransitionFunction,
                 outputEventFunction = negOutputEventFunction,
                 algorithmFunctionTop = negAlgorithmFunctionTop,
                 algorithmFunctionBot = negAlgorithmFunctionBot,
                 mapping = negMapping,
                 isEncodeReverseImplication = false
+            )
+        }
+
+        // Note: be very careful with positive/negative variables!
+        for (v in negativeScenarioTree.passiveVertices) {
+            comment("Negative mapping constraints: for passive node v = $v")
+            declareMappingConstraintsForPassiveNode(
+                v = v,
+                tree = negativeScenarioTree,
+                C = C, O = O,
+                transitionFunction = negTransitionFunction,
+                outputEventFunction = negOutputEventFunction,
+                mapping = negMapping
             )
         }
     }
@@ -72,43 +96,6 @@ fun Solver.declareMappingConstraintsForRoot(
 ) {
     comment("Root maps to the initial state")
     clause(mapping[1, 1])
-}
-
-fun Solver.declareMappingConstraintsForNode(
-    v: Int,
-    tree: ScenarioTreeInterface,
-    C: Int,
-    O: Int,
-    Z: Int,
-    transitionFunction: IntMultiArray,
-    outputEventFunction: IntMultiArray,
-    algorithmFunctionTop: IntMultiArray,
-    algorithmFunctionBot: IntMultiArray,
-    mapping: IntMultiArray,
-    isEncodeReverseImplication: Boolean
-) {
-    if (tree.outputEvent(v) != 0)
-        declareMappingConstraintsForActiveNode(
-            v = v,
-            tree = tree,
-            C = C,
-            Z = Z,
-            transitionFunction = transitionFunction,
-            outputEventFunction = outputEventFunction,
-            algorithmFunctionTop = algorithmFunctionTop,
-            algorithmFunctionBot = algorithmFunctionBot,
-            mapping = mapping,
-            isEncodeReverseImplication = isEncodeReverseImplication
-        )
-    else
-        declareMappingConstraintsForPassiveNode(
-            v = v,
-            tree = tree,
-            C = C,
-            O = O,
-            outputEventFunction = outputEventFunction,
-            mapping = mapping
-        )
 }
 
 fun Solver.declareMappingConstraintsForActiveNode(
@@ -123,9 +110,9 @@ fun Solver.declareMappingConstraintsForActiveNode(
     mapping: IntMultiArray,
     isEncodeReverseImplication: Boolean
 ) {
-    if (isEncodeReverseImplication) {
-        log.warn("'Reverse implication' is not yet implemented")
-    }
+    // if (isEncodeReverseImplication) {
+    //     log.warn("'Reverse implication' is not yet implemented")
+    // }
 
     val p = tree.parent(v)
     val e = tree.inputEvent(v)
@@ -172,6 +159,7 @@ fun Solver.declareMappingConstraintsForPassiveNode(
     tree: ScenarioTreeInterface,
     C: Int,
     O: Int,
+    transitionFunction: IntMultiArray,
     outputEventFunction: IntMultiArray,
     mapping: IntMultiArray
 ) {
@@ -187,8 +175,16 @@ fun Solver.declareMappingConstraintsForPassiveNode(
             mapping[v, c]
         )
 
+    comment("Constraining transition function for passive node v = $v")
+    // transitionFunction[mapping[tp(v)], tie(v), tin(v)] = mapping[tp(v)]
+    for (c in 1..C)
+        imply(
+            mapping[p, c],
+            transitionFunction[c, e, u, c]
+        )
+
     comment("Constraining output event function for passive node v = $v")
-    // outputEventFunction[mapping[tp(v)], tie(v), tin(v)] = toe(v)
+    // outputEventFunction[mapping[tp(v)], tie(v), tin(v)] = epsilon
     for (c in 1..C)
         imply(
             mapping[p, c],
