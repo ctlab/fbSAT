@@ -87,7 +87,7 @@ class FbSAT : CliktCommand() {
         help = "Output directory",
         metavar = "<path>"
     ).file().defaultLazy {
-        val now = DateTime.now().format(ISO8601.IsoDateTimeFormat(null, "YYYY-MM-DD_hh-mm-ss"))
+        val now = DateTime.nowLocal().format(ISO8601.IsoDateTimeFormat(null, "YYYY-MM-DD_hh-mm-ss"))
         File("out/$now")
     }
 
