@@ -54,7 +54,7 @@ class ExtendedTask(
                     else newVariable()
                 }
 
-                vars = ExtendedVariables.fromBasic(
+                vars = ExtendedVariables(
                     basicVars = basicTask.vars,
                     P = P,
                     nodeType = nodeType,

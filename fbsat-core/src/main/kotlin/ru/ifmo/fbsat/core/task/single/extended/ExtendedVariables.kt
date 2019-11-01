@@ -51,40 +51,37 @@ class ExtendedVariables(
     val N: Int?
         get() = maxTotalGuardsSize
 
-    companion object {
-        fun fromBasic(
-            basicVars: BasicVariables,
-            P: Int,
-            nodeType: IntMultiArray,
-            nodeInputVariable: IntMultiArray,
-            nodeParent: IntMultiArray,
-            nodeChild: IntMultiArray,
-            nodeValue: IntMultiArray
-        ): ExtendedVariables =
-            ExtendedVariables(
-                scenarioTree = basicVars.scenarioTree,
-                C = basicVars.C,
-                K = basicVars.K,
-                P = P,
-                transitionDestination = basicVars.transitionDestination,
-                transitionInputEvent = basicVars.transitionInputEvent,
-                transitionFiring = basicVars.transitionFiring,
-                firstFired = basicVars.firstFired,
-                notFired = basicVars.notFired,
-                stateOutputEvent = basicVars.stateOutputEvent,
-                stateAlgorithmTop = basicVars.stateAlgorithmTop,
-                stateAlgorithmBot = basicVars.stateAlgorithmBot,
-                transitionFunction = basicVars.transitionFunction,
-                actualTransitionFunction = basicVars.actualTransitionFunction,
-                outputEventFunction = basicVars.outputEventFunction,
-                algorithmFunctionTop = basicVars.algorithmFunctionTop,
-                algorithmFunctionBot = basicVars.algorithmFunctionBot,
-                mapping = basicVars.mapping,
-                nodeType = nodeType,
-                nodeInputVariable = nodeInputVariable,
-                nodeParent = nodeParent,
-                nodeChild = nodeChild,
-                nodeValue = nodeValue
-            )
-    }
+    constructor(
+        basicVars: BasicVariables,
+        P: Int,
+        nodeType: IntMultiArray,
+        nodeInputVariable: IntMultiArray,
+        nodeParent: IntMultiArray,
+        nodeChild: IntMultiArray,
+        nodeValue: IntMultiArray
+    ) : this(
+        scenarioTree = basicVars.scenarioTree,
+        C = basicVars.C,
+        K = basicVars.K,
+        P = P,
+        transitionDestination = basicVars.transitionDestination,
+        transitionInputEvent = basicVars.transitionInputEvent,
+        transitionFiring = basicVars.transitionFiring,
+        firstFired = basicVars.firstFired,
+        notFired = basicVars.notFired,
+        stateOutputEvent = basicVars.stateOutputEvent,
+        stateAlgorithmTop = basicVars.stateAlgorithmTop,
+        stateAlgorithmBot = basicVars.stateAlgorithmBot,
+        transitionFunction = basicVars.transitionFunction,
+        actualTransitionFunction = basicVars.actualTransitionFunction,
+        outputEventFunction = basicVars.outputEventFunction,
+        algorithmFunctionTop = basicVars.algorithmFunctionTop,
+        algorithmFunctionBot = basicVars.algorithmFunctionBot,
+        mapping = basicVars.mapping,
+        nodeType = nodeType,
+        nodeInputVariable = nodeInputVariable,
+        nodeParent = nodeParent,
+        nodeChild = nodeChild,
+        nodeValue = nodeValue
+    )
 }
