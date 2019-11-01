@@ -140,7 +140,7 @@ fun Solver.declareMappingConstraintsForActiveNode(
     comment("Constraining algorithms for active node v = $v")
     // algorithmFunction{tov(tp(v),z)}[mapping[tp(v)], tie(v), tin(v), z] = tov(v,z)
     for (c in 1..C)
-        for (z in 1..Z) {
+        for (z in 1..Z)
             imply(
                 mapping[p, c],
                 when (val values = tree.outputValue(p, z) to tree.outputValue(v, z)) {
@@ -151,7 +151,6 @@ fun Solver.declareMappingConstraintsForActiveNode(
                     else -> error("Weird combination of values: $values")
                 }
             )
-        }
 }
 
 fun Solver.declareMappingConstraintsForPassiveNode(
