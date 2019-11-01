@@ -12,7 +12,6 @@ import ru.ifmo.fbsat.core.solver.implyImply
 import ru.ifmo.fbsat.core.solver.implyImplyIff
 import ru.ifmo.fbsat.core.solver.implyImplyIffAnd
 import ru.ifmo.fbsat.core.solver.implyImplyIffOr
-import ru.ifmo.fbsat.core.solver.implyOr
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
 import ru.ifmo.fbsat.core.utils.boolToSign
@@ -110,18 +109,6 @@ fun Solver.declareGuardConditionsConstraintsInputless(
                     imply(
                         nodeChild[c, k, p, ch],
                         nodeParent[c, k, ch, p]
-                    )
-
-    comment("Parent-child relation")
-    // (nodeParent[ch] = p) => (nodeChild[p] = ch) | (nodeChild[p] = ch-1)
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                for (ch in (p + 1)..P)
-                    implyOr(
-                        nodeParent[c, k, ch, p],
-                        nodeChild[c, k, p, ch],
-                        nodeChild[c, k, p, ch - 1]
                     )
 
     comment("Parent has lesser number")
