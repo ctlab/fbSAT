@@ -205,7 +205,7 @@ fun Solver.declareGuardConditionsConstraintsInputless(
                         )
 
     comment("Right child of binary operators follows the left one")
-    // (nodeType[p] in {AND,OR}) & (nodeChild[p] = ch) => (nodeParent[ch+1] = p)
+    // (nodeType[p] = AND/OR) & (nodeChild[p] = ch) => (nodeParent[ch+1] = p)
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
