@@ -112,6 +112,11 @@ fun Solver.declareAutomatonStructureConstraintsInputless(
                 clause(-stateAlgorithmBot[1, z])
             }
         }
+        StartStateAlgorithms.ZERONOTHING -> {
+            comment("Start state does not change zeros")
+            for (z in 1..Z)
+                clause(-stateAlgorithmBot[1, z])
+        }
         StartStateAlgorithms.ANY -> TODO("Arbitrary start state algorithms")
     }
 

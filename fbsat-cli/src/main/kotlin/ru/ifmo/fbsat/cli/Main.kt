@@ -214,9 +214,10 @@ class FbSAT : CliktCommand() {
     ).choice(
         "nothing" to StartStateAlgorithms.NOTHING,
         "zero" to StartStateAlgorithms.ZERO,
+        "zeronothing" to StartStateAlgorithms.ZERONOTHING,
         "any" to StartStateAlgorithms.ANY
     ).default(
-        StartStateAlgorithms.NOTHING
+        StartStateAlgorithms.ZERONOTHING
     )
 
     val isEncodeReverseImplication: Boolean by option(
