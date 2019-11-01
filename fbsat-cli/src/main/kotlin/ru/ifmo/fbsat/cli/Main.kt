@@ -241,7 +241,7 @@ class FbSAT : CliktCommand() {
         help = "[DEBUG] Encode terminal numbers lexicographic order"
     ).flag(
         "--no-encode-terminals-order",
-        default = true
+        default = false
     )
 
     val isEncodeTotalizer: Boolean by option(
