@@ -82,29 +82,14 @@ interface Solver {
         vararg shape: Int,
         one: Boolean = false,
         init: (IntArray) -> Int = { newVariable() }
-    ): IntMultiArray {
-        val array = IntMultiArray.create(shape, init)
-
-        if (one) {
-            check(shape.size > 1)
-            for (index in cartesianProduct(shape.dropLast(1).map { 1..it })) {
-                exactlyOne {
-                    for (last in 1..shape.last())
-                        @Suppress("ReplaceGetOrSet")
-                        yield(array.get(*(index + last).toIntArray()))
-                }
-            }
-        }
-
-        return array
-    }
+    ): IntMultiArray
 
     fun comment(comment: String)
 
     fun clause(literals: Iterable<Int>)
-    fun clause(vararg literals: Int) = clause(literals.asIterable())
-    fun clause(literals: Sequence<Int>) = clause(literals.toList())
-    fun clause(block: suspend SequenceScope<Int>.() -> Unit) = clause(sequence(block).constrainOnce())
+    fun clause(vararg literals: Int)
+    fun clause(literals: Sequence<Int>)
+    fun clause(block: suspend SequenceScope<Int>.() -> Unit)
 
     fun solve(): RawAssignment?
     fun finalize2()
@@ -127,6 +112,28 @@ private abstract class AbstractSolver : Solver {
     final override val context: SolverContext = SolverContext(this)
 
     final override fun newVariable(): Int = ++numberOfVariables
+    final override fun newArray(
+        vararg shape: Int,
+        one: Boolean,
+        init: (IntArray) -> Int
+    ): IntMultiArray {
+        val array = IntMultiArray.create(shape, init)
+
+        if (one) {
+            check(shape.size > 1)
+            comment("ExactlyOne for shape ${shape.toList()}")
+            for (index in cartesianProduct(shape.dropLast(1).map { 1..it })) {
+                comment("ExactlyOne for index $index: {1..${shape.last()}}")
+                exactlyOne {
+                    for (last in 1..shape.last())
+                        @Suppress("ReplaceGetOrSet")
+                        yield(array.get(*(index + last).toIntArray()))
+                }
+            }
+        }
+
+        return array
+    }
 
     @Suppress("FunctionName")
     protected abstract fun _clause(literals: Iterable<Int>)
@@ -140,6 +147,10 @@ private abstract class AbstractSolver : Solver {
             _clause(lits)
         }
     }
+
+    final override fun clause(vararg literals: Int) = clause(literals.asIterable())
+    final override fun clause(literals: Sequence<Int>) = clause(literals.toList())
+    final override fun clause(block: suspend SequenceScope<Int>.() -> Unit) = clause(sequence(block).constrainOnce())
 
     @Suppress("FunctionName")
     protected abstract fun _solve(): BooleanArray?
