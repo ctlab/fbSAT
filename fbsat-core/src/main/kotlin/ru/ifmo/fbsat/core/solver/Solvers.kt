@@ -102,7 +102,7 @@ interface Solver {
     fun comment(comment: String)
 
     fun clause(literals: Iterable<Int>)
-    fun clause(vararg literals: Int) = clause(literals.asList())
+    fun clause(vararg literals: Int) = clause(literals.asIterable())
     fun clause(literals: Sequence<Int>) = clause(literals.toList())
     fun clause(block: suspend SequenceScope<Int>.() -> Unit) = clause(sequence(block).constrainOnce())
 
@@ -133,11 +133,12 @@ private abstract class AbstractSolver : Solver {
 
     final override fun clause(literals: Iterable<Int>) {
         if (trueVariable in literals) return
-        if (falseVariable in literals) return clause(literals.filter { it != falseVariable })
 
-        ++numberOfClauses
-
-        _clause(literals)
+        val lits = literals.filter { it != falseVariable }
+        if (lits.isNotEmpty()) {
+            ++numberOfClauses
+            _clause(lits)
+        }
     }
 
     @Suppress("FunctionName")
