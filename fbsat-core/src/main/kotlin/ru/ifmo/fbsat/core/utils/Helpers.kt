@@ -140,13 +140,10 @@ fun <T> Iterable<T>.firstIndexed(predicate: (Int, T) -> Boolean): T =
 
 fun Iterable<Boolean>.all(): Boolean = all { it }
 
-fun <T> cartesianProduct(iterables: List<Iterable<T>>): List<List<T>> =
-    when (iterables.size) {
-        0 -> emptyList()
-        1 -> iterables.first().map { listOf(it) }
-        else -> iterables.fold(listOf(listOf<T>())) { acc, iterable ->
-            acc.flatMap { list -> iterable.map { element -> list + element } }
-        }.toList()
+fun <T> cartesianProduct(iterables: Iterable<Iterable<T>>): Sequence<List<T>> =
+    if (iterables.count() == 0) emptySequence()
+    else iterables.fold(sequenceOf(listOf())) { acc, iterable ->
+        acc.flatMap { list -> iterable.asSequence().map { element -> list + element } }
     }
 
 fun <T> Iterable<T>.pairs(): Sequence<Pair<T, T>> = sequence {
