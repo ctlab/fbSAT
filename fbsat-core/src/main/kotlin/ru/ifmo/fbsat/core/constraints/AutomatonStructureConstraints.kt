@@ -229,7 +229,6 @@ fun Solver.declareAutomatonStructureConstraintsForInput(
                 actualTransitionFunction[i, e, u, C + 1],
                 transitionFunction[i, e, u, i]
             )
-            // FIXME: maybe even 'iff'?
             for (j in 1..C)
                 imply(
                     actualTransitionFunction[i, e, u, j],
