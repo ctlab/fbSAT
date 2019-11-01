@@ -100,7 +100,7 @@ fun Solver.declareGuardConditionsConstraintsInputless(
                 nodeType[c, k, 1, NodeType.NONE.value]
             )
 
-    comment("Child-parent relation")
+    comment("child=>parent relation")
     // (nodeChild[p] = ch) => (nodeParent[ch] = p)
     for (c in 1..C)
         for (k in 1..K)
