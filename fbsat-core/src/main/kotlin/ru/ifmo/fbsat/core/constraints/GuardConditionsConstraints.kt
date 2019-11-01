@@ -147,17 +147,6 @@ fun Solver.declareGuardConditionsConstraintsInputless(
                     -nodeType[c, k, p, NodeType.NONE.value]
                 )
 
-    // NONE-TYPE NODES CONSTRAINTS
-
-    comment("None-typed nodes do not have children")
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                imply(
-                    nodeType[c, k, p, NodeType.NONE.value],
-                    nodeChild[c, k, p, P + 1]
-                )
-
     // TERMINALS CONSTRAINTS
 
     comment("Only terminal nodes have associated input variables")
@@ -269,6 +258,17 @@ fun Solver.declareGuardConditionsConstraintsInputless(
                         nodeType[c, k, par, NodeType.NOT.value],
                         nodeChild[c, k, par, p]
                     )
+
+    // NONE-TYPE NODES CONSTRAINTS
+
+    comment("None-typed nodes do not have children")
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..P)
+                imply(
+                    nodeType[c, k, p, NodeType.NONE.value],
+                    nodeChild[c, k, p, P + 1]
+                )
 }
 
 fun Solver.declareGuardConditionsConstraintsForInput(
