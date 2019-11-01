@@ -7,6 +7,7 @@ import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareComparatorLessThanOrEqual
 import ru.ifmo.fbsat.core.solver.declareTotalizer
+import ru.ifmo.fbsat.core.solver.implyImply
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.utils.Globals
 import java.io.File
@@ -82,9 +83,9 @@ class ExtendedTask(
                 for (k in 1..K)
                     for (p in 1 until P)
                         for (ch in (p + 1)..P)
-                            clause(
-                                -nodeType[c, k, p, NodeType.NOT.value],
-                                -nodeChild[c, k, p, ch],
+                            implyImply(
+                                nodeType[c, k, p, NodeType.NOT.value],
+                                nodeChild[c, k, p, ch],
                                 -nodeType[c, k, ch, NodeType.NOT.value]
                             )
 
