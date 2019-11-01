@@ -92,11 +92,6 @@ fun Solver.declareAutomatonStructureConstraintsInputless(
     comment("Start state produces epsilon event")
     clause(stateOutputEvent[1, O + 1])
 
-    // FIXME: Do we really forbid epsilon output events in all states?
-    comment("Only start state produces epsilon event")
-    for (c in 2..C)
-        clause(-stateOutputEvent[c, O + 1])
-
     when (Globals.START_STATE_ALGORITHMS) {
         StartStateAlgorithms.NOTHING -> {
             comment("Start state does nothing")
