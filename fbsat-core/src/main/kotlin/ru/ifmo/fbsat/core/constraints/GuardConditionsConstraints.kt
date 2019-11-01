@@ -46,7 +46,10 @@ fun Solver.declarePositiveGuardConditionsConstraints(extendedVars: ExtendedVaria
     }
 }
 
-fun Solver.declareNegativeGuardConditionsConstraints(completeVars: CompleteVariables, Us: Iterable<Int>) {
+fun Solver.declareNegativeGuardConditionsConstraints(
+    completeVars: CompleteVariables,
+    Us: Iterable<Int>
+) {
     comment("Negative guard conditions constraints")
     with(completeVars) {
         // Note: no inputless constraints
