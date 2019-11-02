@@ -12,7 +12,6 @@ import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
 import com.soywiz.klock.DateTime
-import com.soywiz.klock.ISO8601
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
@@ -86,7 +85,7 @@ class FbSAT : CliktCommand() {
         help = "Output directory",
         metavar = "<path>"
     ).file().defaultLazy {
-        val now = DateTime.nowLocal().format(ISO8601.IsoDateTimeFormat(null, "YYYY-MM-DD_hh-mm-ss"))
+        val now = DateTime.nowLocal().format("yyyy-MM-dd_HH-mm-ss")
         File("out/$now")
     }
 
