@@ -32,8 +32,6 @@ import ru.ifmo.fbsat.core.utils.inputNamesPnP
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.outputNamesPnP
 import java.io.File
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.system.measureTimeMillis
 
 enum class Method(val s: String) {
@@ -605,8 +603,8 @@ class FbSAT : CliktCommand() {
 }
 
 fun main(args: Array<String>) {
-    log.br(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+    log.br(DateTime.nowLocal().format("yyyy-MM-dd HH:mm:ss"))
     val runningTime = measureTimeMillis { FbSAT().main(args) }
-    log.br(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+    log.br(DateTime.nowLocal().format("yyyy-MM-dd HH:mm:ss"))
     log.success("All done in %.3f seconds".format(runningTime / 1000.0))
 }
