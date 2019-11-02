@@ -3,8 +3,8 @@
 package ru.ifmo.fbsat.core.constraints
 
 import com.github.lipen.multiarray.IntMultiArray
-import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.automaton.NodeType
+import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.imply
@@ -33,8 +33,8 @@ fun Solver.declarePositiveGuardConditionsConstraints(extendedVars: ExtendedVaria
             comment("Positive guard conditions constraints: for u = $u")
             declareGuardConditionsConstraintsForInput(
                 u = u,
+                tree = scenarioTree,
                 C = C, K = K, P = P, X = X,
-                UIs = scenarioTree.uniqueInputs,
                 transitionFiring = transitionFiring,
                 nodeType = nodeType,
                 nodeInputVariable = nodeInputVariable,
@@ -58,8 +58,8 @@ fun Solver.declareNegativeGuardConditionsConstraints(
             comment("Negative guard conditions constraints: for u = $u")
             declareGuardConditionsConstraintsForInput(
                 u = u,
+                tree = negativeScenarioTree,
                 C = C, K = K, P = P, X = X,
-                UIs = negUIs,
                 transitionFiring = negTransitionFiring,
                 nodeType = nodeType,
                 nodeInputVariable = nodeInputVariable,
@@ -246,11 +246,11 @@ fun Solver.declareGuardConditionsConstraintsInputless(
 
 fun Solver.declareGuardConditionsConstraintsForInput(
     u: Int,
+    tree: ScenarioTreeInterface,
     C: Int,
     K: Int,
     P: Int,
     X: Int,
-    UIs: List<InputValues>,
     transitionFiring: IntMultiArray,
     nodeType: IntMultiArray,
     nodeInputVariable: IntMultiArray,
@@ -274,7 +274,7 @@ fun Solver.declareGuardConditionsConstraintsForInput(
                 for (x in 1..X)
                     imply(
                         nodeInputVariable[c, k, p, x],
-                        nodeValue[c, k, p, u] * boolToSign(UIs[u - 1][x - 1])
+                        nodeValue[c, k, p, u] * boolToSign(tree.uniqueInputs[u - 1][x - 1])
                     )
 
     comment("AND: value is calculated as a conjunction of children values")
