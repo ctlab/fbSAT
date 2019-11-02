@@ -121,6 +121,27 @@ class ExtendedTask(
                                             yield(-nodeInputVariable[c, k, p_, x_])
                                 })
             }
+
+            if (Globals.IS_ENCODE_TERMINALS_MINI_ORDER) {
+                // Note: this constraint seems to be very expensive, but does not provide visible speed-up
+                comment("A.5. Terminals mini-order: AND/OR children-terminals order")
+                // (nodeType[p] = AND/OR) & (nodeChild[p] = ch) & (nodeType[ch] = TERMINAL) & (nodeType[ch+1] = TERMINAL) => (nodeInputVariable[ch] < nodeInputVariable[ch+1])
+                for (c in 1..C)
+                    for (k in 1..K)
+                        for (p in 1..P)
+                            for (t in listOf(NodeType.AND, NodeType.OR))
+                                for (ch in (p + 1) until P)
+                                    for (x in 1..X)
+                                        for (x_ in 1..x)
+                                            clause(
+                                                -nodeType[c, k, p, t.value],
+                                                -nodeChild[c, k, p, ch],
+                                                -nodeType[c, k, ch, NodeType.NOT.value],
+                                                -nodeType[c, k, ch + 1, NodeType.NOT.value],
+                                                -nodeInputVariable[c, k, ch, x],
+                                                -nodeInputVariable[c, k, ch + 1, x_]
+                                            )
+            }
         }
     }
 
