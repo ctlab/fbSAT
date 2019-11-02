@@ -60,11 +60,7 @@ class BasicTask(
             val stateAlgorithmBot = newArray(C, Z)
             val stateAlgorithmTop = newArray(C, Z)
             /* Interface variables */
-            val transitionFunction = newArray(C, E, U, C, one = true)
             val actualTransitionFunction = newArray(C, E, U, C + 1, one = true)
-            val outputEventFunction = newArray(C, E, U, O + 1, one = true)
-            val algorithmFunctionBot = newArray(C, E, U, Z)
-            val algorithmFunctionTop = newArray(C, E, U, Z)
             /* Mapping variables */
             val mapping = newArray(V, C, one = true)
             // val memoryOutputValue = newArray(V, Z)
@@ -80,11 +76,7 @@ class BasicTask(
                 stateOutputEvent = stateOutputEvent,
                 stateAlgorithmTop = stateAlgorithmTop,
                 stateAlgorithmBot = stateAlgorithmBot,
-                transitionFunction = transitionFunction,
                 actualTransitionFunction = actualTransitionFunction,
-                outputEventFunction = outputEventFunction,
-                algorithmFunctionTop = algorithmFunctionTop,
-                algorithmFunctionBot = algorithmFunctionBot,
                 mapping = mapping
             )
 

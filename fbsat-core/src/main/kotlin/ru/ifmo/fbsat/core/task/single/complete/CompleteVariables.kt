@@ -29,11 +29,7 @@ class CompleteVariables(
     val stateAlgorithmTop: IntMultiArray,
     val stateAlgorithmBot: IntMultiArray,
     /* Interface variables */
-    val transitionFunction: IntMultiArray,
     val actualTransitionFunction: IntMultiArray,
-    val outputEventFunction: IntMultiArray,
-    val algorithmFunctionTop: IntMultiArray,
-    val algorithmFunctionBot: IntMultiArray,
     /* Mapping variables */
     val mapping: IntMultiArray,
     /* Guard conditions variables */
@@ -76,15 +72,7 @@ class CompleteVariables(
         internal set
     lateinit var negNotFired: IntMultiArray
         internal set
-    lateinit var negTransitionFunction: IntMultiArray
-        internal set
     lateinit var negActualTransitionFunction: IntMultiArray
-        internal set
-    lateinit var negOutputEventFunction: IntMultiArray
-        internal set
-    lateinit var negAlgorithmFunctionBot: IntMultiArray
-        internal set
-    lateinit var negAlgorithmFunctionTop: IntMultiArray
         internal set
     lateinit var negNodeValue: IntMultiArray
         internal set
@@ -110,11 +98,7 @@ class CompleteVariables(
             stateOutputEvent = extVars.stateOutputEvent,
             stateAlgorithmTop = extVars.stateAlgorithmTop,
             stateAlgorithmBot = extVars.stateAlgorithmBot,
-            transitionFunction = extVars.transitionFunction,
             actualTransitionFunction = extVars.actualTransitionFunction,
-            outputEventFunction = extVars.outputEventFunction,
-            algorithmFunctionTop = extVars.algorithmFunctionTop,
-            algorithmFunctionBot = extVars.algorithmFunctionBot,
             mapping = extVars.mapping,
             nodeType = extVars.nodeType,
             nodeInputVariable = extVars.nodeInputVariable,

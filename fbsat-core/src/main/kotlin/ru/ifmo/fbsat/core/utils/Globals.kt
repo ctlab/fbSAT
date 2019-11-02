@@ -2,12 +2,16 @@ package ru.ifmo.fbsat.core.utils
 
 import kotlin.properties.Delegates
 
-// TODO: move to a more suitable place
+enum class EpsilonOutputEvents {
+    START, ONLYSTART, NONE
+}
+
 enum class StartStateAlgorithms {
     NOTHING, ZERO, ZERONOTHING, ANY;
 }
 
 object Globals {
+    var EPSILON_OUTPUT_EVENTS: EpsilonOutputEvents by Delegates.notNull()
     var START_STATE_ALGORITHMS: StartStateAlgorithms by Delegates.notNull()
     var IS_FORBID_OR: Boolean by Delegates.notNull()
     var IS_BFS_AUTOMATON: Boolean by Delegates.notNull()

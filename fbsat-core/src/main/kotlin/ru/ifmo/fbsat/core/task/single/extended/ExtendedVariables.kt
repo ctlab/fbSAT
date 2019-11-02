@@ -21,11 +21,7 @@ class ExtendedVariables(
     val stateAlgorithmTop: IntMultiArray,
     val stateAlgorithmBot: IntMultiArray,
     /* Interface variables */
-    val transitionFunction: IntMultiArray,
     val actualTransitionFunction: IntMultiArray,
-    val outputEventFunction: IntMultiArray,
-    val algorithmFunctionTop: IntMultiArray,
-    val algorithmFunctionBot: IntMultiArray,
     /* Mapping variables */
     val mapping: IntMultiArray,
     /* Guard conditions variables */
@@ -72,11 +68,7 @@ class ExtendedVariables(
         stateOutputEvent = basicVars.stateOutputEvent,
         stateAlgorithmTop = basicVars.stateAlgorithmTop,
         stateAlgorithmBot = basicVars.stateAlgorithmBot,
-        transitionFunction = basicVars.transitionFunction,
         actualTransitionFunction = basicVars.actualTransitionFunction,
-        outputEventFunction = basicVars.outputEventFunction,
-        algorithmFunctionTop = basicVars.algorithmFunctionTop,
-        algorithmFunctionBot = basicVars.algorithmFunctionBot,
         mapping = basicVars.mapping,
         nodeType = nodeType,
         nodeInputVariable = nodeInputVariable,

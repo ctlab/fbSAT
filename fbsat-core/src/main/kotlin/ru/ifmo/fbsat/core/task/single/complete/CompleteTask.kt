@@ -113,30 +113,10 @@ class CompleteTask(
                         { negNotFired[c, k, it] },
                         { notFired[c, k, it] })
                 }
-                negTransitionFunction = newArray(C, E, U, C, one = true) { (c, e, u, c2) ->
-                    inputChoice(u,
-                        { negTransitionFunction[c, e, it, c2] },
-                        { transitionFunction[c, e, it, c2] })
-                }
                 negActualTransitionFunction = newArray(C, E, U, C + 1, one = true) { (c, e, u, c2) ->
                     inputChoice(u,
                         { negActualTransitionFunction[c, e, it, c2] },
                         { actualTransitionFunction[c, e, it, c2] })
-                }
-                negOutputEventFunction = newArray(C, E, U, O + 1, one = true) { (c, e, u, o) ->
-                    inputChoice(u,
-                        { negOutputEventFunction[c, e, it, o] },
-                        { outputEventFunction[c, e, it, o] })
-                }
-                negAlgorithmFunctionBot = newArray(C, E, U, Z) { (c, e, u, z) ->
-                    inputChoice(u,
-                        { negAlgorithmFunctionBot[c, e, it, z] },
-                        { algorithmFunctionBot[c, e, it, z] })
-                }
-                negAlgorithmFunctionTop = newArray(C, E, U, Z) { (c, e, u, z) ->
-                    inputChoice(u,
-                        { negAlgorithmFunctionTop[c, e, it, z] },
-                        { algorithmFunctionTop[c, e, it, z] })
                 }
                 negNodeValue = newArray(C, K, P, U) { (c, k, p, u) ->
                     if (p == 1) inputChoice(u,

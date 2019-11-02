@@ -6,9 +6,9 @@ import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
-import ru.ifmo.fbsat.core.solver.implyIff
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
+import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 
@@ -29,26 +29,22 @@ fun Solver.declareAutomatonStructureConstraints(basicVariables: BasicVariables) 
             comment("Automaton structure constraints: for u = $u")
             declareAutomatonStructureConstraintsForInput(
                 u = u,
-                C = C, K = K, E = E, O = O, Z = Z,
-                stateOutputEvent = stateOutputEvent,
-                stateAlgorithmTop = stateAlgorithmTop,
-                stateAlgorithmBot = stateAlgorithmBot,
+                C = C, K = K, E = E,
                 transitionDestination = transitionDestination,
                 transitionInputEvent = transitionInputEvent,
                 transitionFiring = transitionFiring,
                 firstFired = firstFired,
                 notFired = notFired,
-                actualTransitionFunction = actualTransitionFunction,
-                transitionFunction = transitionFunction,
-                outputEventFunction = outputEventFunction,
-                algorithmFunctionTop = algorithmFunctionTop,
-                algorithmFunctionBot = algorithmFunctionBot
+                actualTransitionFunction = actualTransitionFunction
             )
         }
     }
 }
 
-fun Solver.declareNegativeAutomatonStructureConstraints(completeVars: CompleteVariables, Us: Iterable<Int>) {
+fun Solver.declareNegativeAutomatonStructureConstraints(
+    completeVars: CompleteVariables,
+    Us: Iterable<Int>
+) {
     comment("Negative automaton structure constraints")
     with(completeVars) {
         // Note: no inputless constraints
@@ -58,20 +54,13 @@ fun Solver.declareNegativeAutomatonStructureConstraints(completeVars: CompleteVa
             comment("Negative automaton structure constraints: for u = $u")
             declareAutomatonStructureConstraintsForInput(
                 u = u,
-                C = C, K = K, E = E, O = O, Z = Z,
-                stateOutputEvent = stateOutputEvent,
-                stateAlgorithmTop = stateAlgorithmTop,
-                stateAlgorithmBot = stateAlgorithmBot,
+                C = C, K = K, E = E,
                 transitionDestination = transitionDestination,
                 transitionInputEvent = transitionInputEvent,
                 transitionFiring = negTransitionFiring,
                 firstFired = negFirstFired,
                 notFired = negNotFired,
-                actualTransitionFunction = negActualTransitionFunction,
-                transitionFunction = negTransitionFunction,
-                outputEventFunction = negOutputEventFunction,
-                algorithmFunctionTop = negAlgorithmFunctionTop,
-                algorithmFunctionBot = negAlgorithmFunctionBot
+                actualTransitionFunction = negActualTransitionFunction
             )
         }
     }
@@ -89,8 +78,23 @@ fun Solver.declareAutomatonStructureConstraintsInputless(
     transitionDestination: IntMultiArray,
     transitionInputEvent: IntMultiArray
 ) {
-    comment("Start state produces epsilon event")
-    clause(stateOutputEvent[1, O + 1])
+    when (Globals.EPSILON_OUTPUT_EVENTS) {
+        EpsilonOutputEvents.START -> {
+            comment("Start state produces epsilon event")
+            clause(stateOutputEvent[1, O + 1])
+        }
+        EpsilonOutputEvents.ONLYSTART -> {
+            comment("Only start state produces epsilon event")
+            clause(stateOutputEvent[1, O + 1])
+            for (c in 1..C)
+                clause(-stateOutputEvent[c, O + 1])
+        }
+        EpsilonOutputEvents.NONE -> {
+            comment("No state can produce epsilon event")
+            for (c in 1..C)
+                clause(-stateOutputEvent[c, O + 1])
+        }
+    }
 
     when (Globals.START_STATE_ALGORITHMS) {
         StartStateAlgorithms.NOTHING -> {
@@ -112,7 +116,9 @@ fun Solver.declareAutomatonStructureConstraintsInputless(
             for (z in 1..Z)
                 clause(-stateAlgorithmBot[1, z])
         }
-        StartStateAlgorithms.ANY -> TODO("Arbitrary start state algorithms")
+        StartStateAlgorithms.ANY -> {
+            comment("Start state algorithms may be arbitrary")
+        }
     }
 
     comment("Null-transitions are last")
@@ -139,21 +145,12 @@ fun Solver.declareAutomatonStructureConstraintsForInput(
     C: Int,
     K: Int,
     E: Int,
-    O: Int,
-    Z: Int,
-    stateOutputEvent: IntMultiArray,
-    stateAlgorithmTop: IntMultiArray,
-    stateAlgorithmBot: IntMultiArray,
     transitionDestination: IntMultiArray,
     transitionInputEvent: IntMultiArray,
     transitionFiring: IntMultiArray,
     firstFired: IntMultiArray,
     notFired: IntMultiArray,
-    actualTransitionFunction: IntMultiArray,
-    transitionFunction: IntMultiArray,
-    outputEventFunction: IntMultiArray,
-    algorithmFunctionTop: IntMultiArray,
-    algorithmFunctionBot: IntMultiArray
+    actualTransitionFunction: IntMultiArray
 ) {
     comment("First fired definition")
     // (firstFired = k) <=> transitionFiring[k] & notFired[k-1]
@@ -221,62 +218,4 @@ fun Solver.declareAutomatonStructureConstraintsForInput(
                         yield(aux)
                     }
                 })
-
-    comment("Transition function definition for u = $u")
-    for (i in 1..C)
-        for (e in 1..E) {
-            imply(
-                actualTransitionFunction[i, e, u, C + 1],
-                transitionFunction[i, e, u, i]
-            )
-            for (j in 1..C)
-                imply(
-                    actualTransitionFunction[i, e, u, j],
-                    transitionFunction[i, e, u, j]
-                )
-        }
-
-    comment("Output function definition for u = $u")
-    for (i in 1..C)
-        for (e in 1..E) {
-            imply(
-                actualTransitionFunction[i, e, u, C + 1],
-                outputEventFunction[i, e, u, O + 1]
-            )
-            for (j in 1..C)
-                for (o in 1..(O + 1))
-                    implyIff(
-                        actualTransitionFunction[i, e, u, j],
-                        outputEventFunction[i, e, u, o],
-                        stateOutputEvent[j, o]
-                    )
-        }
-
-    comment("Algorithm function definition for u = $u")
-    for (i in 1..C)
-        for (e in 1..E)
-            for (z in 1..Z) {
-                // Top
-                imply(
-                    actualTransitionFunction[i, e, u, C + 1],
-                    algorithmFunctionTop[i, e, u, z]
-                )
-                for (j in 1..C)
-                    implyIff(
-                        actualTransitionFunction[i, e, u, j],
-                        algorithmFunctionTop[i, e, u, z],
-                        stateAlgorithmTop[j, z]
-                    )
-                // Bot
-                imply(
-                    actualTransitionFunction[i, e, u, C + 1],
-                    -algorithmFunctionBot[i, e, u, z]
-                )
-                for (j in 1..C)
-                    implyIff(
-                        actualTransitionFunction[i, e, u, j],
-                        algorithmFunctionBot[i, e, u, z],
-                        stateAlgorithmBot[j, z]
-                    )
-            }
 }

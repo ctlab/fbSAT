@@ -25,6 +25,7 @@ import ru.ifmo.fbsat.core.task.single.complete.CompleteTask
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedMinTask
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedMinUBTask
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedTask
+import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
@@ -208,6 +209,17 @@ class FbSAT : CliktCommand() {
         readable = true
     )
 
+    val epsilonOutputEvents: EpsilonOutputEvents by option(
+        "--epsilon-output-events",
+        help = "Epsilon output events"
+    ).choice(
+        "start" to EpsilonOutputEvents.START,
+        "onlystart" to EpsilonOutputEvents.ONLYSTART,
+        "none" to EpsilonOutputEvents.NONE
+    ).default(
+        EpsilonOutputEvents.START
+    )
+
     val startStateAlgorithms: StartStateAlgorithms by option(
         "--start-state-algorithms",
         help = "Start state algorithms"
@@ -275,6 +287,7 @@ class FbSAT : CliktCommand() {
     }
 
     override fun run() {
+        Globals.EPSILON_OUTPUT_EVENTS = epsilonOutputEvents
         Globals.START_STATE_ALGORITHMS = startStateAlgorithms
         Globals.IS_FORBID_OR = isForbidOr
         Globals.IS_BFS_AUTOMATON = isBfsAutomaton
