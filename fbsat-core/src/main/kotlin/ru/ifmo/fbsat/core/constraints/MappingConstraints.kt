@@ -31,10 +31,6 @@ fun Solver.declarePositiveMappingConstraints(
                 stateAlgorithmTop = stateAlgorithmTop,
                 stateAlgorithmBot = stateAlgorithmBot,
                 actualTransitionFunction = actualTransitionFunction,
-                // transitionFunction = transitionFunction,
-                // outputEventFunction = outputEventFunction,
-                // algorithmFunctionTop = algorithmFunctionTop,
-                // algorithmFunctionBot = algorithmFunctionBot,
                 mapping = mapping
             )
         }
@@ -46,8 +42,6 @@ fun Solver.declarePositiveMappingConstraints(
                 tree = scenarioTree,
                 C = C,
                 actualTransitionFunction = actualTransitionFunction,
-                // transitionFunction = transitionFunction,
-                // outputEventFunction = outputEventFunction,
                 mapping = mapping
             )
         }
@@ -101,10 +95,6 @@ fun Solver.declareNegativeMappingConstraints(
                 stateAlgorithmTop = stateAlgorithmTop,
                 stateAlgorithmBot = stateAlgorithmBot,
                 actualTransitionFunction = negActualTransitionFunction,
-                // transitionFunction = negTransitionFunction,
-                // outputEventFunction = negOutputEventFunction,
-                // algorithmFunctionTop = negAlgorithmFunctionTop,
-                // algorithmFunctionBot = negAlgorithmFunctionBot,
                 mapping = negMapping
             )
         }
@@ -117,8 +107,6 @@ fun Solver.declareNegativeMappingConstraints(
                 tree = negativeScenarioTree,
                 C = C,
                 actualTransitionFunction = negActualTransitionFunction,
-                // transitionFunction = negTransitionFunction,
-                // outputEventFunction = negOutputEventFunction,
                 mapping = negMapping
             )
         }
