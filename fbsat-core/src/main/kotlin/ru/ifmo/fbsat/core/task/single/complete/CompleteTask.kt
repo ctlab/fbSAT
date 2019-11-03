@@ -98,27 +98,27 @@ class CompleteTask(
                 val newOnlyNegUs = newOnlyNegUIs.map(::getNegU)
 
                 /* Variables */
-                negTransitionFiring = newArray(C, K, U) { (c, k, u) ->
+                negTransitionFiring = newArray(C, K, negU) { (c, k, u) ->
                     inputChoice(u,
                         { negTransitionFiring[c, k, it] },
                         { transitionFiring[c, k, it] })
                 }
-                negFirstFired = newArray(C, U, K + 1, one = true) { (c, u, k) ->
+                negFirstFired = newArray(C, negU, K + 1, one = true) { (c, u, k) ->
                     inputChoice(u,
                         { negFirstFired[c, it, k] },
                         { firstFired[c, it, k] })
                 }
-                negNotFired = newArray(C, K, U) { (c, k, u) ->
+                negNotFired = newArray(C, K, negU) { (c, k, u) ->
                     inputChoice(u,
                         { negNotFired[c, k, it] },
                         { notFired[c, k, it] })
                 }
-                negActualTransitionFunction = newArray(C, E, U, C + 1, one = true) { (c, e, u, c2) ->
+                negActualTransitionFunction = newArray(C, E, negU, C + 1, one = true) { (c, e, u, c2) ->
                     inputChoice(u,
                         { negActualTransitionFunction[c, e, it, c2] },
                         { actualTransitionFunction[c, e, it, c2] })
                 }
-                negNodeValue = newArray(C, K, P, U) { (c, k, p, u) ->
+                negNodeValue = newArray(C, K, P, negU) { (c, k, p, u) ->
                     if (p == 1) inputChoice(u,
                         { negNodeValue[c, k, p, it] },
                         { nodeValue[c, k, p, it] })
