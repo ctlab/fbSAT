@@ -84,7 +84,7 @@ fun Solver.declareGuardConditionsConstraintsInputless(
     comment("None-typed nodes have largest indices")
     // (nodeType[p] = NONE) => (nodeType[p+1] = NONE)
     for (c in 1..C)
-        for (k in 1..C)
+        for (k in 1..K)
             for (p in 1 until P)
                 imply(
                     nodeType[c, k, p, NodeType.NONE.value],
