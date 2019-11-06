@@ -119,10 +119,10 @@ class CompleteTask(
                         { actualTransitionFunction[c, e, it, c2] })
                 }
                 negNodeValue = newArray(C, K, P, negU) { (c, k, p, u) ->
-                    if (p == 1) inputChoice(u,
+                    if (p == 1) negTransitionFiring[c, k, u]
+                    else inputChoice(u,
                         { negNodeValue[c, k, p, it] },
                         { nodeValue[c, k, p, it] })
-                    else newVariable()
                 }
                 negMapping = newArray(negV, C + 1, one = true) { (v, c) ->
                     if (v in newNegVs) newVariable()
