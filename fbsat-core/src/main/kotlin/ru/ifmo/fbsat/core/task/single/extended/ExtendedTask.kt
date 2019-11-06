@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.task.single.extended
 
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.NodeType
+import ru.ifmo.fbsat.core.constraints.declareGuardsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveGuardConditionsConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
@@ -75,6 +76,7 @@ class ExtendedTask(
 
             /* Constraints */
             declarePositiveGuardConditionsConstraints(vars)
+            if (Globals.IS_BFS_GUARD) declareGuardsBfsConstraints(vars)
             declareAdhocConstraints()
         }
 
