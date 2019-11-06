@@ -58,6 +58,33 @@ fun Solver.implyIff(x1: Int, x2: Int, x3: Int) {
 }
 
 /**
+ * [x1] => ([x2] => AND([xs])
+ */
+fun Solver.implyImplyAnd(x1: Int, x2: Int, xs: Iterable<Int>) {
+    for (x in xs)
+        clause(-x1, -x2, x)
+}
+
+/**
+ * [x1] => ([x2] => OR([xs])
+ */
+fun Solver.implyImplyOr(x1: Int, x2: Int, xs: Iterable<Int>) {
+    clause {
+        yield(-x1)
+        yield(-x2)
+        for (x in xs)
+            yield(x)
+    }
+}
+
+/**
+ * [x1] => ([x2] => ([x3] => [x4]))
+ */
+fun Solver.implyImplyImply(x1: Int, x2: Int, x3: Int, x4: Int) {
+    clause(-x1, -x2, -x3, x4)
+}
+
+/**
  * [x1] => ([x2] => ([x3] <=> [x4]))
  */
 fun Solver.implyImplyIff(x1: Int, x2: Int, x3: Int, x4: Int) {

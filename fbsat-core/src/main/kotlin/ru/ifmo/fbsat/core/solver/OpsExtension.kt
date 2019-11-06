@@ -1,3 +1,5 @@
+@file:Suppress("PublicApiImplicitType")
+
 package ru.ifmo.fbsat.core.solver
 
 fun Solver.atLeastOne(literals: Sequence<Int>) {
@@ -43,6 +45,26 @@ fun Solver.implyOr(lhs: Int, rhs: Sequence<Int>) = implyOr(lhs, rhs.toList())
  * [lhs] => OR([rhs])
  */
 fun Solver.implyOr(lhs: Int, vararg rhs: Int) = implyOr(lhs, rhs.asIterable())
+
+/**
+ * [x1] => (x2 => AND([rhs])
+ */
+fun Solver.implyImplyAnd(x1: Int, x2: Int, rhs: Sequence<Int>) = implyImplyAnd(x1, x2, rhs.toList())
+
+/**
+ * [x1] => (x2 => AND([rhs])
+ */
+fun Solver.implyImplyAnd(x1: Int, x2: Int, vararg rhs: Int) = implyImplyAnd(x1, x2, rhs.asIterable())
+
+/**
+ * [x1] => (x2 => OR([rhs])
+ */
+fun Solver.implyImplyOr(x1: Int, x2: Int, rhs: Sequence<Int>) = implyImplyOr(x1, x2, rhs.toList())
+
+/**
+ * [x1] => (x2 => OR([rhs])
+ */
+fun Solver.implyImplyOr(x1: Int, x2: Int, vararg rhs: Int) = implyImplyOr(x1, x2, rhs.asIterable())
 
 /**
  * [x1] => ([x2] => ([x3] <=> AND([xs]))
