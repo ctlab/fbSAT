@@ -107,8 +107,9 @@ class NegativeScenarioTree(
                     """<TR><TD align="left">$name</TD><TD>$newValue</TD></TR>"""
             }
 
+            val label = """$idStr ${element.outputEvent?.name ?: "ε"} @${element.ceState}"""
             val tableBody = """
-                <TR><TD align="center" colspan="2">$idStr ${element.outputEvent ?: "ε"} @${element.ceState}</TD></TR>
+                <TR><TD align="center" colspan="2">$label</TD></TR>
                 <HR/>
                 %s
             """.trimIndent().format(vs)
@@ -129,7 +130,7 @@ class NegativeScenarioTree(
                     .joinToString("") { (name, value) ->
                         """${if (!value) "~" else ""}$name\l"""
                     }
-                """${parent.id} -> $id [label="$label"]"""
+                """${parent.id} -> $id [label="${element.inputEvent?.name ?: "ε"}\l$label"]"""
             } else {
                 val label = "init"
                 """start -> $id [label="$label"]"""
