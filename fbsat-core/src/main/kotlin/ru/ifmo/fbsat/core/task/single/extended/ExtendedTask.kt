@@ -14,7 +14,7 @@ import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.utils.Globals
 import java.io.File
 
-@Suppress("MemberVisibilityCanBePrivate", "LocalVariableName", "UnnecessaryVariable")
+@Suppress("LocalVariableName")
 class ExtendedTask(
     scenarioTree: ScenarioTree,
     numberOfStates: Int, // C

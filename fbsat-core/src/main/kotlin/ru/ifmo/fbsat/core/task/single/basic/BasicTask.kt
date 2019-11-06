@@ -14,7 +14,7 @@ import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.secondsSince
 import java.io.File
 
-@Suppress("MemberVisibilityCanBePrivate", "LocalVariableName")
+@Suppress("LocalVariableName")
 class BasicTask(
     scenarioTree: ScenarioTree,
     numberOfStates: Int, // C

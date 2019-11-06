@@ -14,7 +14,7 @@ import ru.ifmo.fbsat.core.task.single.extended.ExtendedTask
 import ru.ifmo.fbsat.core.task.single.extended.toAutomaton
 import java.io.File
 
-@Suppress("MemberVisibilityCanBePrivate", "LocalVariableName")
+@Suppress("LocalVariableName")
 class CompleteTask(
     scenarioTree: ScenarioTree,
     negativeScenarioTree: NegativeScenarioTree? = null, // empty if null
