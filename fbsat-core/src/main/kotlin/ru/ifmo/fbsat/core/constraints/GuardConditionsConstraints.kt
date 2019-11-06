@@ -35,7 +35,6 @@ fun Solver.declarePositiveGuardConditionsConstraints(extendedVars: ExtendedVaria
                 u = u,
                 tree = scenarioTree,
                 C = C, K = K, P = P, X = X,
-                transitionFiring = transitionFiring,
                 nodeType = nodeType,
                 nodeInputVariable = nodeInputVariable,
                 nodeChild = nodeChild,
@@ -60,7 +59,6 @@ fun Solver.declareNegativeGuardConditionsConstraints(
                 u = u,
                 tree = negativeScenarioTree,
                 C = C, K = K, P = P, X = X,
-                transitionFiring = negTransitionFiring,
                 nodeType = nodeType,
                 nodeInputVariable = nodeInputVariable,
                 nodeChild = nodeChild,
@@ -251,21 +249,11 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
     K: Int,
     P: Int,
     X: Int,
-    transitionFiring: IntMultiArray,
     nodeType: IntMultiArray,
     nodeInputVariable: IntMultiArray,
     nodeChild: IntMultiArray,
     nodeValue: IntMultiArray
 ) {
-    comment("Shortcut for root value")
-    // nodeValue[c,k,1,u] <=> transitionFiring[c,k,u]
-    for (c in 1..C)
-        for (k in 1..K)
-            iff(
-                nodeValue[c, k, 1, u],
-                transitionFiring[c, k, u]
-            )
-
     comment("Terminal nodes have value from associated input variables")
     // (nodeInputVariable[p] = x) => AND_{u}( nodeValue[p,u] <=> u[x] )
     for (c in 1..C)
