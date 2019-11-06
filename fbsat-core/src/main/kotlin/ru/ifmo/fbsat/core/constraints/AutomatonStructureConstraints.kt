@@ -86,7 +86,7 @@ fun Solver.declareAutomatonStructureConstraintsInputless(
         EpsilonOutputEvents.ONLYSTART -> {
             comment("Only start state produces epsilon event")
             clause(stateOutputEvent[1, O + 1])
-            for (c in 1..C)
+            for (c in 2..C)
                 clause(-stateOutputEvent[c, O + 1])
         }
         EpsilonOutputEvents.NONE -> {
