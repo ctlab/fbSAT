@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.utils
 
+import com.github.lipen.multiarray.IntMultiArray
 import com.soywiz.klock.DateTime
 import okio.BufferedSource
 import okio.Source
@@ -9,6 +10,7 @@ import okio.sink
 import okio.source
 import ru.ifmo.fbsat.core.automaton.InputEvent
 import ru.ifmo.fbsat.core.automaton.OutputEvent
+import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
 import java.io.File
 import kotlin.random.Random
 
@@ -159,3 +161,23 @@ fun <T> Iterable<T>.pairsWithReplacement(): Sequence<Pair<T, T>> = sequence {
 }
 
 fun boolToSign(b: Boolean): Int = if (b) 1 else -1
+
+fun algorithmChoice(
+    tree: ScenarioTreeInterface,
+    v: Int,
+    c: Int,
+    z: Int,
+    algorithmTop: IntMultiArray,
+    algorithmBot: IntMultiArray
+): Int {
+    val p = tree.parent(v)
+    val oldValue = tree.outputValue(p, z)
+    val newValue = tree.outputValue(v, z)
+    return when (val values = oldValue to newValue) {
+        true to true -> algorithmTop[c, z]
+        true to false -> -algorithmTop[c, z]
+        false to true -> algorithmBot[c, z]
+        false to false -> -algorithmBot[c, z]
+        else -> error("Weird combination of values: $values")
+    }
+}
