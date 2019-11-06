@@ -11,29 +11,29 @@ fun Solver.declareGuardsBfsConstraints(extendedVars: ExtendedVariables) {
     with(extendedVars) {
         for (c in 1..C)
             for (k in 1..K) {
-                val bfsTransitionGuard = newArray(C, C) { (i, j) ->
+                val bfsTransitionGuard = newArray(P, P) { (i, j) ->
                     if (j > i) nodeParent[c, k, j, i] else falseVariable
                 }
-                val bfsParentGuard = newArray(C, C) { (j, i) ->
+                val bfsParentGuard = newArray(P, P) { (j, i) ->
                     if (i < j) newVariable() else falseVariable
                 }
 
-                comment("66.2. F_p")
+                comment("F_p")
                 // p[j, i] <=> t[i, j] & AND_{n<i}( ~t[n, j] )
                 for (i in 1..P)
                     for (j in (i + 1)..P)
-                        iffAnd(bfsParentGuard[c, k, j, i], sequence {
-                            yield(bfsTransitionGuard[c, k, i, j])
+                        iffAnd(bfsParentGuard[j, i], sequence {
+                            yield(bfsTransitionGuard[i, j])
                             for (n in 1 until i)
-                                yield(-bfsTransitionGuard[c, k, n, j])
+                                yield(-bfsTransitionGuard[n, j])
                         })
 
-                comment("66.4. F_BFS(p)")
+                comment("F_BFS(p)")
                 // p[j, i] => ~p[j+1, n] :: LB<=n<i<j<UB
                 for (n in 1..P)
                     for (i in (n + 1)..P)
                         for (j in (i + 1) until P)
-                            imply(bfsParentGuard[c, k, j, i], -bfsParentGuard[c, k, j + 1, n])
+                            imply(bfsParentGuard[j, i], -bfsParentGuard[j + 1, n])
             }
     }
 }
