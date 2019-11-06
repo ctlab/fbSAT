@@ -70,7 +70,7 @@ fun Solver.declareNegativeGuardConditionsConstraints(
     }
 }
 
-fun Solver.declareGuardConditionsConstraintsInputless(
+private fun Solver.declareGuardConditionsConstraintsInputless(
     C: Int,
     K: Int,
     P: Int,
@@ -244,7 +244,7 @@ fun Solver.declareGuardConditionsConstraintsInputless(
                 )
 }
 
-fun Solver.declareGuardConditionsConstraintsForInput(
+private fun Solver.declareGuardConditionsConstraintsForInput(
     u: Int,
     tree: ScenarioTreeInterface,
     C: Int,

@@ -66,7 +66,7 @@ fun Solver.declareNegativeAutomatonStructureConstraints(
     }
 }
 
-fun Solver.declareAutomatonStructureConstraintsInputless(
+private fun Solver.declareAutomatonStructureConstraintsInputless(
     C: Int,
     K: Int,
     E: Int,
@@ -140,7 +140,7 @@ fun Solver.declareAutomatonStructureConstraintsInputless(
             )
 }
 
-fun Solver.declareAutomatonStructureConstraintsForInput(
+private fun Solver.declareAutomatonStructureConstraintsForInput(
     u: Int,
     C: Int,
     K: Int,

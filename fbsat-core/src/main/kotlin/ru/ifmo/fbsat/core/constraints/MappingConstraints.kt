@@ -153,14 +153,14 @@ fun Solver.declareNegativeMappingConstraints(
     }
 }
 
-fun Solver.declareMappingConstraintsForRoot(
+private fun Solver.declareMappingConstraintsForRoot(
     mapping: IntMultiArray
 ) {
     comment("Root maps to the initial state")
     clause(mapping[1, 1])
 }
 
-fun Solver.declareMappingConstraintsForActiveNode(
+private fun Solver.declareMappingConstraintsForActiveNode(
     v: Int,
     tree: ScenarioTreeInterface,
     C: Int,
@@ -199,7 +199,7 @@ fun Solver.declareMappingConstraintsForActiveNode(
             )
 }
 
-fun Solver.declareMappingConstraintsForPassiveNode(
+private fun Solver.declareMappingConstraintsForPassiveNode(
     v: Int,
     tree: ScenarioTreeInterface,
     C: Int,
