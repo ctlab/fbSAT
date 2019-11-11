@@ -87,7 +87,7 @@ class CompleteCegisTask(
             val treeSize = negativeScenarioTree.size
             negativeScenarios.forEach(negativeScenarioTree::addNegativeScenario)
             val treeSizeDiff = negativeScenarioTree.size - treeSize
-            // Note: it is suffice to check just `negSc == lastNegSc`, but it may be costy,
+            // Note: it is suffice to check just `negSc == lastNegSc`, but it may be costly,
             // so check it only in a specific case - when negative tree does not change its size
             if (treeSizeDiff == 0 && negativeScenarios == lastNegativeScenarios)
                 error("Stale")
