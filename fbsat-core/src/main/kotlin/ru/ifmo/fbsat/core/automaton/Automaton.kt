@@ -294,9 +294,12 @@ class Automaton(
             @Suppress("LiftReturnOrAssignment")
             if (last.destination == loop.destination) {
                 log.error("Negative scenario is satisfied (last==loop)")
-                // println("[!] Negative scenario${index?.let { " ($index)" } ?: ""} is satisfied (last==loop)")
-                // println(">>> satisfyingStates = ${results.map { it?.id ?: 0 }} (size = ${results.size})")
-                // println(">>> something = ${negativeScenario.elements.map { it.nodeId }}")
+                // println(">>> satisfyingStates = ${results.map {
+                //     it.destination.id.toString().padStart(2)
+                // }} (size = ${results.size})")
+                // println(">>>        something = ${negativeScenario.elements.map {
+                //     it.nodeId.toString().padStart(2)
+                // }}")
                 // println(">>> loopPosition = ${negativeScenario.loopPosition}")
                 // println(">>> loop = $loop")
                 // println(">>> last = $last")
