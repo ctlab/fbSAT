@@ -142,11 +142,13 @@ class ScenarioTree(
                             "ScenarioTree is not deterministic!"
                         }
                         current = child
+                        element.nodeId = current.id
                         continue@meow
                     }
                 }
             }
             current = Node(element, current)
+            element.nodeId = current.id
             isAnyoneCreated = true
         }
 
