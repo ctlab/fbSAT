@@ -92,7 +92,13 @@ class BasicTask(
     }
 
     private fun Solver.declareAdhocConstraints() {
-        // TODO: basic adhoc constraints
+        comment("ADHOC constraints")
+        with(vars) {
+            comment("Ad-hoc: no transition to the first state")
+            for (c in 1..C)
+                for (k in 1..K)
+                    clause(-transitionDestination[c, k, 1])
+        }
     }
 
     fun updateCardinality(newMaxTransitions: Int?) {
