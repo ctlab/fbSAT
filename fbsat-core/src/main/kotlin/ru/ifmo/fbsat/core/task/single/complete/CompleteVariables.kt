@@ -40,11 +40,11 @@ class CompleteVariables(
     val nodeValue: IntMultiArray
 ) {
     /* Computable constants */
-    val V = scenarioTree.size
-    val E = scenarioTree.inputEvents.size
-    val O = scenarioTree.outputEvents.size
-    val X = scenarioTree.inputNames.size
-    val Z = scenarioTree.outputNames.size
+    val V: Int = scenarioTree.size
+    val E: Int = scenarioTree.inputEvents.size
+    val O: Int = scenarioTree.outputEvents.size
+    val X: Int = scenarioTree.inputNames.size
+    val Z: Int = scenarioTree.outputNames.size
     val posUIs: List<InputValues> = scenarioTree.uniqueInputs
     val U: Int = posUIs.size
 
