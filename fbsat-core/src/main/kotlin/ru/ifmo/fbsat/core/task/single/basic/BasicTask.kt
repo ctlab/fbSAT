@@ -10,6 +10,7 @@ import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareComparatorLessThanOrEqual
 import ru.ifmo.fbsat.core.solver.declareTotalizer
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.checkMapping
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.secondsSince
 import java.io.File
@@ -28,27 +29,20 @@ class BasicTask(
     val vars: BasicVariables
 
     init {
-        val timeStart = DateTime.now()
+        val timeStart = DateTime.nowLocal()
+        val nvarStart = solver.numberOfVariables
+        val nconStart = solver.numberOfClauses
 
         with(solver) {
             /* Constants */
+            @Suppress("UnnecessaryVariable")
             val C = numberOfStates
             val K = maxOutgoingTransitions ?: C
             val V = scenarioTree.size
             val E = scenarioTree.inputEvents.size
             val O = scenarioTree.outputEvents.size
-            val X = scenarioTree.inputNames.size
             val Z = scenarioTree.outputNames.size
             val U = scenarioTree.uniqueInputs.size
-
-            println("C = $C")
-            println("K = $K")
-            println("V = $V")
-            println("E = $E")
-            println("O = $O")
-            println("X = $X")
-            println("Z = $Z")
-            println("U = $U")
 
             /* Core variables */
             val transitionDestination = newArray(C, K, C + 1, one = true)
@@ -89,7 +83,12 @@ class BasicTask(
 
         updateCardinality(maxTransitions)
 
-        log.info("Done declaring variables and constraints in %.2f s".format(secondsSince(timeStart)))
+        val nvarDiff = solver.numberOfVariables - nvarStart
+        val nconDiff = solver.numberOfClauses - nconStart
+        log.info(
+            "BasicTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s"
+                .format(secondsSince(timeStart))
+        )
     }
 
     private fun Solver.declareAdhocConstraints() {
@@ -122,9 +121,22 @@ class BasicTask(
     fun infer(): Automaton? {
         val rawAssignment = solver.solve()?.data
         if (autoFinalize) finalize2()
-        return rawAssignment?.let { raw ->
-            BasicAssignment.fromRaw(raw, vars).toAutomaton()
+        if (rawAssignment == null) return null
+
+        val assignment = BasicAssignment.fromRaw(rawAssignment, vars)
+        val automaton = assignment.toAutomaton()
+
+        with(vars) {
+            check(
+                checkMapping(
+                    automaton = automaton,
+                    scenarios = scenarioTree.scenarios,
+                    mapping = assignment.mapping
+                )
+            ) { "Positive mapping mismatch" }
         }
+
+        return automaton
     }
 
     fun finalize2() {

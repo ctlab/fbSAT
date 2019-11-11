@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.task.single.complete
 
+import com.soywiz.klock.DateTime
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.constraints.declareNegativeAutomatonStructureConstraints
@@ -12,6 +13,10 @@ import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedAssignment
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedTask
 import ru.ifmo.fbsat.core.task.single.extended.toAutomaton
+import ru.ifmo.fbsat.core.utils.TheAssignment
+import ru.ifmo.fbsat.core.utils.checkMapping
+import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.secondsSince
 import java.io.File
 
 @Suppress("LocalVariableName")
@@ -41,7 +46,11 @@ class CompleteTask(
     )
 
     init {
-        vars = CompleteVariables.fromExtended(
+        val timeStart = DateTime.nowLocal()
+        val nvarStart = solver.numberOfVariables
+        val nconStart = solver.numberOfClauses
+
+        vars = CompleteVariables(
             extVars = extendedTask.vars,
             negativeScenarioTree = negativeScenarioTree ?: NegativeScenarioTree(
                 inputEvents = scenarioTree.inputEvents,
@@ -53,6 +62,13 @@ class CompleteTask(
 
         updateCardinality(maxTotalGuardsSize)
         updateNegativeReduction()
+
+        val nvarDiff = solver.numberOfVariables - nvarStart
+        val nconDiff = solver.numberOfClauses - nconStart
+        log.info(
+            "CompleteTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s"
+                .format(secondsSince(timeStart))
+        )
     }
 
     fun addNegativeScenario(negativeScenario: NegativeScenario) {
@@ -146,9 +162,28 @@ class CompleteTask(
     fun infer(): Automaton? {
         val rawAssignment = solver.solve()?.data
         if (autoFinalize) finalize2()
-        return rawAssignment?.let { raw ->
-            ExtendedAssignment.fromRaw(raw, extendedTask.vars).toAutomaton()
+        if (rawAssignment == null) return null
+
+        val assignment = ExtendedAssignment.fromRaw(rawAssignment, extendedTask.vars)
+        val automaton = assignment.toAutomaton()
+
+        with(vars) {
+            check(
+                checkMapping(
+                    automaton = automaton,
+                    scenarios = scenarioTree.scenarios,
+                    mapping = assignment.mapping
+                )
+            ) { "Positive mapping mismatch" }
+            check(checkMapping(automaton = automaton,
+                scenarios = negativeScenarioTree.negativeScenarios,
+                mapping = with(object : TheAssignment {}) {
+                    rawAssignment.convertIntArray(negMapping, negV, domain = 1..C) { 0 }
+                }
+            )) { "Negative mapping mismatch" }
         }
+
+        return automaton
     }
 
     fun finalize2() {

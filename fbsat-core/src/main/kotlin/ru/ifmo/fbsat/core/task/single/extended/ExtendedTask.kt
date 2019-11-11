@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.task.single.extended
 
+import com.soywiz.klock.DateTime
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.constraints.declareGuardsBfsConstraints
@@ -13,6 +14,9 @@ import ru.ifmo.fbsat.core.solver.implyAnd
 import ru.ifmo.fbsat.core.solver.implyImply
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.checkMapping
+import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.secondsSince
 import java.io.File
 
 @Suppress("LocalVariableName")
@@ -42,19 +46,24 @@ class ExtendedTask(
     val vars: ExtendedVariables
 
     init {
+        val timeStart = DateTime.nowLocal()
+        val nvarStart = solver.numberOfVariables
+        val nconStart = solver.numberOfClauses
+
         with(solver) {
             with(basicTask.vars) {
                 /* Constants */
+                @Suppress("UnnecessaryVariable")
                 val P = maxGuardSize
 
                 /* Guard conditions variables */
                 val nodeType = newArray(C, K, P, NodeType.values().size, one = true)
                 val nodeInputVariable = newArray(C, K, P, X + 1, one = true)
-                val nodeParent = newArray(C, K, P, P + 1, one = true) { (c, k, p, par) ->
+                val nodeParent = newArray(C, K, P, P + 1, one = true) { (_, _, p, par) ->
                     if (par < p || par == P + 1) newVariable()
                     else falseVariable
                 }
-                val nodeChild = newArray(C, K, P, P + 1, one = true) { (c, k, p, ch) ->
+                val nodeChild = newArray(C, K, P, P + 1, one = true) { (_, _, p, ch) ->
                     if (ch > p || ch == P + 1) newVariable()
                     else falseVariable
                 }
@@ -81,6 +90,13 @@ class ExtendedTask(
         }
 
         updateCardinality(maxTotalGuardsSize)
+
+        val nvarDiff = solver.numberOfVariables - nvarStart
+        val nconDiff = solver.numberOfClauses - nconStart
+        log.info(
+            "ExtendedTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s"
+                .format(secondsSince(timeStart))
+        )
     }
 
     private fun Solver.declareAdhocConstraints() {
@@ -174,9 +190,22 @@ class ExtendedTask(
     fun infer(): Automaton? {
         val rawAssignment = solver.solve()?.data
         if (autoFinalize) finalize2()
-        return rawAssignment?.let { raw ->
-            ExtendedAssignment.fromRaw(raw, vars).toAutomaton()
+        if (rawAssignment == null) return null
+
+        val assignment = ExtendedAssignment.fromRaw(rawAssignment, vars)
+        val automaton = assignment.toAutomaton()
+
+        with(vars) {
+            check(
+                checkMapping(
+                    automaton = automaton,
+                    scenarios = scenarioTree.scenarios,
+                    mapping = assignment.mapping
+                )
+            ) { "Positive mapping mismatch" }
         }
+
+        return automaton
     }
 
     fun finalize2() {
