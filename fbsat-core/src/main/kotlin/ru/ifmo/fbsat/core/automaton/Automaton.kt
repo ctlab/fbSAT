@@ -7,12 +7,14 @@ import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
+import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.utils.graph
 import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.random
 import java.io.File
 
@@ -230,6 +232,21 @@ class Automaton(
                 currentValues = it.outputAction.values
             }
         }
+    }
+
+    fun getMapping(scenario: Scenario): List<State?> {
+        val mapping: MutableList<State?> = mutableListOfNulls(scenario.elements.size)
+        val results = eval(scenario.elements.map { it.inputAction })
+        for (i in results.indices) {
+            val result = results[i]
+            val element = scenario.elements[i]
+            if (element.outputAction == result.outputAction) {
+                mapping[i] = result.destination
+            } else {
+                break
+            }
+        }
+        return mapping
     }
 
     /**
