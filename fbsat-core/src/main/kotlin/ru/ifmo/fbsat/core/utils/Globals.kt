@@ -7,7 +7,7 @@ enum class SolverBackend {
 }
 
 enum class EpsilonOutputEvents {
-    START, ONLYSTART, NONE
+    START, ONLYSTART, NONE;
 }
 
 enum class StartStateAlgorithms {
