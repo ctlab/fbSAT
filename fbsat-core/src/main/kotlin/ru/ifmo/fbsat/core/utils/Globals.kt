@@ -2,6 +2,10 @@ package ru.ifmo.fbsat.core.utils
 
 import kotlin.properties.Delegates
 
+enum class SolverBackend {
+    DEFAULT, INCREMENTAL;
+}
+
 enum class EpsilonOutputEvents {
     START, ONLYSTART, NONE
 }

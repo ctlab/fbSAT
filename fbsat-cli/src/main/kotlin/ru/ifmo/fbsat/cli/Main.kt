@@ -8,6 +8,7 @@ import com.github.ajalt.clikt.parameters.options.defaultLazy
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
+import com.github.ajalt.clikt.parameters.options.switch
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
@@ -26,6 +27,7 @@ import ru.ifmo.fbsat.core.task.single.extended.ExtendedMinUBTask
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedTask
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.SolverBackend
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
 import ru.ifmo.fbsat.core.utils.log
@@ -147,12 +149,13 @@ class FbSAT : CliktCommand() {
         "incremental-cryptominisat"
     )
 
-    val isIncrementalSolver: Boolean by option(
-        "--incremental",
-        help = "Use IncrementalSolver backend"
-    ).flag(
-        "--no-incremental",
-        default = true
+    val solverBackend: SolverBackend by option(
+        help = "Solver backend (default: IncrementalSolver)"
+    ).switch(
+        "--incremental" to SolverBackend.INCREMENTAL,
+        "--no-incremental" to SolverBackend.DEFAULT
+    ).default(
+        SolverBackend.INCREMENTAL
     )
 
     val isForbidOr: Boolean by option(
@@ -360,10 +363,13 @@ class FbSAT : CliktCommand() {
         }
         // ===
 
-        val solverProvider: () -> Solver = if (isIncrementalSolver) {
-            { Solver.incremental(solverCmd) }
-        } else {
-            { Solver.default(solverCmd) }
+        val solverProvider: () -> Solver = when (solverBackend) {
+            SolverBackend.DEFAULT -> {
+                { Solver.default(solverCmd) }
+            }
+            SolverBackend.INCREMENTAL -> {
+                { Solver.incremental(solverCmd) }
+            }
         }
 
         // TODO: warn about ignored specified parameters
