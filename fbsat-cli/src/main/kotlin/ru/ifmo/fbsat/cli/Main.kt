@@ -217,7 +217,7 @@ class FbSAT : CliktCommand() {
         "onlystart" to EpsilonOutputEvents.ONLYSTART,
         "none" to EpsilonOutputEvents.NONE
     ).default(
-        EpsilonOutputEvents.START
+        EpsilonOutputEvents.ONLYSTART
     )
 
     val startStateAlgorithms: StartStateAlgorithms by option(
@@ -229,7 +229,7 @@ class FbSAT : CliktCommand() {
         "zeronothing" to StartStateAlgorithms.ZERONOTHING,
         "any" to StartStateAlgorithms.ANY
     ).default(
-        StartStateAlgorithms.ZERONOTHING
+        StartStateAlgorithms.ZERO
     )
 
     val isEncodeReverseImplication: Boolean by option(
