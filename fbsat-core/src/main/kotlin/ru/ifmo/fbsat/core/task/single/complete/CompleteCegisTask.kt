@@ -4,7 +4,6 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.Counterexample
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
-import ru.ifmo.fbsat.core.scenario.negative.toNegativeScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.utils.copyFile
@@ -76,7 +75,8 @@ class CompleteCegisTask(
             }
             // Convert counterexamples to negative scenarios
             val negativeScenarios = counterexamples.map {
-                it.toNegativeScenario(
+                NegativeScenario.fromCounterexample(
+                    it,
                     scenarioTree.inputEvents,
                     scenarioTree.outputEvents,
                     scenarioTree.inputNames,

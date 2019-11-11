@@ -43,6 +43,37 @@ data class NegativeScenario(
     }
 
     companion object {
+        fun fromCounterexample(
+            counterexample: Counterexample,
+            inputEvents: List<InputEvent>,
+            outputEvents: List<OutputEvent>,
+            inputNames: List<String>,
+            outputNames: List<String>
+        ): NegativeScenario {
+            require(inputEvents.isNotEmpty())
+            require(outputEvents.isNotEmpty())
+            require(inputNames.isNotEmpty())
+            require(outputNames.isNotEmpty())
+
+            val elements = counterexample.states.zipWithNext { first, second ->
+                ScenarioElement(
+                    InputAction(
+                        InputEvent.of(first.getFirstTrue(inputEvents.map { it.name })),
+                        InputValues(first.getBooleanValues(inputNames))
+                    ),
+                    OutputAction(
+                        OutputEvent.of(second.getFirstTrue(outputEvents.map { it.name })),
+                        OutputValues(second.getBooleanValues(outputNames))
+                    )
+                ).apply {
+                    ceState = second.variables["_state"]
+                }
+            }
+
+            // Note: subtract 1. Just because.
+            return NegativeScenario(elements, counterexample.loopPosition!! - 1)
+        }
+
         fun fromFile(
             file: File,
             inputEvents: List<InputEvent>,
@@ -51,37 +82,7 @@ data class NegativeScenario(
             outputNames: List<String>
         ): List<NegativeScenario> =
             Counterexample.fromFile(file).map {
-                it.toNegativeScenario(inputEvents, outputEvents, inputNames, outputNames)
+                fromCounterexample(it, inputEvents, outputEvents, inputNames, outputNames)
             }
     }
-}
-
-fun Counterexample.toNegativeScenario(
-    inputEvents: List<InputEvent>,
-    outputEvents: List<OutputEvent>,
-    inputNames: List<String>,
-    outputNames: List<String>
-): NegativeScenario {
-    require(inputEvents.isNotEmpty())
-    require(outputEvents.isNotEmpty())
-    require(inputNames.isNotEmpty())
-    require(outputNames.isNotEmpty())
-
-    val elements = states.zipWithNext { first, second ->
-        ScenarioElement(
-            InputAction(
-                InputEvent.of(first.getFirstTrue(inputEvents.map { it.name })),
-                InputValues(first.getBooleanValues(inputNames))
-            ),
-            OutputAction(
-                OutputEvent.of(second.getFirstTrue(outputEvents.map { it.name })),
-                OutputValues(second.getBooleanValues(outputNames))
-            )
-        ).apply {
-            ceState = second.variables["_state"]
-        }
-    }
-
-    // Note: subtract 1. Just because.
-    return NegativeScenario(elements, loopPosition!! - 1)
 }
