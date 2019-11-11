@@ -322,7 +322,10 @@ class FbSAT : CliktCommand() {
                 tree.outputEvents,
                 tree.inputNames,
                 tree.outputNames
-            )
+            ).also { negTree ->
+                println("[*] Negative scenarios: ${negTree.negativeScenarios.size}")
+                println("[*] Negative elements: ${negTree.negativeScenarios.sumBy { it.elements.size }}")
+            }
         }
 
         // ===
