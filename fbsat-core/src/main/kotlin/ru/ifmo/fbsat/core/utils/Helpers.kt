@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.utils
 
 import com.github.lipen.multiarray.IntMultiArray
 import com.soywiz.klock.DateTime
+import com.soywiz.klock.DateTimeTz
 import okio.BufferedSource
 import okio.Source
 import okio.buffer
@@ -117,6 +118,8 @@ inline fun <T> timeIt(block: () -> T): Pair<T, Double> {
 }
 
 fun secondsSince(timeStart: DateTime): Double = (DateTime.now() - timeStart).seconds
+
+fun secondsSince(timeStart: DateTimeTz): Double = (DateTime.nowLocal() - timeStart).seconds
 
 fun File.sourceAutoGzip(): Source =
     if (extension == "gz")
