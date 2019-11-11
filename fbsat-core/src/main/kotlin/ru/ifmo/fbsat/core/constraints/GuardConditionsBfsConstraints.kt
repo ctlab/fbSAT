@@ -20,8 +20,8 @@ fun Solver.declareGuardsBfsConstraints(extendedVars: ExtendedVariables) {
 
                 comment("F_p")
                 // p[j, i] <=> t[i, j] & AND_{n<i}( ~t[n, j] )
-                for (i in 1..P)
-                    for (j in (i + 1)..P)
+                for (j in 1..P)
+                    for (i in 1 until j)
                         iffAnd(bfsParentGuard[j, i], sequence {
                             yield(bfsTransitionGuard[i, j])
                             for (n in 1 until i)
@@ -30,9 +30,9 @@ fun Solver.declareGuardsBfsConstraints(extendedVars: ExtendedVariables) {
 
                 comment("F_BFS(p)")
                 // p[j, i] => ~p[j+1, n] :: LB<=n<i<j<UB
-                for (n in 1..P)
-                    for (i in (n + 1)..P)
-                        for (j in (i + 1) until P)
+                for (j in 1 until P)
+                    for (i in 1 until j)
+                        for (n in 1 until i)
                             imply(bfsParentGuard[j, i], -bfsParentGuard[j + 1, n])
             }
     }
