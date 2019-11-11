@@ -80,31 +80,29 @@ class CompleteVariables(
         internal set
     val forbiddenLoops: MutableSet<Pair<Int, Int>> = mutableSetOf()
 
-    companion object {
-        fun fromExtended(
-            extVars: ExtendedVariables,
-            negativeScenarioTree: NegativeScenarioTree
-        ): CompleteVariables = CompleteVariables(
-            scenarioTree = extVars.scenarioTree,
-            negativeScenarioTree = negativeScenarioTree,
-            C = extVars.C,
-            K = extVars.K,
-            P = extVars.P,
-            transitionDestination = extVars.transitionDestination,
-            transitionInputEvent = extVars.transitionInputEvent,
-            transitionFiring = extVars.transitionFiring,
-            firstFired = extVars.firstFired,
-            notFired = extVars.notFired,
-            stateOutputEvent = extVars.stateOutputEvent,
-            stateAlgorithmTop = extVars.stateAlgorithmTop,
-            stateAlgorithmBot = extVars.stateAlgorithmBot,
-            actualTransitionFunction = extVars.actualTransitionFunction,
-            mapping = extVars.mapping,
-            nodeType = extVars.nodeType,
-            nodeInputVariable = extVars.nodeInputVariable,
-            nodeParent = extVars.nodeParent,
-            nodeChild = extVars.nodeChild,
-            nodeValue = extVars.nodeValue
-        )
-    }
+    constructor(
+        extVars: ExtendedVariables,
+        negativeScenarioTree: NegativeScenarioTree
+    ) : this(
+        scenarioTree = extVars.scenarioTree,
+        negativeScenarioTree = negativeScenarioTree,
+        C = extVars.C,
+        K = extVars.K,
+        P = extVars.P,
+        transitionDestination = extVars.transitionDestination,
+        transitionInputEvent = extVars.transitionInputEvent,
+        transitionFiring = extVars.transitionFiring,
+        firstFired = extVars.firstFired,
+        notFired = extVars.notFired,
+        stateOutputEvent = extVars.stateOutputEvent,
+        stateAlgorithmTop = extVars.stateAlgorithmTop,
+        stateAlgorithmBot = extVars.stateAlgorithmBot,
+        actualTransitionFunction = extVars.actualTransitionFunction,
+        mapping = extVars.mapping,
+        nodeType = extVars.nodeType,
+        nodeInputVariable = extVars.nodeInputVariable,
+        nodeParent = extVars.nodeParent,
+        nodeChild = extVars.nodeChild,
+        nodeValue = extVars.nodeValue
+    )
 }
