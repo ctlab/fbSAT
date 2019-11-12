@@ -28,8 +28,8 @@ tasks.jar {
 
 tasks.shadowJar {
     archiveBaseName.set(rootProject.name)
-    archiveClassifier.set(null as String?)
-    archiveVersion.set(null as String?)
+    archiveClassifier.set("")
+    archiveVersion.set("")
     minimize {
         // exclude(dependency("org.jetbrains.kotlin:kotlin-reflect"))
     }
