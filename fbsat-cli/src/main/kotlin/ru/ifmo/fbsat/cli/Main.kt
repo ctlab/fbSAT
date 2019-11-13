@@ -17,6 +17,8 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicMinTask
+import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicTask
 import ru.ifmo.fbsat.core.task.single.basic.BasicMinTask
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.task.single.complete.CompleteCegisTask
@@ -482,94 +484,94 @@ class FbSAT : CliktCommand() {
                 )
                 task.infer()
             }
-            // Method.ModularBasic -> {
-            //     val task = ParallelModularBasicTask(
-            //         scenarioTree = tree,
-            //         numberOfModules = numberOfModules!!,
-            //         numberOfStates = numberOfStates!!,
-            //         maxOutgoingTransitions = maxOutgoingTransitions,
-            //         maxTransitions = maxTransitions,
-            //         outDir = outDir,
-            //         solver = solverProvider()
-            //     )
-            //     val modularAutomaton = task.infer()
-            //
-            //     if (modularAutomaton == null) {
-            //         log.failure("Modular automaton not found")
-            //     } else {
-            //         log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules:")
-            //         for ((m, automaton) in modularAutomaton.modules.withIndex()) {
-            //             log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
-            //             automaton.pprint()
-            //             automaton.dump(outDir, "the_module-$m")
-            //         }
-            //         log.info("Output variables controlled by modules:")
-            //         for (m in 1..numberOfModules!!) {
-            //             val vars = (1..modularAutomaton.outputNames.size)
-            //                 .filter { z -> modularAutomaton.outputVariableModule[z] == m }
-            //                 .map { z -> modularAutomaton.outputNames[z - 1] }
-            //             log.info("Module #$m: ${vars.joinToString(" ")}")
-            //         }
-            //         modularAutomaton.dumpFbt(
-            //             outDir.resolve("modularAutomaton.fbt"),
-            //             name = "ModularController"
-            //         )
-            //         if (modularAutomaton.verify(tree))
-            //             log.success("Verify: OK")
-            //         else {
-            //             log.failure("Verify: FAILED")
-            //         }
-            //     }
-            //
-            //     log.br()
-            //     log.br("The following messages - lies.")
-            //     log.br()
-            //     null
-            // }
-            // Method.ModularBasicMin -> {
-            //     val task = ParallelModularBasicMinTask(
-            //         scenarioTree = tree,
-            //         numberOfModules = numberOfModules!!,
-            //         numberOfStates = numberOfStates,
-            //         maxOutgoingTransitions = maxOutgoingTransitions,
-            //         initialMaxTransitions = maxTransitions,
-            //         solverProvider = solverProvider,
-            //         outDir = outDir
-            //     )
-            //     val modularAutomaton = task.infer()
-            //
-            //     if (modularAutomaton == null) {
-            //         log.failure("Modular automaton not found")
-            //     } else {
-            //         log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules:")
-            //         for ((m, automaton) in modularAutomaton.modules.withIndex()) {
-            //             log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
-            //             automaton.pprint()
-            //             automaton.dump(outDir, "the_module-$m")
-            //         }
-            //         log.info("Output variables controlled by modules:")
-            //         for (m in 1..numberOfModules!!) {
-            //             val vars = (1..modularAutomaton.outputNames.size)
-            //                 .filter { z -> modularAutomaton.outputVariableModule[z] == m }
-            //                 .map { z -> modularAutomaton.outputNames[z - 1] }
-            //             log.info("Module #$m: ${vars.joinToString(" ")}")
-            //         }
-            //         modularAutomaton.dumpFbt(
-            //             outDir.resolve("modularAutomaton.fbt"),
-            //             name = "ModularController"
-            //         )
-            //         if (modularAutomaton.verify(tree))
-            //             log.success("Verify: OK")
-            //         else {
-            //             log.failure("Verify: FAILED")
-            //         }
-            //     }
-            //
-            //     log.br()
-            //     log.br("The following messages - lies.")
-            //     log.br()
-            //     null
-            // }
+            Method.ModularBasic -> {
+                val task = ParallelModularBasicTask(
+                    scenarioTree = tree,
+                    numberOfModules = numberOfModules!!,
+                    numberOfStates = numberOfStates!!,
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    maxTransitions = maxTransitions,
+                    outDir = outDir,
+                    solver = solverProvider()
+                )
+                val modularAutomaton = task.infer()
+
+                if (modularAutomaton == null) {
+                    log.failure("Modular automaton not found")
+                } else {
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules:")
+                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
+                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                        automaton.pprint()
+                        automaton.dump(outDir, "the_module-$m")
+                    }
+                    log.info("Output variables controlled by modules:")
+                    for (m in 1..numberOfModules!!) {
+                        val vars = (1..modularAutomaton.outputNames.size)
+                            .filter { z -> modularAutomaton.outputVariableModule[z] == m }
+                            .map { z -> modularAutomaton.outputNames[z - 1] }
+                        log.info("Module #$m: ${vars.joinToString(" ")}")
+                    }
+                    modularAutomaton.dumpFbt(
+                        outDir.resolve("modularAutomaton.fbt"),
+                        name = "ModularController"
+                    )
+                    if (modularAutomaton.verify(tree))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                    }
+                }
+
+                log.br()
+                log.br("The following messages - lies.")
+                log.br()
+                null
+            }
+            Method.ModularBasicMin -> {
+                val task = ParallelModularBasicMinTask(
+                    scenarioTree = tree,
+                    numberOfModules = numberOfModules!!,
+                    numberOfStates = numberOfStates,
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    initialMaxTransitions = maxTransitions,
+                    solverProvider = solverProvider,
+                    outDir = outDir
+                )
+                val modularAutomaton = task.infer()
+
+                if (modularAutomaton == null) {
+                    log.failure("Modular automaton not found")
+                } else {
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules:")
+                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
+                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                        automaton.pprint()
+                        automaton.dump(outDir, "the_module-$m")
+                    }
+                    log.info("Output variables controlled by modules:")
+                    for (m in 1..numberOfModules!!) {
+                        val vars = (1..modularAutomaton.outputNames.size)
+                            .filter { z -> modularAutomaton.outputVariableModule[z] == m }
+                            .map { z -> modularAutomaton.outputNames[z - 1] }
+                        log.info("Module #$m: ${vars.joinToString(" ")}")
+                    }
+                    modularAutomaton.dumpFbt(
+                        outDir.resolve("modularAutomaton.fbt"),
+                        name = "ModularController"
+                    )
+                    if (modularAutomaton.verify(tree))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                    }
+                }
+
+                log.br()
+                log.br("The following messages - lies.")
+                log.br()
+                null
+            }
             else -> TODO("method '$method'")
         }
 

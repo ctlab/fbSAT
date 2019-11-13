@@ -6,6 +6,7 @@ import ru.ifmo.fbsat.core.solver.exactlyOne
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
+import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 
 fun Solver.declareAutomatonBfsConstraints(basicVars: BasicVariables) {
@@ -49,5 +50,17 @@ fun Solver.declareAutomatonBfsConstraints(basicVars: BasicVariables) {
             for (i in 2 until j)
                 for (k in 1 until i)
                     imply(bfsParentAutomaton[j, i], -bfsParentAutomaton[j + 1, k])
+    }
+}
+
+fun Solver.declareParallelModularAutomatonBfsConstraints(
+    parallelModularBasicVariables: ParallelModularBasicVariables
+) {
+    comment("Parallel modular automaton BFS constraints")
+    with(parallelModularBasicVariables) {
+        for (m in 1..M) {
+            comment("Automaton BFS constraints: for module m = $m")
+            declareAutomatonBfsConstraints(modularBasicVariables[m])
+        }
     }
 }

@@ -2,10 +2,13 @@ package ru.ifmo.fbsat.core.constraints
 
 import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.atLeastOne
+import ru.ifmo.fbsat.core.solver.exactlyOne
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
+import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
@@ -63,6 +66,41 @@ fun Solver.declareNegativeAutomatonStructureConstraints(
                 actualTransitionFunction = negActualTransitionFunction
             )
         }
+    }
+}
+
+fun Solver.declareParallelModularAutomatonStructureConstraints(
+    parallelModularBasicVariables: ParallelModularBasicVariables
+) {
+    comment("Parallel modular automaton structure constraints")
+    with(parallelModularBasicVariables) {
+        for (m in 1..M) {
+            comment("Automaton structure constraints: for module m = $m")
+            declareAutomatonStructureConstraints(modularBasicVariables[m])
+        }
+
+        comment("Additional parallel modular structure constraints")
+
+        // EO
+        for (z in 1..Z)
+            exactlyOne {
+                for (m in 1..M)
+                    yield(moduleControllingOutputVariable[z, m])
+            }
+        // ALO
+        for (m in 1..M)
+            atLeastOne {
+                for (z in 1..Z)
+                    yield(moduleControllingOutputVariable[z, m])
+            }
+
+        comment("Constraint free variables")
+        for (m in 1..M)
+            for (z in 1..Z)
+                for (c in 2..C) {
+                    imply(-moduleControllingOutputVariable[z, m], modularStateAlgorithmTop[m][c, z])
+                    imply(-moduleControllingOutputVariable[z, m], -modularStateAlgorithmBot[m][c, z])
+                }
     }
 }
 
