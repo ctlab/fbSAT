@@ -1,5 +1,3 @@
-@file:Suppress("DuplicatedCode")
-
 package ru.ifmo.fbsat.core.constraints
 
 import com.github.lipen.multiarray.IntMultiArray
