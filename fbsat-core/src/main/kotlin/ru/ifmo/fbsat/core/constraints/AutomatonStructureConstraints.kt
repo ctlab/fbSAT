@@ -26,7 +26,7 @@ fun Solver.declareAutomatonStructureConstraints(basicVariables: BasicVariables) 
         )
 
         for (u in 1..U) {
-            comment("Automaton structure constraints: for u = $u")
+            comment("Automaton structure constraints: for input u = $u")
             declareAutomatonStructureConstraintsForInput(
                 u = u,
                 C = C, K = K, E = E,
@@ -51,7 +51,7 @@ fun Solver.declareNegativeAutomatonStructureConstraints(
 
         for (u in Us) {
             // Note: be very careful with positive/negative variables!
-            comment("Negative automaton structure constraints: for u = $u")
+            comment("Negative automaton structure constraints: for input u = $u")
             declareAutomatonStructureConstraintsForInput(
                 u = u,
                 C = C, K = K, E = E,

@@ -30,7 +30,7 @@ fun Solver.declarePositiveGuardConditionsConstraints(extendedVars: ExtendedVaria
         )
 
         for (u in 1..U) {
-            comment("Positive guard conditions constraints: for u = $u")
+            comment("Positive guard conditions constraints: for input u = $u")
             declareGuardConditionsConstraintsForInput(
                 u = u,
                 tree = scenarioTree,
@@ -54,7 +54,7 @@ fun Solver.declareNegativeGuardConditionsConstraints(
 
         // Note: be very careful with positive/negative variables!
         for (u in Us) {
-            comment("Negative guard conditions constraints: for u = $u")
+            comment("Negative guard conditions constraints: for input u = $u")
             declareGuardConditionsConstraintsForInput(
                 u = u,
                 tree = negativeScenarioTree,
