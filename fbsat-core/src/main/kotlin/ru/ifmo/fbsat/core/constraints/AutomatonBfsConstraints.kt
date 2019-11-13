@@ -9,13 +9,12 @@ import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 
 fun Solver.declareAutomatonBfsConstraints(basicVars: BasicVariables) {
+    comment("Automaton BFS constraints")
     with(basicVars) {
         val bfsTransitionAutomaton = newArray(C, C)
         val bfsParentAutomaton = newArray(C, C) { (j, i) ->
             if (i < j) newVariable() else falseVariable
         }
-
-        comment("Automaton BFS constraints")
 
         comment("bfs_t definition")
         // t[i, j] <=> OR_k( transition[i, k, j] )
