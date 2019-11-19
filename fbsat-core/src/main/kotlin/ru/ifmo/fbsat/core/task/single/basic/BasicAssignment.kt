@@ -82,7 +82,7 @@ fun BasicAssignment.toAutomaton(): Automaton {
                             .asSequence()
                             .associate { u ->
                                 scenarioTree.uniqueInputs[u - 1] to
-                                    // rootValue[c, k, u]
+                                    // transitionFiring[c, k, u]
                                     when {
                                         notFired[c, k, u] -> false
                                         firstFired[c, u] == k -> true
