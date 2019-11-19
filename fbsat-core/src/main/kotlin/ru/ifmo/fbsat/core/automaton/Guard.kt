@@ -82,7 +82,14 @@ class TruthTableGuard(
             "[${truthTable.values.take(3).toBinaryString()}${Typography.ellipsis}]"
 
     override fun toFbtString(): String {
-        return "TRUTH_TABLE"
+        return truthTable.entries
+            .filter { (_, value) -> value == true }
+            .joinToString(" OR ") { (input, _) ->
+                "(" + inputNames.zip(input.values).joinToString(" AND ") { (name, value) ->
+                    if (value) name
+                    else "NOT $name"
+                } + ")"
+            }
     }
 
     override fun toSmvString(): String {
