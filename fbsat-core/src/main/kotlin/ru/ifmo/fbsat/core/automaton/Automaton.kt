@@ -503,9 +503,7 @@ class Automaton(
                             "x" to r(), "y" to r()
                         ) {
                             state.algorithm as BinaryAlgorithm
-                            "ECAction"(
-                                "Algorithm" to "${state.id}_${state.algorithm.toFbtString()}"
-                            ) {
+                            "ECAction"("Algorithm" to "${state.id}_${state.algorithm.toFbtString()}") {
                                 if (state.outputEvent != null)
                                     attribute("Output", state.outputEvent.name)
                             }
@@ -532,9 +530,7 @@ class Automaton(
                         )
                     }
                 }
-                "Algorithm"(
-                    "Name" to "INIT" // INIT algorithm
-                ) {
+                "Algorithm"("Name" to "INIT") {
                     // Note: INIT algorithm zeroes out all variables
                     "ST"(
                         "Text" to BinaryAlgorithm(
@@ -548,12 +544,8 @@ class Automaton(
                         continue
 
                     val algorithm = state.algorithm as BinaryAlgorithm
-                    "Algorithm"(
-                        "Name" to "${state.id}_${algorithm.toFbtString()}"
-                    ) {
-                        "ST"(
-                            "Text" to algorithm.toST(outputNames)
-                        )
+                    "Algorithm"("Name" to "${state.id}_${algorithm.toFbtString()}") {
+                        "ST"("Text" to algorithm.toST(outputNames))
                     }
                 }
             }
