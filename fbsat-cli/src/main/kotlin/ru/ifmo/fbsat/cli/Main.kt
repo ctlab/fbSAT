@@ -163,7 +163,7 @@ class FbSAT : CliktCommand() {
     val isForbidOr: Boolean by option(
         "--forbid-or"
     ).flag(
-        "--no-forbid-or",
+        "--allow-or",
         default = false
     )
 
