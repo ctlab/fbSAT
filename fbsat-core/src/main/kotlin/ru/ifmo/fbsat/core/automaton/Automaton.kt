@@ -3,7 +3,6 @@
 package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.lazycache.LazyCache
-import org.redundent.kotlin.xml.PrintOptions
 import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
@@ -13,6 +12,7 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.graph
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
@@ -557,7 +557,7 @@ class Automaton(
                     }
                 }
             }
-        }.toString(PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = false))
+        }.toString(Globals.xmlPrintOptions)
     }
 
     /**
