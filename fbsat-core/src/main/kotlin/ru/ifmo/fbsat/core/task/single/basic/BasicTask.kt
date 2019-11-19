@@ -94,10 +94,12 @@ class BasicTask(
     private fun Solver.declareAdhocConstraints() {
         comment("ADHOC constraints")
         with(vars) {
-            comment("Ad-hoc: no transition to the first state")
-            for (c in 1..C)
-                for (k in 1..K)
-                    clause(-transitionDestination[c, k, 1])
+            if (Globals.IS_FORBID_TRANSITIONS_TO_FIRST_STATE) {
+                comment("Ad-hoc: no transition to the first state")
+                for (c in 1..C)
+                    for (k in 1..K)
+                        clause(-transitionDestination[c, k, 1])
+            }
         }
     }
 

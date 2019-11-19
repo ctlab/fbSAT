@@ -167,6 +167,13 @@ class FbSAT : CliktCommand() {
         default = false
     )
 
+    val isForbidTransitionsToFirstState: Boolean by option(
+        "--forbid-transitions-to-first-state"
+    ).flag(
+        "--allow-transitions-to-first-state",
+        default = true
+    )
+
     val isBfsAutomaton: Boolean by option(
         "--bfs-automaton"
     ).flag(
@@ -300,6 +307,7 @@ class FbSAT : CliktCommand() {
         Globals.EPSILON_OUTPUT_EVENTS = epsilonOutputEvents
         Globals.START_STATE_ALGORITHMS = startStateAlgorithms
         Globals.IS_FORBID_OR = isForbidOr
+        Globals.IS_FORBID_TRANSITIONS_TO_FIRST_STATE = isForbidTransitionsToFirstState
         Globals.IS_BFS_AUTOMATON = isBfsAutomaton
         Globals.IS_BFS_GUARD = isBfsGuard
         Globals.IS_ENCODE_TRANSITIONS_ORDER = isEncodeTransitionsOrder

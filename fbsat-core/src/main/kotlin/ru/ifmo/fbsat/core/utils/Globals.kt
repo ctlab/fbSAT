@@ -18,6 +18,7 @@ object Globals {
     var EPSILON_OUTPUT_EVENTS: EpsilonOutputEvents by Delegates.notNull()
     var START_STATE_ALGORITHMS: StartStateAlgorithms by Delegates.notNull()
     var IS_FORBID_OR: Boolean by Delegates.notNull()
+    var IS_FORBID_TRANSITIONS_TO_FIRST_STATE: Boolean by Delegates.notNull()
     var IS_BFS_AUTOMATON: Boolean by Delegates.notNull()
     var IS_BFS_GUARD: Boolean by Delegates.notNull()
     var IS_ENCODE_TRANSITIONS_ORDER: Boolean by Delegates.notNull()
