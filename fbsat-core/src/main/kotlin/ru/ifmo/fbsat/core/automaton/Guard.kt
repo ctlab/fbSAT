@@ -68,7 +68,7 @@ class TruthTableGuard(
 
     override fun eval(inputValues: InputValues): Boolean {
         // return truthTable[uniqueInputs.indexOf(inputValues)] in "1x"
-        return truthTable[inputValues] ?: true
+        return truthTable.getValue(inputValues) ?: true
     }
 
     override fun toSimpleString(): String {
