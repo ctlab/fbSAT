@@ -348,7 +348,7 @@ class Automaton(
      */
     fun dumpGv(file: File) {
         file.printWriter().use {
-            it.println(this.toGraphvizString())
+            it.println(toGraphvizString())
         }
         Runtime.getRuntime().exec("dot -Tpdf -O $file")
         // Runtime.getRuntime().exec("dot -Tpng -O $file")
@@ -359,7 +359,7 @@ class Automaton(
      */
     fun dumpFbt(file: File, name: String? = null) {
         file.printWriter().use {
-            it.println(this.toFbtString(name))
+            it.println(toFbtString(name))
         }
     }
 
@@ -368,7 +368,7 @@ class Automaton(
      */
     fun dumpSmv(file: File) {
         file.printWriter().use {
-            it.println(this.toSmvString())
+            it.println(toSmvString())
         }
     }
 
