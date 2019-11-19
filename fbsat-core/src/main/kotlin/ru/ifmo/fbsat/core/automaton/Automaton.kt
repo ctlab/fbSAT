@@ -4,6 +4,7 @@ package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.lazycache.LazyCache
 import org.redundent.kotlin.xml.PrintOptions
+import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
@@ -442,7 +443,7 @@ class Automaton(
                 "Organization" to "nxtControl GmbH",
                 "Version" to "0.0",
                 "Author" to "fbSAT",
-                "Date" to "2011-08-30"
+                "Date" to DateTime.nowLocal().format("yyyy-MM-dd")
             )
             "InterfaceList" {
                 "EventInputs" {
