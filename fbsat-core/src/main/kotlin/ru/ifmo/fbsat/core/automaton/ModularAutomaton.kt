@@ -16,13 +16,14 @@ import ru.ifmo.fbsat.core.utils.random
 import ru.ifmo.fbsat.core.utils.writeEventMerger
 import java.io.File
 
+@Suppress("PropertyName")
 class ModularAutomaton(
     val modules: MultiArray<Automaton>, // [M] : Automaton
     val outputVariableModule: IntMultiArray // [Z] : 1..M
 ) {
-    private val M = modules.shape[0]
-    private val Z = outputVariableModule.shape[0]
-    private val moduleOutputVariables: MultiArray<List<Int>> = // [M] : {1..Z}
+    val M: Int = modules.shape[0]
+    val Z: Int = outputVariableModule.shape[0]
+    val moduleOutputVariables: MultiArray<List<Int>> = // [M] : {1..Z}
         MultiArray.create(M) { (m) ->
             (1..Z).filter { z -> outputVariableModule[z] == m }
         }
@@ -125,7 +126,7 @@ class ModularAutomaton(
         for (m in 1..M) {
             modules[m].dumpFbt(file.resolveSibling("module-$m.fbt"), "module-$m")
         }
-        if (M != 2) writeEventMerger(file.resolveSibling("E_MERGE$M.fbt"), M, "E_MERGE$M")
+        if (M != 2) writeEventMerger(file.resolveSibling("E_MERGE$M.fbt"), "E_MERGE$M")
         file.writeText(toFbtString(name))
     }
 

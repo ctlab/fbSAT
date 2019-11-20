@@ -2,9 +2,10 @@ package ru.ifmo.fbsat.core.utils
 
 import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
+import ru.ifmo.fbsat.core.automaton.ModularAutomaton
 import java.io.File
 
-fun generateEventMerger(M: Int, name: String?): String {
+fun ModularAutomaton.generateEventMerger(name: String? = null): String {
     require(M >= 2) { "E_MERGE must be at least 2-ary" }
     require(M != 2) { "Use the standard 2-ary IEC61499.Standard.E_MERGE instead" }
 
@@ -66,6 +67,6 @@ fun generateEventMerger(M: Int, name: String?): String {
     }.toString(Globals.xmlPrintOptions)
 }
 
-fun writeEventMerger(file: File, M: Int, name: String?) {
-    file.writeText(generateEventMerger(M, name = name))
+fun ModularAutomaton.writeEventMerger(file: File, name: String? = null) {
+    file.writeText(generateEventMerger(name = name))
 }
