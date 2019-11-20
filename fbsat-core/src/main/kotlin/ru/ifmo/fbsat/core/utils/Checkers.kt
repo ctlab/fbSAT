@@ -4,14 +4,13 @@ import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.Scenario
 
-fun checkMapping(
-    automaton: Automaton,
+fun Automaton.checkMapping(
     scenarios: List<Scenario>,
     mapping: IntMultiArray
 ): Boolean {
     var isOk = true
     for ((i, scenario) in scenarios.withIndex(start = 1)) {
-        val automatonMapping = automaton.getMapping(scenario).map { it?.id ?: 0 }
+        val automatonMapping = getMapping(scenario).map { it?.id ?: 0 }
         val assignmentMapping = scenario.elements.map { mapping[it.nodeId!!] }
         if (automatonMapping != assignmentMapping) {
             log.error("Scenario $i/${scenarios.size} mapping mismatch:")

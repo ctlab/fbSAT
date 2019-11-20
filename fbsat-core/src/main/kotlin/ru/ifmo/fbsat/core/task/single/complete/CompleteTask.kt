@@ -169,15 +169,13 @@ class CompleteTask(
 
         with(vars) {
             check(
-                checkMapping(
-                    automaton = automaton,
+                automaton.checkMapping(
                     scenarios = scenarioTree.scenarios,
                     mapping = assignment.mapping
                 )
             ) { "Positive mapping mismatch" }
             check(
-                checkMapping(automaton = automaton,
-                    scenarios = negativeScenarioTree.negativeScenarios,
+                automaton.checkMapping(scenarios = negativeScenarioTree.negativeScenarios,
                     mapping = with(object : TheAssignment {}) {
                         rawAssignment.convertIntArray(negMapping, negV, domain = 1..C) { 0 }
                     }

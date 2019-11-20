@@ -197,8 +197,7 @@ class ExtendedTask(
 
         with(vars) {
             check(
-                checkMapping(
-                    automaton = automaton,
+                automaton.checkMapping(
                     scenarios = scenarioTree.scenarios,
                     mapping = assignment.mapping
                 )
