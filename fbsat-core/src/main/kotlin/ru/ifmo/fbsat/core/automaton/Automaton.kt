@@ -451,8 +451,9 @@ class Automaton(
                     "Event"("Name" to "INIT")
                     for (inputEvent in inputEvents) {
                         "Event"("Name" to inputEvent.name) {
-                            for (inputName in inputNames)
+                            for (inputName in inputNames) {
                                 "With"("Var" to inputName)
+                            }
                         }
                     }
                 }
@@ -460,8 +461,9 @@ class Automaton(
                     // Note: INITO output event has the same associated variables as all output events
                     for (outputEvent in outputEvents + OutputEvent("INITO")) {
                         "Event"("Name" to outputEvent.name) {
-                            for (outputName in outputNames)
+                            for (outputName in outputNames) {
                                 "With"("Var" to outputName)
+                            }
                         }
                     }
                 }
