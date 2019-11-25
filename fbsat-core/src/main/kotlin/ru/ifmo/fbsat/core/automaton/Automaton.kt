@@ -505,7 +505,7 @@ class Automaton(
                             "x" to r(), "y" to r()
                         ) {
                             state.algorithm as BinaryAlgorithm
-                            "ECAction"("Algorithm" to "${state.id}_${state.algorithm.toFbtString()}") {
+                            "ECAction"("Algorithm" to "s${state.id}_${state.algorithm.toFbtString()}") {
                                 if (state.outputEvent != null)
                                     attribute("Output", state.outputEvent.name)
                             }
@@ -546,7 +546,7 @@ class Automaton(
                         continue
 
                     val algorithm = state.algorithm as BinaryAlgorithm
-                    "Algorithm"("Name" to "${state.id}_${algorithm.toFbtString()}") {
+                    "Algorithm"("Name" to "s${state.id}_${algorithm.toFbtString()}") {
                         "ST"("Text" to algorithm.toST(outputNames))
                     }
                 }
