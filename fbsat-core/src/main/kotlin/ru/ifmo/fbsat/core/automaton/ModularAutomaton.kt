@@ -124,7 +124,7 @@ class ModularAutomaton(
      */
     fun dumpFbt(file: File, name: String? = null) {
         for (m in 1..M) {
-            modules[m].dumpFbt(file.resolveSibling("module-$m.fbt"), "module-$m")
+            modules[m].dumpFbt(file.resolveSibling("module_$m.fbt"), "module_$m")
         }
         if (M != 2) writeEventMerger(file.resolveSibling("E_MERGE$M.fbt"), "E_MERGE$M")
         file.writeText(toFbtString(name))
@@ -191,7 +191,7 @@ class ModularAutomaton(
                 for (m in 1..M) {
                     "FB"(
                         "Name" to "M$m",
-                        "Type" to "module-$m",
+                        "Type" to "module_$m",
                         "Namespace" to "Main",
                         "x" to r(), "y" to r()
                     )
@@ -199,7 +199,7 @@ class ModularAutomaton(
                 for (outputEvent in outputEvents) {
                     for (m in 2..M) {
                         "FB"(
-                            "Name" to "EM-${outputEvent.name}",
+                            "Name" to "EM_${outputEvent.name}",
                             "Type" to if (M == 2) "E_MERGE" else "E_MERGE$M",
                             "Namespace" to if (M == 2) "IEC61499.Standard" else "Main",
                             "x" to r(), "y" to r()
@@ -219,10 +219,10 @@ class ModularAutomaton(
                         for (m in 1..M) {
                             "Connection"(
                                 "Source" to "M$m.${outputEvent.name}",
-                                "Destination" to "EM-${outputEvent.name}.EI$m"
+                                "Destination" to "EM_${outputEvent.name}.EI$m"
                             )
                             "Connection"(
-                                "Source" to "EM-${outputEvent.name}.EO",
+                                "Source" to "EM_${outputEvent.name}.EO",
                                 "Destination" to outputEvent.name
                             )
                         }
