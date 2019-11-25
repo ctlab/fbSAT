@@ -221,11 +221,11 @@ class ModularAutomaton(
                                 "Source" to "M$m.${outputEvent.name}",
                                 "Destination" to "EM_${outputEvent.name}.EI$m"
                             )
-                            "Connection"(
-                                "Source" to "EM_${outputEvent.name}.EO",
-                                "Destination" to outputEvent.name
-                            )
                         }
+                        "Connection"(
+                            "Source" to "EM_${outputEvent.name}.EO",
+                            "Destination" to outputEvent.name
+                        )
                     }
                 }
                 "DataConnections" {
