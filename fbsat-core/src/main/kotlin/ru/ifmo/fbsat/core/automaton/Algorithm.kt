@@ -40,7 +40,7 @@ class BinaryAlgorithm(val algorithm0: BooleanArray, val algorithm1: BooleanArray
             if (a0 == a1)
                 "$name:=${a0.toString().toUpperCase()};"
             else
-                "$name:=~$name;"
+                "$name:=NOT $name;"
         }
     }
 
