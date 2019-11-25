@@ -15,6 +15,7 @@ fun ModularAutomaton.generateEventMerger(name: String? = null): String {
         if (name != null) {
             attribute("Name", name)
         }
+        attribute("Namespace", "Main")
         "Identification"("Standard" to "61499-2")
         "VersionInfo"(
             "Organization" to "nxtControl GmbH",
