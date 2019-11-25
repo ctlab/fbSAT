@@ -192,6 +192,7 @@ class ModularAutomaton(
                     "FB"(
                         "Name" to "M$m",
                         "Type" to "module-$m",
+                        "Namespace" to "Main",
                         "x" to r(), "y" to r()
                     )
                 }
