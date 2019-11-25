@@ -201,6 +201,7 @@ class ModularAutomaton(
                         "FB"(
                             "Name" to "EM-${outputEvent.name}",
                             "Type" to if (M == 2) "E_MERGE" else "E_MERGE$M",
+                            "Namespace" to if (M == 2) "IEC61499.Standard" else "Main",
                             "x" to r(), "y" to r()
                         )
                     }
