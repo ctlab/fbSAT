@@ -227,6 +227,21 @@ class ModularAutomaton(
                             "Destination" to outputEvent.name
                         )
                     }
+                    // Handle initialization
+                    "Connection"(
+                        "Source" to "INIT",
+                        "Destination" to "M1.INIT"
+                    )
+                    for (m in 1 until M) {
+                        "Connection"(
+                            "Source" to "M$m.INITO",
+                            "Destination" to "M${m + 1}.INIT"
+                        )
+                    }
+                    "Connection"(
+                        "Source" to "M$M.INITO",
+                        "Destination" to "INITO"
+                    )
                 }
                 "DataConnections" {
                     for (inputName in inputNames) {
