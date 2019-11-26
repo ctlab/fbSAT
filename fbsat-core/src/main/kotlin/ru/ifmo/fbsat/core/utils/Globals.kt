@@ -28,5 +28,5 @@ object Globals {
     var IS_ENCODE_TOTALIZER: Boolean by Delegates.notNull()
     var IS_DEBUG: Boolean by Delegates.notNull()
     val xmlPrintOptions: PrintOptions =
-        PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = false)
+        PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = true)
 }
