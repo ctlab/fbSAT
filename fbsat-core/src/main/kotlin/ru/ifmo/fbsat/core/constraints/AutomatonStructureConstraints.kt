@@ -8,6 +8,7 @@ import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
+import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
@@ -75,7 +76,7 @@ fun Solver.declareParallelModularAutomatonStructureConstraints(
     comment("Parallel modular automaton structure constraints")
     with(parallelModularBasicVariables) {
         for (m in 1..M) {
-            comment("Automaton structure constraints: for module m = $m")
+            comment("Parallel modular automaton structure constraints: for module m = $m")
             declareAutomatonStructureConstraints(modularBasicVariables[m])
         }
 
@@ -101,6 +102,48 @@ fun Solver.declareParallelModularAutomatonStructureConstraints(
                     imply(-moduleControllingOutputVariable[z, m], modularStateAlgorithmTop[m][c, z])
                     imply(-moduleControllingOutputVariable[z, m], -modularStateAlgorithmBot[m][c, z])
                 }
+    }
+}
+
+fun Solver.declareConsecutiveModularAutomatonStructureConstraints(
+    consecutiveModularBasicVariables: ConsecutiveModularBasicVariables
+) {
+    check(Globals.EPSILON_OUTPUT_EVENTS == EpsilonOutputEvents.NONE)
+    check(Globals.START_STATE_ALGORITHMS == StartStateAlgorithms.ZERONOTHING || Globals.START_STATE_ALGORITHMS == StartStateAlgorithms.ZERO)
+
+    comment("Consecutive modular automaton structure constraints")
+    with(consecutiveModularBasicVariables) {
+        check(M == 2)
+        for (m in 1..M) with(modularBasicVariables[m]) {
+            comment("Consecutive modular automaton structure constraints for module m = $m: inputless")
+            declareAutomatonStructureConstraintsInputless(
+                // Note: O = E, it is not a typo!
+                C = C, K = K, E = E, O = E, Z = Z,
+                stateOutputEvent = stateOutputEvent,
+                stateAlgorithmTop = stateAlgorithmTop,
+                stateAlgorithmBot = stateAlgorithmBot,
+                transitionDestination = transitionDestination,
+                transitionInputEvent = transitionInputEvent
+            )
+
+            for (u in 1..U) {
+                comment("Consecutive modular automaton structure constraints for module m = $m: for input u = $u")
+                declareAutomatonStructureConstraintsForInput(
+                    u = u,
+                    C = C, K = K, E = E,
+                    transitionDestination = transitionDestination,
+                    transitionInputEvent = transitionInputEvent,
+                    transitionFiring = transitionFiring,
+                    firstFired = firstFired,
+                    notFired = notFired,
+                    actualTransitionFunction = actualTransitionFunction
+                )
+            }
+        }
+
+        /* Additional constraints */
+
+        // TODO: Additional consecutive parallel constraints
     }
 }
 
