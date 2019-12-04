@@ -188,3 +188,6 @@ fun algorithmChoice(
         else -> error("Weird combination of values: $values")
     }
 }
+
+fun <T> Iterable<T>.joinPadded(length: Int, separator: String = " "): String =
+    joinToString(separator) { it.toString().padStart(length) }
