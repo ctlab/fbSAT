@@ -59,7 +59,7 @@ class ConsecutiveModularAutomaton(
                     if (element.outputEvent != null) {
                         if (result.outputAction.event != OutputEvent("CNF")) {
                             log.error("Module m = $m")
-                            log.error("Scenario element #$i ${element}: FAILED")
+                            log.error("Scenario element #$i $element: FAILED")
                             log.error("Output event mismatch: ${result.outputAction.event} != CNF")
                             log.error("Result: $result")
                             log.error("Scenario: ${scenario.elements}")
@@ -93,14 +93,14 @@ class ConsecutiveModularAutomaton(
             }
 
             if (result.outputAction.event != element.outputEvent) {
-                log.error("Scenario element #$i ${element}: FAILED")
+                log.error("Scenario element #$i $element: FAILED")
                 log.error("Output event mismatch: ${result.outputAction.event} != ${element.outputEvent}")
                 log.error("Result: $result")
                 log.error("Scenario: ${scenario.elements}")
                 return false
             }
             if (result.outputAction.values != element.outputValues) {
-                log.error("Scenario element #$i ${element}: FAILED")
+                log.error("Scenario element #$i $element: FAILED")
                 log.error("Output values mismatch: ${result.outputAction.values.values.toBinaryString()} != ${element.outputValues.values.toBinaryString()}")
                 log.error("Result: $result")
                 log.error("Scenario: ${scenario.elements}")
