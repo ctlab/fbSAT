@@ -18,7 +18,7 @@ class BasicAssignment(
     val transition: IntMultiArray, // [C, K] : 0..C
     val actualTransition: IntMultiArray, // [C, E, U] : 0..C
     val inputEvent: IntMultiArray, // [C, K] : 0..E
-    val outputEvent: IntMultiArray, // [C] : 1..O
+    val outputEvent: IntMultiArray, // [C] : 0..O
     val stateAlgorithm: MultiArray<Algorithm>, // [C]: Algorithm
     val transitionFiring: BooleanMultiArray, // [C, K, U] : Boolean
     val firstFired: IntMultiArray, // [C, U] : 0..K
