@@ -21,6 +21,7 @@ import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicTask
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicMinTask
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicTask
+import ru.ifmo.fbsat.core.task.modular.extended.consecutive.ConsecutiveModularExtendedTask
 import ru.ifmo.fbsat.core.task.single.basic.BasicMinTask
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.task.single.complete.CompleteCegisTask
@@ -52,7 +53,8 @@ enum class Method(val s: String) {
     ModularBasic("modular-basic"),
     ModularBasicMin("modular-basic-min"),
     ConsecutiveModularBasic("modular-consecutive-basic"),
-    ConsecutiveModularBasicMin("modular-consecutive-basic-min")
+    ConsecutiveModularBasicMin("modular-consecutive-basic-min"),
+    ConsecutiveModularExtended("modular-consecutive-extended");
 }
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -639,6 +641,45 @@ class FbSAT : CliktCommand() {
                     log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules:")
                     for ((m, automaton) in modularAutomaton.modules.withIndex()) {
                         log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                        automaton.pprint()
+                        automaton.dump(outDir, "the_module-$m")
+                    }
+                    // modularAutomaton.dumpFbt(
+                    //     outDir.resolve("modularAutomaton.fbt"),
+                    //     name = "ModularController"
+                    // )
+                    if (modularAutomaton.verify(tree))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                    }
+                }
+
+                log.br()
+                log.br("The following messages - lies.")
+                log.br()
+                null
+            }
+            Method.ConsecutiveModularExtended -> {
+                val task = ConsecutiveModularExtendedTask(
+                    scenarioTree = tree,
+                    numberOfModules = requireNotNull(numberOfModules),
+                    numberOfStates = requireNotNull(numberOfStates),
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    maxGuardSize = requireNotNull(maxGuardSize),
+                    maxTotalGuardsSize = maxTotalGuardsSize,
+                    outDir = outDir,
+                    solver = solverProvider(),
+                    isEncodeReverseImplication = isEncodeReverseImplication
+                )
+                val modularAutomaton = task.infer()
+
+                if (modularAutomaton == null) {
+                    log.failure("Modular automaton not found")
+                } else {
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules, ${modularAutomaton.numberOfTransitions} transitions, ${modularAutomaton.totalGuardsSize} nodes:")
+                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
+                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes:")
                         automaton.pprint()
                         automaton.dump(outDir, "the_module-$m")
                     }
