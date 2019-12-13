@@ -17,9 +17,10 @@ class ConsecutiveModularAutomaton(
     val outputNames: List<String>
 ) {
     val M: Int = modules.shape[0]
-
     val numberOfTransitions: Int
         get() = modules.sumBy { it.numberOfTransitions }
+    val totalGuardsSize: Int
+        get() = modules.sumBy { it.totalGuardsSize }
 
     constructor(modules: MultiArray<Automaton>, scenarioTree: ScenarioTree) : this(
         modules,
