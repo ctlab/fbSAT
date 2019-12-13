@@ -601,7 +601,7 @@ class FbSAT : CliktCommand() {
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
                 } else {
-                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules:")
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules, ${modularAutomaton.numberOfTransitions} transitions:")
                     for ((m, automaton) in modularAutomaton.modules.withIndex()) {
                         log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
                         automaton.pprint()
@@ -638,7 +638,7 @@ class FbSAT : CliktCommand() {
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
                 } else {
-                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules:")
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules, ${modularAutomaton.numberOfTransitions} transitions:")
                     for ((m, automaton) in modularAutomaton.modules.withIndex()) {
                         log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
                         automaton.pprint()
