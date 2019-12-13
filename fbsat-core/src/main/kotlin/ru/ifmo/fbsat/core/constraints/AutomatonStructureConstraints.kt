@@ -113,7 +113,6 @@ fun Solver.declareConsecutiveModularAutomatonStructureConstraints(
 
     comment("Consecutive modular automaton structure constraints")
     with(consecutiveModularBasicVariables) {
-        check(M == 2)
         for (m in 1..M) with(modularBasicVariables[m]) {
             comment("Consecutive modular automaton structure constraints for module m = $m: inputless")
             declareAutomatonStructureConstraintsInputless(

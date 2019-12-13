@@ -250,7 +250,7 @@ fun Solver.declarePositiveConsecutiveModularMappingConstraints(
                 declareConsecutiveModularMappingConstraintsForActiveNode(
                     m = m, v = v,
                     tree = scenarioTree,
-                    C = C, Z = Z,
+                    M = M, C = C, Z = Z,
                     stateOutputEvent = stateOutputEvent,
                     actualTransitionFunction = actualTransitionFunction,
                     mapping = mapping,
@@ -264,7 +264,7 @@ fun Solver.declarePositiveConsecutiveModularMappingConstraints(
                 declareConsecutiveModularMappingConstraintsForPassiveNode(
                     m = m, v = v,
                     tree = scenarioTree,
-                    C = C, O = O,
+                    M = M, C = C,
                     actualTransitionFunction = actualTransitionFunction,
                     mapping = mapping
                 )
@@ -461,6 +461,7 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForActiveNode(
     m: Int,
     v: Int,
     tree: ScenarioTreeInterface,
+    M: Int,
     C: Int,
     Z: Int,
     stateOutputEvent: IntMultiArray,
@@ -492,7 +493,7 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForActiveNode(
                     stateOutputEvent[c, 1]
                 )
         }
-        2 -> {
+        M -> {
             // (mapping[v] = c) <=> (actualTransition[mapping[tp(v)],tie(v),tin(v)] = c) & (stateOutputEvent[c] = toe(v)) & AND_{z}(modularComputedOutputValue{m}(v,z)}(c,z) = tov(v,z)
             for (i in 1..C)
                 for (j in 1..C)
@@ -507,7 +508,23 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForActiveNode(
                         }
                     )
         }
-        else -> error("meh")
+        else -> {
+            // (mapping[v] = c) <=> (actualTransition[mapping[tp(v)],tie(v),tin(v)] = c)
+            for (i in 1..C)
+                for (j in 1..C)
+                    implyIff(
+                        mapping[p, i],
+                        mapping[v, j],
+                        actualTransitionFunction[i, 1, u, j] // Note: e=REQ
+                    )
+
+            // stateOutputEvent[mapping[v]] = CNF
+            for (c in 1..C)
+                imply(
+                    mapping[v, c],
+                    stateOutputEvent[c, 1]
+                )
+        }
     }.exhaustive
 }
 
@@ -515,8 +532,8 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForPassiveNode(
     m: Int,
     v: Int,
     tree: ScenarioTreeInterface,
+    M: Int,
     C: Int,
-    O: Int,
     actualTransitionFunction: IntMultiArray,
     mapping: IntMultiArray
 ) {
@@ -525,50 +542,30 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForPassiveNode(
     val u = tree.inputNumber(v)
 
     comment("Consecutive modular mapping definition for passive node v = $v, module m = $m")
-    when (m) {
-        1 -> {
-            // // (mapping[v] = c) <=> (actualTransition[mapping[tp(v)],tie(v),tin(v)] = c)
-            // for (i in 1..C)
-            //     for (j in 1..C)
-            //         implyIff(
-            //             mapping[p, i],
-            //             mapping[v, j],
-            //             actualTransitionFunction[i, e, u, j]
-            //         )
 
-            comment("Mapping propagation for passive node v = $v, module m = $m")
-            // mapping[v] = mapping[tp(v)]
-            for (c in 1..C)
-                imply(
-                    mapping[p, c],
-                    mapping[v, c]
-                )
+    comment("Mapping propagation for passive node v = $v, module m = $m")
+    // mapping[v] = mapping[tp(v)]
+    for (c in 1..C)
+        imply(
+            mapping[p, c],
+            mapping[v, c]
+        )
 
-            comment("Constraining actualTransitionFunction for passive node v = $v, module m = $m")
-            // actualTransition[mapping[tp(v)],tie(v),tin(v)] = 0
-            for (c in 1..C)
-                imply(
-                    mapping[p, c],
-                    actualTransitionFunction[c, e, u, C + 1]
-                )
-        }
-        2 -> {
-            comment("Mapping propagation for passive node v = $v, module m = $m")
-            // mapping[v] = mapping[tp(v)]
-            for (c in 1..C)
-                imply(
-                    mapping[p, c],
-                    mapping[v, c]
-                )
-
-            comment("Constraining actualTransitionFunction for passive node v = $v, module m = $m")
-            // actualTransition[mapping[tp(v)],tie(v),tin(v)] = 0
-            for (c in 1..C)
-                imply(
-                    mapping[p, c],
-                    actualTransitionFunction[c, 1, u, C + 1] // Note: e=REQ
-                )
-        }
-        else -> error("meh")
-    }.exhaustive
+    if (m == 1) {
+        comment("Constraining actualTransitionFunction for passive node v = $v, module m = $m")
+        // actualTransition[mapping[tp(v)],tie(v),tin(v)] = 0
+        for (c in 1..C)
+            imply(
+                mapping[p, c],
+                actualTransitionFunction[c, e, u, C + 1]
+            )
+    } else {
+        comment("Constraining actualTransitionFunction for passive node v = $v, module m = $m")
+        // actualTransition[mapping[tp(v)],tie(v),tin(v)] = 0
+        for (c in 1..C)
+            imply(
+                mapping[p, c],
+                actualTransitionFunction[c, 1, u, C + 1] // Note: e=REQ
+            )
+    }
 }

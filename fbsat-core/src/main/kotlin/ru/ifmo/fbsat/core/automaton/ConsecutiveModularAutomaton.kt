@@ -31,7 +31,6 @@ class ConsecutiveModularAutomaton(
 
     init {
         require(M >= 2)
-        require(M == 2) // Temporarily
         require(modules.all { it.inputEvents == inputEvents })
         require(modules.all { it.inputNames == inputNames })
         require(modules.all { it.outputEvents == outputEvents })
