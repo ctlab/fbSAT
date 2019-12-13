@@ -6,7 +6,8 @@ import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
 
-fun Solver.declareGuardsBfsConstraints(extendedVars: ExtendedVariables) {
+fun Solver.declareGuardConditionsBfsConstraints(extendedVars: ExtendedVariables) {
+    println("Guard conditions BFS constraints")
     with(extendedVars) {
         for (c in 1..C)
             for (k in 1..K) {
