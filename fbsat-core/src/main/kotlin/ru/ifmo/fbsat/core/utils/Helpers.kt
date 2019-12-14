@@ -1,6 +1,8 @@
 package ru.ifmo.fbsat.core.utils
 
+import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.IntMultiArray
+import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.DateTimeTz
 import okio.BufferedSource
@@ -191,3 +193,12 @@ fun algorithmChoice(
 
 fun <T> Iterable<T>.joinPadded(length: Int, separator: String = " "): String =
     joinToString(separator) { it.toString().padStart(length) }
+
+fun <T, R> MultiArray<T>.mapValues(transform: (T) -> R): MultiArray<R> =
+    MultiArray.create(shape) { index -> transform(get(*index)) }
+
+fun <T> MultiArray<T>.mapValuesToInt(transform: (T) -> Int): IntMultiArray =
+    IntMultiArray.create(shape) { index -> transform(get(*index)) }
+
+fun <T> MultiArray<T>.mapValuesToBoolean(transform: (T) -> Boolean): BooleanMultiArray =
+    BooleanMultiArray.create(shape) { index -> transform(get(*index)) }
