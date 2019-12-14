@@ -32,4 +32,6 @@ internal interface TheAssignment {
             }
         } ?: onAbsence(index)
     }
+
+    companion object : TheAssignment
 }
