@@ -640,3 +640,32 @@ class Automaton(
     // Allow companion object extensions
     companion object
 }
+
+fun Automaton.endowed(
+    C: Int,
+    K: Int,
+    stateOutputEvent: (c: Int) -> OutputEvent?,
+    stateAlgorithm: (c: Int) -> Algorithm,
+    transitionDestination: (c: Int, k: Int) -> Int,
+    transitionInputEvent: (c: Int, k: Int) -> InputEvent,
+    transitionGuard: (c: Int, k: Int) -> Guard
+): Automaton = apply {
+    for (c in 1..C)
+        addState(
+            id = c,
+            outputEvent = stateOutputEvent(c),
+            algorithm = stateAlgorithm(c)
+        )
+
+    for (c in 1..C)
+        for (k in 1..K) {
+            val d = transitionDestination(c, k)
+            if (d != 0)
+                addTransition(
+                    sourceId = c,
+                    destinationId = d,
+                    inputEvent = transitionInputEvent(c, k),
+                    guard = transitionGuard(c, k)
+                )
+        }
+}
