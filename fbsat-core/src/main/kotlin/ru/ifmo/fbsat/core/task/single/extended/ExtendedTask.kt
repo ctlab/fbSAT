@@ -7,7 +7,6 @@ import ru.ifmo.fbsat.core.constraints.declareGuardConditionsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveGuardConditionsConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.Solver.Companion.falseVariable
 import ru.ifmo.fbsat.core.solver.declareComparatorLessThanOrEqual
 import ru.ifmo.fbsat.core.solver.declareTotalizer
 import ru.ifmo.fbsat.core.solver.implyAnd
@@ -51,37 +50,8 @@ class ExtendedTask(
         val nconStart = solver.numberOfClauses
 
         with(solver) {
-            with(basicTask.vars) {
-                /* Constants */
-                @Suppress("UnnecessaryVariable")
-                val P = maxGuardSize
-
-                /* Guard conditions variables */
-                val nodeType = newArray(C, K, P, NodeType.values().size, one = true)
-                val nodeInputVariable = newArray(C, K, P, X + 1, one = true)
-                val nodeParent = newArray(C, K, P, P + 1, one = true) { (_, _, p, par) ->
-                    if (par < p || par == P + 1) newVariable()
-                    else falseVariable
-                }
-                val nodeChild = newArray(C, K, P, P + 1, one = true) { (_, _, p, ch) ->
-                    if (ch > p || ch == P + 1) newVariable()
-                    else falseVariable
-                }
-                val nodeValue = newArray(C, K, P, U) { (c, k, p, u) ->
-                    if (p == 1) transitionFiring[c, k, u]
-                    else newVariable()
-                }
-
-                vars = ExtendedVariables(
-                    basicVars = basicTask.vars,
-                    P = P,
-                    nodeType = nodeType,
-                    nodeInputVariable = nodeInputVariable,
-                    nodeParent = nodeParent,
-                    nodeChild = nodeChild,
-                    nodeValue = nodeValue
-                )
-            }
+            /* Variables */
+            vars = declareExtendedVariables(basicVars = basicTask.vars, P = maxGuardSize)
 
             /* Constraints */
             declarePositiveGuardConditionsConstraints(vars)
@@ -89,6 +59,7 @@ class ExtendedTask(
             declareAdhocConstraints()
         }
 
+        /* Initial cardinality constraints */
         updateCardinality(maxTotalGuardsSize)
 
         val nvarDiff = solver.numberOfVariables - nvarStart

@@ -1,7 +1,5 @@
 package ru.ifmo.fbsat.core.task.modular.basic.parallel
 
-import com.github.lipen.multiarray.IntMultiArray
-import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.DateTime
 import ru.ifmo.fbsat.core.automaton.ModularAutomaton
 import ru.ifmo.fbsat.core.constraints.declareParallelModularAutomatonBfsConstraints
@@ -37,54 +35,12 @@ class ParallelModularBasicTask(
         val nconStart = solver.numberOfClauses
 
         with(solver) {
-            /* Constants */
-            @Suppress("UnnecessaryVariable")
-            val M = numberOfModules
-            @Suppress("UnnecessaryVariable")
-            val C = numberOfStates
-            val K = maxOutgoingTransitions ?: C
-            val V = scenarioTree.size
-            val E = scenarioTree.inputEvents.size
-            val O = scenarioTree.outputEvents.size
-            val Z = scenarioTree.outputNames.size
-            val U = scenarioTree.uniqueInputs.size
-
-            fun newModularArray(
-                vararg shape: Int,
-                one: Boolean = false,
-                init: (IntArray) -> Int = { newVariable() }
-            ): MultiArray<IntMultiArray> =
-                MultiArray.create(M) { newArray(*shape, one = one, init = init) }
-
-            /* Core variables */
-            val modularTransitionDestination = newModularArray(C, K, C + 1, one = true)
-            val modularTransitionInputEvent = newModularArray(C, K, E + 1, one = true)
-            val modularTransitionFiring = newModularArray(C, K, U)
-            val modularFirstFired = newModularArray(C, U, K + 1)
-            val modularNotFired = newModularArray(C, K, U)
-            val modularStateOutputEvent = newModularArray(C, O + 1, one = true)
-            val modularStateAlgorithmBot = newModularArray(C, Z)
-            val modularStateAlgorithmTop = newModularArray(C, Z)
-            /* Interface variables */
-            val modularActualTransitionFunction = newModularArray(C, E, U, C + 1, one = true)
-            val moduleControllingOutputVariable = newArray(Z, M, one = true)
-            /* Mapping variables */
-            val modularMapping = newModularArray(V, C, one = true)
-
-            vars = ParallelModularBasicVariables(
+            /* Variables */
+            vars = declareParallelModularBasicVariables(
                 scenarioTree = scenarioTree,
-                M = M, C = C, K = K,
-                modularTransitionDestination = modularTransitionDestination,
-                modularTransitionInputEvent = modularTransitionInputEvent,
-                modularTransitionFiring = modularTransitionFiring,
-                modularFirstFired = modularFirstFired,
-                modularNotFired = modularNotFired,
-                modularStateOutputEvent = modularStateOutputEvent,
-                modularStateAlgorithmTop = modularStateAlgorithmTop,
-                modularStateAlgorithmBot = modularStateAlgorithmBot,
-                modularActualTransitionFunction = modularActualTransitionFunction,
-                moduleControllingOutputVariable = moduleControllingOutputVariable,
-                modularMapping = modularMapping
+                M = numberOfModules,
+                C = numberOfStates,
+                K = maxOutgoingTransitions ?: numberOfStates
             )
 
             /* Constraints */
@@ -94,6 +50,7 @@ class ParallelModularBasicTask(
             declareAdhocConstraints()
         }
 
+        /* Initial cardinality constraints */
         updateCardinality(maxTransitions)
 
         val nvarDiff = solver.numberOfVariables - nvarStart
@@ -108,13 +65,15 @@ class ParallelModularBasicTask(
         comment("ADHOC constraints")
         with(vars) {
             comment("Ad-hoc: no transition to the first state")
-            for (m in 1..M)
+            for (m in 1..M) with(modularBasicVariables[m]) {
                 for (c in 1..C)
                     for (k in 1..K)
-                        clause(-modularTransitionDestination[m][c, k, 1])
+                        clause(-transitionDestination[c, k, 1])
+            }
         }
     }
 
+    @Suppress("DuplicatedCode")
     fun updateCardinality(newMaxTransitions: Int?) {
         with(solver) {
             with(vars) {
@@ -125,10 +84,11 @@ class ParallelModularBasicTask(
                 if (newMaxTransitions == null && !Globals.IS_ENCODE_TOTALIZER) return
                 if (totalizer == null) {
                     totalizer = declareTotalizer {
-                        for (m in 1..M)
+                        for (m in 1..M) with(modularBasicVariables[m]) {
                             for (c in 1..C)
                                 for (k in 1..K)
-                                    yield(-modularTransitionDestination[m][c, k, C + 1])
+                                    yield(-transitionDestination[c, k, C + 1])
+                        }
                     }
                 }
                 if (newMaxTransitions == null) return

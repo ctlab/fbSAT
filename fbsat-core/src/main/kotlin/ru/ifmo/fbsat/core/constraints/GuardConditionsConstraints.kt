@@ -70,10 +70,10 @@ fun Solver.declareNegativeGuardConditionsConstraints(
 fun Solver.declareConsecutiveModularGuardConditionsConstraints(
     consecutiveModularExtendedVariables: ConsecutiveModularExtendedVariables
 ) {
-    println("Consecutive modular guard conditions constraints")
+    comment("Consecutive modular guard conditions constraints")
     with(consecutiveModularExtendedVariables) {
         for (m in 1..M) {
-            println("Consecutive modular guard conditions constraints: for module m = $m")
+            comment("Consecutive modular guard conditions constraints: for module m = $m")
             declarePositiveGuardConditionsConstraints(
                 modularExtendedVariables[m]
             )

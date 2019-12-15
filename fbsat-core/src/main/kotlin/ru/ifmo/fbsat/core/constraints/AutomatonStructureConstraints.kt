@@ -96,12 +96,13 @@ fun Solver.declareParallelModularAutomatonStructureConstraints(
             }
 
         comment("Constraint free variables")
-        for (m in 1..M)
+        for (m in 1..M) with(modularBasicVariables[m]) {
             for (z in 1..Z)
                 for (c in 2..C) {
-                    imply(-moduleControllingOutputVariable[z, m], modularStateAlgorithmTop[m][c, z])
-                    imply(-moduleControllingOutputVariable[z, m], -modularStateAlgorithmBot[m][c, z])
+                    imply(-moduleControllingOutputVariable[z, m], stateAlgorithmTop[c, z])
+                    imply(-moduleControllingOutputVariable[z, m], -stateAlgorithmBot[c, z])
                 }
+        }
     }
 }
 

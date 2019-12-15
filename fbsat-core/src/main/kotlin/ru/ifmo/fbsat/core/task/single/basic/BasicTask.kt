@@ -34,44 +34,11 @@ class BasicTask(
         val nconStart = solver.numberOfClauses
 
         with(solver) {
-            /* Constants */
-            @Suppress("UnnecessaryVariable")
-            val C = numberOfStates
-            val K = maxOutgoingTransitions ?: C
-            val V = scenarioTree.size
-            val E = scenarioTree.inputEvents.size
-            val O = scenarioTree.outputEvents.size
-            val Z = scenarioTree.outputNames.size
-            val U = scenarioTree.uniqueInputs.size
-
-            /* Core variables */
-            val transitionDestination = newArray(C, K, C + 1, one = true)
-            val transitionInputEvent = newArray(C, K, E + 1, one = true)
-            val transitionFiring = newArray(C, K, U)
-            val firstFired = newArray(C, U, K + 1)
-            val notFired = newArray(C, K, U)
-            val stateOutputEvent = newArray(C, O + 1, one = true)
-            val stateAlgorithmBot = newArray(C, Z)
-            val stateAlgorithmTop = newArray(C, Z)
-            /* Interface variables */
-            val actualTransitionFunction = newArray(C, E, U, C + 1, one = true)
-            /* Mapping variables */
-            val mapping = newArray(V, C, one = true)
-            // val memoryOutputValue = newArray(V, Z)
-
-            vars = BasicVariables(
-                scenarioTree = scenarioTree,
-                C = C, K = K,
-                transitionDestination = transitionDestination,
-                transitionInputEvent = transitionInputEvent,
-                transitionFiring = transitionFiring,
-                firstFired = firstFired,
-                notFired = notFired,
-                stateOutputEvent = stateOutputEvent,
-                stateAlgorithmTop = stateAlgorithmTop,
-                stateAlgorithmBot = stateAlgorithmBot,
-                actualTransitionFunction = actualTransitionFunction,
-                mapping = mapping
+            /* Variables */
+            vars = declareBasicVariables(
+                scenarioTree,
+                C = numberOfStates,
+                K = maxOutgoingTransitions ?: numberOfStates
             )
 
             /* Constraints */
@@ -81,6 +48,7 @@ class BasicTask(
             declareAdhocConstraints()
         }
 
+        /* Initial cardinality constraints */
         updateCardinality(maxTransitions)
 
         val nvarDiff = solver.numberOfVariables - nvarStart

@@ -42,10 +42,10 @@ fun Solver.declareGuardConditionsBfsConstraints(extendedVars: ExtendedVariables)
 fun Solver.declareConsecutiveModularGuardConditionsBfsConstraints(
     consecutiveModularExtendedVariables: ConsecutiveModularExtendedVariables
 ) {
-    println("Consecutive modular guard conditions BFS constraints")
+    comment("Consecutive modular guard conditions BFS constraints")
     with(consecutiveModularExtendedVariables) {
         for (m in 1..M) {
-            println("Consecutive modular guard conditions BFS constraints: for module m = $m")
+            comment("Consecutive modular guard conditions BFS constraints: for module m = $m")
             declareGuardConditionsBfsConstraints(
                 modularExtendedVariables[m]
             )

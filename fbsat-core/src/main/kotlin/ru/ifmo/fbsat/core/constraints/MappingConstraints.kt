@@ -287,28 +287,31 @@ fun Solver.declarePositiveConsecutiveModularMappingConstraints(
             val p = scenarioTree.parent(v)
 
             // modularComputedOutputValue{1}[v,z] <=> stateAlgorithm{tov(tp(v),z)}[mapping[v],z]
-            for (c in 1..C)
-                for (z in 1..Z)
-                    implyIff(
-                        modularMapping[1][v, c],
-                        modularComputedOutputValue[1][v, z],
-                        when (scenarioTree.outputValue(p, z)) {
-                            true -> modularStateAlgorithmTop[1][c, z]
-                            false -> modularStateAlgorithmBot[1][c, z]
-                        }.exhaustive
-                    )
+            with(modularBasicVariables[1]) {
+                for (c in 1..C)
+                    for (z in 1..Z)
+                        implyIff(
+                            mapping[v, c],
+                            modularComputedOutputValue[1][v, z],
+                            when (scenarioTree.outputValue(p, z)) {
+                                true -> stateAlgorithmTop[c, z]
+                                false -> stateAlgorithmBot[c, z]
+                            }.exhaustive
+                        )
+            }
 
             // modularComputedOutputValue{m>1}[v,z] <=> stateAlgorithm{modularComputedOutputValue{m-1}[v,z]}[mapping[v],z]
-            for (m in 2..M)
+            for (m in 2..M) with(modularBasicVariables[m]) {
                 for (c in 1..C)
                     for (z in 1..Z)
                         implyIffIte(
-                            modularMapping[m][v, c],
+                            mapping[v, c],
                             modularComputedOutputValue[m][v, z],
                             modularComputedOutputValue[m - 1][v, z],
-                            modularStateAlgorithmTop[m][c, z],
-                            modularStateAlgorithmBot[m][c, z]
+                            stateAlgorithmTop[c, z],
+                            stateAlgorithmBot[c, z]
                         )
+            }
         }
     }
 }

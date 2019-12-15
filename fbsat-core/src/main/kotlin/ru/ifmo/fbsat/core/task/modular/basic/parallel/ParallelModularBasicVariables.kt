@@ -3,7 +3,9 @@ package ru.ifmo.fbsat.core.task.modular.basic.parallel
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
+import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
 
 @Suppress("PropertyName")
 class ParallelModularBasicVariables(
@@ -12,29 +14,17 @@ class ParallelModularBasicVariables(
     val M: Int,
     val C: Int,
     val K: Int,
-    /* Core variables */
-    val modularTransitionDestination: MultiArray<IntMultiArray>,
-    val modularTransitionInputEvent: MultiArray<IntMultiArray>,
-    val modularTransitionFiring: MultiArray<IntMultiArray>,
-    val modularFirstFired: MultiArray<IntMultiArray>,
-    val modularNotFired: MultiArray<IntMultiArray>,
-    val modularStateOutputEvent: MultiArray<IntMultiArray>,
-    val modularStateAlgorithmTop: MultiArray<IntMultiArray>,
-    val modularStateAlgorithmBot: MultiArray<IntMultiArray>,
+    val V: Int,
+    val E: Int,
+    val O: Int,
+    val X: Int,
+    val Z: Int,
+    val U: Int,
+    /* Modularized BasicVariables */
+    val modularBasicVariables: MultiArray<BasicVariables>,
     /* Interface variables */
-    val modularActualTransitionFunction: MultiArray<IntMultiArray>,
-    val moduleControllingOutputVariable: IntMultiArray,
-    /* Mapping variables */
-    val modularMapping: MultiArray<IntMultiArray>
+    val moduleControllingOutputVariable: IntMultiArray
 ) {
-    /* Computable constants */
-    val V: Int = scenarioTree.size
-    val E: Int = scenarioTree.inputEvents.size
-    val O: Int = scenarioTree.outputEvents.size
-    val X: Int = scenarioTree.inputNames.size
-    val Z: Int = scenarioTree.outputNames.size
-    val U: Int = scenarioTree.uniqueInputs.size
-
     /* Cardinality variables */
     var totalizer: IntArray? = null
         internal set
@@ -42,23 +32,36 @@ class ParallelModularBasicVariables(
         internal set
     val T: Int?
         get() = maxTransitions
+}
 
+fun Solver.declareParallelModularBasicVariables(
+    scenarioTree: ScenarioTree,
+    M: Int,
+    C: Int,
+    K: Int,
+    V: Int = scenarioTree.size,
+    E: Int = scenarioTree.inputEvents.size,
+    O: Int = scenarioTree.outputEvents.size,
+    X: Int = scenarioTree.inputNames.size,
+    Z: Int = scenarioTree.outputNames.size,
+    U: Int = scenarioTree.uniqueInputs.size
+): ParallelModularBasicVariables {
     /* Modularized BasicVariables */
-    val modularBasicVariables: MultiArray<BasicVariables> =
-        MultiArray.create(M) { (m) ->
-            BasicVariables(
-                scenarioTree = scenarioTree,
-                C = C, K = K,
-                transitionDestination = modularTransitionDestination[m],
-                transitionInputEvent = modularTransitionInputEvent[m],
-                transitionFiring = modularTransitionFiring[m],
-                firstFired = modularFirstFired[m],
-                notFired = modularNotFired[m],
-                stateOutputEvent = modularStateOutputEvent[m],
-                stateAlgorithmTop = modularStateAlgorithmTop[m],
-                stateAlgorithmBot = modularStateAlgorithmBot[m],
-                actualTransitionFunction = modularActualTransitionFunction[m],
-                mapping = modularMapping[m]
-            )
-        }
+    val modularBasicVariables = MultiArray.create(M) { (m) ->
+        declareBasicVariables(
+            scenarioTree = scenarioTree,
+            C = C, K = K,
+            V = V, E = E, O = O, X = X, Z = Z, U = U
+        )
+    }
+    /* Interface variables */
+    val moduleControllingOutputVariable = newArray(Z, M, one = true)
+
+    return ParallelModularBasicVariables(
+        scenarioTree = scenarioTree,
+        M = M, C = C, K = K,
+        V = V, E = E, O = O, X = X, Z = Z, U = U,
+        modularBasicVariables = modularBasicVariables,
+        moduleControllingOutputVariable = moduleControllingOutputVariable
+    )
 }

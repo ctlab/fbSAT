@@ -3,7 +3,9 @@ package ru.ifmo.fbsat.core.task.modular.basic.consecutive
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
+import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
 
 @Suppress("PropertyName")
 class ConsecutiveModularBasicVariables(
@@ -12,29 +14,17 @@ class ConsecutiveModularBasicVariables(
     val M: Int,
     val C: Int,
     val K: Int,
-    /* Core variables */
-    val modularTransitionDestination: MultiArray<IntMultiArray>,
-    val modularTransitionInputEvent: MultiArray<IntMultiArray>,
-    val modularTransitionFiring: MultiArray<IntMultiArray>,
-    val modularFirstFired: MultiArray<IntMultiArray>,
-    val modularNotFired: MultiArray<IntMultiArray>,
-    val modularStateOutputEvent: MultiArray<IntMultiArray>,
-    val modularStateAlgorithmTop: MultiArray<IntMultiArray>,
-    val modularStateAlgorithmBot: MultiArray<IntMultiArray>,
-    /* Interface variables */
-    val modularActualTransitionFunction: MultiArray<IntMultiArray>,
+    val V: Int,
+    val E: Int,
+    val O: Int,
+    val X: Int,
+    val Z: Int,
+    val U: Int,
+    /* Modularized BasicVariables */
+    val modularBasicVariables: MultiArray<BasicVariables>,
     /* Mapping variables */
-    val modularMapping: MultiArray<IntMultiArray>,
     val modularComputedOutputValue: MultiArray<IntMultiArray>
 ) {
-    /* Computable constants */
-    val V: Int = scenarioTree.size
-    val E: Int = scenarioTree.inputEvents.size
-    val O: Int = scenarioTree.outputEvents.size
-    val X: Int = scenarioTree.inputNames.size
-    val Z: Int = scenarioTree.outputNames.size
-    val U: Int = scenarioTree.uniqueInputs.size
-
     /* Cardinality variables */
     var totalizer: IntArray? = null
         internal set
@@ -42,23 +32,42 @@ class ConsecutiveModularBasicVariables(
         internal set
     val T: Int?
         get() = maxTransitions
+}
 
+fun Solver.declareConsecutiveModularBasicVariables(
+    scenarioTree: ScenarioTree,
+    M: Int,
+    C: Int,
+    K: Int,
+    V: Int = scenarioTree.size,
+    E: Int = scenarioTree.inputEvents.size,
+    O: Int = scenarioTree.outputEvents.size,
+    X: Int = scenarioTree.inputNames.size,
+    Z: Int = scenarioTree.outputNames.size,
+    U: Int = scenarioTree.uniqueInputs.size
+): ConsecutiveModularBasicVariables {
     /* Modularized BasicVariables */
-    val modularBasicVariables: MultiArray<BasicVariables> =
-        MultiArray.create(M) { (m) ->
-            BasicVariables(
-                scenarioTree = scenarioTree,
-                C = C, K = K,
-                transitionDestination = modularTransitionDestination[m],
-                transitionInputEvent = modularTransitionInputEvent[m],
-                transitionFiring = modularTransitionFiring[m],
-                firstFired = modularFirstFired[m],
-                notFired = modularNotFired[m],
-                stateOutputEvent = modularStateOutputEvent[m],
-                stateAlgorithmTop = modularStateAlgorithmTop[m],
-                stateAlgorithmBot = modularStateAlgorithmBot[m],
-                actualTransitionFunction = modularActualTransitionFunction[m],
-                mapping = modularMapping[m]
-            )
-        }
+    val modularBasicVariables = MultiArray.create(M) { (m) ->
+        declareBasicVariables(
+            scenarioTree = scenarioTree,
+            C = C,
+            K = K,
+            V = V,
+            E = if (m == 1) E else 1,
+            O = if (m == M) O else 1,
+            X = X,
+            Z = Z,
+            U = U
+        )
+    }
+    /* Mapping variables */
+    val modularComputedOutputValue = MultiArray.create(M) { newArray(V, Z) }
+
+    return ConsecutiveModularBasicVariables(
+        scenarioTree = scenarioTree,
+        M = M, C = C, K = K,
+        V = V, E = E, O = O, X = X, Z = Z, U = U,
+        modularBasicVariables = modularBasicVariables,
+        modularComputedOutputValue = modularComputedOutputValue
+    )
 }
