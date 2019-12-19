@@ -7,7 +7,7 @@ import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.core.automaton.TruthTableGuard
 import ru.ifmo.fbsat.core.automaton.endowed
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.utils.TheAssignment
+import ru.ifmo.fbsat.core.solver.RawAssignment
 
 class BasicAssignment(
     val scenarioTree: ScenarioTree,
@@ -40,29 +40,30 @@ class BasicAssignment(
     @Suppress("PropertyName")
     val T: Int = transitionDestination.count { it != 0 }
 
-    companion object : TheAssignment {
+    companion object {
         fun fromRaw(
-            raw: BooleanArray,
+            raw: RawAssignment,
             vars: BasicVariables
-        ): BasicAssignment = with(vars) {
-            BasicAssignment(
-                scenarioTree = scenarioTree,
-                C = C, K = K,
-                V = V, E = E, O = O, X = X, Z = Z, U = U,
-                transitionDestination = raw.convertIntArray(transitionDestination, C, K, domain = 1..C) { 0 },
-                transitionInputEvent = raw.convertIntArray(transitionInputEvent, C, K, domain = 1..E) { 0 },
-                transitionFiring = raw.convertBooleanArray(transitionFiring, C, K, U),
-                firstFired = raw.convertIntArray(firstFired, C, U, domain = 1..K) { 0 },
-                notFired = raw.convertBooleanArray(notFired, C, K, U),
-                stateOutputEvent = raw.convertIntArray(stateOutputEvent, C, domain = 1..O) { 0 },
-                stateAlgorithmTop = raw.convertBooleanArray(stateAlgorithmTop, C, Z),
-                stateAlgorithmBot = raw.convertBooleanArray(stateAlgorithmBot, C, Z),
-                actualTransitionFunction = raw.convertIntArray(actualTransitionFunction, C, E, U, domain = 1..C) { 0 },
-                mapping = raw.convertIntArray(mapping, V, domain = 1..C) { (v) ->
-                    error("mapping[v = $v] is undefined")
+        ): BasicAssignment =
+            with(raw) {
+                with(vars) {
+                    BasicAssignment(
+                        scenarioTree = scenarioTree,
+                        C = C, K = K,
+                        V = V, E = E, O = O, X = X, Z = Z, U = U,
+                        transitionDestination = transitionDestination.convert(),
+                        transitionInputEvent = transitionInputEvent.convert(),
+                        transitionFiring = transitionFiring.convert(),
+                        firstFired = firstFired.convert(),
+                        notFired = notFired.convert(),
+                        stateOutputEvent = stateOutputEvent.convert(),
+                        stateAlgorithmTop = stateAlgorithmTop.convert(),
+                        stateAlgorithmBot = stateAlgorithmBot.convert(),
+                        actualTransitionFunction = actualTransitionFunction.convert(),
+                        mapping = mapping.convert()
+                    )
                 }
-            )
-        }
+            }
     }
 }
 

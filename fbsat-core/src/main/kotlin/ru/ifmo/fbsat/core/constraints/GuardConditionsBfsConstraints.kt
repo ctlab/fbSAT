@@ -8,22 +8,20 @@ import ru.ifmo.fbsat.core.task.modular.extended.consecutive.ConsecutiveModularEx
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
 
 fun Solver.declareGuardConditionsBfsConstraints(extendedVars: ExtendedVariables) {
-    println("Guard conditions BFS constraints")
+    comment("Guard conditions BFS constraints")
     with(extendedVars) {
         for (c in 1..C)
             for (k in 1..K) {
-                val bfsTransitionGuard = newArray(P, P) { (i, j) ->
-                    if (j > i) nodeParent[c, k, j, i] else falseVariable
+                val bfsTransitionGuard = newBoolVar(P, P) { (i, j) ->
+                    if (j > i) nodeParent[c, k, j] eq i else falseVariable
                 }
-                val bfsParentGuard = newArray(P, P) { (j, i) ->
-                    if (i < j) newVariable() else falseVariable
-                }
+                val bfsParentGuard = newIntVar(P) { (j) -> 0 until j }
 
                 comment("F_p")
-                // p[j, i] <=> t[i, j] & AND_{n<i}( ~t[n, j] )
+                // (p[j] = i) <=> t[i, j] & AND_{k<i}( ~t[k, j] ) :: i<j
                 for (j in 1..P)
                     for (i in 1 until j)
-                        iffAnd(bfsParentGuard[j, i], sequence {
+                        iffAnd(bfsParentGuard[j] eq i, sequence {
                             yield(bfsTransitionGuard[i, j])
                             for (n in 1 until i)
                                 yield(-bfsTransitionGuard[n, j])
@@ -34,7 +32,7 @@ fun Solver.declareGuardConditionsBfsConstraints(extendedVars: ExtendedVariables)
                 for (j in 1 until P)
                     for (i in 1 until j)
                         for (n in 1 until i)
-                            imply(bfsParentGuard[j, i], -bfsParentGuard[j + 1, n])
+                            imply(bfsParentGuard[j] eq i, bfsParentGuard[j + 1] neq n)
             }
     }
 }

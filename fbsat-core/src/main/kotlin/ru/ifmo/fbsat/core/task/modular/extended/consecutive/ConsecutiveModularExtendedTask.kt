@@ -85,9 +85,9 @@ class ConsecutiveModularExtendedTask(
                         for (p in 1 until P)
                             for (ch in (p + 1)..P)
                                 implyImply(
-                                    nodeType[c, k, p, NodeType.NOT.value],
-                                    nodeChild[c, k, p, ch],
-                                    -nodeType[c, k, ch, NodeType.NOT.value]
+                                    nodeType[c, k, p] eq NodeType.NOT,
+                                    nodeChild[c, k, p] eq ch,
+                                    nodeType[c, k, ch] neq NodeType.NOT
                                 )
             }
 
@@ -100,7 +100,7 @@ class ConsecutiveModularExtendedTask(
                     for (c in 1..C)
                         for (k in 1..K)
                             for (p in 1..P)
-                                clause(-nodeType[c, k, p, NodeType.OR.value])
+                                clause(nodeType[c, k, p] neq NodeType.OR)
                 }
             }
 
@@ -112,10 +112,10 @@ class ConsecutiveModularExtendedTask(
                         for (k in 1..K)
                             for (p in 1..P)
                                 for (x in 1..X)
-                                    implyAnd(nodeInputVariable[c, k, p, x], sequence {
+                                    implyAnd(nodeInputVariable[c, k, p] eq x, sequence {
                                         for (p_ in 1 until p)
                                             for (x_ in x..X)
-                                                yield(-nodeInputVariable[c, k, p_, x_])
+                                                yield(nodeInputVariable[c, k, p_] neq x_)
                                     })
                 }
             }
@@ -133,12 +133,12 @@ class ConsecutiveModularExtendedTask(
                                         for (x in 1..X)
                                             for (x_ in 1..x)
                                                 clause(
-                                                    -nodeType[c, k, p, t.value],
-                                                    -nodeChild[c, k, p, ch],
-                                                    -nodeType[c, k, ch, NodeType.NOT.value],
-                                                    -nodeType[c, k, ch + 1, NodeType.NOT.value],
-                                                    -nodeInputVariable[c, k, ch, x],
-                                                    -nodeInputVariable[c, k, ch + 1, x_]
+                                                    nodeType[c, k, p] neq t,
+                                                    nodeChild[c, k, p] neq ch,
+                                                    nodeType[c, k, ch] neq NodeType.NOT,
+                                                    nodeType[c, k, ch + 1] neq NodeType.NOT,
+                                                    nodeInputVariable[c, k, ch] neq x,
+                                                    nodeInputVariable[c, k, ch + 1] neq x_
                                                 )
                 }
             }
@@ -159,7 +159,7 @@ class ConsecutiveModularExtendedTask(
                             for (c in 1..C)
                                 for (k in 1..K)
                                     for (p in 1..P)
-                                        yield(-nodeType[c, k, p, NodeType.NONE.value])
+                                        yield(nodeType[c, k, p] neq NodeType.NONE)
                         }
                     }
                 }
@@ -172,7 +172,7 @@ class ConsecutiveModularExtendedTask(
     }
 
     fun infer(): ConsecutiveModularAutomaton? {
-        val rawAssignment = solver.solve()?.data
+        val rawAssignment = solver.solve()
         if (autoFinalize) finalize2()
         if (rawAssignment == null) return null
 

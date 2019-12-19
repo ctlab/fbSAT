@@ -1,10 +1,13 @@
 package ru.ifmo.fbsat.core.task.single.complete
 
-import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.automaton.InputValues
+import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.solver.BoolVar
+import ru.ifmo.fbsat.core.solver.IntVar
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.Var
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
 
 /*
@@ -27,24 +30,24 @@ class CompleteVariables(
     val Z: Int,
     val U: Int,
     /* Core variables */
-    val transitionDestination: IntMultiArray,
-    val transitionInputEvent: IntMultiArray,
-    val transitionFiring: IntMultiArray,
-    val firstFired: IntMultiArray,
-    val notFired: IntMultiArray,
-    val stateOutputEvent: IntMultiArray,
-    val stateAlgorithmTop: IntMultiArray,
-    val stateAlgorithmBot: IntMultiArray,
+    val transitionDestination: IntVar,
+    val transitionInputEvent: IntVar,
+    val transitionFiring: BoolVar,
+    val firstFired: IntVar,
+    val notFired: BoolVar,
+    val stateOutputEvent: IntVar,
+    val stateAlgorithmTop: BoolVar,
+    val stateAlgorithmBot: BoolVar,
     /* Interface variables */
-    val actualTransitionFunction: IntMultiArray,
+    val actualTransitionFunction: IntVar,
     /* Mapping variables */
-    val mapping: IntMultiArray,
+    val mapping: IntVar,
     /* Guard conditions variables */
-    val nodeType: IntMultiArray,
-    val nodeInputVariable: IntMultiArray,
-    val nodeParent: IntMultiArray,
-    val nodeChild: IntMultiArray,
-    val nodeValue: IntMultiArray
+    val nodeType: Var<NodeType>,
+    val nodeInputVariable: IntVar,
+    val nodeParent: IntVar,
+    val nodeChild: IntVar,
+    val nodeValue: BoolVar
 ) {
     /* Computable constants */
     val posUIs: List<InputValues> = scenarioTree.uniqueInputs
@@ -67,17 +70,17 @@ class CompleteVariables(
     var onlyNegUIs: List<InputValues> = emptyList() // Actually `negUIs - posUIs`, but is initially empty
         internal set
     // These variables (until negMapping) use U in domain, so must be redeclared for negU
-    lateinit var negTransitionFiring: IntMultiArray
+    lateinit var negTransitionFiring: BoolVar
         internal set
-    lateinit var negFirstFired: IntMultiArray
+    lateinit var negFirstFired: IntVar
         internal set
-    lateinit var negNotFired: IntMultiArray
+    lateinit var negNotFired: BoolVar
         internal set
-    lateinit var negActualTransitionFunction: IntMultiArray
+    lateinit var negActualTransitionFunction: IntVar
         internal set
-    lateinit var negNodeValue: IntMultiArray
+    lateinit var negNodeValue: BoolVar
         internal set
-    lateinit var negMapping: IntMultiArray
+    lateinit var negMapping: IntVar
         internal set
     val forbiddenLoops: MutableSet<Pair<Int, Int>> = mutableSetOf()
 }

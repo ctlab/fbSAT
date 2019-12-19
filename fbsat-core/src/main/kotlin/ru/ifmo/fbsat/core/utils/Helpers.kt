@@ -14,6 +14,7 @@ import okio.source
 import ru.ifmo.fbsat.core.automaton.InputEvent
 import ru.ifmo.fbsat.core.automaton.OutputEvent
 import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
+import ru.ifmo.fbsat.core.solver.BoolVar
 import java.io.File
 import kotlin.random.Random
 
@@ -176,8 +177,8 @@ fun algorithmChoice(
     v: Int,
     c: Int,
     z: Int,
-    algorithmTop: IntMultiArray,
-    algorithmBot: IntMultiArray
+    algorithmTop: BoolVar,
+    algorithmBot: BoolVar
 ): Int {
     val p = tree.parent(v)
     val oldValue = tree.outputValue(p, z)
@@ -194,6 +195,15 @@ fun algorithmChoice(
 fun <T> Iterable<T>.joinPadded(length: Int, separator: String = " "): String =
     joinToString(separator) { it.toString().padStart(length) }
 
+val <T> MultiArray<T>.multiIndices: Sequence<IntArray>
+    get() = cartesianProduct(shape.map { 1..it }).map { it.toIntArray() }
+
+fun <T> MultiArray<T>.withMultiIndex(): Sequence<Pair<IntArray, T>> =
+    multiIndices.zip(values.asSequence())
+
+fun <T, R> MultiArray<T>.mapMultiIndexed(transform: (IntArray, T) -> R): Sequence<R> =
+    withMultiIndex().map { (index, value) -> transform(index, value) }
+
 fun <T, R> MultiArray<T>.mapValues(transform: (T) -> R): MultiArray<R> =
     MultiArray.create(shape) { index -> transform(get(*index)) }
 
@@ -202,3 +212,5 @@ fun <T> MultiArray<T>.mapValuesToInt(transform: (T) -> Int): IntMultiArray =
 
 fun <T> MultiArray<T>.mapValuesToBoolean(transform: (T) -> Boolean): BooleanMultiArray =
     BooleanMultiArray.create(shape) { index -> transform(get(*index)) }
+
+fun <T> T.applyIfNotNull(block: (T.() -> Unit)?): T = apply { if (block != null) block() }

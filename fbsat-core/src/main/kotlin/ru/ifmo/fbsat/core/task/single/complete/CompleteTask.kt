@@ -13,7 +13,6 @@ import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedAssignment
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedTask
 import ru.ifmo.fbsat.core.task.single.extended.toAutomaton
-import ru.ifmo.fbsat.core.utils.TheAssignment
 import ru.ifmo.fbsat.core.utils.checkMapping
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.secondsSince
@@ -120,36 +119,36 @@ class CompleteTask(
                 val newOnlyNegUs = newOnlyNegUIs.map(::getNegU)
 
                 /* Variables */
-                negTransitionFiring = newArray(C, K, negU) { (c, k, u) ->
+                negTransitionFiring = newBoolVar(C, K, negU) { (c, k, u) ->
                     inputChoice(u,
                         { negTransitionFiring[c, k, it] },
                         { transitionFiring[c, k, it] })
                 }
-                negFirstFired = newArray(C, negU, K + 1, one = true) { (c, u, k) ->
+                negFirstFired = newIntVar(C, negU, init = { (c, u, k), _ ->
                     inputChoice(u,
-                        { negFirstFired[c, it, k] },
-                        { firstFired[c, it, k] })
-                }
-                negNotFired = newArray(C, K, negU) { (c, k, u) ->
+                        { negFirstFired[c, it] eq 0 },
+                        { firstFired[c, it] eq k })
+                }) { 0..K }
+                negNotFired = newBoolVar(C, K, negU) { (c, k, u) ->
                     inputChoice(u,
                         { negNotFired[c, k, it] },
                         { notFired[c, k, it] })
                 }
-                negActualTransitionFunction = newArray(C, E, negU, C + 1, one = true) { (c, e, u, c2) ->
+                negActualTransitionFunction = newIntVar(C, E, negU, init = { (c, e, u, c2), _ ->
                     inputChoice(u,
-                        { negActualTransitionFunction[c, e, it, c2] },
-                        { actualTransitionFunction[c, e, it, c2] })
-                }
-                negNodeValue = newArray(C, K, P, negU) { (c, k, p, u) ->
+                        { negActualTransitionFunction[c, e, it] eq c2 },
+                        { actualTransitionFunction[c, e, it] eq c2 })
+                }) { 0..C }
+                negNodeValue = newBoolVar(C, K, P, negU) { (c, k, p, u) ->
                     if (p == 1) negTransitionFiring[c, k, u]
                     else inputChoice(u,
                         { negNodeValue[c, k, p, it] },
                         { nodeValue[c, k, p, it] })
                 }
-                negMapping = newArray(negV, C + 1, one = true) { (v, c) ->
+                negMapping = newIntVar(negV, init = { (v, c), _ ->
                     if (v in newNegVs) newVariable()
-                    else negMapping[v, c]
-                }
+                    else negMapping[v] eq c
+                }) { 0..C }
 
                 /* Constraints */
                 declareNegativeAutomatonStructureConstraints(vars, Us = newOnlyNegUs)
@@ -166,7 +165,7 @@ class CompleteTask(
     }
 
     fun infer(): Automaton? {
-        val rawAssignment = solver.solve()?.data
+        val rawAssignment = solver.solve()
         if (autoFinalize) finalize2()
         if (rawAssignment == null) return null
 
@@ -181,10 +180,9 @@ class CompleteTask(
                 )
             ) { "Positive mapping mismatch" }
             check(
-                automaton.checkMapping(scenarios = negativeScenarioTree.negativeScenarios,
-                    mapping = with(TheAssignment) {
-                        rawAssignment.convertIntArray(negMapping, negV, domain = 1..C) { 0 }
-                    }
+                automaton.checkMapping(
+                    scenarios = negativeScenarioTree.negativeScenarios,
+                    mapping = negMapping.convert(rawAssignment)
                 )
             ) { "Negative mapping mismatch" }
         }

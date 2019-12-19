@@ -1,7 +1,8 @@
 package ru.ifmo.fbsat.core.task.single.basic
 
-import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.solver.BoolVar
+import ru.ifmo.fbsat.core.solver.IntVar
 import ru.ifmo.fbsat.core.solver.Solver
 
 @Suppress("PropertyName")
@@ -17,18 +18,18 @@ class BasicVariables(
     val Z: Int,
     val U: Int,
     /* Core variables */
-    val transitionDestination: IntMultiArray,
-    val transitionInputEvent: IntMultiArray,
-    val transitionFiring: IntMultiArray,
-    val firstFired: IntMultiArray,
-    val notFired: IntMultiArray,
-    val stateOutputEvent: IntMultiArray,
-    val stateAlgorithmTop: IntMultiArray,
-    val stateAlgorithmBot: IntMultiArray,
+    val transitionDestination: IntVar,
+    val transitionInputEvent: IntVar,
+    val transitionFiring: BoolVar,
+    val firstFired: IntVar,
+    val notFired: BoolVar,
+    val stateOutputEvent: IntVar,
+    val stateAlgorithmTop: BoolVar,
+    val stateAlgorithmBot: BoolVar,
     /* Interface variables */
-    val actualTransitionFunction: IntMultiArray,
+    val actualTransitionFunction: IntVar,
     /* Mapping variables */
-    val mapping: IntMultiArray
+    val mapping: IntVar
 ) {
     /* Cardinality variables */
     var totalizer: IntArray? = null
@@ -51,18 +52,18 @@ fun Solver.declareBasicVariables(
     U: Int = scenarioTree.uniqueInputs.size
 ): BasicVariables {
     /* Core variables */
-    val transitionDestination = newArray(C, K, C + 1, one = true)
-    val transitionInputEvent = newArray(C, K, E + 1, one = true)
-    val transitionFiring = newArray(C, K, U)
-    val firstFired = newArray(C, U, K + 1)
-    val notFired = newArray(C, K, U)
-    val stateOutputEvent = newArray(C, O + 1, one = true)
-    val stateAlgorithmBot = newArray(C, Z)
-    val stateAlgorithmTop = newArray(C, Z)
+    val transitionDestination = newIntVar(C, K) { 0..C }
+    val transitionInputEvent = newIntVar(C, K) { 0..E }
+    val transitionFiring = newBoolVar(C, K, U)
+    val firstFired = newIntVar(C, U) { 0..K }
+    val notFired = newBoolVar(C, K, U)
+    val stateOutputEvent = newIntVar(C) { 0..O }
+    val stateAlgorithmBot = newBoolVar(C, Z)
+    val stateAlgorithmTop = newBoolVar(C, Z)
     /* Interface variables */
-    val actualTransitionFunction = newArray(C, E, U, C + 1, one = true)
+    val actualTransitionFunction = newIntVar(C, E, U) { 0..C }
     /* Mapping variables */
-    val mapping = newArray(V, C, one = true)
+    val mapping = newIntVar(V) { 1..C }
 
     return BasicVariables(
         scenarioTree = scenarioTree,

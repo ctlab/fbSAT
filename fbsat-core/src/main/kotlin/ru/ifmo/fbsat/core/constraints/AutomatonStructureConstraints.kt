@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.core.constraints
 
-import com.github.lipen.multiarray.IntMultiArray
+import ru.ifmo.fbsat.core.solver.BoolVar
+import ru.ifmo.fbsat.core.solver.IntVar
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.atLeastOne
 import ru.ifmo.fbsat.core.solver.exactlyOne
@@ -86,21 +87,21 @@ fun Solver.declareParallelModularAutomatonStructureConstraints(
         for (z in 1..Z)
             exactlyOne {
                 for (m in 1..M)
-                    yield(moduleControllingOutputVariable[z, m])
+                    yield(moduleControllingOutputVariable[z] eq m)
             }
         // ALO
         for (m in 1..M)
             atLeastOne {
                 for (z in 1..Z)
-                    yield(moduleControllingOutputVariable[z, m])
+                    yield(moduleControllingOutputVariable[z] eq m)
             }
 
         comment("Constraint free variables")
         for (m in 1..M) with(modularBasicVariables[m]) {
             for (z in 1..Z)
                 for (c in 2..C) {
-                    imply(-moduleControllingOutputVariable[z, m], stateAlgorithmTop[c, z])
-                    imply(-moduleControllingOutputVariable[z, m], -stateAlgorithmBot[c, z])
+                    imply(moduleControllingOutputVariable[z] neq m, stateAlgorithmTop[c, z])
+                    imply(moduleControllingOutputVariable[z] neq m, -stateAlgorithmBot[c, z])
                 }
         }
     }
@@ -153,27 +154,27 @@ private fun Solver.declareAutomatonStructureConstraintsInputless(
     E: Int,
     O: Int,
     Z: Int,
-    stateOutputEvent: IntMultiArray,
-    stateAlgorithmTop: IntMultiArray,
-    stateAlgorithmBot: IntMultiArray,
-    transitionDestination: IntMultiArray,
-    transitionInputEvent: IntMultiArray
+    stateOutputEvent: IntVar,
+    stateAlgorithmTop: BoolVar,
+    stateAlgorithmBot: BoolVar,
+    transitionDestination: IntVar,
+    transitionInputEvent: IntVar
 ) {
     when (Globals.EPSILON_OUTPUT_EVENTS) {
         EpsilonOutputEvents.START -> {
             comment("Start state produces epsilon event")
-            clause(stateOutputEvent[1, O + 1])
+            clause(stateOutputEvent[1] eq 0)
         }
         EpsilonOutputEvents.ONLYSTART -> {
             comment("Only start state produces epsilon event")
-            clause(stateOutputEvent[1, O + 1])
+            clause(stateOutputEvent[1] eq 0)
             for (c in 2..C)
-                clause(-stateOutputEvent[c, O + 1])
+                clause(stateOutputEvent[c] neq 0)
         }
         EpsilonOutputEvents.NONE -> {
             comment("No state can produce epsilon event")
             for (c in 1..C)
-                clause(-stateOutputEvent[c, O + 1])
+                clause(stateOutputEvent[c] neq 0)
         }
     }
 
@@ -207,8 +208,8 @@ private fun Solver.declareAutomatonStructureConstraintsInputless(
     for (c in 1..C)
         for (k in 1 until K)
             imply(
-                transitionDestination[c, k, C + 1],
-                transitionDestination[c, k + 1, C + 1]
+                transitionDestination[c, k] eq 0,
+                transitionDestination[c, k + 1] eq 0
             )
 
     comment("Only null-transitions have no input event")
@@ -216,8 +217,8 @@ private fun Solver.declareAutomatonStructureConstraintsInputless(
     for (c in 1..C)
         for (k in 1..K)
             iff(
-                transitionDestination[c, k, C + 1],
-                transitionInputEvent[c, k, E + 1]
+                transitionDestination[c, k] eq 0,
+                transitionInputEvent[c, k] eq 0
             )
 }
 
@@ -226,23 +227,23 @@ private fun Solver.declareAutomatonStructureConstraintsForInput(
     C: Int,
     K: Int,
     E: Int,
-    transitionDestination: IntMultiArray,
-    transitionInputEvent: IntMultiArray,
-    transitionFiring: IntMultiArray,
-    firstFired: IntMultiArray,
-    notFired: IntMultiArray,
-    actualTransitionFunction: IntMultiArray
+    transitionDestination: IntVar,
+    transitionInputEvent: IntVar,
+    transitionFiring: BoolVar,
+    firstFired: IntVar,
+    notFired: BoolVar,
+    actualTransitionFunction: IntVar
 ) {
     comment("First fired definition")
     // (firstFired = k) <=> transitionFiring[k] & notFired[k-1]
     for (c in 1..C) {
         iff(
-            firstFired[c, u, 1],
+            firstFired[c, u] eq 1,
             transitionFiring[c, 1, u]
         )
         for (k in 2..K)
             iffAnd(
-                firstFired[c, u, k],
+                firstFired[c, u] eq k,
                 transitionFiring[c, k, u],
                 notFired[c, k - 1, u]
             )
@@ -267,7 +268,7 @@ private fun Solver.declareAutomatonStructureConstraintsForInput(
     // firstFired[0] <=> notFired[K}
     for (c in 1..C)
         iff(
-            firstFired[c, u, K + 1],
+            firstFired[c, u] eq 0,
             notFired[c, K, u]
         )
 
@@ -286,15 +287,15 @@ private fun Solver.declareAutomatonStructureConstraintsForInput(
     for (i in 1..C)
         for (e in 1..E)
             for (j in 1..C)
-                iffOr(actualTransitionFunction[i, e, u, j], sequence {
+                iffOr(actualTransitionFunction[i, e, u] eq j, sequence {
                     for (k in 1..K) {
                         // aux <=> (transitionDestination[q,k] = q') & (transitionInputEvent[q,k] = e) & (firstFired[q,u] = k)
                         val aux = newVariable()
                         iffAnd(
                             aux,
-                            transitionDestination[i, k, j],
-                            transitionInputEvent[i, k, e],
-                            firstFired[i, u, k]
+                            transitionDestination[i, k] eq j,
+                            transitionInputEvent[i, k] eq e,
+                            firstFired[i, u] eq k
                         )
                         yield(aux)
                     }

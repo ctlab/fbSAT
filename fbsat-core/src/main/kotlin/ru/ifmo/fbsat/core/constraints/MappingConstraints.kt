@@ -1,8 +1,9 @@
 package ru.ifmo.fbsat.core.constraints
 
-import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
+import ru.ifmo.fbsat.core.solver.BoolVar
+import ru.ifmo.fbsat.core.solver.IntVar
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffImply
@@ -69,7 +70,7 @@ fun Solver.declarePositiveMappingConstraints(
                     val lhsAux = newVariable()
                     iffOr(lhsAux, sequence {
                         for (k in 1..K)
-                            yield(transitionDestination[i, k, j])
+                            yield(transitionDestination[i, k] eq j)
                     })
 
                     val rhsAux = newVariable()
@@ -77,7 +78,7 @@ fun Solver.declarePositiveMappingConstraints(
                         for (v in scenarioTree.activeVertices) {
                             val p = scenarioTree.parent(v)
                             val aux = newVariable()
-                            iffAnd(aux, mapping[p, i], mapping[v, j])
+                            iffAnd(aux, mapping[p] eq i, mapping[v] eq j)
                             yield(aux)
                         }
                     })
@@ -140,8 +141,8 @@ fun Solver.declareNegativeMappingConstraints(
             comment("Non-satisfaction propagation")
             // (negMapping[tp(v)] = 0) => (negMapping[v] = 0)
             imply(
-                negMapping[p, C + 1],
-                negMapping[v, C + 1]
+                negMapping[p] eq 0,
+                negMapping[v] eq 0
             )
         }
 
@@ -152,8 +153,8 @@ fun Solver.declareNegativeMappingConstraints(
                 if (forbiddenLoops.add(v to l))
                     for (c in 1..C)
                         imply(
-                            negMapping[v, c],
-                            -negMapping[l, c]
+                            negMapping[v] eq c,
+                            negMapping[l] neq c
                         )
     }
 }
@@ -212,7 +213,7 @@ fun Solver.declarePositiveParallelModularMappingConstraints(
                         val lhsAux = newVariable()
                         iffOr(lhsAux, sequence {
                             for (k in 1..K)
-                                yield(transitionDestination[i, k, j])
+                                yield(transitionDestination[i, k] eq j)
                         })
 
                         val rhsAux = newVariable()
@@ -220,7 +221,7 @@ fun Solver.declarePositiveParallelModularMappingConstraints(
                             for (v in scenarioTree.activeVertices) {
                                 val p = scenarioTree.parent(v)
                                 val aux = newVariable()
-                                iffAnd(aux, mapping[p, i], mapping[v, j])
+                                iffAnd(aux, mapping[p] eq i, mapping[v] eq j)
                                 yield(aux)
                             }
                         })
@@ -291,7 +292,7 @@ fun Solver.declarePositiveConsecutiveModularMappingConstraints(
                 for (c in 1..C)
                     for (z in 1..Z)
                         implyIff(
-                            mapping[v, c],
+                            mapping[v] eq c,
                             modularComputedOutputValue[1][v, z],
                             when (scenarioTree.outputValue(p, z)) {
                                 true -> stateAlgorithmTop[c, z]
@@ -305,7 +306,7 @@ fun Solver.declarePositiveConsecutiveModularMappingConstraints(
                 for (c in 1..C)
                     for (z in 1..Z)
                         implyIffIte(
-                            mapping[v, c],
+                            mapping[v] eq c,
                             modularComputedOutputValue[m][v, z],
                             modularComputedOutputValue[m - 1][v, z],
                             stateAlgorithmTop[c, z],
@@ -317,10 +318,10 @@ fun Solver.declarePositiveConsecutiveModularMappingConstraints(
 }
 
 private fun Solver.declareMappingConstraintsForRoot(
-    mapping: IntMultiArray
+    mapping: IntVar
 ) {
     comment("Root maps to the initial state")
-    clause(mapping[1, 1])
+    clause(mapping[1] eq 1)
 }
 
 private fun Solver.declareMappingConstraintsForActiveNode(
@@ -328,11 +329,11 @@ private fun Solver.declareMappingConstraintsForActiveNode(
     tree: ScenarioTreeInterface,
     C: Int,
     Z: Int,
-    stateOutputEvent: IntMultiArray,
-    stateAlgorithmTop: IntMultiArray,
-    stateAlgorithmBot: IntMultiArray,
-    actualTransitionFunction: IntMultiArray,
-    mapping: IntMultiArray
+    stateOutputEvent: IntVar,
+    stateAlgorithmTop: BoolVar,
+    stateAlgorithmBot: BoolVar,
+    actualTransitionFunction: IntVar,
+    mapping: IntVar
 ) {
     val p = tree.parent(v)
     val e = tree.inputEvent(v)
@@ -344,11 +345,11 @@ private fun Solver.declareMappingConstraintsForActiveNode(
     for (i in 1..C)
         for (j in 1..C)
             implyIffAnd(
-                mapping[p, i],
-                mapping[v, j],
+                mapping[p] eq i,
+                mapping[v] eq j,
                 sequence {
-                    yield(actualTransitionFunction[i, e, u, j])
-                    yield(stateOutputEvent[j, o])
+                    yield(actualTransitionFunction[i, e, u] eq j)
+                    yield(stateOutputEvent[j] eq o)
                     for (z in 1..Z)
                         yield(
                             algorithmChoice(
@@ -367,9 +368,9 @@ private fun Solver.declareMappingConstraintsForPassiveNode(
     tree: ScenarioTreeInterface,
     C: Int,
     O: Int,
-    stateOutputEvent: IntMultiArray,
-    actualTransitionFunction: IntMultiArray,
-    mapping: IntMultiArray,
+    stateOutputEvent: IntVar,
+    actualTransitionFunction: IntVar,
+    mapping: IntVar,
     isPositive: Boolean
 ) {
     val p = tree.parent(v)
@@ -381,34 +382,34 @@ private fun Solver.declareMappingConstraintsForPassiveNode(
         // mapping[v] = mapping[tp(v)]
         for (c in 1..C)
             imply(
-                mapping[p, c],
-                mapping[v, c]
+                mapping[p] eq c,
+                mapping[v] eq c
             )
 
         comment("Constraining actualTransitionFunction for passive node v = $v")
         // actualTransition[mapping[tp(v)],tie(v),tin(v)] = 0
         for (c in 1..C)
             imply(
-                mapping[p, c],
-                actualTransitionFunction[c, e, u, C + 1]
+                mapping[p] eq c,
+                actualTransitionFunction[c, e, u] eq 0
             )
     } else {
         comment("Mapping propagation for passive node v = $v")
         // (negMapping[v] = negMapping[tp(v)]) | (negMapping[v] = 0)
         for (c in 1..C)
             implyOr(
-                mapping[p, c],
-                mapping[v, c],
-                mapping[v, C + 1]
+                mapping[p] eq c,
+                mapping[v] eq c,
+                mapping[v] eq 0
             )
 
         comment("Constraining actualTransitionFunction for passive node v = $v")
         // (negMapping[v] != 0) => (negActualTransition[mapping[tp(v)],tie(v),tin(v)] = 0)
         for (c in 1..C)
             implyIff(
-                mapping[p, c],
-                mapping[v, c],
-                actualTransitionFunction[c, e, u, C + 1]
+                mapping[p] eq c,
+                mapping[v] eq c,
+                actualTransitionFunction[c, e, u] eq 0
             )
     }
 }
@@ -419,12 +420,12 @@ private fun Solver.declareParallelModularMappingConstraintsForActiveNode(
     tree: ScenarioTreeInterface,
     C: Int,
     Z: Int,
-    stateOutputEvent: IntMultiArray,
-    stateAlgorithmTop: IntMultiArray,
-    stateAlgorithmBot: IntMultiArray,
-    actualTransitionFunction: IntMultiArray,
-    moduleControllingOutputVariable: IntMultiArray,
-    mapping: IntMultiArray
+    stateOutputEvent: IntVar,
+    stateAlgorithmTop: BoolVar,
+    stateAlgorithmBot: BoolVar,
+    actualTransitionFunction: IntVar,
+    moduleControllingOutputVariable: IntVar,
+    mapping: IntVar
 ) {
     val p = tree.parent(v)
     val e = tree.inputEvent(v)
@@ -436,17 +437,17 @@ private fun Solver.declareParallelModularMappingConstraintsForActiveNode(
     for (i in 1..C)
         for (j in 1..C)
             implyIffAnd(
-                mapping[p, i],
-                mapping[v, j],
+                mapping[p] eq i,
+                mapping[v] eq j,
                 sequence {
-                    yield(actualTransitionFunction[i, e, u, j])
-                    yield(stateOutputEvent[j, o])
+                    yield(actualTransitionFunction[i, e, u] eq j)
+                    yield(stateOutputEvent[j] eq o)
                     for (z in 1..Z)
                         yield(
                             newVariable().also { aux ->
                                 iffImply(
                                     aux,
-                                    moduleControllingOutputVariable[z, m],
+                                    moduleControllingOutputVariable[z] eq m,
                                     algorithmChoice(
                                         tree = tree,
                                         v = v, c = j, z = z,
@@ -467,10 +468,10 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForActiveNode(
     M: Int,
     C: Int,
     Z: Int,
-    stateOutputEvent: IntMultiArray,
-    actualTransitionFunction: IntMultiArray,
-    mapping: IntMultiArray,
-    modularComputedOutputValue: MultiArray<IntMultiArray>
+    stateOutputEvent: IntVar,
+    actualTransitionFunction: IntVar,
+    mapping: IntVar,
+    modularComputedOutputValue: MultiArray<BoolVar>
 ) {
     val p = tree.parent(v)
     val e = tree.inputEvent(v)
@@ -484,16 +485,16 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForActiveNode(
             for (i in 1..C)
                 for (j in 1..C)
                     implyIff(
-                        mapping[p, i],
-                        mapping[v, j],
-                        actualTransitionFunction[i, e, u, j]
+                        mapping[p] eq i,
+                        mapping[v] eq j,
+                        actualTransitionFunction[i, e, u] eq j
                     )
 
             // stateOutputEvent[mapping[v]] = CNF
             for (c in 1..C)
                 imply(
-                    mapping[v, c],
-                    stateOutputEvent[c, 1]
+                    mapping[v] eq c,
+                    stateOutputEvent[c] eq 1
                 )
         }
         M -> {
@@ -501,11 +502,11 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForActiveNode(
             for (i in 1..C)
                 for (j in 1..C)
                     implyIffAnd(
-                        mapping[p, i],
-                        mapping[v, j],
+                        mapping[p] eq i,
+                        mapping[v] eq j,
                         sequence {
-                            yield(actualTransitionFunction[i, 1, u, j]) // Note: e=REQ
-                            yield(stateOutputEvent[j, o])
+                            yield(actualTransitionFunction[i, 1, u] eq j) // Note: e=REQ
+                            yield(stateOutputEvent[j] eq o)
                             for (z in 1..Z)
                                 yield(modularComputedOutputValue[m][v, z] * boolToSign(tree.outputValue(v, z)))
                         }
@@ -516,16 +517,16 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForActiveNode(
             for (i in 1..C)
                 for (j in 1..C)
                     implyIff(
-                        mapping[p, i],
-                        mapping[v, j],
-                        actualTransitionFunction[i, 1, u, j] // Note: e=REQ
+                        mapping[p] eq i,
+                        mapping[v] eq j,
+                        actualTransitionFunction[i, 1, u] eq j // Note: e=REQ
                     )
 
             // stateOutputEvent[mapping[v]] = CNF
             for (c in 1..C)
                 imply(
-                    mapping[v, c],
-                    stateOutputEvent[c, 1]
+                    mapping[v] eq c,
+                    stateOutputEvent[c] eq 1
                 )
         }
     }.exhaustive
@@ -537,8 +538,8 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForPassiveNode(
     tree: ScenarioTreeInterface,
     M: Int,
     C: Int,
-    actualTransitionFunction: IntMultiArray,
-    mapping: IntMultiArray
+    actualTransitionFunction: IntVar,
+    mapping: IntVar
 ) {
     val p = tree.parent(v)
     val e = tree.inputEvent(v)
@@ -550,8 +551,8 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForPassiveNode(
     // mapping[v] = mapping[tp(v)]
     for (c in 1..C)
         imply(
-            mapping[p, c],
-            mapping[v, c]
+            mapping[p] eq c,
+            mapping[v] eq c
         )
 
     if (m == 1) {
@@ -559,16 +560,16 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForPassiveNode(
         // actualTransition[mapping[tp(v)],tie(v),tin(v)] = 0
         for (c in 1..C)
             imply(
-                mapping[p, c],
-                actualTransitionFunction[c, e, u, C + 1]
+                mapping[p] eq c,
+                actualTransitionFunction[c, e, u] eq 0
             )
     } else {
         comment("Constraining actualTransitionFunction for passive node v = $v, module m = $m")
         // actualTransition[mapping[tp(v)],tie(v),tin(v)] = 0
         for (c in 1..C)
             imply(
-                mapping[p, c],
-                actualTransitionFunction[c, 1, u, C + 1] // Note: e=REQ
+                mapping[p] eq c,
+                actualTransitionFunction[c, 1, u] eq 0 // Note: e=REQ
             )
     }
 }

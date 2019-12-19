@@ -74,7 +74,7 @@ class ConsecutiveModularBasicTask(
             for (m in 1..M) with(modularBasicVariables[m]) {
                 for (c in 1..C)
                     for (k in 1..K)
-                        clause(-transitionDestination[c, k, 1])
+                        clause(transitionDestination[c, k] neq 1)
             }
         }
     }
@@ -93,7 +93,7 @@ class ConsecutiveModularBasicTask(
                         for (m in 1..M) with(modularBasicVariables[m]) {
                             for (c in 1..C)
                                 for (k in 1..K)
-                                    yield(-transitionDestination[c, k, C + 1])
+                                    yield(transitionDestination[c, k] neq 0)
                         }
                     }
                 }
@@ -106,7 +106,7 @@ class ConsecutiveModularBasicTask(
     }
 
     fun infer(): ConsecutiveModularAutomaton? {
-        val rawAssignment = solver.solve()?.data
+        val rawAssignment = solver.solve()
         if (autoFinalize) finalize2()
         return rawAssignment?.let { raw ->
             ConsecutiveModularBasicAssignment.fromRaw(raw, vars).toAutomaton()

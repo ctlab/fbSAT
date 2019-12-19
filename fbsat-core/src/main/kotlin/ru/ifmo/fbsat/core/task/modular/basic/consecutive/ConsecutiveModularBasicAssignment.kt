@@ -3,9 +3,9 @@ package ru.ifmo.fbsat.core.task.modular.basic.consecutive
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.task.single.basic.BasicAssignment
 import ru.ifmo.fbsat.core.task.single.basic.toAutomaton
-import ru.ifmo.fbsat.core.utils.TheAssignment
 
 class ConsecutiveModularBasicAssignment(
     val scenarioTree: ScenarioTree,
@@ -28,10 +28,10 @@ class ConsecutiveModularBasicAssignment(
     @Suppress("PropertyName")
     val T: Int = modularBasicAssignment.sumBy { it.T }
 
-    companion object : TheAssignment {
+    companion object {
         @Suppress("LocalVariableName")
         fun fromRaw(
-            raw: BooleanArray,
+            raw: RawAssignment,
             vars: ConsecutiveModularBasicVariables
         ): ConsecutiveModularBasicAssignment = with(vars) {
             ConsecutiveModularBasicAssignment(
