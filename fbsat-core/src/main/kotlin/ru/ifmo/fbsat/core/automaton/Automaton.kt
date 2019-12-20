@@ -3,7 +3,7 @@
 package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.lazycache.LazyCache
-import org.redundent.kotlin.xml.PrintOptions
+import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
@@ -12,6 +12,7 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.graph
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
@@ -347,7 +348,7 @@ class Automaton(
      */
     fun dumpGv(file: File) {
         file.printWriter().use {
-            it.println(this.toGraphvizString())
+            it.println(toGraphvizString())
         }
         Runtime.getRuntime().exec("dot -Tpdf -O $file")
         // Runtime.getRuntime().exec("dot -Tpng -O $file")
@@ -358,7 +359,7 @@ class Automaton(
      */
     fun dumpFbt(file: File, name: String? = null) {
         file.printWriter().use {
-            it.println(this.toFbtString(name))
+            it.println(toFbtString(name))
         }
     }
 
@@ -367,7 +368,7 @@ class Automaton(
      */
     fun dumpSmv(file: File) {
         file.printWriter().use {
-            it.println(this.toSmvString())
+            it.println(toSmvString())
         }
     }
 
@@ -437,12 +438,13 @@ class Automaton(
             if (name != null) {
                 attribute("Name", name)
             }
+            attribute("Namespace", "Main")
             "Identification"("Standard" to "61499-2")
             "VersionInfo"(
                 "Organization" to "nxtControl GmbH",
                 "Version" to "0.0",
                 "Author" to "fbSAT",
-                "Date" to "2011-08-30"
+                "Date" to DateTime.nowLocal().format("yyyy-MM-dd")
             )
             "InterfaceList" {
                 "EventInputs" {
@@ -450,8 +452,9 @@ class Automaton(
                     "Event"("Name" to "INIT")
                     for (inputEvent in inputEvents) {
                         "Event"("Name" to inputEvent.name) {
-                            for (inputName in inputNames)
+                            for (inputName in inputNames) {
                                 "With"("Var" to inputName)
+                            }
                         }
                     }
                 }
@@ -459,8 +462,9 @@ class Automaton(
                     // Note: INITO output event has the same associated variables as all output events
                     for (outputEvent in outputEvents + OutputEvent("INITO")) {
                         "Event"("Name" to outputEvent.name) {
-                            for (outputName in outputNames)
+                            for (outputName in outputNames) {
                                 "With"("Var" to outputName)
+                            }
                         }
                     }
                 }
@@ -502,9 +506,7 @@ class Automaton(
                             "x" to r(), "y" to r()
                         ) {
                             state.algorithm as BinaryAlgorithm
-                            "ECAction"(
-                                "Algorithm" to "${state.id}_${state.algorithm.toFbtString()}"
-                            ) {
+                            "ECAction"("Algorithm" to "s${state.id}_${state.algorithm.toFbtString()}") {
                                 if (state.outputEvent != null)
                                     attribute("Output", state.outputEvent.name)
                             }
@@ -531,9 +533,7 @@ class Automaton(
                         )
                     }
                 }
-                "Algorithm"(
-                    "Name" to "INIT" // INIT algorithm
-                ) {
+                "Algorithm"("Name" to "INIT") {
                     // Note: INIT algorithm zeroes out all variables
                     "ST"(
                         "Text" to BinaryAlgorithm(
@@ -547,16 +547,12 @@ class Automaton(
                         continue
 
                     val algorithm = state.algorithm as BinaryAlgorithm
-                    "Algorithm"(
-                        "Name" to "${state.id}_${algorithm.toFbtString()}"
-                    ) {
-                        "ST"(
-                            "Text" to algorithm.toST(outputNames)
-                        )
+                    "Algorithm"("Name" to "s${state.id}_${algorithm.toFbtString()}") {
+                        "ST"("Text" to algorithm.toST(outputNames))
                     }
                 }
             }
-        }.toString(PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = false))
+        }.toString(Globals.xmlPrintOptions)
     }
 
     /**
@@ -643,4 +639,33 @@ class Automaton(
 
     // Allow companion object extensions
     companion object
+}
+
+fun Automaton.endowed(
+    C: Int,
+    K: Int,
+    stateOutputEvent: (c: Int) -> OutputEvent?,
+    stateAlgorithm: (c: Int) -> Algorithm,
+    transitionDestination: (c: Int, k: Int) -> Int,
+    transitionInputEvent: (c: Int, k: Int) -> InputEvent,
+    transitionGuard: (c: Int, k: Int) -> Guard
+): Automaton = apply {
+    for (c in 1..C)
+        addState(
+            id = c,
+            outputEvent = stateOutputEvent(c),
+            algorithm = stateAlgorithm(c)
+        )
+
+    for (c in 1..C)
+        for (k in 1..K) {
+            val d = transitionDestination(c, k)
+            if (d != 0)
+                addTransition(
+                    sourceId = c,
+                    destinationId = d,
+                    inputEvent = transitionInputEvent(c, k),
+                    guard = transitionGuard(c, k)
+                )
+        }
 }

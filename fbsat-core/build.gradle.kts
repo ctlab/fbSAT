@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 dependencies {
     implementation(kotlin("reflect"))
-    implementation(Libs.kotlin_xml_builder)
+    implementation(Libs.xml_builder)
     implementation(Libs.multiarray)
     implementation(Libs.mordant)
     implementation(Libs.okio)

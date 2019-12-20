@@ -50,17 +50,23 @@ class CompleteTask(
         val nvarStart = solver.numberOfVariables
         val nconStart = solver.numberOfClauses
 
-        vars = CompleteVariables(
-            extVars = extendedTask.vars,
-            negativeScenarioTree = negativeScenarioTree ?: NegativeScenarioTree(
-                inputEvents = scenarioTree.inputEvents,
-                outputEvents = scenarioTree.outputEvents,
-                inputNames = scenarioTree.inputNames,
-                outputNames = scenarioTree.outputNames
+        with(solver) {
+            /* Variables */
+            vars = declareCompleteVariables(
+                extendedVars = extendedTask.vars,
+                negativeScenarioTree = negativeScenarioTree ?: NegativeScenarioTree(
+                    inputEvents = scenarioTree.inputEvents,
+                    outputEvents = scenarioTree.outputEvents,
+                    inputNames = scenarioTree.inputNames,
+                    outputNames = scenarioTree.outputNames
+                )
             )
-        )
+        }
 
+        /* Initial cardinality constraints */
         updateCardinality(maxTotalGuardsSize)
+
+        /* Initial negative constraints */
         updateNegativeReduction()
 
         val nvarDiff = solver.numberOfVariables - nvarStart
@@ -169,18 +175,18 @@ class CompleteTask(
 
         with(vars) {
             check(
-                checkMapping(
-                    automaton = automaton,
+                automaton.checkMapping(
                     scenarios = scenarioTree.scenarios,
                     mapping = assignment.mapping
                 )
             ) { "Positive mapping mismatch" }
-            check(checkMapping(automaton = automaton,
-                scenarios = negativeScenarioTree.negativeScenarios,
-                mapping = with(object : TheAssignment {}) {
-                    rawAssignment.convertIntArray(negMapping, negV, domain = 1..C) { 0 }
-                }
-            )) { "Negative mapping mismatch" }
+            check(
+                automaton.checkMapping(scenarios = negativeScenarioTree.negativeScenarios,
+                    mapping = with(TheAssignment) {
+                        rawAssignment.convertIntArray(negMapping, negV, domain = 1..C) { 0 }
+                    }
+                )
+            ) { "Negative mapping mismatch" }
         }
 
         return automaton

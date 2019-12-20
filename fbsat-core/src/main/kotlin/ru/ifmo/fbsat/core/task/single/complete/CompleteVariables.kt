@@ -4,6 +4,7 @@ import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
 
 /*
@@ -19,6 +20,12 @@ class CompleteVariables(
     val C: Int,
     val K: Int,
     val P: Int,
+    val V: Int,
+    val E: Int,
+    val O: Int,
+    val X: Int,
+    val Z: Int,
+    val U: Int,
     /* Core variables */
     val transitionDestination: IntMultiArray,
     val transitionInputEvent: IntMultiArray,
@@ -40,13 +47,7 @@ class CompleteVariables(
     val nodeValue: IntMultiArray
 ) {
     /* Computable constants */
-    val V: Int = scenarioTree.size
-    val E: Int = scenarioTree.inputEvents.size
-    val O: Int = scenarioTree.outputEvents.size
-    val X: Int = scenarioTree.inputNames.size
-    val Z: Int = scenarioTree.outputNames.size
     val posUIs: List<InputValues> = scenarioTree.uniqueInputs
-    val U: Int = posUIs.size
 
     /* Cardinality variables */
     var totalizer: IntArray? = null
@@ -79,30 +80,31 @@ class CompleteVariables(
     lateinit var negMapping: IntMultiArray
         internal set
     val forbiddenLoops: MutableSet<Pair<Int, Int>> = mutableSetOf()
+}
 
-    constructor(
-        extVars: ExtendedVariables,
-        negativeScenarioTree: NegativeScenarioTree
-    ) : this(
-        scenarioTree = extVars.scenarioTree,
+fun Solver.declareCompleteVariables(
+    extendedVars: ExtendedVariables,
+    negativeScenarioTree: NegativeScenarioTree
+): CompleteVariables = with(extendedVars) {
+    CompleteVariables(
+        scenarioTree = scenarioTree,
         negativeScenarioTree = negativeScenarioTree,
-        C = extVars.C,
-        K = extVars.K,
-        P = extVars.P,
-        transitionDestination = extVars.transitionDestination,
-        transitionInputEvent = extVars.transitionInputEvent,
-        transitionFiring = extVars.transitionFiring,
-        firstFired = extVars.firstFired,
-        notFired = extVars.notFired,
-        stateOutputEvent = extVars.stateOutputEvent,
-        stateAlgorithmTop = extVars.stateAlgorithmTop,
-        stateAlgorithmBot = extVars.stateAlgorithmBot,
-        actualTransitionFunction = extVars.actualTransitionFunction,
-        mapping = extVars.mapping,
-        nodeType = extVars.nodeType,
-        nodeInputVariable = extVars.nodeInputVariable,
-        nodeParent = extVars.nodeParent,
-        nodeChild = extVars.nodeChild,
-        nodeValue = extVars.nodeValue
+        C = C, K = K, P = P,
+        V = V, E = E, O = O, X = X, Z = Z, U = U,
+        transitionDestination = transitionDestination,
+        transitionInputEvent = transitionInputEvent,
+        transitionFiring = transitionFiring,
+        firstFired = firstFired,
+        notFired = notFired,
+        stateOutputEvent = stateOutputEvent,
+        stateAlgorithmTop = stateAlgorithmTop,
+        stateAlgorithmBot = stateAlgorithmBot,
+        actualTransitionFunction = actualTransitionFunction,
+        mapping = mapping,
+        nodeType = nodeType,
+        nodeInputVariable = nodeInputVariable,
+        nodeParent = nodeParent,
+        nodeChild = nodeChild,
+        nodeValue = nodeValue
     )
 }

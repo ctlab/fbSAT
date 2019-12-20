@@ -4,23 +4,26 @@ package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
-import org.redundent.kotlin.xml.PrintOptions
+import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.random
+import ru.ifmo.fbsat.core.utils.writeEventMerger
 import java.io.File
 
+@Suppress("PropertyName")
 class ModularAutomaton(
     val modules: MultiArray<Automaton>, // [M] : Automaton
     val outputVariableModule: IntMultiArray // [Z] : 1..M
 ) {
-    private val M = modules.shape[0]
-    private val Z = outputVariableModule.shape[0]
-    private val moduleOutputVariables: MultiArray<List<Int>> = // [M] : {1..Z}
+    val M: Int = modules.shape[0]
+    val Z: Int = outputVariableModule.shape[0]
+    val moduleOutputVariables: MultiArray<List<Int>> = // [M] : {1..Z}
         MultiArray.create(M) { (m) ->
             (1..Z).filter { z -> outputVariableModule[z] == m }
         }
@@ -121,11 +124,10 @@ class ModularAutomaton(
      */
     fun dumpFbt(file: File, name: String? = null) {
         for (m in 1..M) {
-            modules[m].dumpFbt(file.resolveSibling("module-$m.fbt"), "module-$m")
+            modules[m].dumpFbt(file.resolveSibling("module_$m.fbt"), "module_$m")
         }
-        file.printWriter().use {
-            it.println(this.toFbtString(name))
-        }
+        if (M != 2) writeEventMerger(file.resolveSibling("E_MERGE$M.fbt"), "E_MERGE$M")
+        file.writeText(toFbtString(name))
     }
 
     /**
@@ -138,12 +140,13 @@ class ModularAutomaton(
             if (name != null) {
                 attribute("Name", name)
             }
+            attribute("Namespace", "Main")
             "Identification"("Standard" to "61499-2")
             "VersionInfo"(
                 "Organization" to "nxtControl GmbH",
                 "Version" to "0.0",
                 "Author" to "fbSAT",
-                "Date" to "2011-08-30"
+                "Date" to DateTime.nowLocal().format("yyyy-MM-dd")
             )
             "InterfaceList" {
                 "EventInputs" {
@@ -187,56 +190,65 @@ class ModularAutomaton(
             "FBNetwork" {
                 for (m in 1..M) {
                     "FB"(
-                        "Name" to "module-$m",
-                        "Type" to "module-$m",
+                        "Name" to "M$m",
+                        "Type" to "module_$m",
+                        "Namespace" to "Main",
                         "x" to r(), "y" to r()
                     )
                 }
-                for (m in 2..M) {
-                    "FB"(
-                        "Name" to "MERGE_${(1..m).joinToString("-")}",
-                        "Type" to "E_MERGE",
-                        "x" to r(), "y" to r()
-                    )
+                for (outputEvent in outputEvents) {
+                    for (m in 2..M) {
+                        "FB"(
+                            "Name" to "EM_${outputEvent.name}",
+                            "Type" to if (M == 2) "E_MERGE" else "E_MERGE$M",
+                            "Namespace" to if (M == 2) "IEC61499.Standard" else "Main",
+                            "x" to r(), "y" to r()
+                        )
+                    }
                 }
                 "EventConnections" {
                     for (inputEvent in inputEvents) {
                         for (m in 1..M) {
                             "Connection"(
                                 "Source" to inputEvent.name,
-                                "Destination" to "module-$m.${inputEvent.name}"
+                                "Destination" to "M$m.${inputEvent.name}"
                             )
                         }
                     }
                     for (outputEvent in outputEvents) {
-                        "Connection"(
-                            "Source" to "module-1.${outputEvent.name}",
-                            "Destination" to "MERGE_1-2.EI1"
-                        )
-                        for (m in 2..M) {
+                        for (m in 1..M) {
                             "Connection"(
-                                "Source" to "module-$m.${outputEvent.name}",
-                                "Destination" to "MERGE_${(1..m).joinToString("-")}.EI2"
-                            )
-                        }
-                        for (m in 3..M) {
-                            "Connection"(
-                                "Source" to "MERGE_${(1 until m).joinToString("-")}.EO",
-                                "Destination" to "MERGE_${(1..m).joinToString("-")}.EI1"
+                                "Source" to "M$m.${outputEvent.name}",
+                                "Destination" to "EM_${outputEvent.name}.EI$m"
                             )
                         }
                         "Connection"(
-                            "Source" to "MERGE_${(1..M).joinToString("-")}.EO",
+                            "Source" to "EM_${outputEvent.name}.EO",
                             "Destination" to outputEvent.name
                         )
                     }
+                    // Handle initialization
+                    "Connection"(
+                        "Source" to "INIT",
+                        "Destination" to "M1.INIT"
+                    )
+                    for (m in 1 until M) {
+                        "Connection"(
+                            "Source" to "M$m.INITO",
+                            "Destination" to "M${m + 1}.INIT"
+                        )
+                    }
+                    "Connection"(
+                        "Source" to "M$M.INITO",
+                        "Destination" to "INITO"
+                    )
                 }
                 "DataConnections" {
                     for (inputName in inputNames) {
                         for (m in 1..M) {
                             "Connection"(
                                 "Source" to inputName,
-                                "Destination" to "module-$m.$inputName"
+                                "Destination" to "M$m.$inputName"
                             )
                         }
                     }
@@ -244,13 +256,13 @@ class ModularAutomaton(
                         for (z in moduleOutputVariables[m]) {
                             val outputName = outputNames[z - 1]
                             "Connection"(
-                                "Source" to "module-$m.$outputName",
+                                "Source" to "M$m.$outputName",
                                 "Destination" to outputName
                             )
                         }
                     }
                 }
             }
-        }.toString(PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = false))
+        }.toString(Globals.xmlPrintOptions)
     }
 }

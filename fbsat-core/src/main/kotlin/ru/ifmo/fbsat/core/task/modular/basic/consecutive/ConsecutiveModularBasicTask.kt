@@ -1,23 +1,25 @@
-package ru.ifmo.fbsat.core.task.single.basic
+package ru.ifmo.fbsat.core.task.modular.basic.consecutive
 
 import com.soywiz.klock.DateTime
-import ru.ifmo.fbsat.core.automaton.Automaton
-import ru.ifmo.fbsat.core.constraints.declareAutomatonBfsConstraints
-import ru.ifmo.fbsat.core.constraints.declareAutomatonStructureConstraints
-import ru.ifmo.fbsat.core.constraints.declarePositiveMappingConstraints
+import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
+import ru.ifmo.fbsat.core.automaton.InputEvent
+import ru.ifmo.fbsat.core.automaton.OutputEvent
+import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonBfsConstraints
+import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonStructureConstraints
+import ru.ifmo.fbsat.core.constraints.declarePositiveConsecutiveModularMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareComparatorLessThanOrEqual
 import ru.ifmo.fbsat.core.solver.declareTotalizer
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.checkMapping
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.secondsSince
 import java.io.File
 
-@Suppress("LocalVariableName")
-class BasicTask(
+@Suppress("LocalVariableName", "MemberVisibilityCanBePrivate")
+class ConsecutiveModularBasicTask(
     scenarioTree: ScenarioTree,
+    numberOfModules: Int, // M
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
     maxTransitions: Int? = null, // T, unconstrained if null
@@ -26,25 +28,31 @@ class BasicTask(
     val autoFinalize: Boolean = true,
     isEncodeReverseImplication: Boolean = true
 ) {
-    val vars: BasicVariables
+    val maxOutgoingTransitions: Int = maxOutgoingTransitions ?: numberOfStates
+    val vars: ConsecutiveModularBasicVariables
 
     init {
+        require(numberOfModules >= 2) { "Number of modules must be at least 2" }
+        require(scenarioTree.inputEvents == listOf(InputEvent("REQ")))
+        require(scenarioTree.outputEvents == listOf(OutputEvent("CNF")))
+
         val timeStart = DateTime.nowLocal()
         val nvarStart = solver.numberOfVariables
         val nconStart = solver.numberOfClauses
 
         with(solver) {
             /* Variables */
-            vars = declareBasicVariables(
-                scenarioTree,
+            vars = declareConsecutiveModularBasicVariables(
+                scenarioTree = scenarioTree,
+                M = numberOfModules,
                 C = numberOfStates,
                 K = maxOutgoingTransitions ?: numberOfStates
             )
 
             /* Constraints */
-            declareAutomatonStructureConstraints(vars)
-            if (Globals.IS_BFS_AUTOMATON) declareAutomatonBfsConstraints(vars)
-            declarePositiveMappingConstraints(vars, isEncodeReverseImplication = isEncodeReverseImplication)
+            declareConsecutiveModularAutomatonStructureConstraints(vars)
+            if (Globals.IS_BFS_AUTOMATON) declareConsecutiveModularAutomatonBfsConstraints(vars)
+            declarePositiveConsecutiveModularMappingConstraints(vars, isEncodeReverseImplication)
             declareAdhocConstraints()
         }
 
@@ -54,7 +62,7 @@ class BasicTask(
         val nvarDiff = solver.numberOfVariables - nvarStart
         val nconDiff = solver.numberOfClauses - nconStart
         log.info(
-            "BasicTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s"
+            "ConsecutiveModularBasicTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s"
                 .format(secondsSince(timeStart))
         )
     }
@@ -62,8 +70,8 @@ class BasicTask(
     private fun Solver.declareAdhocConstraints() {
         comment("ADHOC constraints")
         with(vars) {
-            if (Globals.IS_FORBID_TRANSITIONS_TO_FIRST_STATE) {
-                comment("Ad-hoc: no transition to the first state")
+            comment("Ad-hoc: no transition to the first state")
+            for (m in 1..M) with(modularBasicVariables[m]) {
                 for (c in 1..C)
                     for (k in 1..K)
                         clause(-transitionDestination[c, k, 1])
@@ -71,6 +79,7 @@ class BasicTask(
         }
     }
 
+    @Suppress("DuplicatedCode")
     fun updateCardinality(newMaxTransitions: Int?) {
         with(solver) {
             with(vars) {
@@ -81,9 +90,11 @@ class BasicTask(
                 if (newMaxTransitions == null && !Globals.IS_ENCODE_TOTALIZER) return
                 if (totalizer == null) {
                     totalizer = declareTotalizer {
-                        for (c in 1..C)
-                            for (k in 1..K)
-                                yield(-transitionDestination[c, k, C + 1])
+                        for (m in 1..M) with(modularBasicVariables[m]) {
+                            for (c in 1..C)
+                                for (k in 1..K)
+                                    yield(-transitionDestination[c, k, C + 1])
+                        }
                     }
                 }
                 if (newMaxTransitions == null) return
@@ -94,24 +105,12 @@ class BasicTask(
         }
     }
 
-    fun infer(): Automaton? {
+    fun infer(): ConsecutiveModularAutomaton? {
         val rawAssignment = solver.solve()?.data
         if (autoFinalize) finalize2()
-        if (rawAssignment == null) return null
-
-        val assignment = BasicAssignment.fromRaw(rawAssignment, vars)
-        val automaton = assignment.toAutomaton()
-
-        with(vars) {
-            check(
-                automaton.checkMapping(
-                    scenarios = scenarioTree.scenarios,
-                    mapping = assignment.mapping
-                )
-            ) { "Positive mapping mismatch" }
+        return rawAssignment?.let { raw ->
+            ConsecutiveModularBasicAssignment.fromRaw(raw, vars).toAutomaton()
         }
-
-        return automaton
     }
 
     fun finalize2() {

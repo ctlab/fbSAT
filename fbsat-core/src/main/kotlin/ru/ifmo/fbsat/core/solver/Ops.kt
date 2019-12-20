@@ -151,6 +151,25 @@ fun Solver.implyIffOr(x1: Int, x2: Int, xs: Iterable<Int>) {
 }
 
 /**
+ * [x1] => ([x2] <=> ITE([a], [b], [c])
+ */
+fun Solver.implyIffIte(x1: Int, x2: Int, a: Int, b: Int, c: Int) {
+    clause(-x1, x2, -a, -b)
+    clause(-x1, -x2, -a, b)
+    clause(-x1, x2, a, -c)
+    clause(-x1, -x2, a, c)
+}
+
+fun Solver.implyIff_Ands_Ites(x1: Int, x2: Int, ands: List<Int>, ites: List<Triple<Int, Int, Int>>) {
+    val zs = ites.map { (c, g, f) ->
+        newVariable().also {
+            iffIte(it, c, g, f)
+        }
+    }
+    implyIffAnd(x1, x2, ands + zs)
+}
+
+/**
  * [lhs] <=> [rhs]
  */
 fun Solver.iff(lhs: Int, rhs: Int) {
@@ -191,4 +210,11 @@ fun Solver.iffImply(aux: Int, lhs: Int, rhs: Int) {
     clause(-aux, -lhs, rhs)
     clause(aux, lhs)
     clause(aux, -rhs)
+}
+
+fun Solver.iffIte(aux: Int, x1: Int, x2: Int, x3: Int) {
+    clause(aux, -x1, -x2)
+    clause(-aux, -x1, x2)
+    clause(aux, x1, -x3)
+    clause(-aux, x1, x3)
 }

@@ -1,6 +1,8 @@
 package ru.ifmo.fbsat.core.utils
 
+import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.IntMultiArray
+import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.DateTimeTz
 import okio.BufferedSource
@@ -141,8 +143,7 @@ val <T> T.exhaustive: T
 inline fun <reified T> mutableListOfNulls(size: Int): MutableList<T?> = MutableList(size) { null }
 
 fun <T> Iterable<T>.withIndex(start: Int): Iterable<Pair<Int, T>> {
-    var i = start
-    return asSequence().map { (i++) to it }.asIterable()
+    return asSequence().mapIndexed { index, value -> (start + index) to value }.asIterable()
 }
 
 fun <T> Iterable<T>.firstIndexed(predicate: (Int, T) -> Boolean): T =
@@ -189,3 +190,15 @@ fun algorithmChoice(
         else -> error("Weird combination of values: $values")
     }
 }
+
+fun <T> Iterable<T>.joinPadded(length: Int, separator: String = " "): String =
+    joinToString(separator) { it.toString().padStart(length) }
+
+fun <T, R> MultiArray<T>.mapValues(transform: (T) -> R): MultiArray<R> =
+    MultiArray.create(shape) { index -> transform(get(*index)) }
+
+fun <T> MultiArray<T>.mapValuesToInt(transform: (T) -> Int): IntMultiArray =
+    IntMultiArray.create(shape) { index -> transform(get(*index)) }
+
+fun <T> MultiArray<T>.mapValuesToBoolean(transform: (T) -> Boolean): BooleanMultiArray =
+    BooleanMultiArray.create(shape) { index -> transform(get(*index)) }

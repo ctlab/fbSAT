@@ -68,7 +68,7 @@ class TruthTableGuard(
 
     override fun eval(inputValues: InputValues): Boolean {
         // return truthTable[uniqueInputs.indexOf(inputValues)] in "1x"
-        return truthTable[inputValues] ?: true
+        return truthTable.getValue(inputValues) ?: true
     }
 
     override fun toSimpleString(): String {
@@ -82,7 +82,14 @@ class TruthTableGuard(
             "[${truthTable.values.take(3).toBinaryString()}${Typography.ellipsis}]"
 
     override fun toFbtString(): String {
-        return "TRUTH_TABLE"
+        return truthTable.entries
+            .filter { (_, value) -> value == true }
+            .joinToString(" OR ") { (input, _) ->
+                "(" + inputNames.zip(input.values).joinToString(" AND ") { (name, value) ->
+                    if (value) name
+                    else "NOT $name"
+                } + ")"
+            }
     }
 
     override fun toSmvString(): String {
@@ -369,6 +376,6 @@ enum class NodeType(val value: Int) {
     companion object {
         private val lookup: Map<Int, NodeType> = values().associateBy(NodeType::value)
 
-        fun from(value: Int) = lookup[value]
+        fun from(value: Int): NodeType = lookup.getValue(value)
     }
 }

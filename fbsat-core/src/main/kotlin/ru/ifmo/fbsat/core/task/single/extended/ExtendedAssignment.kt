@@ -3,126 +3,125 @@ package ru.ifmo.fbsat.core.task.single.extended
 import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
-import ru.ifmo.fbsat.core.automaton.Algorithm
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.automaton.ParseTreeGuard
+import ru.ifmo.fbsat.core.automaton.endowed
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.utils.TheAssignment
+import ru.ifmo.fbsat.core.utils.mapValues
 
 class ExtendedAssignment(
     val scenarioTree: ScenarioTree,
     val C: Int,
     val K: Int,
     val P: Int,
-    val mapping: IntMultiArray, // [V] : 1..C
-    val transition: IntMultiArray, // [C, K] : 0..C
-    val actualTransition: IntMultiArray, // [C, E, U] : 0..C
-    val inputEvent: IntMultiArray, // [C, K] : 0..E
-    val outputEvent: IntMultiArray, // [C] : 0..O
-    val algorithm: MultiArray<Algorithm>, // [C]: Algorithm
-    val nodeType: MultiArray<NodeType>, // [C, K, P] : NodeType
-    val terminal: IntMultiArray, // [C, K, P] : 0..X
-    val parent: IntMultiArray, // [C, K, P] : 0..P
-    val child: IntMultiArray, // [C, K, P] : 0..P
-    val nodeValue: BooleanMultiArray, // [C, K, P, U] : Boolean
-    val rootValue: BooleanMultiArray, // [C, K, U] : Boolean
+    val V: Int,
+    val E: Int,
+    val O: Int,
+    val X: Int,
+    val Z: Int,
+    val U: Int,
+    /* Core variables */
+    val transitionDestination: IntMultiArray, // [C, K] : 0..C
+    val transitionInputEvent: IntMultiArray, // [C, K]  0..E
+    val transitionFiring: BooleanMultiArray, // [C, K, U] : Boolean
     val firstFired: IntMultiArray, // [C, U] : 0..K
-    val notFired: BooleanMultiArray // [C, U, K] : Boolean
+    val notFired: BooleanMultiArray, // [C, K, U] : Boolean
+    val stateOutputEvent: IntMultiArray, // [C] : 0..O
+    val stateAlgorithmTop: BooleanMultiArray, // [C, Z] : Boolean
+    val stateAlgorithmBot: BooleanMultiArray, // [C, Z] : Boolean
+    /* Interface variables */
+    val actualTransitionFunction: IntMultiArray, // [C, E, U] : [0..C]
+    /* Mapping variables */
+    val mapping: IntMultiArray, // [V] : 1..C
+    /* Guard conditions variables */
+    val nodeType: MultiArray<NodeType>, // [C, K, P] : NodeType
+    val nodeInputVariable: IntMultiArray, // [C, K, P] : 0..X
+    val nodeParent: IntMultiArray, // [C, K, P] : 0..P
+    val nodeChild: IntMultiArray, // [C, K, P] : 0..P
+    val nodeValue: BooleanMultiArray // [C, K, P, U] : Boolean
 ) {
     /**
      * Number of transitions.
      */
     @Suppress("PropertyName")
-    val T: Int = transition.values.count { it != 0 }
+    val T: Int = transitionDestination.count { it != 0 }
     /**
      * Total guards size (total number of nodes in all parse trees).
      */
     @Suppress("PropertyName")
-    val N: Int = nodeType.values.count { it != NodeType.NONE }
+    val N: Int = nodeType.count { it != NodeType.NONE }
 
     companion object : TheAssignment {
-        fun fromRaw(raw: BooleanArray, vars: ExtendedVariables): ExtendedAssignment {
-            return with(vars) {
-                ExtendedAssignment(
-                    scenarioTree = scenarioTree,
-                    C = C,
-                    K = K,
-                    P = P,
-                    mapping = raw.convertIntArray(mapping, V, domain = 1..C) { (v) ->
-                        error("mapping[v = $v] is undefined")
-                    },
-                    transition = raw.convertIntArray(transitionDestination, C, K, domain = 1..C) { 0 },
-                    actualTransition = raw.convertIntArray(actualTransitionFunction, C, E, U, domain = 1..C) { 0 },
-                    inputEvent = raw.convertIntArray(transitionInputEvent, C, K, domain = 1..E) { 0 },
-                    outputEvent = raw.convertIntArray(stateOutputEvent, C, domain = 1..O) { 0 },
-                    algorithm = MultiArray.create(C) { (c) ->
-                        BinaryAlgorithm(
-                            // Note: c is 1-based, z is 0-based
-                            algorithm0 = BooleanArray(Z) { z -> raw[stateAlgorithmBot[c, z + 1] - 1] },
-                            algorithm1 = BooleanArray(Z) { z -> raw[stateAlgorithmTop[c, z + 1] - 1] }
-                        )
-                    },
-                    nodeType = MultiArray.create(C, K, P) { (c, k, p) ->
-                        NodeType.values().firstOrNull { nt ->
-                            nodeType[c, k, p, nt.value].let { t ->
-                                when (t) {
-                                    Solver.trueVariable -> true
-                                    Solver.falseVariable -> false
-                                    else -> raw[t - 1]
-                                }
-                            }
-                        } ?: error("nodeType[c,k,p = $c,$k,$p] is undefined")
-                    },
-                    terminal = raw.convertIntArray(nodeInputVariable, C, K, P, domain = 1..X) { 0 },
-                    parent = raw.convertIntArray(nodeParent, C, K, P, domain = 1..P) { 0 },
-                    child = raw.convertIntArray(nodeChild, C, K, P, domain = 1..P) { 0 },
-                    nodeValue = raw.convertBooleanArray(nodeValue, C, K, P, U),
-                    rootValue = raw.convertBooleanArray(transitionFiring, C, K, U),
-                    firstFired = raw.convertIntArray(firstFired, C, U, domain = 1..K) { 0 },
-                    notFired = raw.convertBooleanArray(notFired, C, K, U)
-                )
-            }
+        fun fromRaw(
+            raw: BooleanArray,
+            vars: ExtendedVariables
+        ): ExtendedAssignment = with(vars) {
+            ExtendedAssignment(
+                scenarioTree = scenarioTree,
+                C = C, K = K, P = P,
+                V = V, E = E, O = O, X = X, Z = Z, U = U,
+                transitionDestination = raw.convertIntArray(transitionDestination, C, K, domain = 1..C) { 0 },
+                transitionInputEvent = raw.convertIntArray(transitionInputEvent, C, K, domain = 1..E) { 0 },
+                transitionFiring = raw.convertBooleanArray(transitionFiring, C, K, U),
+                firstFired = raw.convertIntArray(firstFired, C, U, domain = 1..K) { 0 },
+                notFired = raw.convertBooleanArray(notFired, C, K, U),
+                stateOutputEvent = raw.convertIntArray(stateOutputEvent, C, domain = 1..O) { 0 },
+                stateAlgorithmTop = raw.convertBooleanArray(stateAlgorithmTop, C, Z),
+                stateAlgorithmBot = raw.convertBooleanArray(stateAlgorithmBot, C, Z),
+                actualTransitionFunction = raw.convertIntArray(actualTransitionFunction, C, E, U, domain = 1..C) { 0 },
+                mapping = raw.convertIntArray(mapping, V, domain = 1..C) { (v) ->
+                    error("mapping[v = $v] is undefined")
+                },
+                nodeType = raw.convertIntArray(nodeType, C, K, P, domain = 1..5) { (c, k, p) ->
+                    error("nodeType[c,k,p = $c,$k,$p] is undefined")
+                }.mapValues {
+                    NodeType.from(it)
+                },
+                nodeInputVariable = raw.convertIntArray(nodeInputVariable, C, K, P, domain = 1..X) { 0 },
+                nodeParent = raw.convertIntArray(nodeParent, C, K, P, domain = 1..P) { 0 },
+                nodeChild = raw.convertIntArray(nodeChild, C, K, P, domain = 1..P) { 0 },
+                nodeValue = raw.convertBooleanArray(nodeValue, C, K, P, U)
+            )
         }
     }
 }
 
-@Suppress("LocalVariableName")
-fun ExtendedAssignment.toAutomaton(): Automaton {
-    val automaton = Automaton(scenarioTree)
-
-    for (c in 1..C)
-        automaton.addState(
-            id = c,
-            outputEvent = outputEvent[c].let {
-                if (it == 0) null else scenarioTree.outputEvents[it - 1]
-            },
-            algorithm = algorithm[c]
-        )
-
-    for (c in 1..C)
-        for (k in 1..K)
-            if (transition[c, k] != 0)
-                automaton.addTransition(
-                    sourceId = c,
-                    destinationId = transition[c, k],
-                    inputEvent = scenarioTree.inputEvents[inputEvent[c, k] - 1],
-                    guard = ParseTreeGuard(
-                        nodeType = MultiArray.create(P) { (p) -> nodeType[c, k, p] },
-                        terminal = IntMultiArray.create(P) { (p) -> terminal[c, k, p] },
-                        parent = IntMultiArray.create(P) { (p) -> parent[c, k, p] },
-                        childLeft = IntMultiArray.create(P) { (p) -> child[c, k, p] },
-                        childRight = IntMultiArray.create(P) { (p) ->
-                            if (nodeType[c, k, p] in setOf(NodeType.AND, NodeType.OR))
-                                child[c, k, p] + 1
-                            else
-                                0
-                        },
-                        inputNames = scenarioTree.inputNames
-                    )
-                )
-
-    return automaton
-}
+fun ExtendedAssignment.toAutomaton(): Automaton =
+    Automaton(scenarioTree).endowed(
+        C = C, K = K,
+        stateOutputEvent = { c ->
+            stateOutputEvent[c].let { o ->
+                if (o == 0) null else scenarioTree.outputEvents[o - 1]
+            }
+        },
+        stateAlgorithm = { c ->
+            BinaryAlgorithm(
+                algorithm0 = BooleanArray(Z) { z0 -> stateAlgorithmBot[c, z0 + 1] },
+                algorithm1 = BooleanArray(Z) { z0 -> stateAlgorithmTop[c, z0 + 1] }
+            )
+        },
+        transitionDestination = { c, k ->
+            transitionDestination[c, k]
+        },
+        transitionInputEvent = { c, k ->
+            scenarioTree.inputEvents[transitionInputEvent[c, k] - 1]
+        },
+        transitionGuard = { c, k ->
+            ParseTreeGuard(
+                nodeType = MultiArray.create(P) { (p) -> nodeType[c, k, p] },
+                terminal = IntMultiArray.create(P) { (p) -> nodeInputVariable[c, k, p] },
+                parent = IntMultiArray.create(P) { (p) -> nodeParent[c, k, p] },
+                childLeft = IntMultiArray.create(P) { (p) -> nodeChild[c, k, p] },
+                childRight = IntMultiArray.create(P) { (p) ->
+                    if (nodeType[c, k, p] in setOf(NodeType.AND, NodeType.OR))
+                        nodeChild[c, k, p] + 1
+                    else
+                        0
+                },
+                inputNames = scenarioTree.inputNames
+            )
+        }
+    )

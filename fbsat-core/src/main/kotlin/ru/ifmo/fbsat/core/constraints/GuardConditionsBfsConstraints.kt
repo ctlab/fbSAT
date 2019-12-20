@@ -4,9 +4,11 @@ import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.Solver.Companion.falseVariable
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.imply
+import ru.ifmo.fbsat.core.task.modular.extended.consecutive.ConsecutiveModularExtendedVariables
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
 
-fun Solver.declareGuardsBfsConstraints(extendedVars: ExtendedVariables) {
+fun Solver.declareGuardConditionsBfsConstraints(extendedVars: ExtendedVariables) {
+    println("Guard conditions BFS constraints")
     with(extendedVars) {
         for (c in 1..C)
             for (k in 1..K) {
@@ -34,5 +36,19 @@ fun Solver.declareGuardsBfsConstraints(extendedVars: ExtendedVariables) {
                         for (n in 1 until i)
                             imply(bfsParentGuard[j, i], -bfsParentGuard[j + 1, n])
             }
+    }
+}
+
+fun Solver.declareConsecutiveModularGuardConditionsBfsConstraints(
+    consecutiveModularExtendedVariables: ConsecutiveModularExtendedVariables
+) {
+    comment("Consecutive modular guard conditions BFS constraints")
+    with(consecutiveModularExtendedVariables) {
+        for (m in 1..M) {
+            comment("Consecutive modular guard conditions BFS constraints: for module m = $m")
+            declareGuardConditionsBfsConstraints(
+                modularExtendedVariables[m]
+            )
+        }
     }
 }

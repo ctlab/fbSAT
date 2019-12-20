@@ -10,6 +10,7 @@ import ru.ifmo.fbsat.core.solver.implyImply
 import ru.ifmo.fbsat.core.solver.implyImplyIff
 import ru.ifmo.fbsat.core.solver.implyImplyIffAnd
 import ru.ifmo.fbsat.core.solver.implyImplyIffOr
+import ru.ifmo.fbsat.core.task.modular.extended.consecutive.ConsecutiveModularExtendedVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
 import ru.ifmo.fbsat.core.utils.boolToSign
@@ -61,6 +62,20 @@ fun Solver.declareNegativeGuardConditionsConstraints(
                 nodeInputVariable = nodeInputVariable,
                 nodeChild = nodeChild,
                 nodeValue = negNodeValue
+            )
+        }
+    }
+}
+
+fun Solver.declareConsecutiveModularGuardConditionsConstraints(
+    consecutiveModularExtendedVariables: ConsecutiveModularExtendedVariables
+) {
+    comment("Consecutive modular guard conditions constraints")
+    with(consecutiveModularExtendedVariables) {
+        for (m in 1..M) {
+            comment("Consecutive modular guard conditions constraints: for module m = $m")
+            declarePositiveGuardConditionsConstraints(
+                modularExtendedVariables[m]
             )
         }
     }

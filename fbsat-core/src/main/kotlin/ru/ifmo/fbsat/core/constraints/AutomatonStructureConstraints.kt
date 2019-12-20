@@ -2,10 +2,14 @@ package ru.ifmo.fbsat.core.constraints
 
 import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.atLeastOne
+import ru.ifmo.fbsat.core.solver.exactlyOne
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
+import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
+import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
@@ -63,6 +67,83 @@ fun Solver.declareNegativeAutomatonStructureConstraints(
                 actualTransitionFunction = negActualTransitionFunction
             )
         }
+    }
+}
+
+fun Solver.declareParallelModularAutomatonStructureConstraints(
+    parallelModularBasicVariables: ParallelModularBasicVariables
+) {
+    comment("Parallel modular automaton structure constraints")
+    with(parallelModularBasicVariables) {
+        for (m in 1..M) {
+            comment("Parallel modular automaton structure constraints: for module m = $m")
+            declareAutomatonStructureConstraints(modularBasicVariables[m])
+        }
+
+        comment("Additional parallel modular structure constraints")
+
+        // EO
+        for (z in 1..Z)
+            exactlyOne {
+                for (m in 1..M)
+                    yield(moduleControllingOutputVariable[z, m])
+            }
+        // ALO
+        for (m in 1..M)
+            atLeastOne {
+                for (z in 1..Z)
+                    yield(moduleControllingOutputVariable[z, m])
+            }
+
+        comment("Constraint free variables")
+        for (m in 1..M) with(modularBasicVariables[m]) {
+            for (z in 1..Z)
+                for (c in 2..C) {
+                    imply(-moduleControllingOutputVariable[z, m], stateAlgorithmTop[c, z])
+                    imply(-moduleControllingOutputVariable[z, m], -stateAlgorithmBot[c, z])
+                }
+        }
+    }
+}
+
+fun Solver.declareConsecutiveModularAutomatonStructureConstraints(
+    consecutiveModularBasicVariables: ConsecutiveModularBasicVariables
+) {
+    check(Globals.EPSILON_OUTPUT_EVENTS == EpsilonOutputEvents.NONE)
+    check(Globals.START_STATE_ALGORITHMS == StartStateAlgorithms.ZERONOTHING || Globals.START_STATE_ALGORITHMS == StartStateAlgorithms.ZERO)
+
+    comment("Consecutive modular automaton structure constraints")
+    with(consecutiveModularBasicVariables) {
+        for (m in 1..M) with(modularBasicVariables[m]) {
+            comment("Consecutive modular automaton structure constraints for module m = $m: inputless")
+            declareAutomatonStructureConstraintsInputless(
+                // Note: O = E, it is not a typo!
+                C = C, K = K, E = E, O = E, Z = Z,
+                stateOutputEvent = stateOutputEvent,
+                stateAlgorithmTop = stateAlgorithmTop,
+                stateAlgorithmBot = stateAlgorithmBot,
+                transitionDestination = transitionDestination,
+                transitionInputEvent = transitionInputEvent
+            )
+
+            for (u in 1..U) {
+                comment("Consecutive modular automaton structure constraints for module m = $m: for input u = $u")
+                declareAutomatonStructureConstraintsForInput(
+                    u = u,
+                    C = C, K = K, E = E,
+                    transitionDestination = transitionDestination,
+                    transitionInputEvent = transitionInputEvent,
+                    transitionFiring = transitionFiring,
+                    firstFired = firstFired,
+                    notFired = notFired,
+                    actualTransitionFunction = actualTransitionFunction
+                )
+            }
+        }
+
+        /* Additional constraints */
+
+        // TODO: Additional consecutive parallel constraints
     }
 }
 
