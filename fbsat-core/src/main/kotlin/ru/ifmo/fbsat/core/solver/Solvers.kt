@@ -2,87 +2,41 @@ package ru.ifmo.fbsat.core.solver
 
 import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.IntMultiArray
+import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.DateTime
 import okio.Buffer
 import okio.buffer
 import okio.sink
 import okio.source
-import ru.ifmo.fbsat.core.solver.Solver.Companion.falseVariable
-import ru.ifmo.fbsat.core.solver.Solver.Companion.trueVariable
-import ru.ifmo.fbsat.core.utils.cartesianProduct
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.secondsSince
 import ru.ifmo.fbsat.core.utils.timeIt
 import kotlin.math.absoluteValue
-import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
-
-class SolverContext internal constructor(val solver: Solver) : MutableMap<String, Any> by mutableMapOf() {
-    operator fun <T : Any> invoke(value: T): ContextProvider<T> = ContextProvider(value)
-    // operator fun <T : Any> invoke(init: Solver.() -> T): ContextProvider<T> = invoke(solver.init())
-
-    inner class ContextProvider<T : Any>(val value: T) {
-        operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): ReadOnlyProperty<Any?, T> {
-            this@SolverContext[property.name] = value
-            return object : ReadOnlyProperty<Any?, T> {
-                override fun getValue(thisRef: Any?, property: KProperty<*>): T {
-                    // To return dynamic value, use this:
-                    // return this@SolverContext.getForce(property.name)
-                    return value
-                }
-            }
-        }
-    }
-}
-
-class RawAssignment(
-    internal val data: BooleanArray,
-    internal val context: SolverContext
-) : Map<String, Any> by context {
-    operator fun get(index: Int): Boolean = data[index - 1]
-
-    fun booleanArray(
-        variable: IntMultiArray,
-        vararg shape: Int
-    ) = BooleanMultiArray.create(shape) { index ->
-        @Suppress("ReplaceGetOrSet")
-        when (val v = variable.get(*index)) {
-            trueVariable -> true
-            falseVariable -> false
-            else -> this[v]
-        }
-    }
-
-    fun intArray(
-        variable: IntMultiArray,
-        vararg shape: Int,
-        domain: Iterable<Int>,
-        onAbsence: (index: IntArray) -> Int /*= { error("variable[index = $it] is undefined") }*/
-    ) = IntMultiArray.create(shape) { index ->
-        domain.firstOrNull { last ->
-            @Suppress("ReplaceGetOrSet")
-            when (val v = variable.get(*index, last)) {
-                trueVariable -> true
-                falseVariable -> false
-                else -> this[v]
-            }
-        } ?: onAbsence(index)
-    }
-}
 
 // TODO: make solver able to reset
 
 interface Solver {
     val numberOfVariables: Int
     val numberOfClauses: Int
-    val context: SolverContext
 
     fun newVariable(): Int
-    fun newArray(
+
+    fun newBoolVar(
         vararg shape: Int,
-        one: Boolean = false,
         init: (IntArray) -> Int = { newVariable() }
-    ): IntMultiArray
+    ): BoolVar
+
+    fun newIntVar(
+        vararg shape: Int,
+        init: (IntArray, Int) -> Int = { _, _ -> newVariable() },
+        domain: (IntArray) -> Iterable<Int>
+    ): IntVar
+
+    fun <T> newVar(
+        vararg shape: Int,
+        init: (IntArray, T) -> Int = { _, _ -> newVariable() },
+        domain: (IntArray) -> Iterable<T>
+    ): Var<T>
 
     fun comment(comment: String)
 
@@ -100,6 +54,12 @@ interface Solver {
 
         fun default(command: String): Solver = DefaultSolver(command)
         fun incremental(command: String): Solver = IncrementalSolver(command)
+        fun mock(): Solver = object : AbstractSolver() {
+            override fun comment(comment: String) = TODO()
+            override fun _clause(literals: Iterable<Int>) = TODO()
+            override fun _solve(): BooleanArray? = TODO()
+            override fun finalize2() = TODO()
+        }
     }
 }
 
@@ -108,40 +68,33 @@ private abstract class AbstractSolver : Solver {
         protected set
     final override var numberOfClauses = 0
         protected set
-    @Suppress("LeakingThis")
-    final override val context: SolverContext = SolverContext(this)
 
     final override fun newVariable(): Int = ++numberOfVariables
-    final override fun newArray(
+
+    override fun newBoolVar(
         vararg shape: Int,
-        one: Boolean,
         init: (IntArray) -> Int
-    ): IntMultiArray {
-        val array = IntMultiArray.create(shape, init)
+    ): BoolVar = BoolVar.create(shape, init)
 
-        if (one) {
-            check(shape.size > 1)
-            comment("ExactlyOne for shape ${shape.toList()}")
-            for (index in cartesianProduct(shape.dropLast(1).map { 1..it })) {
-                comment("ExactlyOne for index $index: {1..${shape.last()}}")
-                exactlyOne {
-                    for (last in 1..shape.last())
-                        @Suppress("ReplaceGetOrSet")
-                        yield(array.get(*(index + last).toIntArray()))
-                }
-            }
-        }
+    override fun newIntVar(
+        vararg shape: Int,
+        init: (IntArray, Int) -> Int,
+        domain: (IntArray) -> Iterable<Int>
+    ): IntVar = IntVar.create(shape, init, { exactlyOne(values) }, domain)
 
-        return array
-    }
+    override fun <T> newVar(
+        vararg shape: Int,
+        init: (IntArray, T) -> Int,
+        domain: (IntArray) -> Iterable<T>
+    ): Var<T> = Var.create(shape, init, { exactlyOne(values) }, domain)
 
     @Suppress("FunctionName")
     protected abstract fun _clause(literals: Iterable<Int>)
 
     final override fun clause(literals: Iterable<Int>) {
-        if (trueVariable in literals) return
+        if (Solver.trueVariable in literals) return
 
-        val lits = literals.filter { it != falseVariable }
+        val lits = literals.filter { it != Solver.falseVariable }
         if (lits.isNotEmpty()) {
             ++numberOfClauses
             _clause(lits)
@@ -155,7 +108,7 @@ private abstract class AbstractSolver : Solver {
     @Suppress("FunctionName")
     protected abstract fun _solve(): BooleanArray?
 
-    final override fun solve(): RawAssignment? = _solve()?.let { RawAssignment(it, context) }
+    final override fun solve(): RawAssignment? = _solve()?.let { RawAssignment(it) }
 }
 
 private class DefaultSolver(private val command: String) : AbstractSolver() {

@@ -1,9 +1,11 @@
 package ru.ifmo.fbsat.core.task.single.extended
 
-import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.solver.BoolVar
+import ru.ifmo.fbsat.core.solver.IntVar
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.Var
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 
 @Suppress("PropertyName")
@@ -20,24 +22,24 @@ class ExtendedVariables(
     val Z: Int,
     val U: Int,
     /* Core variables */
-    val transitionDestination: IntMultiArray,
-    val transitionInputEvent: IntMultiArray,
-    val transitionFiring: IntMultiArray,
-    val firstFired: IntMultiArray,
-    val notFired: IntMultiArray,
-    val stateOutputEvent: IntMultiArray,
-    val stateAlgorithmTop: IntMultiArray,
-    val stateAlgorithmBot: IntMultiArray,
+    val transitionDestination: IntVar,
+    val transitionInputEvent: IntVar,
+    val transitionFiring: BoolVar,
+    val firstFired: IntVar,
+    val notFired: BoolVar,
+    val stateOutputEvent: IntVar,
+    val stateAlgorithmTop: BoolVar,
+    val stateAlgorithmBot: BoolVar,
     /* Interface variables */
-    val actualTransitionFunction: IntMultiArray,
+    val actualTransitionFunction: IntVar,
     /* Mapping variables */
-    val mapping: IntMultiArray,
+    val mapping: IntVar,
     /* Guard conditions variables */
-    val nodeType: IntMultiArray,
-    val nodeInputVariable: IntMultiArray,
-    val nodeParent: IntMultiArray,
-    val nodeChild: IntMultiArray,
-    val nodeValue: IntMultiArray
+    val nodeType: Var<NodeType>,
+    val nodeInputVariable: IntVar,
+    val nodeParent: IntVar,
+    val nodeChild: IntVar,
+    val nodeValue: BoolVar
 ) {
     /* Cardinality variables */
     var totalizer: IntArray? = null
@@ -53,17 +55,11 @@ fun Solver.declareExtendedVariables(
     P: Int
 ): ExtendedVariables = with(basicVars) {
     /* Guard conditions variables */
-    val nodeType = newArray(C, K, P, NodeType.values().size, one = true)
-    val nodeInputVariable = newArray(C, K, P, X + 1, one = true)
-    val nodeParent = newArray(C, K, P, P + 1, one = true) { (_, _, p, par) ->
-        if (par < p || par == P + 1) newVariable()
-        else Solver.falseVariable
-    }
-    val nodeChild = newArray(C, K, P, P + 1, one = true) { (_, _, p, ch) ->
-        if (ch > p || ch == P + 1) newVariable()
-        else Solver.falseVariable
-    }
-    val nodeValue = newArray(C, K, P, U) { (c, k, p, u) ->
+    val nodeType = newVar(C, K, P) { NodeType.values().asIterable() }
+    val nodeInputVariable = newIntVar(C, K, P) { 0..X }
+    val nodeParent = newIntVar(C, K, P) { (_, _, p) -> 0 until p }
+    val nodeChild = newIntVar(C, K, P) { (_, _, p) -> ((p + 1)..P) + 0 }
+    val nodeValue = newBoolVar(C, K, P, U) { (c, k, p, u) ->
         if (p == 1) transitionFiring[c, k, u]
         else newVariable()
     }

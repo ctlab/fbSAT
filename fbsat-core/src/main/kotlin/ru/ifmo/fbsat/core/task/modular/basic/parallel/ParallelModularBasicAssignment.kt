@@ -8,8 +8,8 @@ import ru.ifmo.fbsat.core.automaton.ModularAutomaton
 import ru.ifmo.fbsat.core.automaton.TruthTableGuard
 import ru.ifmo.fbsat.core.automaton.endowed
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.task.single.basic.BasicAssignment
-import ru.ifmo.fbsat.core.utils.TheAssignment
 
 class ParallelModularBasicAssignment(
     val scenarioTree: ScenarioTree,
@@ -37,10 +37,10 @@ class ParallelModularBasicAssignment(
             (1..Z).filter { z -> moduleControllingOutputVariable[z] == m }
         }
 
-    companion object : TheAssignment {
+    companion object {
         @Suppress("LocalVariableName")
         fun fromRaw(
-            raw: BooleanArray,
+            raw: RawAssignment,
             vars: ParallelModularBasicVariables
         ): ParallelModularBasicAssignment = with(vars) {
             ParallelModularBasicAssignment(
@@ -50,13 +50,7 @@ class ParallelModularBasicAssignment(
                 modularBasicAssignment = MultiArray.create(M) { (m) ->
                     BasicAssignment.fromRaw(raw, modularBasicVariables[m])
                 },
-                moduleControllingOutputVariable = raw.convertIntArray(
-                    moduleControllingOutputVariable,
-                    Z,
-                    domain = 1..M
-                ) { (z) ->
-                    error("moduleControllingOutputVariable[z = $z] is undefined")
-                }
+                moduleControllingOutputVariable = moduleControllingOutputVariable.convert(raw)
             )
         }
     }

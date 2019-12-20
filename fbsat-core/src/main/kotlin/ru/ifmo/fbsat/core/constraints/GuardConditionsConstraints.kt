@@ -1,9 +1,11 @@
 package ru.ifmo.fbsat.core.constraints
 
-import com.github.lipen.multiarray.IntMultiArray
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
+import ru.ifmo.fbsat.core.solver.BoolVar
+import ru.ifmo.fbsat.core.solver.IntVar
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.Var
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.implyImply
@@ -86,11 +88,11 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
     K: Int,
     P: Int,
     X: Int,
-    transitionDestination: IntMultiArray,
-    nodeType: IntMultiArray,
-    nodeInputVariable: IntMultiArray,
-    nodeParent: IntMultiArray,
-    nodeChild: IntMultiArray
+    transitionDestination: IntVar,
+    nodeType: Var<NodeType>,
+    nodeInputVariable: IntVar,
+    nodeParent: IntVar,
+    nodeChild: IntVar
 ) {
     comment("None-typed nodes have largest indices")
     // (nodeType[p] = NONE) => (nodeType[p+1] = NONE)
@@ -98,8 +100,8 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
         for (k in 1..K)
             for (p in 1 until P)
                 imply(
-                    nodeType[c, k, p, NodeType.NONE.value],
-                    nodeType[c, k, p + 1, NodeType.NONE.value]
+                    nodeType[c, k, p] eq NodeType.NONE,
+                    nodeType[c, k, p + 1] eq NodeType.NONE
                 )
 
     comment("Only null-transitions have no guard (root is none-typed)")
@@ -107,8 +109,8 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
     for (c in 1..C)
         for (k in 1..K)
             iff(
-                transitionDestination[c, k, C + 1],
-                nodeType[c, k, 1, NodeType.NONE.value]
+                transitionDestination[c, k] eq 0,
+                nodeType[c, k, 1] eq NodeType.NONE
             )
 
     comment("child=>parent relation")
@@ -118,8 +120,8 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
             for (p in 1..P)
                 for (ch in (p + 1)..P)
                     imply(
-                        nodeChild[c, k, p, ch],
-                        nodeParent[c, k, ch, p]
+                        nodeChild[c, k, p] eq ch,
+                        nodeParent[c, k, ch] eq p
                     )
 
     comment("Only typed nodes, except the root, have parents")
@@ -127,8 +129,8 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
         for (k in 1..K)
             for (p in 2..P)
                 iff(
-                    -nodeParent[c, k, p, P + 1],
-                    -nodeType[c, k, p, NodeType.NONE.value]
+                    nodeParent[c, k, p] neq 0,
+                    nodeType[c, k, p] neq NodeType.NONE
                 )
 
     // TERMINALS CONSTRAINTS
@@ -139,8 +141,8 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
         for (k in 1..K)
             for (p in 1..P)
                 iff(
-                    nodeType[c, k, p, NodeType.TERMINAL.value],
-                    -nodeInputVariable[c, k, p, X + 1]
+                    nodeType[c, k, p] eq NodeType.TERMINAL,
+                    nodeInputVariable[c, k, p] neq 0
                 )
 
     comment("Terminals do not have children")
@@ -148,8 +150,8 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
         for (k in 1..K)
             for (p in 1..P)
                 imply(
-                    nodeType[c, k, p, NodeType.TERMINAL.value],
-                    nodeChild[c, k, p, P + 1]
+                    nodeType[c, k, p] eq NodeType.TERMINAL,
+                    nodeChild[c, k, p] eq 0
                 )
 
     // AND/OR NODES CONSTRAINTS
@@ -158,12 +160,12 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
     for (c in 1..C)
         for (k in 1..K) {
             if (P >= 1) {
-                clause(-nodeType[c, k, P, NodeType.AND.value])
-                clause(-nodeType[c, k, P, NodeType.OR.value])
+                clause(nodeType[c, k, P] neq NodeType.AND)
+                clause(nodeType[c, k, P] neq NodeType.OR)
             }
             if (P >= 2) {
-                clause(-nodeType[c, k, P - 1, NodeType.AND.value])
-                clause(-nodeType[c, k, P - 1, NodeType.OR.value])
+                clause(nodeType[c, k, P - 1] neq NodeType.AND)
+                clause(nodeType[c, k, P - 1] neq NodeType.OR)
             }
         }
 
@@ -173,33 +175,44 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
             for (p in 1..(P - 2))
                 for (nt in listOf(NodeType.AND, NodeType.OR))
                     imply(
-                        nodeType[c, k, p, nt.value],
-                        -nodeChild[c, k, p, P]
+                        nodeType[c, k, p] eq nt,
+                        nodeChild[c, k, p] neq P
                     )
 
     comment("11.1. AND/OR nodes have left child")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 2))
-                for (t in listOf(NodeType.AND, NodeType.OR))
+                for (nt in listOf(NodeType.AND, NodeType.OR))
                     imply(
-                        nodeType[c, k, p, t.value],
-                        -nodeChild[c, k, p, P + 1]
+                        nodeType[c, k, p] eq nt,
+                        nodeChild[c, k, p] neq 0
                     )
 
     comment("11.3. AND/OR: hard to explain")
     // parent[p, par] & nodetype[par, AND/OR] => child[par, p] | child[par, p-1]
     for (c in 1..C)
         for (k in 1..K)
-            for (par in 1..P)
-                for (ch in (par + 1) until P)
+            for (par in 1..P) {
+                run {
+                    val ch = par + 1
+                    if (ch < P)
+                        for (nt in listOf(NodeType.AND, NodeType.OR))
+                            clause(
+                                nodeType[c, k, par] neq nt,
+                                nodeParent[c, k, ch] neq par,
+                                nodeChild[c, k, par] eq ch
+                            )
+                }
+                for (ch in (par + 2) until P)
                     for (nt in listOf(NodeType.AND, NodeType.OR))
                         clause(
-                            -nodeType[c, k, par, nt.value],
-                            -nodeParent[c, k, ch, par],
-                            nodeChild[c, k, par, ch],
-                            nodeChild[c, k, par, ch - 1]
+                            nodeType[c, k, par] neq nt,
+                            nodeParent[c, k, ch] neq par,
+                            nodeChild[c, k, par] eq ch,
+                            nodeChild[c, k, par] eq ch - 1
                         )
+            }
 
     comment("Right child of binary operators follows the left one")
     // (nodeType[p] = AND/OR) & (nodeChild[p] = ch) => (nodeParent[ch+1] = p)
@@ -207,11 +220,11 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
         for (k in 1..K)
             for (p in 1..P)
                 for (ch in (p + 1) until P)
-                    for (t in listOf(NodeType.AND, NodeType.OR))
+                    for (nt in listOf(NodeType.AND, NodeType.OR))
                         implyImply(
-                            nodeType[c, k, p, t.value],
-                            nodeChild[c, k, p, ch],
-                            nodeParent[c, k, ch + 1, p]
+                            nodeType[c, k, p] eq nt,
+                            nodeChild[c, k, p] eq ch,
+                            nodeParent[c, k, ch + 1] eq p
                         )
 
     // NOT NODES CONSTRAINTS
@@ -220,15 +233,15 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
     for (c in 1..C)
         for (k in 1..K)
             if (P >= 1)
-                clause(-nodeType[c, k, P, NodeType.NOT.value])
+                clause(nodeType[c, k, P] neq NodeType.NOT)
 
     comment("12.1. NOT nodes have left child")
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1 until P)
                 imply(
-                    nodeType[c, k, p, NodeType.NOT.value],
-                    -nodeChild[c, k, p, P + 1]
+                    nodeType[c, k, p] eq NodeType.NOT,
+                    nodeChild[c, k, p] neq 0
                 )
 
     comment("12.2. NOT: parent's child is the current node")
@@ -238,9 +251,9 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
             for (par in 1..P)
                 for (ch in (par + 1)..P)
                     implyImply(
-                        nodeType[c, k, par, NodeType.NOT.value],
-                        nodeParent[c, k, ch, par],
-                        nodeChild[c, k, par, ch]
+                        nodeType[c, k, par] eq NodeType.NOT,
+                        nodeParent[c, k, ch] eq par,
+                        nodeChild[c, k, par] eq ch
                     )
 
     // NONE-TYPE NODES CONSTRAINTS
@@ -250,8 +263,8 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
         for (k in 1..K)
             for (p in 1..P)
                 imply(
-                    nodeType[c, k, p, NodeType.NONE.value],
-                    nodeChild[c, k, p, P + 1]
+                    nodeType[c, k, p] eq NodeType.NONE,
+                    nodeChild[c, k, p] eq 0
                 )
 }
 
@@ -262,10 +275,10 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
     K: Int,
     P: Int,
     X: Int,
-    nodeType: IntMultiArray,
-    nodeInputVariable: IntMultiArray,
-    nodeChild: IntMultiArray,
-    nodeValue: IntMultiArray
+    nodeType: Var<NodeType>,
+    nodeInputVariable: IntVar,
+    nodeChild: IntVar,
+    nodeValue: BoolVar
 ) {
     comment("Terminal nodes have value from associated input variables")
     // (nodeInputVariable[p] = x) => AND_{u}( nodeValue[p,u] <=> u[x] )
@@ -274,7 +287,7 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
             for (p in 1..P)
                 for (x in 1..X)
                     imply(
-                        nodeInputVariable[c, k, p, x],
+                        nodeInputVariable[c, k, p] eq x,
                         nodeValue[c, k, p, u] * boolToSign(tree.uniqueInputs[u - 1][x - 1])
                     )
 
@@ -286,8 +299,8 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
             for (p in 1..P)
                 for (ch in (p + 1) until P)
                     implyImplyIffAnd(
-                        nodeType[c, k, p, NodeType.AND.value],
-                        nodeChild[c, k, p, ch],
+                        nodeType[c, k, p] eq NodeType.AND,
+                        nodeChild[c, k, p] eq ch,
                         nodeValue[c, k, p, u],
                         nodeValue[c, k, ch, u],
                         nodeValue[c, k, ch + 1, u]
@@ -301,8 +314,8 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
             for (p in 1..P)
                 for (ch in (p + 1) until P)
                     implyImplyIffOr(
-                        nodeType[c, k, p, NodeType.OR.value],
-                        nodeChild[c, k, p, ch],
+                        nodeType[c, k, p] eq NodeType.OR,
+                        nodeChild[c, k, p] eq ch,
                         nodeValue[c, k, p, u],
                         nodeValue[c, k, ch, u],
                         nodeValue[c, k, ch + 1, u]
@@ -316,8 +329,8 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
             for (p in 1..P)
                 for (ch in (p + 1)..P)
                     implyImplyIff(
-                        nodeType[c, k, p, NodeType.NOT.value],
-                        nodeChild[c, k, p, ch],
+                        nodeType[c, k, p] eq NodeType.NOT,
+                        nodeChild[c, k, p] eq ch,
                         nodeValue[c, k, p, u],
                         -nodeValue[c, k, ch, u]
                     )
@@ -328,7 +341,7 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
         for (k in 1..K)
             for (p in 1..P)
                 imply(
-                    nodeType[c, k, p, NodeType.NONE.value],
+                    nodeType[c, k, p] eq NodeType.NONE,
                     -nodeValue[c, k, p, u]
                 )
 }

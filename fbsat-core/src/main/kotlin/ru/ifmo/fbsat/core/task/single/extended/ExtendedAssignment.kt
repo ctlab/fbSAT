@@ -9,8 +9,7 @@ import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.automaton.ParseTreeGuard
 import ru.ifmo.fbsat.core.automaton.endowed
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.utils.TheAssignment
-import ru.ifmo.fbsat.core.utils.mapValues
+import ru.ifmo.fbsat.core.solver.RawAssignment
 
 class ExtendedAssignment(
     val scenarioTree: ScenarioTree,
@@ -54,36 +53,31 @@ class ExtendedAssignment(
     @Suppress("PropertyName")
     val N: Int = nodeType.count { it != NodeType.NONE }
 
-    companion object : TheAssignment {
+    companion object {
         fun fromRaw(
-            raw: BooleanArray,
+            raw: RawAssignment,
             vars: ExtendedVariables
         ): ExtendedAssignment = with(vars) {
             ExtendedAssignment(
                 scenarioTree = scenarioTree,
                 C = C, K = K, P = P,
                 V = V, E = E, O = O, X = X, Z = Z, U = U,
-                transitionDestination = raw.convertIntArray(transitionDestination, C, K, domain = 1..C) { 0 },
-                transitionInputEvent = raw.convertIntArray(transitionInputEvent, C, K, domain = 1..E) { 0 },
-                transitionFiring = raw.convertBooleanArray(transitionFiring, C, K, U),
-                firstFired = raw.convertIntArray(firstFired, C, U, domain = 1..K) { 0 },
-                notFired = raw.convertBooleanArray(notFired, C, K, U),
-                stateOutputEvent = raw.convertIntArray(stateOutputEvent, C, domain = 1..O) { 0 },
-                stateAlgorithmTop = raw.convertBooleanArray(stateAlgorithmTop, C, Z),
-                stateAlgorithmBot = raw.convertBooleanArray(stateAlgorithmBot, C, Z),
-                actualTransitionFunction = raw.convertIntArray(actualTransitionFunction, C, E, U, domain = 1..C) { 0 },
-                mapping = raw.convertIntArray(mapping, V, domain = 1..C) { (v) ->
-                    error("mapping[v = $v] is undefined")
-                },
-                nodeType = raw.convertIntArray(nodeType, C, K, P, domain = 1..5) { (c, k, p) ->
-                    error("nodeType[c,k,p = $c,$k,$p] is undefined")
-                }.mapValues {
-                    NodeType.from(it)
-                },
-                nodeInputVariable = raw.convertIntArray(nodeInputVariable, C, K, P, domain = 1..X) { 0 },
-                nodeParent = raw.convertIntArray(nodeParent, C, K, P, domain = 1..P) { 0 },
-                nodeChild = raw.convertIntArray(nodeChild, C, K, P, domain = 1..P) { 0 },
-                nodeValue = raw.convertBooleanArray(nodeValue, C, K, P, U)
+                // transitionDestination = raw.convertIntArray(transitionDestination, C, K, domain = 1..C) { 0 },
+                transitionDestination = transitionDestination.convert(raw),
+                transitionInputEvent = transitionInputEvent.convert(raw),
+                transitionFiring = transitionFiring.convert(raw),
+                firstFired = firstFired.convert(raw),
+                notFired = notFired.convert(raw),
+                stateOutputEvent = stateOutputEvent.convert(raw),
+                stateAlgorithmTop = stateAlgorithmTop.convert(raw),
+                stateAlgorithmBot = stateAlgorithmBot.convert(raw),
+                actualTransitionFunction = actualTransitionFunction.convert(raw),
+                mapping = mapping.convert(raw),
+                nodeType = nodeType.convert(raw),
+                nodeInputVariable = nodeInputVariable.convert(raw),
+                nodeParent = nodeParent.convert(raw),
+                nodeChild = nodeChild.convert(raw),
+                nodeValue = nodeValue.convert(raw)
             )
         }
     }
