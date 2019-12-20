@@ -1,8 +1,5 @@
 package ru.ifmo.fbsat.core.solver
 
-import com.github.lipen.multiarray.BooleanMultiArray
-import com.github.lipen.multiarray.IntMultiArray
-import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.DateTime
 import okio.Buffer
 import okio.buffer
