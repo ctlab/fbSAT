@@ -8,9 +8,9 @@ import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonBfsConst
 import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveConsecutiveModularMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.declareComparatorLessThanOrEqual
-import ru.ifmo.fbsat.core.solver.declareTotalizer
+import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.secondsSince
@@ -30,6 +30,7 @@ class ConsecutiveModularBasicTask(
 ) {
     val maxOutgoingTransitions: Int = maxOutgoingTransitions ?: numberOfStates
     val vars: ConsecutiveModularBasicVariables
+    internal val cardinality: Cardinality
 
     init {
         require(numberOfModules >= 2) { "Number of modules must be at least 2" }
@@ -49,6 +50,17 @@ class ConsecutiveModularBasicTask(
                 K = maxOutgoingTransitions ?: numberOfStates
             )
 
+            /* Cardinality */
+            cardinality = declareCardinality {
+                with(vars) {
+                    for (m in 1..M) with(modularBasicVariables[m]) {
+                        for (c in 1..C)
+                            for (k in 1..K)
+                                yield(transitionDestination[c, k] neq 0)
+                    }
+                }
+            }
+
             /* Constraints */
             declareConsecutiveModularAutomatonStructureConstraints(vars)
             if (Globals.IS_BFS_AUTOMATON) declareConsecutiveModularAutomatonBfsConstraints(vars)
@@ -57,7 +69,7 @@ class ConsecutiveModularBasicTask(
         }
 
         /* Initial cardinality constraints */
-        updateCardinality(maxTransitions)
+        updateCardinalityLessThan(maxTransitions)
 
         val nvarDiff = solver.numberOfVariables - nvarStart
         val nconDiff = solver.numberOfClauses - nconStart
@@ -79,30 +91,8 @@ class ConsecutiveModularBasicTask(
         }
     }
 
-    @Suppress("DuplicatedCode")
-    fun updateCardinality(newMaxTransitions: Int?) {
-        with(solver) {
-            with(vars) {
-                maxTransitions?.let { T ->
-                    check(newMaxTransitions != null && newMaxTransitions <= T) { "Cannot soften UB" }
-                }
-
-                if (newMaxTransitions == null && !Globals.IS_ENCODE_TOTALIZER) return
-                if (totalizer == null) {
-                    totalizer = declareTotalizer {
-                        for (m in 1..M) with(modularBasicVariables[m]) {
-                            for (c in 1..C)
-                                for (k in 1..K)
-                                    yield(transitionDestination[c, k] neq 0)
-                        }
-                    }
-                }
-                if (newMaxTransitions == null) return
-
-                declareComparatorLessThanOrEqual(totalizer!!, newMaxTransitions, maxTransitions)
-                maxTransitions = newMaxTransitions
-            }
-        }
+    fun updateCardinalityLessThan(newMaxTransitions: Int?) {
+        cardinality.updateUpperBoundLessThan(newMaxTransitions)
     }
 
     fun infer(): ConsecutiveModularAutomaton? {

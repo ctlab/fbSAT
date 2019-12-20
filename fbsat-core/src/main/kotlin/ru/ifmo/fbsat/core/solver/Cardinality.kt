@@ -3,7 +3,42 @@ package ru.ifmo.fbsat.core.solver
 import java.util.ArrayDeque
 import java.util.Deque
 
-fun Solver.declareTotalizer(variables: Sequence<Int>): IntArray {
+class Cardinality(
+    private val solver: Solver,
+    private var totalizer: BoolVar
+) {
+    var upperBound: Int? = null // sum(totalizer) <= upperBound
+        private set
+
+    fun updateUpperBoundLessThanOrEqual(newUpperBound: Int?) {
+        upperBound?.let { curUpperBound ->
+            check(newUpperBound != null && newUpperBound <= curUpperBound) { "Cannot soften UB" }
+        }
+
+        if (newUpperBound == null) return
+
+        solver.declareComparatorLessThanOrEqual(totalizer, newUpperBound, upperBound)
+        upperBound = newUpperBound
+    }
+
+    fun updateUpperBoundLessThan(newUpperBound: Int?) {
+        updateUpperBoundLessThanOrEqual(newUpperBound?.let { it - 1 })
+    }
+}
+
+fun Solver.declareCardinality(variables: Iterable<Int>): Cardinality =
+    Cardinality(
+        solver = this,
+        totalizer = declareTotalizer(variables)
+    )
+
+fun Solver.declareCardinality(variables: Sequence<Int>): Cardinality =
+    declareCardinality(variables.asIterable())
+
+fun Solver.declareCardinality(block: suspend SequenceScope<Int>.() -> Unit): Cardinality =
+    declareCardinality(sequence(block).constrainOnce())
+
+fun Solver.declareTotalizer(variables: Iterable<Int>): BoolVar {
     val queue: Deque<List<Int>> = ArrayDeque()
 
     for (e in variables) {
@@ -44,20 +79,25 @@ fun Solver.declareTotalizer(variables: Sequence<Int>): IntArray {
         }
     }
 
-    return queue.removeFirst().toIntArray()
+    val totalizer = queue.removeFirst()
+    return BoolVar.create(totalizer.size) { (i) -> totalizer[i - 1] }
 }
 
-fun Solver.declareTotalizer(block: suspend SequenceScope<Int>.() -> Unit): IntArray =
+fun Solver.declareTotalizer(variables: Sequence<Int>): BoolVar =
+    declareTotalizer(variables.asIterable())
+
+fun Solver.declareTotalizer(block: suspend SequenceScope<Int>.() -> Unit): BoolVar =
     declareTotalizer(sequence(block).constrainOnce())
 
 /**
  * Declares cardinality constraint `sum(totalizer) <= x`
  * @param[declared] previously declared upper bound.
  */
-fun Solver.declareComparatorLessThanOrEqual(totalizer: IntArray, x: Int, declared: Int? = null) {
+fun Solver.declareComparatorLessThanOrEqual(totalizer: BoolVar, x: Int, declared: Int? = null) {
+    require(totalizer.shape.size == 1) { "Totalizer must be 1-dimensional." }
     val max = declared ?: totalizer.size
     comment("Comparator(<=$x up to $max)")
     for (i in max downTo x + 1) {
-        clause(-totalizer[i - 1]) // Note: totalizer is zero-based
+        clause(-totalizer[i])
     }
 }

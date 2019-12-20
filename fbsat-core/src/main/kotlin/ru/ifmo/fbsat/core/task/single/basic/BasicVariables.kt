@@ -30,15 +30,7 @@ class BasicVariables(
     val actualTransitionFunction: IntVar,
     /* Mapping variables */
     val mapping: IntVar
-) {
-    /* Cardinality variables */
-    var totalizer: IntArray? = null
-        internal set
-    var maxTransitions: Int? = null
-        internal set
-    val T: Int?
-        get() = maxTransitions
-}
+)
 
 fun Solver.declareBasicVariables(
     scenarioTree: ScenarioTree,

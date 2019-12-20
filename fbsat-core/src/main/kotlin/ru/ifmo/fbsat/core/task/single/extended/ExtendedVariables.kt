@@ -40,15 +40,7 @@ class ExtendedVariables(
     val nodeParent: IntVar,
     val nodeChild: IntVar,
     val nodeValue: BoolVar
-) {
-    /* Cardinality variables */
-    var totalizer: IntArray? = null
-        internal set
-    var maxTotalGuardsSize: Int? = null
-        internal set
-    val N: Int?
-        get() = maxTotalGuardsSize
-}
+)
 
 fun Solver.declareExtendedVariables(
     basicVars: BasicVariables,
