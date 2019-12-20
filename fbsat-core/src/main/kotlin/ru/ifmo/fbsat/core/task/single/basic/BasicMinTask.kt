@@ -75,17 +75,17 @@ class BasicMinTask(
         if (!isOnlyC && best != null) {
             log.info("BasicMinTask: searching for minimal T...")
             while (true) {
-                val T = best!!.numberOfTransitions - 1
-                task.updateCardinality(T)
+                val T = best!!.numberOfTransitions
+                task.updateCardinalityLessThan(T)
                 val (automaton, runningTime) = timeIt { task.infer() }
                 if (automaton != null) {
                     log.success(
-                        "BasicMinTask: T = $T -> ${automaton.numberOfTransitions} in %.2f s"
+                        "BasicMinTask: T < $T -> ${automaton.numberOfTransitions} in %.2f s"
                             .format(runningTime)
                     )
                     best = automaton
                 } else {
-                    log.failure("BasicMinTask: T = $T -> UNSAT in %.2f".format(runningTime))
+                    log.failure("BasicMinTask: T < $T -> UNSAT in %.2f".format(runningTime))
                     log.info("BasicMinTask: minimal T = ${best.numberOfTransitions}")
                     break
                 }

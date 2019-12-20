@@ -6,9 +6,9 @@ import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularGuardConditionsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularGuardConditionsConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.declareComparatorLessThanOrEqual
-import ru.ifmo.fbsat.core.solver.declareTotalizer
+import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.implyAnd
 import ru.ifmo.fbsat.core.solver.implyImply
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicTask
@@ -44,6 +44,7 @@ class ConsecutiveModularExtendedTask(
         )
 
     val vars: ConsecutiveModularExtendedVariables
+    internal val cardinality: Cardinality
 
     init {
         val timeStart = DateTime.nowLocal()
@@ -57,13 +58,25 @@ class ConsecutiveModularExtendedTask(
                 P = maxGuardSize
             )
 
+            /* Cardinality */
+            cardinality = declareCardinality {
+                with(vars) {
+                    for (m in 1..M) with(modularExtendedVariables[m]) {
+                        for (c in 1..C)
+                            for (k in 1..K)
+                                for (p in 1..P)
+                                    yield(nodeType[c, k, p] neq NodeType.NONE)
+                    }
+                }
+            }
+
             /* Constraints */
             declareConsecutiveModularGuardConditionsConstraints(vars)
             if (Globals.IS_BFS_GUARD) declareConsecutiveModularGuardConditionsBfsConstraints(vars)
             declareAdhocConstraints()
         }
 
-        updateCardinality(maxTotalGuardsSize)
+        updateCardinalityLessThan(maxTotalGuardsSize)
 
         val nvarDiff = solver.numberOfVariables - nvarStart
         val nconDiff = solver.numberOfClauses - nconStart
@@ -145,30 +158,8 @@ class ConsecutiveModularExtendedTask(
         }
     }
 
-    fun updateCardinality(newMaxTotalGuardsSize: Int?) {
-        with(solver) {
-            with(vars) {
-                maxTotalGuardsSize?.let { N ->
-                    check(newMaxTotalGuardsSize != null && newMaxTotalGuardsSize <= N) { "Cannot soften UB" }
-                }
-
-                if (newMaxTotalGuardsSize == null && !Globals.IS_ENCODE_TOTALIZER) return
-                if (totalizer == null) {
-                    totalizer = declareTotalizer {
-                        for (m in 1..M) with(modularExtendedVariables[m]) {
-                            for (c in 1..C)
-                                for (k in 1..K)
-                                    for (p in 1..P)
-                                        yield(nodeType[c, k, p] neq NodeType.NONE)
-                        }
-                    }
-                }
-                if (newMaxTotalGuardsSize == null) return
-
-                declareComparatorLessThanOrEqual(totalizer!!, newMaxTotalGuardsSize, maxTotalGuardsSize)
-                maxTotalGuardsSize = newMaxTotalGuardsSize
-            }
-        }
+    fun updateCardinalityLessThan(newMaxTotalGuardsSize: Int?) {
+        cardinality.updateUpperBoundLessThan(newMaxTotalGuardsSize)
     }
 
     fun infer(): ConsecutiveModularAutomaton? {

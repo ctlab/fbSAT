@@ -66,7 +66,7 @@ class ExtendedMinTask(
             while (true) {
                 // val N = best!!.totalGuardsSize - 1
                 val N = best!!.totalGuardsSize - 1
-                task.updateCardinality(N)
+                task.updateCardinalityLessThan(N)
                 val (automaton, runningTime) = timeIt { task.infer() }
                 if (automaton != null) {
                     log.success("ExtMinTask: N = $N -> ${automaton.totalGuardsSize} in %.2f s".format(runningTime))

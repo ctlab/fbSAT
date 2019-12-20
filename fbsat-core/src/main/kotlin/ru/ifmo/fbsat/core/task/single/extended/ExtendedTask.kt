@@ -6,9 +6,9 @@ import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.constraints.declareGuardConditionsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveGuardConditionsConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.declareComparatorLessThanOrEqual
-import ru.ifmo.fbsat.core.solver.declareTotalizer
+import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.implyAnd
 import ru.ifmo.fbsat.core.solver.implyImply
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
@@ -43,6 +43,7 @@ class ExtendedTask(
         )
 
     val vars: ExtendedVariables
+    internal val cardinality: Cardinality
 
     init {
         val timeStart = DateTime.nowLocal()
@@ -53,6 +54,16 @@ class ExtendedTask(
             /* Variables */
             vars = declareExtendedVariables(basicVars = basicTask.vars, P = maxGuardSize)
 
+            /* Cardinality */
+            cardinality = declareCardinality {
+                with(vars){
+                    for (c in 1..C)
+                        for (k in 1..K)
+                            for (p in 1..P)
+                                yield(nodeType[c, k, p] neq NodeType.NONE)
+                }
+            }
+
             /* Constraints */
             declarePositiveGuardConditionsConstraints(vars)
             if (Globals.IS_BFS_GUARD) declareGuardConditionsBfsConstraints(vars)
@@ -60,7 +71,7 @@ class ExtendedTask(
         }
 
         /* Initial cardinality constraints */
-        updateCardinality(maxTotalGuardsSize)
+        updateCardinalityLessThan(maxTotalGuardsSize)
 
         val nvarDiff = solver.numberOfVariables - nvarStart
         val nconDiff = solver.numberOfClauses - nconStart
@@ -134,28 +145,8 @@ class ExtendedTask(
         }
     }
 
-    fun updateCardinality(newMaxTotalGuardsSize: Int?) {
-        with(solver) {
-            with(vars) {
-                maxTotalGuardsSize?.let { N ->
-                    check(newMaxTotalGuardsSize != null && newMaxTotalGuardsSize <= N) { "Cannot soften UB" }
-                }
-
-                if (newMaxTotalGuardsSize == null && !Globals.IS_ENCODE_TOTALIZER) return
-                if (totalizer == null) {
-                    totalizer = declareTotalizer {
-                        for (c in 1..C)
-                            for (k in 1..K)
-                                for (p in 1..P)
-                                    yield(nodeType[c, k, p] neq NodeType.NONE)
-                    }
-                }
-                if (newMaxTotalGuardsSize == null) return
-
-                declareComparatorLessThanOrEqual(totalizer!!, newMaxTotalGuardsSize, maxTotalGuardsSize)
-                maxTotalGuardsSize = newMaxTotalGuardsSize
-            }
-        }
+    fun updateCardinalityLessThan(newMaxTotalGuardsSize: Int?) {
+        cardinality.updateUpperBoundLessThan(newMaxTotalGuardsSize)
     }
 
     fun infer(): Automaton? {

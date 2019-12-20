@@ -9,6 +9,7 @@ import ru.ifmo.fbsat.core.constraints.declareNegativeMappingConstraints
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedAssignment
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedTask
@@ -31,6 +32,7 @@ class CompleteTask(
     val autoFinalize: Boolean = true
 ) {
     val vars: CompleteVariables
+    internal val cardinality: Cardinality
 
     private val extendedTask = ExtendedTask(
         scenarioTree = scenarioTree,
@@ -60,10 +62,13 @@ class CompleteTask(
                     outputNames = scenarioTree.outputNames
                 )
             )
+
+            /* Cardinality */
+            cardinality = extendedTask.cardinality
         }
 
         /* Initial cardinality constraints */
-        updateCardinality(maxTotalGuardsSize)
+        updateCardinalityLessThan(maxTotalGuardsSize)
 
         /* Initial negative constraints */
         updateNegativeReduction()
@@ -158,10 +163,8 @@ class CompleteTask(
         }
     }
 
-    fun updateCardinality(newMaxTotalGuardsSize: Int?) {
-        extendedTask.updateCardinality(newMaxTotalGuardsSize)
-        vars.totalizer = extendedTask.vars.totalizer
-        vars.maxTotalGuardsSize = extendedTask.vars.maxTotalGuardsSize
+    fun updateCardinalityLessThan(newMaxTotalGuardsSize: Int?) {
+        extendedTask.updateCardinalityLessThan(newMaxTotalGuardsSize)
     }
 
     fun infer(): Automaton? {

@@ -79,7 +79,7 @@ class ParallelModularBasicMinTask(
             log.info("ParallelModularBasicMinTask: searching for minimal T...")
             while (true) {
                 val T = best!!.numberOfTransitions - 1
-                task.updateCardinality(T)
+                task.updateCardinalityLessThan(T)
                 val (automaton, runningTime) = timeIt { task.infer() }
                 if (automaton != null) {
                     log.success(
