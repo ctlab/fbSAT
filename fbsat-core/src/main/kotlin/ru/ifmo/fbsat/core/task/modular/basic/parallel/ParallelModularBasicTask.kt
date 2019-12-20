@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.task.modular.basic.parallel
 
 import com.soywiz.klock.DateTime
-import ru.ifmo.fbsat.core.automaton.ModularAutomaton
+import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
 import ru.ifmo.fbsat.core.constraints.declareParallelModularAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareParallelModularAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveParallelModularMappingConstraints
@@ -89,7 +89,7 @@ class ParallelModularBasicTask(
         cardinality.updateUpperBoundLessThan(newMaxTransitions)
     }
 
-    fun infer(): ModularAutomaton? {
+    fun infer(): ParallelModularAutomaton? {
         val rawAssignment = solver.solve()
         if (autoFinalize) finalize2()
         return rawAssignment?.let { raw ->

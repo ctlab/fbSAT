@@ -1,6 +1,6 @@
 package ru.ifmo.fbsat.core.task.modular.basic.parallel
 
-import ru.ifmo.fbsat.core.automaton.ModularAutomaton
+import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.utils.log
@@ -24,8 +24,8 @@ class ParallelModularBasicMinTask(
     }
 
     @Suppress("LocalVariableName")
-    fun infer(): ModularAutomaton? {
-        var best: ModularAutomaton? = null
+    fun infer(): ParallelModularAutomaton? {
+        var best: ParallelModularAutomaton? = null
         var task: ParallelModularBasicTask by Delegates.notNull()
 
         if (numberOfStates == null) {

@@ -17,7 +17,7 @@ import ru.ifmo.fbsat.core.utils.writeEventMerger
 import java.io.File
 
 @Suppress("PropertyName")
-class ModularAutomaton(
+class ParallelModularAutomaton(
     val modules: MultiArray<Automaton>, // [M] : Automaton
     val outputVariableModule: IntMultiArray // [Z] : 1..M
 ) {

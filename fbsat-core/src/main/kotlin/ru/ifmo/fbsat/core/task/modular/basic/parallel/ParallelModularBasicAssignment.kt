@@ -4,7 +4,7 @@ import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
-import ru.ifmo.fbsat.core.automaton.ModularAutomaton
+import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
 import ru.ifmo.fbsat.core.automaton.TruthTableGuard
 import ru.ifmo.fbsat.core.automaton.endowed
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
@@ -56,7 +56,7 @@ class ParallelModularBasicAssignment(
     }
 }
 
-fun ParallelModularBasicAssignment.toAutomaton(): ModularAutomaton {
+fun ParallelModularBasicAssignment.toAutomaton(): ParallelModularAutomaton {
     val modules = MultiArray.create(M) { (m) ->
         with(modularBasicAssignment[m]) {
             Automaton(
@@ -103,5 +103,5 @@ fun ParallelModularBasicAssignment.toAutomaton(): ModularAutomaton {
         }
     }
 
-    return ModularAutomaton(modules, moduleControllingOutputVariable)
+    return ParallelModularAutomaton(modules, moduleControllingOutputVariable)
 }
