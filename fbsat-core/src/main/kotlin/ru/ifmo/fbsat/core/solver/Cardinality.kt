@@ -1,10 +1,10 @@
 package ru.ifmo.fbsat.core.solver
 
+import java.util.ArrayDeque
 import java.util.Deque
-import java.util.LinkedList
 
 fun Solver.declareTotalizer(variables: Sequence<Int>): IntArray {
-    val queue: Deque<List<Int>> = LinkedList()
+    val queue: Deque<List<Int>> = ArrayDeque()
 
     for (e in variables) {
         queue.addLast(listOf(e))
