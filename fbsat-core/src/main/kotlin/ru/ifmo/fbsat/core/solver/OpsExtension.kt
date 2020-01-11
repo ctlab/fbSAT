@@ -8,7 +8,7 @@ fun Solver.atLeastOne(literals: Sequence<Literal>) =
 
 /** AtLeastOne(literals) */
 fun Solver.atLeastOne(block: suspend SequenceScope<Literal>.() -> Unit) =
-    atLeastOne(sequence(block).constrainOnce())
+    atLeastOne(sequence(block))
 
 /** AtMostOne([literals]) */
 fun Solver.atMostOne(literals: Sequence<Literal>) =
@@ -16,7 +16,7 @@ fun Solver.atMostOne(literals: Sequence<Literal>) =
 
 /** AtMostOne(literals) */
 fun Solver.atMostOne(block: suspend SequenceScope<Literal>.() -> Unit) =
-    atMostOne(sequence(block).constrainOnce())
+    atMostOne(sequence(block))
 
 /** ExactlyOne([literals]) */
 fun Solver.exactlyOne(literals: Sequence<Literal>) =
@@ -24,7 +24,7 @@ fun Solver.exactlyOne(literals: Sequence<Literal>) =
 
 /** ExactlyOne(literals) */
 fun Solver.exactlyOne(block: suspend SequenceScope<Literal>.() -> Unit) =
-    exactlyOne(sequence(block).constrainOnce())
+    exactlyOne(sequence(block))
 
 /** [lhs] => AND([rhs]) */
 fun Solver.implyAnd(lhs: Literal, rhs: Sequence<Literal>) =
