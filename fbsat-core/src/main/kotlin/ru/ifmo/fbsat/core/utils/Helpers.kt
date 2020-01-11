@@ -176,8 +176,6 @@ fun <T> Iterable<T>.pairsWithReplacement(): Sequence<Pair<T, T>> = sequence {
     }
 }
 
-fun boolToSign(b: Boolean): Int = if (b) 1 else -1
-
 fun algorithmChoice(
     tree: ScenarioTreeInterface,
     v: Int,

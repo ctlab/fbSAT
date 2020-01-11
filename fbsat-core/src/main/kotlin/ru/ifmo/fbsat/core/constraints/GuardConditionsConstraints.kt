@@ -12,10 +12,10 @@ import ru.ifmo.fbsat.core.solver.implyImply
 import ru.ifmo.fbsat.core.solver.implyImplyIff
 import ru.ifmo.fbsat.core.solver.implyImplyIffAnd
 import ru.ifmo.fbsat.core.solver.implyImplyIffOr
+import ru.ifmo.fbsat.core.solver.sign
 import ru.ifmo.fbsat.core.task.modular.extended.consecutive.ConsecutiveModularExtendedVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
-import ru.ifmo.fbsat.core.utils.boolToSign
 
 fun Solver.declarePositiveGuardConditionsConstraints(extendedVars: ExtendedVariables) {
     comment("Positive guard conditions constraints")
@@ -288,7 +288,7 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
                 for (x in 1..X)
                     imply(
                         nodeInputVariable[c, k, p] eq x,
-                        nodeValue[c, k, p, u] * boolToSign(tree.uniqueInputs[u - 1][x - 1])
+                        nodeValue[c, k, p, u] sign tree.uniqueInputs[u - 1][x - 1]
                     )
 
     comment("AND: value is calculated as a conjunction of children values")

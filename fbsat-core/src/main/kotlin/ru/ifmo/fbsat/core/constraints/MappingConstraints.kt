@@ -17,6 +17,7 @@ import ru.ifmo.fbsat.core.solver.implyIffIte
 import ru.ifmo.fbsat.core.solver.implyImply
 import ru.ifmo.fbsat.core.solver.implyImplyIff
 import ru.ifmo.fbsat.core.solver.implyOr
+import ru.ifmo.fbsat.core.solver.sign
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.PinVars
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
@@ -24,7 +25,6 @@ import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariab
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
 import ru.ifmo.fbsat.core.utils.algorithmChoice
-import ru.ifmo.fbsat.core.utils.boolToSign
 import ru.ifmo.fbsat.core.utils.exhaustive
 import ru.ifmo.fbsat.core.utils.withIndex
 
@@ -388,7 +388,7 @@ fun Solver.declarePositiveArbitraryModularMappingConstraints(
             comment("External outbound pins (input variable) have values from input values in the tree")
             for ((x, pin) in externalOutboundVarPins.withIndex(start = 1))
                 for (v in 2..V)
-                    clause(outboundVarPinComputedValue[v, pin] * boolToSign(scenarioTree.inputValue(v, x)))
+                    clause(outboundVarPinComputedValue[v, pin] sign scenarioTree.inputValue(v, x))
 
             comment("If pin does not have a parent, then it always has false value")
             for (pin in allInboundVarPins)
@@ -603,7 +603,7 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForActiveNode(
                             yield(actualTransitionFunction[i, 1, u] eq j) // Note: e=REQ
                             yield(stateOutputEvent[j] eq o)
                             for (z in 1..Z)
-                                yield(modularComputedOutputValue[m][v, z] * boolToSign(tree.outputValue(v, z)))
+                                yield(modularComputedOutputValue[m][v, z] sign tree.outputValue(v, z))
                         }
                     )
         }
@@ -753,7 +753,7 @@ private fun Solver.declareArbitraryModularMappingConstraintsForActiveNode(
     // pinComputedValue{ext}[v,z] <=> tov(v,z)
     for (z in 1..Z) {
         val pin = getExternalInboundVarPin(z)
-        clause(inboundVarPinComputedValue[v, pin] * boolToSign(tree.outputValue(v, z)))
+        clause(inboundVarPinComputedValue[v, pin] sign tree.outputValue(v, z))
     }
 }
 

@@ -9,6 +9,8 @@ import com.github.lipen.multiarray.MultiArray
 
 typealias Literal = Int
 
+infix fun Literal.sign(b: Boolean): Literal = if (b) this else -this
+
 enum class VarEncoding {
     ONEHOT,
     ONEHOT_BINARY,
