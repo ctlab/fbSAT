@@ -6,7 +6,7 @@ endif::[]
 
 Automatic Inference of Minimal Finite-State Models of Function Blocks from Execution Scenarios and Temporal Properties
 
-image:https://travis-ci.org/ctlab/fbSAT.svg?branch=master["Build Status", link="https://travis-ci.org/ctlab/fbSAT"]
+image:https://travis-ci.com/ctlab/fbSAT.svg?branch=master["Build Status", link="https://travis-ci.com/ctlab/fbSAT"]
 image:https://api.codacy.com/project/badge/Grade/4e7cce48cb6844af9ec03fa459773c0d["Codacy code quality", link="https://www.codacy.com/manual/Lipen/fbSAT"]
 image:https://hitsofcode.com/github/ctlab/fbSAT["Hits-of-Code", link="https://hitsofcode.com/view/github/ctlab/fbSAT"]
 
