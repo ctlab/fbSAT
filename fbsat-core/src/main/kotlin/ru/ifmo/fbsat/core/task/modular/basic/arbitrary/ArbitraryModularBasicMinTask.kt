@@ -1,6 +1,6 @@
-package ru.ifmo.fbsat.core.task.modular.basic.consecutive
+package ru.ifmo.fbsat.core.task.modular.basic.arbitrary
 
-import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
+import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.utils.log
@@ -8,7 +8,8 @@ import ru.ifmo.fbsat.core.utils.timeIt
 import java.io.File
 import kotlin.properties.Delegates
 
-class ConsecutiveModularBasicMinTask(
+@Suppress("MemberVisibilityCanBePrivate")
+class ArbitraryModularBasicMinTask(
     val numberOfModules: Int, // M
     val scenarioTree: ScenarioTree,
     val numberOfStates: Int? = null, // C, search if null
@@ -24,14 +25,14 @@ class ConsecutiveModularBasicMinTask(
     }
 
     @Suppress("LocalVariableName")
-    fun infer(): ConsecutiveModularAutomaton? {
-        var best: ConsecutiveModularAutomaton? = null
-        var task: ConsecutiveModularBasicTask by Delegates.notNull()
+    fun infer(): ArbitraryModularAutomaton? {
+        var best: ArbitraryModularAutomaton? = null
+        var task: ArbitraryModularBasicTask by Delegates.notNull()
 
         if (numberOfStates == null) {
-            log.info("ConsecutiveModularBasicMinTask: searching for minimal C...")
+            log.info("ArbitraryModularBasicMinTask: searching for minimal C...")
             for (C in 1..50) {
-                task = ConsecutiveModularBasicTask(
+                task = ArbitraryModularBasicTask(
                     scenarioTree = scenarioTree,
                     numberOfModules = numberOfModules,
                     numberOfStates = C,
@@ -44,19 +45,19 @@ class ConsecutiveModularBasicMinTask(
                 )
                 val (automaton, runningTime) = timeIt { task.infer() }
                 if (automaton != null) {
-                    log.success("ConsecutiveModularBasicMinTask: C = $C -> SAT in %.2f s".format(runningTime))
-                    log.info("ConsecutiveModularBasicMinTask: minimal C = $C")
+                    log.success("ArbitraryModularBasicMinTask: C = $C -> SAT in %.2f s".format(runningTime))
+                    log.info("ArbitraryModularBasicMinTask: minimal C = $C")
                     best = automaton
                     break
                 } else {
-                    log.failure("ConsecutiveModularBasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
+                    log.failure("ArbitraryModularBasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
                     task.finalize2()
                 }
             }
         } else {
             val C = numberOfStates
-            log.info("ConsecutiveModularBasicMinTask: using provided C = $C")
-            task = ConsecutiveModularBasicTask(
+            log.info("ArbitraryModularBasicMinTask: using provided C = $C")
+            task = ArbitraryModularBasicTask(
                 scenarioTree = scenarioTree,
                 numberOfModules = numberOfModules,
                 numberOfStates = C,
@@ -69,27 +70,27 @@ class ConsecutiveModularBasicMinTask(
             )
             val (automaton, runningTime) = timeIt { task.infer() }
             if (automaton != null)
-                log.success("ConsecutiveModularBasicMinTask: C = $C -> SAT in %.2f s".format(runningTime))
+                log.success("ArbitraryModularBasicMinTask: C = $C -> SAT in %.2f s".format(runningTime))
             else
-                log.failure("ConsecutiveModularBasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
+                log.failure("ArbitraryModularBasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
             best = automaton
         }
 
         if (!isOnlyC && best != null) {
-            log.info("ConsecutiveModularBasicMinTask: searching for minimal T...")
+            log.info("ArbitraryModularBasicMinTask: searching for minimal T...")
             while (true) {
                 val T = best!!.numberOfTransitions
                 task.updateCardinalityLessThan(T)
                 val (automaton, runningTime) = timeIt { task.infer() }
                 if (automaton != null) {
                     log.success(
-                        "ConsecutiveModularBasicMinTask: T < $T -> ${automaton.numberOfTransitions} in %.2f s"
+                        "ArbitraryModularBasicMinTask: T < $T -> ${automaton.numberOfTransitions} in %.2f s"
                             .format(runningTime)
                     )
                     best = automaton
                 } else {
-                    log.failure("ConsecutiveModularBasicMinTask: T < $T -> UNSAT in %.2f".format(runningTime))
-                    log.info("ConsecutiveModularBasicMinTask: minimal T = ${best.numberOfTransitions}")
+                    log.failure("ArbitraryModularBasicMinTask: T < $T -> UNSAT in %.2f".format(runningTime))
+                    log.info("ArbitraryModularBasicMinTask: minimal T = ${best.numberOfTransitions}")
                     break
                 }
             }

@@ -218,17 +218,31 @@ class Automaton(
         }
     }
 
-    data class EvalResult(val destination: State, val outputAction: OutputAction)
+    inner class EvalResult(val destination: State, val outputAction: OutputAction)
+
+    fun eval(
+        inputAction: InputAction,
+        state: State,
+        values: OutputValues
+    ): EvalResult =
+        state.eval(inputAction, values)
 
     fun eval(
         inputActions: Iterable<InputAction>,
         startState: State = initialState,
         startValues: OutputValues = OutputValues.zeros(outputNames.size)
-    ): List<EvalResult> {
+    ): List<EvalResult> =
+        eval(inputActions.asSequence(), startState, startValues).toList()
+
+    fun eval(
+        inputActions: Sequence<InputAction>,
+        startState: State = initialState,
+        startValues: OutputValues = OutputValues.zeros(outputNames.size)
+    ): Sequence<EvalResult> {
         var currentState = startState
         var currentValues = startValues
         return inputActions.map { inputAction ->
-            currentState.eval(inputAction, currentValues).also {
+            eval(inputAction, currentState, currentValues).also {
                 currentState = it.destination
                 currentValues = it.outputAction.values
             }
@@ -256,7 +270,7 @@ class Automaton(
      * @return `true` if [positiveScenario] is satisfied.
      */
     fun verify(positiveScenario: PositiveScenario): Boolean {
-        val elements = positiveScenario.elements
+        val elements = positiveScenario.elements.asSequence()
         val results = eval(elements.map { it.inputAction })
         for ((i, xxx) in elements.zip(results).withIndex()) {
             val (element, result) = xxx

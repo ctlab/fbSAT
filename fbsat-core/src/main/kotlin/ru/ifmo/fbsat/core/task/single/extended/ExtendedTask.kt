@@ -56,7 +56,7 @@ class ExtendedTask(
 
             /* Cardinality */
             cardinality = declareCardinality {
-                with(vars){
+                with(vars) {
                     for (c in 1..C)
                         for (k in 1..K)
                             for (p in 1..P)
@@ -71,7 +71,7 @@ class ExtendedTask(
         }
 
         /* Initial cardinality constraints */
-        updateCardinalityLessThan(maxTotalGuardsSize)
+        updateCardinalityLessThan(maxTotalGuardsSize?.let { it + 1 })
 
         val nvarDiff = solver.numberOfVariables - nvarStart
         val nconDiff = solver.numberOfClauses - nconStart

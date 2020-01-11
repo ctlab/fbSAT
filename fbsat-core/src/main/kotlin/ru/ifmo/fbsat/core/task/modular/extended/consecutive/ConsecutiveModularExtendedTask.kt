@@ -76,7 +76,7 @@ class ConsecutiveModularExtendedTask(
             declareAdhocConstraints()
         }
 
-        updateCardinalityLessThan(maxTotalGuardsSize)
+        updateCardinalityLessThan(maxTotalGuardsSize?.let { it + 1 })
 
         val nvarDiff = solver.numberOfVariables - nvarStart
         val nconDiff = solver.numberOfClauses - nconStart

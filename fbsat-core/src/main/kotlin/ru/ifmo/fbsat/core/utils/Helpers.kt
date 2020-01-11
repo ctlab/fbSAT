@@ -5,6 +5,8 @@ import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.DateTimeTz
+import com.soywiz.klock.PerformanceCounter
+import com.soywiz.klock.microseconds
 import okio.BufferedSource
 import okio.Source
 import okio.buffer
@@ -14,7 +16,7 @@ import okio.source
 import ru.ifmo.fbsat.core.automaton.InputEvent
 import ru.ifmo.fbsat.core.automaton.OutputEvent
 import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
-import ru.ifmo.fbsat.core.solver.BoolVar
+import ru.ifmo.fbsat.core.solver.BoolVarArray
 import java.io.File
 import kotlin.random.Random
 
@@ -109,15 +111,18 @@ fun copyFile(source: File, destination: File) {
     }
 }
 
+data class TimeItResult<T>(val result: T, val runningTime: Double)
+
 /**
- * Measures the [block] execution time and returns a [Pair](result, runningTime).
+ * Measures the [block] execution time and returns a [TimeItResult](`result`, `runningTime`)
  * @param[block] code to execute.
- * @return [Pair] of [block] execution result and running time (in seconds).
+ * @return [TimeItResult] of [block] execution result and running time (in seconds).
  */
-inline fun <T> timeIt(block: () -> T): Pair<T, Double> {
-    val timeStart = DateTime.now()
-    val result = block()
-    return result to secondsSince(timeStart)
+inline fun <T> timeIt(block: () -> T): TimeItResult<T> {
+    val start = PerformanceCounter.microseconds
+    val result: T = block()
+    val end = PerformanceCounter.microseconds
+    return TimeItResult(result, (end - start).microseconds.seconds)
 }
 
 fun secondsSince(timeStart: DateTime): Double = (DateTime.now() - timeStart).seconds
@@ -152,6 +157,7 @@ fun <T> Iterable<T>.firstIndexed(predicate: (Int, T) -> Boolean): T =
 
 fun Iterable<Boolean>.all(): Boolean = all { it }
 
+@Suppress("ReplaceCollectionCountWithSize")
 fun <T> cartesianProduct(iterables: Iterable<Iterable<T>>): Sequence<List<T>> =
     if (iterables.count() == 0) emptySequence()
     else iterables.fold(sequenceOf(listOf())) { acc, iterable ->
@@ -177,8 +183,8 @@ fun algorithmChoice(
     v: Int,
     c: Int,
     z: Int,
-    algorithmTop: BoolVar,
-    algorithmBot: BoolVar
+    algorithmTop: BoolVarArray,
+    algorithmBot: BoolVarArray
 ): Int {
     val p = tree.parent(v)
     val oldValue = tree.outputValue(p, z)
@@ -212,5 +218,8 @@ fun <T> MultiArray<T>.mapValuesToInt(transform: (T) -> Int): IntMultiArray =
 
 fun <T> MultiArray<T>.mapValuesToBoolean(transform: (T) -> Boolean): BooleanMultiArray =
     BooleanMultiArray.create(shape) { index -> transform(get(*index)) }
+
+// fun <T, R> MultiArray<T>.mapValuesMultiIndexed(transform: (IntArray, T) -> R): MultiArray<R> =
+//     MultiArray.create(shape) { index -> transform(index, get(*index)) }
 
 fun <T> T.applyIfNotNull(block: (T.() -> Unit)?): T = apply { if (block != null) block() }

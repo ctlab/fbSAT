@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.constraints
 
-import ru.ifmo.fbsat.core.solver.BoolVar
-import ru.ifmo.fbsat.core.solver.IntVar
+import ru.ifmo.fbsat.core.solver.BoolVarArray
+import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.atLeastOne
 import ru.ifmo.fbsat.core.solver.exactlyOne
@@ -16,6 +16,7 @@ import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
+import ru.ifmo.fbsat.core.utils.exhaustive
 
 fun Solver.declareAutomatonStructureConstraints(basicVariables: BasicVariables) {
     comment("Automaton structure constraints")
@@ -154,11 +155,11 @@ private fun Solver.declareAutomatonStructureConstraintsInputless(
     E: Int,
     O: Int,
     Z: Int,
-    stateOutputEvent: IntVar,
-    stateAlgorithmTop: BoolVar,
-    stateAlgorithmBot: BoolVar,
-    transitionDestination: IntVar,
-    transitionInputEvent: IntVar
+    stateOutputEvent: IntVarArray,
+    stateAlgorithmTop: BoolVarArray,
+    stateAlgorithmBot: BoolVarArray,
+    transitionDestination: IntVarArray,
+    transitionInputEvent: IntVarArray
 ) {
     when (Globals.EPSILON_OUTPUT_EVENTS) {
         EpsilonOutputEvents.START -> {
@@ -176,7 +177,7 @@ private fun Solver.declareAutomatonStructureConstraintsInputless(
             for (c in 1..C)
                 clause(stateOutputEvent[c] neq 0)
         }
-    }
+    }.exhaustive
 
     when (Globals.START_STATE_ALGORITHMS) {
         StartStateAlgorithms.NOTHING -> {
@@ -201,7 +202,7 @@ private fun Solver.declareAutomatonStructureConstraintsInputless(
         StartStateAlgorithms.ANY -> {
             comment("Start state algorithms may be arbitrary")
         }
-    }
+    }.exhaustive
 
     comment("Null-transitions are last")
     // (transitionDestination[k] = 0) => (transitionDestination[k+1] = 0)
@@ -227,12 +228,12 @@ private fun Solver.declareAutomatonStructureConstraintsForInput(
     C: Int,
     K: Int,
     E: Int,
-    transitionDestination: IntVar,
-    transitionInputEvent: IntVar,
-    transitionFiring: BoolVar,
-    firstFired: IntVar,
-    notFired: BoolVar,
-    actualTransitionFunction: IntVar
+    transitionDestination: IntVarArray,
+    transitionInputEvent: IntVarArray,
+    transitionFiring: BoolVarArray,
+    firstFired: IntVarArray,
+    notFired: BoolVarArray,
+    actualTransitionFunction: IntVarArray
 ) {
     comment("First fired definition")
     // (firstFired = k) <=> transitionFiring[k] & notFired[k-1]
@@ -290,7 +291,7 @@ private fun Solver.declareAutomatonStructureConstraintsForInput(
                 iffOr(actualTransitionFunction[i, e, u] eq j, sequence {
                     for (k in 1..K) {
                         // aux <=> (transitionDestination[q,k] = q') & (transitionInputEvent[q,k] = e) & (firstFired[q,u] = k)
-                        val aux = newVariable()
+                        val aux = newLiteral()
                         iffAnd(
                             aux,
                             transitionDestination[i, k] eq j,

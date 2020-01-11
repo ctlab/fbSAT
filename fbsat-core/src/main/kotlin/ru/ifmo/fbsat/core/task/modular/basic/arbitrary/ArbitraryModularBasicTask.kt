@@ -1,12 +1,12 @@
-package ru.ifmo.fbsat.core.task.modular.basic.consecutive
+package ru.ifmo.fbsat.core.task.modular.basic.arbitrary
 
 import com.soywiz.klock.DateTime
-import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
+import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.automaton.InputEvent
 import ru.ifmo.fbsat.core.automaton.OutputEvent
-import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonBfsConstraints
-import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonStructureConstraints
-import ru.ifmo.fbsat.core.constraints.declarePositiveConsecutiveModularMappingConstraints
+import ru.ifmo.fbsat.core.constraints.declareArbitraryModularAutomatonBfsConstraints
+import ru.ifmo.fbsat.core.constraints.declareArbitraryModularAutomatonStructureConstraints
+import ru.ifmo.fbsat.core.constraints.declarePositiveArbitraryModularMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
@@ -17,7 +17,7 @@ import ru.ifmo.fbsat.core.utils.secondsSince
 import java.io.File
 
 @Suppress("LocalVariableName", "MemberVisibilityCanBePrivate")
-class ConsecutiveModularBasicTask(
+class ArbitraryModularBasicTask(
     scenarioTree: ScenarioTree,
     numberOfModules: Int, // M
     numberOfStates: Int, // C
@@ -29,7 +29,7 @@ class ConsecutiveModularBasicTask(
     isEncodeReverseImplication: Boolean = true
 ) {
     val maxOutgoingTransitions: Int = maxOutgoingTransitions ?: numberOfStates
-    val vars: ConsecutiveModularBasicVariables
+    val vars: ArbitraryModularBasicVariables
     internal val cardinality: Cardinality
 
     init {
@@ -43,7 +43,7 @@ class ConsecutiveModularBasicTask(
 
         with(solver) {
             /* Variables */
-            vars = declareConsecutiveModularBasicVariables(
+            vars = declareArbitraryModularBasicVariables(
                 scenarioTree = scenarioTree,
                 M = numberOfModules,
                 C = numberOfStates,
@@ -53,19 +53,19 @@ class ConsecutiveModularBasicTask(
             /* Cardinality */
             cardinality = declareCardinality {
                 with(vars) {
-                    for (m in 1..M) with(modularBasicVariables[m]) {
+                    for (m in 1..M) {
                         for (c in 1..C)
                             for (k in 1..K)
-                                yield(transitionDestination[c, k] neq 0)
+                                yield(modularTransitionDestination[m][c, k] neq 0)
                     }
                 }
             }
 
             /* Constraints */
-            declareConsecutiveModularAutomatonStructureConstraints(vars)
-            if (Globals.IS_BFS_AUTOMATON) declareConsecutiveModularAutomatonBfsConstraints(vars)
-            declarePositiveConsecutiveModularMappingConstraints(vars, isEncodeReverseImplication)
-            declareAdhocConstraints()
+            declareArbitraryModularAutomatonStructureConstraints(vars)
+            if (Globals.IS_BFS_AUTOMATON) declareArbitraryModularAutomatonBfsConstraints(vars)
+            declarePositiveArbitraryModularMappingConstraints(vars, isEncodeReverseImplication)
+            // declareAdhocConstraints()
         }
 
         /* Initial cardinality constraints */
@@ -74,7 +74,7 @@ class ConsecutiveModularBasicTask(
         val nvarDiff = solver.numberOfVariables - nvarStart
         val nconDiff = solver.numberOfClauses - nconStart
         log.info(
-            "ConsecutiveModularBasicTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s"
+            "ArbitraryModularBasicTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s"
                 .format(secondsSince(timeStart))
         )
     }
@@ -83,10 +83,10 @@ class ConsecutiveModularBasicTask(
         comment("ADHOC constraints")
         with(vars) {
             comment("Ad-hoc: no transition to the first state")
-            for (m in 1..M) with(modularBasicVariables[m]) {
+            for (m in 1..M) {
                 for (c in 1..C)
                     for (k in 1..K)
-                        clause(transitionDestination[c, k] neq 1)
+                        clause(modularTransitionDestination[m][c, k] neq 1)
             }
         }
     }
@@ -95,11 +95,11 @@ class ConsecutiveModularBasicTask(
         cardinality.updateUpperBoundLessThan(newMaxTransitions)
     }
 
-    fun infer(): ConsecutiveModularAutomaton? {
+    fun infer(): ArbitraryModularAutomaton? {
         val rawAssignment = solver.solve()
         if (autoFinalize) finalize2()
         return rawAssignment?.let { raw ->
-            ConsecutiveModularBasicAssignment.fromRaw(raw, vars).toAutomaton()
+            ArbitraryModularBasicAssignment.fromRaw(raw, vars).toAutomaton()
         }
     }
 

@@ -2,10 +2,10 @@ package ru.ifmo.fbsat.core.constraints
 
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
-import ru.ifmo.fbsat.core.solver.BoolVar
-import ru.ifmo.fbsat.core.solver.IntVar
+import ru.ifmo.fbsat.core.solver.BoolVarArray
+import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.Var
+import ru.ifmo.fbsat.core.solver.VarArray
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.implyImply
@@ -88,11 +88,11 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
     K: Int,
     P: Int,
     X: Int,
-    transitionDestination: IntVar,
-    nodeType: Var<NodeType>,
-    nodeInputVariable: IntVar,
-    nodeParent: IntVar,
-    nodeChild: IntVar
+    transitionDestination: IntVarArray,
+    nodeType: VarArray<NodeType>,
+    nodeInputVariable: IntVarArray,
+    nodeParent: IntVarArray,
+    nodeChild: IntVarArray
 ) {
     comment("None-typed nodes have largest indices")
     // (nodeType[p] = NONE) => (nodeType[p+1] = NONE)
@@ -275,10 +275,10 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
     K: Int,
     P: Int,
     X: Int,
-    nodeType: Var<NodeType>,
-    nodeInputVariable: IntVar,
-    nodeChild: IntVar,
-    nodeValue: BoolVar
+    nodeType: VarArray<NodeType>,
+    nodeInputVariable: IntVarArray,
+    nodeChild: IntVarArray,
+    nodeValue: BoolVarArray
 ) {
     comment("Terminal nodes have value from associated input variables")
     // (nodeInputVariable[p] = x) => AND_{u}( nodeValue[p,u] <=> u[x] )

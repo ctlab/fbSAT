@@ -59,7 +59,7 @@ class BasicTask(
         }
 
         /* Initial cardinality constraints */
-        updateCardinalityLessThan(maxTransitions)
+        updateCardinalityLessThan(maxTransitions?.let { it + 1 })
 
         val nvarDiff = solver.numberOfVariables - nvarStart
         val nconDiff = solver.numberOfClauses - nconStart

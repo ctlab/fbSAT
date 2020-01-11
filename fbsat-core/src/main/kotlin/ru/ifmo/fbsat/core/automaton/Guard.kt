@@ -56,7 +56,7 @@ class TruthTableGuard(
 ) : Guard {
     override val size: Int
         get() {
-            log.warn("TruthTableGuard has no meaningful size")
+            // log.warn("TruthTableGuard has no meaningful size")
             return 0
         }
 

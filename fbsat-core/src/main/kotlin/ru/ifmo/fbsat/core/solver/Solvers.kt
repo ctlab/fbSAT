@@ -5,10 +5,10 @@ import okio.Buffer
 import okio.buffer
 import okio.sink
 import okio.source
+import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.secondsSince
 import ru.ifmo.fbsat.core.utils.timeIt
-import kotlin.math.absoluteValue
 
 // TODO: make solver able to reset
 
@@ -16,46 +16,67 @@ interface Solver {
     val numberOfVariables: Int
     val numberOfClauses: Int
 
-    fun newVariable(): Int
-
-    fun newBoolVar(
-        vararg shape: Int,
-        init: (IntArray) -> Int = { newVariable() }
-    ): BoolVar
-
-    fun newIntVar(
-        vararg shape: Int,
-        init: (IntArray, Int) -> Int = { _, _ -> newVariable() },
-        domain: (IntArray) -> Iterable<Int>
-    ): IntVar
+    fun newLiteral(): Literal
 
     fun <T> newVar(
-        vararg shape: Int,
-        init: (IntArray, T) -> Int = { _, _ -> newVariable() },
-        domain: (IntArray) -> Iterable<T>
+        domain: Iterable<T>,
+        encoding: VarEncoding = Globals.defaultVarEncoding,
+        init: (T) -> Literal = { newLiteral() }
     ): Var<T>
+
+    fun newIntVar(
+        domain: Iterable<Int>,
+        encoding: VarEncoding = Globals.defaultVarEncoding,
+        init: (Int) -> Literal = { newLiteral() }
+    ): IntVar
+
+    fun newBoolVarArray(
+        vararg shape: Int,
+        init: (IntArray) -> Literal = { newLiteral() }
+    ): BoolVarArray
+
+    fun <T> Solver.newVarArray(
+        vararg shape: Int,
+        encoding: VarEncoding = Globals.defaultVarEncoding,
+        domain: (IntArray) -> Iterable<T>
+    ): VarArray<T>
+
+    fun Solver.newIntVarArray(
+        vararg shape: Int,
+        encoding: VarEncoding = Globals.defaultVarEncoding,
+        domain: (IntArray) -> Iterable<Int>
+    ): IntVarArray
 
     fun comment(comment: String)
 
-    fun clause(literals: Iterable<Int>)
-    fun clause(vararg literals: Int)
-    fun clause(literals: Sequence<Int>)
-    fun clause(block: suspend SequenceScope<Int>.() -> Unit)
+    fun clause(literals: Iterable<Literal>)
+    fun clause(vararg literals: Literal)
+    fun clause(literals: Sequence<Literal>)
+    fun clause(block: suspend SequenceScope<Literal>.() -> Unit)
 
     fun solve(): RawAssignment?
     fun finalize2()
 
     companion object {
-        const val trueVariable: Int = Int.MAX_VALUE
-        const val falseVariable: Int = -trueVariable
+        const val trueVariable: Literal = Int.MAX_VALUE
+        const val falseVariable: Literal = -trueVariable
 
+        @JvmStatic
         fun default(command: String): Solver = DefaultSolver(command)
+
+        @JvmStatic
         fun incremental(command: String): Solver = IncrementalSolver(command)
-        fun mock(): Solver = object : AbstractSolver() {
-            override fun comment(comment: String) = TODO()
-            override fun _clause(literals: Iterable<Int>) = TODO()
-            override fun _solve(): BooleanArray? = TODO()
-            override fun finalize2() = TODO()
+
+        fun mock(
+            comment: (String) -> Unit = {},
+            _clause: (List<Literal>) -> Unit = {},
+            _solve: () -> BooleanArray? = { TODO() },
+            finalize2: () -> Unit = {}
+        ): Solver = object : AbstractSolver() {
+            override fun comment(comment: String) = comment(comment)
+            override fun _clause(literals: List<Literal>) = _clause(literals)
+            override fun _solve(): BooleanArray? = _solve()
+            override fun finalize2() = finalize2()
         }
     }
 }
@@ -66,41 +87,57 @@ private abstract class AbstractSolver : Solver {
     final override var numberOfClauses = 0
         protected set
 
-    final override fun newVariable(): Int = ++numberOfVariables
+    final override fun newLiteral(): Literal = ++numberOfVariables
 
-    override fun newBoolVar(
-        vararg shape: Int,
-        init: (IntArray) -> Int
-    ): BoolVar = BoolVar.create(shape, init)
+    final override fun <T> newVar(
+        domain: Iterable<T>,
+        encoding: VarEncoding,
+        init: (T) -> Literal
+    ): Var<T> = Var.create(domain, this, encoding, init)
 
-    override fun newIntVar(
-        vararg shape: Int,
-        init: (IntArray, Int) -> Int,
-        domain: (IntArray) -> Iterable<Int>
-    ): IntVar = IntVar.create(shape, init, { exactlyOne(values) }, domain)
+    final override fun newIntVar(
+        domain: Iterable<Int>,
+        encoding: VarEncoding,
+        init: (Int) -> Literal
+    ): IntVar = IntVar.create(domain, this, encoding, init)
 
-    override fun <T> newVar(
+    final override fun newBoolVarArray(
         vararg shape: Int,
-        init: (IntArray, T) -> Int,
+        init: (IntArray) -> Literal
+    ): BoolVarArray = BoolVarArray.create(shape, init)
+
+    final override fun <T> Solver.newVarArray(
+        vararg shape: Int,
+        encoding: VarEncoding,
         domain: (IntArray) -> Iterable<T>
-    ): Var<T> = Var.create(shape, init, { exactlyOne(values) }, domain)
+    ): VarArray<T> = VarArray.create(shape) { index -> newVar(domain(index), encoding) }
+
+    final override fun Solver.newIntVarArray(
+        vararg shape: Int,
+        encoding: VarEncoding,
+        domain: (IntArray) -> Iterable<Int>
+    ): IntVarArray = IntVarArray.create(shape) { index -> newIntVar(domain(index), encoding) }
 
     @Suppress("FunctionName")
-    protected abstract fun _clause(literals: Iterable<Int>)
+    protected abstract fun _clause(literals: List<Literal>)
 
-    final override fun clause(literals: Iterable<Int>) {
-        if (Solver.trueVariable in literals) return
-
-        val lits = literals.filter { it != Solver.falseVariable }
-        if (lits.isNotEmpty()) {
+    final override fun clause(literals: Iterable<Literal>) {
+        val pool = literals.filter { it != Solver.falseVariable }
+        if (Solver.trueVariable in pool) return
+        if (pool.isNotEmpty()) {
             ++numberOfClauses
-            _clause(lits)
+            _clause(pool)
         }
     }
 
-    final override fun clause(vararg literals: Int) = clause(literals.asIterable())
-    final override fun clause(literals: Sequence<Int>) = clause(literals.toList())
-    final override fun clause(block: suspend SequenceScope<Int>.() -> Unit) = clause(sequence(block).constrainOnce())
+    final override fun clause(vararg literals: Literal) =
+        clause(literals.asIterable())
+
+    final override fun clause(literals: Sequence<Literal>) =
+        clause(literals.asIterable())
+
+    final override fun clause(block: suspend SequenceScope<Literal>.() -> Unit) =
+        clause(sequence(block).constrainOnce())
 
     @Suppress("FunctionName")
     protected abstract fun _solve(): BooleanArray?
@@ -116,24 +153,16 @@ private class DefaultSolver(private val command: String) : AbstractSolver() {
         buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
     }
 
-    override fun _clause(literals: Iterable<Int>) {
+    override fun _clause(literals: List<Literal>) {
         for (x in literals)
             buffer.writeUtf8(x.toString()).writeUtf8(" ")
         buffer.writeUtf8("0\n")
     }
 
     override fun _solve(): BooleanArray? {
-        // println("[*] Dumping cnf to file...")
-        // File("cnf").outputStream().use {
-        //     it.write("p cnf $numberOfVariables $numberOfClauses\n".toByteArray())
-        //     buffer.copyTo(it)
-        // }
-
         val process = Runtime.getRuntime().exec(command)
         val processInput = process.outputStream.sink().buffer()
-        // println("[*] Writing DIMACS header to process.outputStream...")
         processInput.writeUtf8("p cnf $numberOfVariables $numberOfClauses\n")
-        // println("[*] Redirecting buffer to process.outputStream...")
         buffer.copyTo(processInput.buffer)
 
         log.debug { "Solving..." }
@@ -145,7 +174,6 @@ private class DefaultSolver(private val command: String) : AbstractSolver() {
 
         process.inputStream.bufferedReader().useLines { lines ->
             label@ for (line in lines.map(String::trim)) {
-                // if (!line.startsWith("v ")) println(line)
                 when {
                     line == "s SATISFIABLE" -> {
                         val timeSolve = secondsSince(timeSolveStart)
@@ -154,22 +182,18 @@ private class DefaultSolver(private val command: String) : AbstractSolver() {
                     }
                     line == "s UNSATISFIABLE" -> {
                         val timeSolve = secondsSince(timeSolveStart)
-                        log.failure("[-] UNSAT in %.2f seconds".format(timeSolve))
+                        log.failure("UNSAT in %.2f seconds".format(timeSolve))
                         isSat = false
                         continue@label
                     }
                     line.startsWith("v ") -> {
-                        val values = line
-                            .splitToSequence(" ")
-                            .drop(1) // drop "v"
-                            .map { it.toInt() }
-                            .takeWhile { it != 0 }
-                        values.forEachIndexed { i, v ->
-                            require(i + rawAssignment.size + 1 == v.absoluteValue) {
-                                "Value $v should be ${i + rawAssignment.size + 1}"
-                            }
-                        }
-                        rawAssignment.addAll(values.map { it > 0 })
+                        rawAssignment.addAll(
+                            line.splitToSequence(" ")
+                                .drop(1) // drop "v"
+                                .map { it.toInt() }
+                                .takeWhile { it != 0 }
+                                .map { it > 0 }
+                        )
                     }
                 }
             }
@@ -199,7 +223,7 @@ private class IncrementalSolver(command: String) : AbstractSolver() {
         buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
     }
 
-    override fun _clause(literals: Iterable<Int>) {
+    override fun _clause(literals: List<Literal>) {
         for (x in literals)
             processInput.writeUtf8(x.toString()).writeUtf8(" ")
         processInput.writeUtf8("0\n")
@@ -210,18 +234,6 @@ private class IncrementalSolver(command: String) : AbstractSolver() {
     }
 
     override fun _solve(): BooleanArray? {
-        // clause(newVariable())
-
-        // measureNanoTime {
-        //     println("[*] Dumping cnf to file...")
-        //     File("cnf").outputStream().use {
-        //         it.write("p cnf $numberOfVariables $numberOfClauses\n".toByteArray())
-        //         buffer.copyTo(it)
-        //     }
-        // }.also {
-        //     println("CNF dumped in %.2f ms".format(it / 1_000_000.0))
-        // }
-
         processInput.writeUtf8("solve 0\n")
         processInput.flush()
 

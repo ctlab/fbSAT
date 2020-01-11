@@ -2,7 +2,7 @@ package ru.ifmo.fbsat.core.task.modular.basic.consecutive
 
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.solver.BoolVar
+import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
@@ -23,7 +23,7 @@ class ConsecutiveModularBasicVariables(
     /* Modularized BasicVariables */
     val modularBasicVariables: MultiArray<BasicVariables>,
     /* Mapping variables */
-    val modularComputedOutputValue: MultiArray<BoolVar>
+    val modularComputedOutputValue: MultiArray<BoolVarArray>
 ) {
     /* Cardinality variables */
     var totalizer: IntArray? = null
@@ -61,7 +61,7 @@ fun Solver.declareConsecutiveModularBasicVariables(
         )
     }
     /* Mapping variables */
-    val modularComputedOutputValue = MultiArray.create(M) { newBoolVar(V, Z) }
+    val modularComputedOutputValue = MultiArray.create(M) { newBoolVarArray(V, Z) }
 
     return ConsecutiveModularBasicVariables(
         scenarioTree = scenarioTree,

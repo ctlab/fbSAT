@@ -17,6 +17,8 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicMinTask
+import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicTask
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicMinTask
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicTask
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicMinTask
@@ -54,7 +56,9 @@ enum class Method(val s: String) {
     ModularBasicMin("modular-basic-min"),
     ConsecutiveModularBasic("modular-consecutive-basic"),
     ConsecutiveModularBasicMin("modular-consecutive-basic-min"),
-    ConsecutiveModularExtended("modular-consecutive-extended");
+    ConsecutiveModularExtended("modular-consecutive-extended"),
+    ArbitraryModularBasic("modular-arbitrary-basic"),
+    ArbitraryModularBasicMin("modular-arbitrary-basic-min"),
 }
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -397,7 +401,7 @@ class FbSAT : CliktCommand() {
             Method.Basic -> {
                 val task = BasicTask(
                     scenarioTree = tree,
-                    numberOfStates = numberOfStates!!,
+                    numberOfStates = requireNotNull(numberOfStates),
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxTransitions = maxTransitions,
                     solver = solverProvider(),
@@ -501,8 +505,8 @@ class FbSAT : CliktCommand() {
             Method.ModularBasic -> {
                 val task = ParallelModularBasicTask(
                     scenarioTree = tree,
-                    numberOfModules = numberOfModules!!,
-                    numberOfStates = numberOfStates!!,
+                    numberOfModules = requireNotNull(numberOfModules),
+                    numberOfStates = requireNotNull(numberOfStates),
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxTransitions = maxTransitions,
                     outDir = outDir,
@@ -545,7 +549,7 @@ class FbSAT : CliktCommand() {
             Method.ModularBasicMin -> {
                 val task = ParallelModularBasicMinTask(
                     scenarioTree = tree,
-                    numberOfModules = numberOfModules!!,
+                    numberOfModules = requireNotNull(numberOfModules),
                     numberOfStates = numberOfStates,
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     initialMaxTransitions = maxTransitions,
@@ -589,8 +593,8 @@ class FbSAT : CliktCommand() {
             Method.ConsecutiveModularBasic -> {
                 val task = ConsecutiveModularBasicTask(
                     scenarioTree = tree,
-                    numberOfModules = numberOfModules!!,
-                    numberOfStates = numberOfStates!!,
+                    numberOfModules = requireNotNull(numberOfModules),
+                    numberOfStates = requireNotNull(numberOfStates),
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxTransitions = maxTransitions,
                     outDir = outDir,
@@ -626,7 +630,7 @@ class FbSAT : CliktCommand() {
             Method.ConsecutiveModularBasicMin -> {
                 val task = ConsecutiveModularBasicMinTask(
                     scenarioTree = tree,
-                    numberOfModules = numberOfModules!!,
+                    numberOfModules = requireNotNull(numberOfModules),
                     numberOfStates = numberOfStates,
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     initialMaxTransitions = maxTransitions,
@@ -692,6 +696,78 @@ class FbSAT : CliktCommand() {
                     else {
                         log.failure("Verify: FAILED")
                     }
+                }
+
+                log.br()
+                log.br("The following messages - lies.")
+                log.br()
+                null
+            }
+            Method.ArbitraryModularBasic -> {
+                val task = ArbitraryModularBasicTask(
+                    scenarioTree = tree,
+                    numberOfModules = requireNotNull(numberOfModules),
+                    numberOfStates = requireNotNull(numberOfStates),
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    maxTransitions = maxTransitions,
+                    outDir = outDir,
+                    solver = solverProvider()
+                )
+                val modularAutomaton = task.infer()
+
+                if (modularAutomaton == null) {
+                    log.failure("Modular automaton not found")
+                } else {
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules, ${modularAutomaton.numberOfTransitions} transitions:")
+                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
+                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                        automaton.pprint()
+                        automaton.dump(outDir, "the_module-$m")
+                    }
+                    log.warn("Verify: Not implemented yet")
+                    // if (modularAutomaton.verify(tree))
+                    //     log.success("Verify: OK")
+                    // else {
+                    //     log.failure("Verify: FAILED")
+                    // }
+                }
+
+                log.br()
+                log.br("The following messages - lies.")
+                log.br()
+                null
+            }
+            Method.ArbitraryModularBasicMin -> {
+                val task = ArbitraryModularBasicMinTask(
+                    scenarioTree = tree,
+                    numberOfModules = requireNotNull(numberOfModules),
+                    numberOfStates = numberOfStates,
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    initialMaxTransitions = maxTransitions,
+                    solverProvider = solverProvider,
+                    outDir = outDir
+                )
+                val modularAutomaton = task.infer()
+
+                if (modularAutomaton == null) {
+                    log.failure("Modular automaton not found")
+                } else {
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules, ${modularAutomaton.numberOfTransitions} transitions:")
+                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
+                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                        automaton.pprint()
+                        automaton.dump(outDir, "the_module-$m")
+                    }
+                    // modularAutomaton.dumpFbt(
+                    //     outDir.resolve("modularAutomaton.fbt"),
+                    //     name = "ModularController"
+                    // )
+                    log.warn("Verify: Not implemented yet")
+                    // if (modularAutomaton.verify(tree))
+                    //     log.success("Verify: OK")
+                    // else {
+                    //     log.failure("Verify: FAILED")
+                    // }
                 }
 
                 log.br()

@@ -1,126 +1,119 @@
 package ru.ifmo.fbsat.core.solver
 
-import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
-import ru.ifmo.fbsat.core.utils.applyIfNotNull
-import ru.ifmo.fbsat.core.utils.mapValues
-import ru.ifmo.fbsat.core.utils.mapValuesToInt
-import ru.ifmo.fbsat.core.utils.toBooleanArray
 
-class BoolVar private constructor(
-    private val backend: MultiArray<Int>
-) : MultiArray<Int> by backend {
-    fun convert(raw: RawAssignment): BooleanMultiArray {
-        return BooleanMultiArray.create(shape) { index -> raw[get(*index)] }
-    }
+// inline class Literal(val number: Int) {
+//     operator fun unaryMinus(): Literal = Literal(-number)
+// }
 
-    companion object {
-        @JvmStatic
-        fun create(
-            shape: IntArray,
-            init: (IntArray) -> Int
-        ): BoolVar = BoolVar(MultiArray.create(shape, init))
+typealias Literal = Int
 
-        @JvmStatic
-        @JvmName("createVararg")
-        fun create(
-            vararg shape: Int,
-            init: (IntArray) -> Int
-        ): BoolVar = create(shape, init)
-    }
+enum class VarEncoding {
+    ONEHOT,
+    ONEHOT_BINARY,
 }
 
-class IntVar private constructor(
-    private val backend: MultiArray<Domain<Int>>
-) : MultiArray<Domain<Int>> by backend {
-    @Suppress("ReplaceGetOrSet")
-    fun domain(index: IntArray): Set<Int> = backend.get(*index).domain
+interface Var<T> {
+    val domain: Set<T>
+    val literals: Collection<Literal> // Note: proper order is *not* guaranteed
+    val bits: List<Literal> // Note: bits[0] is LSB
 
-    fun convert(raw: RawAssignment): IntMultiArray {
-        return backend.mapValuesToInt { it.convert(raw) ?: error("So sad :c") }
-    }
+    infix fun eq(value: T): Literal
+    infix fun neq(value: T): Literal
+    fun bit(index: Int): Literal
 
-    companion object {
+    fun convert(raw: RawAssignment): T?
+
+    companion object Factory {
         @JvmStatic
-        @JvmOverloads
-        fun create(
-            shape: IntArray,
-            init: (IntArray, Int) -> Int,
-            applyDomain: (Domain<Int>.() -> Unit)? = null,
-            domain: (IntArray) -> Iterable<Int>
-        ): IntVar =
-            IntVar(MultiArray.create(shape) { index ->
-                Domain(domain(index).associateWith { value -> init(index, value) })
-                    .applyIfNotNull(applyDomain)
-            })
-
-        @JvmStatic
-        @JvmOverloads
-        @JvmName("createVararg")
-        fun create(
-            vararg shape: Int,
-            init: (IntArray, Int) -> Int,
-            applyDomain: (Domain<Int>.() -> Unit)? = null,
-            domain: (IntArray) -> Iterable<Int>
-        ): IntVar = create(shape, init, applyDomain, domain)
-    }
-}
-
-class Var<T> private constructor(
-    private val backend: MultiArray<Domain<T>>
-) : MultiArray<Domain<T>> by backend {
-    @Suppress("ReplaceGetOrSet")
-    fun domain(index: IntArray): Set<T> = backend.get(*index).domain
-
-    fun convert(raw: RawAssignment): MultiArray<T> {
-        return backend.mapValues { it.convert(raw) ?: error("So sad :c") }
-    }
-
-    companion object {
-        @JvmStatic
-        @JvmOverloads
         fun <T> create(
+            domain: Iterable<T>,
+            solver: Solver,
+            encoding: VarEncoding,
+            init: (T) -> Literal
+        ): Var<T> = when (encoding) {
+            VarEncoding.ONEHOT -> object : AbstractOneHotVar<T>(domain, solver, init) {}
+            VarEncoding.ONEHOT_BINARY -> object : AbstractOneHotBinaryVar<T>(domain, solver, init) {}
+        }
+    }
+}
+
+interface IntVar : Var<Int> {
+    companion object Factory {
+        @JvmStatic
+        fun create(
+            domain: Iterable<Int>,
+            solver: Solver,
+            encoding: VarEncoding,
+            init: (Int) -> Literal
+        ): IntVar = when (encoding) {
+            VarEncoding.ONEHOT -> object : IntVar, AbstractOneHotVar<Int>(domain, solver, init) {}
+            VarEncoding.ONEHOT_BINARY -> object : IntVar, AbstractOneHotBinaryVar<Int>(domain, solver, init) {}
+        }
+    }
+}
+
+private abstract class AbstractVar<T> internal constructor(
+    private val storage: Map<T, Literal>
+) : Var<T> {
+    final override val domain: Set<T> = storage.keys
+    final override val literals: Collection<Literal> = storage.values
+
+    constructor(domain: Iterable<T>, init: (T) -> Literal) :
+        this(domain.associateWith { init(it) })
+
+    final override fun eq(value: T): Literal = storage.getValue(value)
+    final override fun neq(value: T): Literal = -eq(value)
+    final override fun bit(index: Int): Literal = bits[index]
+
+    final override fun convert(raw: RawAssignment): T? =
+        storage.entries.firstOrNull { raw[it.value] }?.key
+}
+
+private abstract class AbstractOneHotVar<T>(
+    domain: Iterable<T>,
+    solver: Solver,
+    init: (T) -> Literal
+) : Var<T>, AbstractVar<T>(domain, init) {
+    // Note: LSP is violated intentionally
+    override val bits: List<Literal>
+        get() = error("OneHotVar does not have associated bitwise representation")
+
+    init {
+        @Suppress("LeakingThis")
+        solver.encodeOneHot(this)
+    }
+}
+
+private abstract class AbstractOneHotBinaryVar<T>(
+    domain: Iterable<T>,
+    solver: Solver,
+    init: (T) -> Literal
+) : Var<T>, AbstractVar<T>(domain, init) {
+    @Suppress("LeakingThis")
+    override val bits: List<Literal> = solver.encodeOneHotBinary(this)
+}
+
+class BoolVarArray private constructor(
+    private val backend: IntMultiArray
+) : MultiArray<Literal> by backend {
+    companion object Factory {
+        @JvmStatic
+        fun create(
             shape: IntArray,
-            init: (IntArray, T) -> Int,
-            applyDomain: (Domain<T>.() -> Unit)? = null,
-            domain: (IntArray) -> Iterable<T>
-        ): Var<T> =
-            Var(MultiArray.create(shape) { index ->
-                Domain(domain(index).associateWith { value -> init(index, value) })
-                    .applyIfNotNull(applyDomain)
-            })
+            init: (IntArray) -> Literal
+        ): BoolVarArray = BoolVarArray(IntMultiArray.create(shape, init))
 
         @JvmStatic
-        @JvmOverloads
         @JvmName("createVararg")
-        fun <T> create(
+        fun create(
             vararg shape: Int,
-            init: (IntArray, T) -> Int,
-            applyDomain: (Domain<T>.() -> Unit)? = null,
-            domain: (IntArray) -> Iterable<T>
-        ): Var<T> = create(shape, init, applyDomain, domain)
+            init: (IntArray) -> Literal
+        ): BoolVarArray = create(shape, init)
     }
 }
 
-class Domain<T>(private val map: Map<T, Int>) {
-    val domain: Set<T> = map.keys
-    val values: Collection<Int> = map.values
+typealias IntVarArray = MultiArray<IntVar>
 
-    infix fun eq(value: T): Int = map.getValue(value)
-    infix fun neq(value: T): Int = -eq(value)
-
-    fun convert(raw: RawAssignment): T? {
-        // TODO: ensure that at most one bit is true
-        return map.entries.firstOrNull { raw[it.value] }?.key
-    }
-}
-
-fun main() {
-    val solver = Solver.mock()
-    val init: (IntArray, Int) -> Int = { _, _ -> solver.newVariable() }
-    val domainVar = IntVar.create(3, 2, init = init) { 1..4 }
-    val raw = RawAssignment("001000100101100010001000".toBooleanArray())
-    val data = domainVar.convert(raw)
-    println("data = $data = ${data.toList()}")
-}
+typealias VarArray<T> = MultiArray<Var<T>>

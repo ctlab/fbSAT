@@ -10,6 +10,7 @@ import ru.ifmo.fbsat.core.automaton.ParseTreeGuard
 import ru.ifmo.fbsat.core.automaton.endowed
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
+import ru.ifmo.fbsat.core.solver.convert
 
 class ExtendedAssignment(
     val scenarioTree: ScenarioTree,
@@ -23,6 +24,7 @@ class ExtendedAssignment(
     val Z: Int,
     val U: Int,
     /* Core variables */
+    val actualTransitionFunction: IntMultiArray, // [C, E, U] : [0..C]
     val transitionDestination: IntMultiArray, // [C, K] : 0..C
     val transitionInputEvent: IntMultiArray, // [C, K]  0..E
     val transitionFiring: BooleanMultiArray, // [C, K, U] : Boolean
@@ -31,8 +33,6 @@ class ExtendedAssignment(
     val stateOutputEvent: IntMultiArray, // [C] : 0..O
     val stateAlgorithmTop: BooleanMultiArray, // [C, Z] : Boolean
     val stateAlgorithmBot: BooleanMultiArray, // [C, Z] : Boolean
-    /* Interface variables */
-    val actualTransitionFunction: IntMultiArray, // [C, E, U] : [0..C]
     /* Mapping variables */
     val mapping: IntMultiArray, // [V] : 1..C
     /* Guard conditions variables */
@@ -62,7 +62,7 @@ class ExtendedAssignment(
                 scenarioTree = scenarioTree,
                 C = C, K = K, P = P,
                 V = V, E = E, O = O, X = X, Z = Z, U = U,
-                // transitionDestination = raw.convertIntArray(transitionDestination, C, K, domain = 1..C) { 0 },
+                actualTransitionFunction = actualTransitionFunction.convert(raw),
                 transitionDestination = transitionDestination.convert(raw),
                 transitionInputEvent = transitionInputEvent.convert(raw),
                 transitionFiring = transitionFiring.convert(raw),
@@ -71,7 +71,6 @@ class ExtendedAssignment(
                 stateOutputEvent = stateOutputEvent.convert(raw),
                 stateAlgorithmTop = stateAlgorithmTop.convert(raw),
                 stateAlgorithmBot = stateAlgorithmBot.convert(raw),
-                actualTransitionFunction = actualTransitionFunction.convert(raw),
                 mapping = mapping.convert(raw),
                 nodeType = nodeType.convert(raw),
                 nodeInputVariable = nodeInputVariable.convert(raw),

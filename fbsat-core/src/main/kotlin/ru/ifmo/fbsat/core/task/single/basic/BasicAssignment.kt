@@ -8,6 +8,7 @@ import ru.ifmo.fbsat.core.automaton.TruthTableGuard
 import ru.ifmo.fbsat.core.automaton.endowed
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
+import ru.ifmo.fbsat.core.solver.convert
 
 class BasicAssignment(
     val scenarioTree: ScenarioTree,
@@ -21,6 +22,7 @@ class BasicAssignment(
     val Z: Int,
     val U: Int,
     /* Core variables */
+    val actualTransitionFunction: IntMultiArray, // [C, E, U] : [0..C]
     val transitionDestination: IntMultiArray, // [C, K] : 0..C
     val transitionInputEvent: IntMultiArray, // [C, K]  0..E
     val transitionFiring: BooleanMultiArray, // [C, K, U] : Boolean
@@ -29,8 +31,6 @@ class BasicAssignment(
     val stateOutputEvent: IntMultiArray, // [C] : 0..O
     val stateAlgorithmTop: BooleanMultiArray, // [C, Z] : Boolean
     val stateAlgorithmBot: BooleanMultiArray, // [C, Z] : Boolean
-    /* Interface variables */
-    val actualTransitionFunction: IntMultiArray, // [C, E, U] : [0..C]
     /* Mapping variables */
     val mapping: IntMultiArray // [V] : 1..C
 ) {
@@ -44,26 +44,23 @@ class BasicAssignment(
         fun fromRaw(
             raw: RawAssignment,
             vars: BasicVariables
-        ): BasicAssignment =
-            with(raw) {
-                with(vars) {
-                    BasicAssignment(
-                        scenarioTree = scenarioTree,
-                        C = C, K = K,
-                        V = V, E = E, O = O, X = X, Z = Z, U = U,
-                        transitionDestination = transitionDestination.convert(),
-                        transitionInputEvent = transitionInputEvent.convert(),
-                        transitionFiring = transitionFiring.convert(),
-                        firstFired = firstFired.convert(),
-                        notFired = notFired.convert(),
-                        stateOutputEvent = stateOutputEvent.convert(),
-                        stateAlgorithmTop = stateAlgorithmTop.convert(),
-                        stateAlgorithmBot = stateAlgorithmBot.convert(),
-                        actualTransitionFunction = actualTransitionFunction.convert(),
-                        mapping = mapping.convert()
-                    )
-                }
-            }
+        ): BasicAssignment = with(vars) {
+            BasicAssignment(
+                scenarioTree = scenarioTree,
+                C = C, K = K,
+                V = V, E = E, O = O, X = X, Z = Z, U = U,
+                actualTransitionFunction = actualTransitionFunction.convert(raw),
+                transitionDestination = transitionDestination.convert(raw),
+                transitionInputEvent = transitionInputEvent.convert(raw),
+                transitionFiring = transitionFiring.convert(raw),
+                firstFired = firstFired.convert(raw),
+                notFired = notFired.convert(raw),
+                stateOutputEvent = stateOutputEvent.convert(raw),
+                stateAlgorithmTop = stateAlgorithmTop.convert(raw),
+                stateAlgorithmBot = stateAlgorithmBot.convert(raw),
+                mapping = mapping.convert(raw)
+            )
+        }
     }
 }
 

@@ -53,30 +53,26 @@ class ExtendedMinTask(
             isEncodeReverseImplication = isEncodeReverseImplication
         )
         val (automaton, runningTime) = timeIt { task.infer() }
-        if (automaton != null)
+        if (automaton != null) {
             log.success(
                 "ExtMinTask: initial N = $initialMaxTotalGuardsSize -> ${automaton.totalGuardsSize} in %.2f s"
                     .format(runningTime)
             )
-        else
+        } else {
             log.failure("ExtMinTask: initial N = $initialMaxTotalGuardsSize -> UNSAT in %.2f s".format(runningTime))
+        }
         var best: Automaton? = automaton
 
         if (best != null) {
             while (true) {
-                // val N = best!!.totalGuardsSize - 1
-                val N = best!!.totalGuardsSize - 1
+                val N = best!!.totalGuardsSize
                 task.updateCardinalityLessThan(N)
                 val (automaton, runningTime) = timeIt { task.infer() }
                 if (automaton != null) {
-                    log.success("ExtMinTask: N = $N -> ${automaton.totalGuardsSize} in %.2f s".format(runningTime))
-                    if (automaton.totalGuardsSize > N) {
-                        automaton.pprint()
-                        error("Automaton has more parse tree nodes than expected")
-                    }
+                    log.success("ExtMinTask: N < $N -> ${automaton.totalGuardsSize} in %.2f s".format(runningTime))
                     best = automaton
                 } else {
-                    log.failure("ExtMinTask: N = $N -> UNSAT in %.2f s".format(runningTime))
+                    log.failure("ExtMinTask: N < $N -> UNSAT in %.2f s".format(runningTime))
                     log.info("ExtMinTask: minimal N = ${best.totalGuardsSize}")
                     break
                 }

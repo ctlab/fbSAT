@@ -2,10 +2,10 @@ package ru.ifmo.fbsat.core.task.single.extended
 
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.solver.BoolVar
-import ru.ifmo.fbsat.core.solver.IntVar
+import ru.ifmo.fbsat.core.solver.BoolVarArray
+import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.Var
+import ru.ifmo.fbsat.core.solver.VarArray
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 
 @Suppress("PropertyName")
@@ -22,24 +22,23 @@ class ExtendedVariables(
     val Z: Int,
     val U: Int,
     /* Core variables */
-    val transitionDestination: IntVar,
-    val transitionInputEvent: IntVar,
-    val transitionFiring: BoolVar,
-    val firstFired: IntVar,
-    val notFired: BoolVar,
-    val stateOutputEvent: IntVar,
-    val stateAlgorithmTop: BoolVar,
-    val stateAlgorithmBot: BoolVar,
-    /* Interface variables */
-    val actualTransitionFunction: IntVar,
+    val actualTransitionFunction: IntVarArray,
+    val transitionDestination: IntVarArray,
+    val transitionInputEvent: IntVarArray,
+    val transitionFiring: BoolVarArray,
+    val firstFired: IntVarArray,
+    val notFired: BoolVarArray,
+    val stateOutputEvent: IntVarArray,
+    val stateAlgorithmTop: BoolVarArray,
+    val stateAlgorithmBot: BoolVarArray,
     /* Mapping variables */
-    val mapping: IntVar,
+    val mapping: IntVarArray,
     /* Guard conditions variables */
-    val nodeType: Var<NodeType>,
-    val nodeInputVariable: IntVar,
-    val nodeParent: IntVar,
-    val nodeChild: IntVar,
-    val nodeValue: BoolVar
+    val nodeType: VarArray<NodeType>,
+    val nodeInputVariable: IntVarArray,
+    val nodeParent: IntVarArray,
+    val nodeChild: IntVarArray,
+    val nodeValue: BoolVarArray
 )
 
 fun Solver.declareExtendedVariables(
@@ -47,19 +46,20 @@ fun Solver.declareExtendedVariables(
     P: Int
 ): ExtendedVariables = with(basicVars) {
     /* Guard conditions variables */
-    val nodeType = newVar(C, K, P) { NodeType.values().asIterable() }
-    val nodeInputVariable = newIntVar(C, K, P) { 0..X }
-    val nodeParent = newIntVar(C, K, P) { (_, _, p) -> 0 until p }
-    val nodeChild = newIntVar(C, K, P) { (_, _, p) -> ((p + 1)..P) + 0 }
-    val nodeValue = newBoolVar(C, K, P, U) { (c, k, p, u) ->
+    val nodeType = newVarArray(C, K, P) { NodeType.values().asIterable() }
+    val nodeInputVariable = newIntVarArray(C, K, P) { 0..X }
+    val nodeParent = newIntVarArray(C, K, P) { (_, _, p) -> 0 until p }
+    val nodeChild = newIntVarArray(C, K, P) { (_, _, p) -> ((p + 1)..P) + 0 }
+    val nodeValue = newBoolVarArray(C, K, P, U) { (c, k, p, u) ->
         if (p == 1) transitionFiring[c, k, u]
-        else newVariable()
+        else newLiteral()
     }
 
     ExtendedVariables(
         scenarioTree = scenarioTree,
         C = C, K = K, P = P,
         V = V, E = E, O = O, X = X, Z = Z, U = U,
+        actualTransitionFunction = actualTransitionFunction,
         transitionDestination = transitionDestination,
         transitionInputEvent = transitionInputEvent,
         transitionFiring = transitionFiring,
@@ -68,7 +68,6 @@ fun Solver.declareExtendedVariables(
         stateOutputEvent = stateOutputEvent,
         stateAlgorithmTop = stateAlgorithmTop,
         stateAlgorithmBot = stateAlgorithmBot,
-        actualTransitionFunction = actualTransitionFunction,
         mapping = mapping,
         nodeType = nodeType,
         nodeInputVariable = nodeInputVariable,

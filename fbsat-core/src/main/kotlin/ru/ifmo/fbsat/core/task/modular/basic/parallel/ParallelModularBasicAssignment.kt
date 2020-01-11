@@ -9,6 +9,7 @@ import ru.ifmo.fbsat.core.automaton.TruthTableGuard
 import ru.ifmo.fbsat.core.automaton.endowed
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
+import ru.ifmo.fbsat.core.solver.convert
 import ru.ifmo.fbsat.core.task.single.basic.BasicAssignment
 
 class ParallelModularBasicAssignment(

@@ -2,126 +2,122 @@
 
 package ru.ifmo.fbsat.core.solver
 
-fun Solver.atLeastOne(literals: Sequence<Int>) {
-    clause(literals)
-}
+/** AtLeastOne([literals]) */
+fun Solver.atLeastOne(literals: Sequence<Literal>) =
+    atLeastOne(literals.asIterable())
 
-fun Solver.atLeastOne(block: suspend SequenceScope<Int>.() -> Unit) {
+/** AtLeastOne(literals) */
+fun Solver.atLeastOne(block: suspend SequenceScope<Literal>.() -> Unit) =
     atLeastOne(sequence(block).constrainOnce())
-}
 
-fun Solver.atMostOne(literals: Sequence<Int>) {
-    atMostOne(literals.toList())
-}
+/** AtMostOne([literals]) */
+fun Solver.atMostOne(literals: Sequence<Literal>) =
+    atMostOne(literals.asIterable())
 
-fun Solver.atMostOne(block: suspend SequenceScope<Int>.() -> Unit) {
+/** AtMostOne(literals) */
+fun Solver.atMostOne(block: suspend SequenceScope<Literal>.() -> Unit) =
     atMostOne(sequence(block).constrainOnce())
-}
 
-fun Solver.exactlyOne(literals: Sequence<Int>) {
-    exactlyOne(literals.toList())
-}
+/** ExactlyOne([literals]) */
+fun Solver.exactlyOne(literals: Sequence<Literal>) =
+    exactlyOne(literals.asIterable())
 
-fun Solver.exactlyOne(block: suspend SequenceScope<Int>.() -> Unit) {
+/** ExactlyOne(literals) */
+fun Solver.exactlyOne(block: suspend SequenceScope<Literal>.() -> Unit) =
     exactlyOne(sequence(block).constrainOnce())
-}
 
-/**
- * [lhs] => AND([rhs])
- */
-fun Solver.implyAnd(lhs: Int, rhs: Sequence<Int>) = implyAnd(lhs, rhs.toList())
+/** [lhs] => AND([rhs]) */
+fun Solver.implyAnd(lhs: Literal, rhs: Sequence<Literal>) =
+    implyAnd(lhs, rhs.asIterable())
 
-/**
- * [lhs] => AND([rhs])
- */
-fun Solver.implyAnd(lhs: Int, vararg rhs: Int) = implyAnd(lhs, rhs.asIterable())
+/** [lhs] => AND([rhs]) */
+fun Solver.implyAnd(lhs: Literal, vararg rhs: Literal) =
+    implyAnd(lhs, rhs.asIterable())
 
-/**
- * [lhs] => OR([rhs])
- */
-fun Solver.implyOr(lhs: Int, rhs: Sequence<Int>) = implyOr(lhs, rhs.toList())
+/** [lhs] => OR([rhs]) */
+fun Solver.implyOr(lhs: Literal, rhs: Sequence<Literal>) =
+    implyOr(lhs, rhs.asIterable())
 
-/**
- * [lhs] => OR([rhs])
- */
-fun Solver.implyOr(lhs: Int, vararg rhs: Int) = implyOr(lhs, rhs.asIterable())
+/** [lhs] => OR([rhs]) */
+fun Solver.implyOr(lhs: Literal, vararg rhs: Literal) =
+    implyOr(lhs, rhs.asIterable())
 
-/**
- * [x1] => (x2 => AND([rhs])
- */
-fun Solver.implyImplyAnd(x1: Int, x2: Int, rhs: Sequence<Int>) = implyImplyAnd(x1, x2, rhs.toList())
+/** [x1] => (x2 => AND([rhs]) */
+fun Solver.implyImplyAnd(x1: Literal, x2: Literal, rhs: Sequence<Literal>) =
+    implyImplyAnd(x1, x2, rhs.asIterable())
 
-/**
- * [x1] => (x2 => AND([rhs])
- */
-fun Solver.implyImplyAnd(x1: Int, x2: Int, vararg rhs: Int) = implyImplyAnd(x1, x2, rhs.asIterable())
+/** [x1] => (x2 => AND([rhs]) */
+fun Solver.implyImplyAnd(x1: Literal, x2: Literal, vararg rhs: Literal) =
+    implyImplyAnd(x1, x2, rhs.asIterable())
 
-/**
- * [x1] => (x2 => OR([rhs])
- */
-fun Solver.implyImplyOr(x1: Int, x2: Int, rhs: Sequence<Int>) = implyImplyOr(x1, x2, rhs.toList())
+/** [x1] => (x2 => OR([rhs]) */
+fun Solver.implyImplyOr(x1: Literal, x2: Literal, rhs: Sequence<Literal>) =
+    implyImplyOr(x1, x2, rhs.asIterable())
 
-/**
- * [x1] => (x2 => OR([rhs])
- */
-fun Solver.implyImplyOr(x1: Int, x2: Int, vararg rhs: Int) = implyImplyOr(x1, x2, rhs.asIterable())
+/** [x1] => (x2 => OR([rhs]) */
+fun Solver.implyImplyOr(x1: Literal, x2: Literal, vararg rhs: Literal) =
+    implyImplyOr(x1, x2, rhs.asIterable())
 
-/**
- * [x1] => ([x2] => ([x3] <=> AND([xs]))
- */
-fun Solver.implyImplyIffAnd(x1: Int, x2: Int, x3: Int, xs: Sequence<Int>) = implyImplyIffAnd(x1, x2, x3, xs.toList())
+/**  [x1] => ([x2] => ([x3] => AND([xs])) */
+fun Solver.implyImplyImplyAnd(x1: Literal, x2: Literal, x3: Literal, xs: Sequence<Literal>) =
+    implyImplyImplyAnd(x1, x2, x3, xs.asIterable())
 
-/**
- * [x1] => ([x2] => ([x3] <=> AND([xs]))
- */
-fun Solver.implyImplyIffAnd(x1: Int, x2: Int, x3: Int, vararg xs: Int) = implyImplyIffAnd(x1, x2, x3, xs.asIterable())
+/** [x1] => ([x2] => ([x3] => AND([xs])) */
+fun Solver.implyImplyImplyAnd(x1: Literal, x2: Literal, x3: Literal, vararg xs: Literal) =
+    implyImplyImplyAnd(x1, x2, x3, xs.asIterable())
 
-/**
- * [x1] => ([x2] => ([x3] <=> OR([xs]))
- */
-fun Solver.implyImplyIffOr(x1: Int, x2: Int, x3: Int, xs: Sequence<Int>) = implyImplyIffOr(x1, x2, x3, xs.toList())
+/** [x1] => ([x2] => ([x3] => OR([xs])) */
+fun Solver.implyImplyImplyOr(x1: Literal, x2: Literal, x3: Literal, xs: Sequence<Literal>) =
+    implyImplyImplyOr(x1, x2, x3, xs.asIterable())
 
-/**
- * [x1] => ([x2] => ([x3] <=> OR([xs]))
- */
-fun Solver.implyImplyIffOr(x1: Int, x2: Int, x3: Int, vararg xs: Int) = implyImplyIffOr(x1, x2, x3, xs.asIterable())
+/** [x1] => ([x2] => ([x3] => OR([xs])) */
+fun Solver.implyImplyImplyOr(x1: Literal, x2: Literal, x3: Literal, vararg xs: Literal) =
+    implyImplyImplyOr(x1, x2, x3, xs.asIterable())
 
-/**
- * [x1] => ([x2] <=> AND([xs]))
- */
-fun Solver.implyIffAnd(x1: Int, x2: Int, xs: Sequence<Int>) = implyIffAnd(x1, x2, xs.toList())
+/**  [x1] => ([x2] => ([x3] <=> AND([xs])) */
+fun Solver.implyImplyIffAnd(x1: Literal, x2: Literal, x3: Literal, xs: Sequence<Literal>) =
+    implyImplyIffAnd(x1, x2, x3, xs.asIterable())
 
-/**
- * [x1] => ([x2] <=> AND([xs]))
- */
-fun Solver.implyIffAnd(x1: Int, x2: Int, vararg xs: Int) = implyIffAnd(x1, x2, xs.asIterable())
+/** [x1] => ([x2] => ([x3] <=> AND([xs])) */
+fun Solver.implyImplyIffAnd(x1: Literal, x2: Literal, x3: Literal, vararg xs: Literal) =
+    implyImplyIffAnd(x1, x2, x3, xs.asIterable())
 
-/**
- * [x1] => ([x2] <=> OR([xs]))
- */
-fun Solver.implyIffOr(x1: Int, x2: Int, xs: Sequence<Int>) = implyIffOr(x1, x2, xs.toList())
+/** [x1] => ([x2] => ([x3] <=> OR([xs])) */
+fun Solver.implyImplyIffOr(x1: Literal, x2: Literal, x3: Literal, xs: Sequence<Literal>) =
+    implyImplyIffOr(x1, x2, x3, xs.asIterable())
 
-/**
- * [x1] => ([x2] <=> OR([xs]))
- */
-fun Solver.implyIffOr(x1: Int, x2: Int, vararg xs: Int) = implyIffOr(x1, x2, xs.asIterable())
+/** [x1] => ([x2] => ([x3] <=> OR([xs])) */
+fun Solver.implyImplyIffOr(x1: Literal, x2: Literal, x3: Literal, vararg xs: Literal) =
+    implyImplyIffOr(x1, x2, x3, xs.asIterable())
 
-/**
- * [lhs] <=> AND([rhs])
- */
-fun Solver.iffAnd(lhs: Int, rhs: Sequence<Int>) = iffAnd(lhs, rhs.toList())
+/** [x1] => ([x2] <=> AND([xs])) */
+fun Solver.implyIffAnd(x1: Literal, x2: Literal, xs: Sequence<Literal>) =
+    implyIffAnd(x1, x2, xs.asIterable())
 
-/**
- * [lhs] <=> AND([rhs])
- */
-fun Solver.iffAnd(lhs: Int, vararg rhs: Int) = iffAnd(lhs, rhs.asIterable())
+/** [x1] => ([x2] <=> AND([xs])) */
+fun Solver.implyIffAnd(x1: Literal, x2: Literal, vararg xs: Literal) =
+    implyIffAnd(x1, x2, xs.asIterable())
 
-/**
- * [lhs] <=> OR([rhs])
- */
-fun Solver.iffOr(lhs: Int, rhs: Sequence<Int>) = iffOr(lhs, rhs.toList())
+/** [x1] => ([x2] <=> OR([xs])) */
+fun Solver.implyIffOr(x1: Literal, x2: Literal, xs: Sequence<Literal>) =
+    implyIffOr(x1, x2, xs.asIterable())
 
-/**
- * [lhs] <=> OR([rhs])
- */
-fun Solver.iffOr(lhs: Int, vararg rhs: Int) = iffOr(lhs, rhs.asIterable())
+/** [x1] => ([x2] <=> OR([xs])) */
+fun Solver.implyIffOr(x1: Literal, x2: Literal, vararg xs: Literal) =
+    implyIffOr(x1, x2, xs.asIterable())
+
+/** [lhs] <=> AND([rhs]) */
+fun Solver.iffAnd(lhs: Literal, rhs: Sequence<Literal>) =
+    iffAnd(lhs, rhs.asIterable())
+
+/** [lhs] <=> AND([rhs]) */
+fun Solver.iffAnd(lhs: Literal, vararg rhs: Literal) =
+    iffAnd(lhs, rhs.asIterable())
+
+/** [lhs] <=> OR([rhs]) */
+fun Solver.iffOr(lhs: Literal, rhs: Sequence<Literal>) =
+    iffOr(lhs, rhs.asIterable())
+
+/** [lhs] <=> OR([rhs]) */
+fun Solver.iffOr(lhs: Literal, vararg rhs: Literal) =
+    iffOr(lhs, rhs.asIterable())

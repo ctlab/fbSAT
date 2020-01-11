@@ -12,10 +12,10 @@ fun Solver.declareGuardConditionsBfsConstraints(extendedVars: ExtendedVariables)
     with(extendedVars) {
         for (c in 1..C)
             for (k in 1..K) {
-                val bfsTransitionGuard = newBoolVar(P, P) { (i, j) ->
+                val bfsTransitionGuard = newBoolVarArray(P, P) { (i, j) ->
                     if (j > i) nodeParent[c, k, j] eq i else falseVariable
                 }
-                val bfsParentGuard = newIntVar(P) { (j) -> 0 until j }
+                val bfsParentGuard = newIntVarArray(P) { (j) -> 0 until j }
 
                 comment("F_p")
                 // (p[j] = i) <=> t[i, j] & AND_{k<i}( ~t[k, j] ) :: i<j

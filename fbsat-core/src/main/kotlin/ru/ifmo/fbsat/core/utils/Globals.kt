@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.core.utils
 
 import org.redundent.kotlin.xml.PrintOptions
+import ru.ifmo.fbsat.core.solver.VarEncoding
 import kotlin.properties.Delegates
 
 enum class SolverBackend {
@@ -26,7 +27,8 @@ object Globals {
     var IS_ENCODE_TERMINALS_ORDER: Boolean by Delegates.notNull()
     var IS_ENCODE_TERMINALS_MINI_ORDER: Boolean by Delegates.notNull()
     var IS_ENCODE_TOTALIZER: Boolean by Delegates.notNull()
-    var IS_DEBUG: Boolean by Delegates.notNull()
+    var IS_DEBUG: Boolean = false // by Delegates.notNull()
     val xmlPrintOptions: PrintOptions =
         PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = true)
+    val defaultVarEncoding: VarEncoding = VarEncoding.ONEHOT
 }

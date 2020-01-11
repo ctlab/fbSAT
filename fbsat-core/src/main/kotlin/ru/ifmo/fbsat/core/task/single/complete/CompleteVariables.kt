@@ -4,10 +4,10 @@ import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.solver.BoolVar
-import ru.ifmo.fbsat.core.solver.IntVar
+import ru.ifmo.fbsat.core.solver.BoolVarArray
+import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.Var
+import ru.ifmo.fbsat.core.solver.VarArray
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
 
 /*
@@ -30,35 +30,26 @@ class CompleteVariables(
     val Z: Int,
     val U: Int,
     /* Core variables */
-    val transitionDestination: IntVar,
-    val transitionInputEvent: IntVar,
-    val transitionFiring: BoolVar,
-    val firstFired: IntVar,
-    val notFired: BoolVar,
-    val stateOutputEvent: IntVar,
-    val stateAlgorithmTop: BoolVar,
-    val stateAlgorithmBot: BoolVar,
-    /* Interface variables */
-    val actualTransitionFunction: IntVar,
+    val actualTransitionFunction: IntVarArray,
+    val transitionDestination: IntVarArray,
+    val transitionInputEvent: IntVarArray,
+    val transitionFiring: BoolVarArray,
+    val firstFired: IntVarArray,
+    val notFired: BoolVarArray,
+    val stateOutputEvent: IntVarArray,
+    val stateAlgorithmTop: BoolVarArray,
+    val stateAlgorithmBot: BoolVarArray,
     /* Mapping variables */
-    val mapping: IntVar,
+    val mapping: IntVarArray,
     /* Guard conditions variables */
-    val nodeType: Var<NodeType>,
-    val nodeInputVariable: IntVar,
-    val nodeParent: IntVar,
-    val nodeChild: IntVar,
-    val nodeValue: BoolVar
+    val nodeType: VarArray<NodeType>,
+    val nodeInputVariable: IntVarArray,
+    val nodeParent: IntVarArray,
+    val nodeChild: IntVarArray,
+    val nodeValue: BoolVarArray
 ) {
     /* Computable constants */
     val posUIs: List<InputValues> = scenarioTree.uniqueInputs
-
-    /* Cardinality variables */
-    var totalizer: IntArray? = null
-        internal set
-    var maxTotalGuardsSize: Int? = null
-        internal set
-    val N: Int?
-        get() = maxTotalGuardsSize
 
     /* Negative constants and variables */
     var negV: Int = 0
@@ -70,17 +61,17 @@ class CompleteVariables(
     var onlyNegUIs: List<InputValues> = emptyList() // Actually `negUIs - posUIs`, but is initially empty
         internal set
     // These variables (until negMapping) use U in domain, so must be redeclared for negU
-    lateinit var negTransitionFiring: BoolVar
+    lateinit var negTransitionFiring: BoolVarArray
         internal set
-    lateinit var negFirstFired: IntVar
+    lateinit var negFirstFired: IntVarArray
         internal set
-    lateinit var negNotFired: BoolVar
+    lateinit var negNotFired: BoolVarArray
         internal set
-    lateinit var negActualTransitionFunction: IntVar
+    lateinit var negActualTransitionFunction: IntVarArray
         internal set
-    lateinit var negNodeValue: BoolVar
+    lateinit var negNodeValue: BoolVarArray
         internal set
-    lateinit var negMapping: IntVar
+    lateinit var negMapping: IntVarArray
         internal set
     val forbiddenLoops: MutableSet<Pair<Int, Int>> = mutableSetOf()
 }
@@ -94,6 +85,7 @@ fun Solver.declareCompleteVariables(
         negativeScenarioTree = negativeScenarioTree,
         C = C, K = K, P = P,
         V = V, E = E, O = O, X = X, Z = Z, U = U,
+        actualTransitionFunction = actualTransitionFunction,
         transitionDestination = transitionDestination,
         transitionInputEvent = transitionInputEvent,
         transitionFiring = transitionFiring,
@@ -102,7 +94,6 @@ fun Solver.declareCompleteVariables(
         stateOutputEvent = stateOutputEvent,
         stateAlgorithmTop = stateAlgorithmTop,
         stateAlgorithmBot = stateAlgorithmBot,
-        actualTransitionFunction = actualTransitionFunction,
         mapping = mapping,
         nodeType = nodeType,
         nodeInputVariable = nodeInputVariable,

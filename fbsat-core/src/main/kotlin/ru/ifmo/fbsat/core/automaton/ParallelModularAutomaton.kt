@@ -36,8 +36,7 @@ class ParallelModularAutomaton(
         modules[m].outputNames[moduleOutputVariables[m].indexOf(z)]
     }
 
-    val numberOfTransitions: Int
-        get() = modules.sumBy { it.numberOfTransitions }
+    val numberOfTransitions: Int = modules.sumBy { it.numberOfTransitions }
 
     init {
         require(modules.all { it.inputEvents == inputEvents })

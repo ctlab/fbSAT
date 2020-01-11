@@ -5,7 +5,7 @@ import java.util.Deque
 
 class Cardinality(
     private val solver: Solver,
-    private var totalizer: BoolVar
+    private var totalizer: BoolVarArray
 ) {
     var upperBound: Int? = null // sum(totalizer) <= upperBound
         private set
@@ -38,7 +38,7 @@ fun Solver.declareCardinality(variables: Sequence<Int>): Cardinality =
 fun Solver.declareCardinality(block: suspend SequenceScope<Int>.() -> Unit): Cardinality =
     declareCardinality(sequence(block).constrainOnce())
 
-fun Solver.declareTotalizer(variables: Iterable<Int>): BoolVar {
+fun Solver.declareTotalizer(variables: Iterable<Int>): BoolVarArray {
     val queue: Deque<List<Int>> = ArrayDeque()
 
     for (e in variables) {
@@ -55,7 +55,7 @@ fun Solver.declareTotalizer(variables: Iterable<Int>): BoolVar {
         val m2 = b.size
         val m = m1 + m2
 
-        val r = List(m) { newVariable() }
+        val r = List(m) { newLiteral() }
         queue.addLast(r)
 
         for (alpha in 0..m1) {
@@ -80,20 +80,20 @@ fun Solver.declareTotalizer(variables: Iterable<Int>): BoolVar {
     }
 
     val totalizer = queue.removeFirst()
-    return BoolVar.create(totalizer.size) { (i) -> totalizer[i - 1] }
+    return newBoolVarArray(totalizer.size) { (i) -> totalizer[i - 1] }
 }
 
-fun Solver.declareTotalizer(variables: Sequence<Int>): BoolVar =
+fun Solver.declareTotalizer(variables: Sequence<Int>): BoolVarArray =
     declareTotalizer(variables.asIterable())
 
-fun Solver.declareTotalizer(block: suspend SequenceScope<Int>.() -> Unit): BoolVar =
+fun Solver.declareTotalizer(block: suspend SequenceScope<Int>.() -> Unit): BoolVarArray =
     declareTotalizer(sequence(block).constrainOnce())
 
 /**
  * Declares cardinality constraint `sum(totalizer) <= x`
  * @param[declared] previously declared upper bound.
  */
-fun Solver.declareComparatorLessThanOrEqual(totalizer: BoolVar, x: Int, declared: Int? = null) {
+fun Solver.declareComparatorLessThanOrEqual(totalizer: BoolVarArray, x: Int, declared: Int? = null) {
     require(totalizer.shape.size == 1) { "Totalizer must be 1-dimensional." }
     val max = declared ?: totalizer.size
     comment("Comparator(<=$x up to $max)")
