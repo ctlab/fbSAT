@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.task.modular.basic.parallel
 
+import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
 import ru.ifmo.fbsat.core.constraints.declareParallelModularAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareParallelModularAutomatonStructureConstraints
@@ -10,7 +11,7 @@ import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.measureTimeOnce
+import ru.ifmo.fbsat.core.utils.timeSince
 import java.io.File
 
 @Suppress("MemberVisibilityCanBePrivate", "LocalVariableName")
@@ -30,46 +31,45 @@ class ParallelModularBasicTask(
     internal val cardinality: Cardinality
 
     init {
+        val timeStart = PerformanceCounter.reference
         val nvarStart = solver.numberOfVariables
         val nconStart = solver.numberOfClauses
-        val timeDeclare = measureTimeOnce {
 
-            with(solver) {
-                /* Variables */
-                vars = declareParallelModularBasicVariables(
-                    scenarioTree = scenarioTree,
-                    M = numberOfModules,
-                    C = numberOfStates,
-                    K = maxOutgoingTransitions ?: numberOfStates
-                )
+        with(solver) {
+            /* Variables */
+            vars = declareParallelModularBasicVariables(
+                scenarioTree = scenarioTree,
+                M = numberOfModules,
+                C = numberOfStates,
+                K = maxOutgoingTransitions ?: numberOfStates
+            )
 
-                /* Cardinality */
-                cardinality = declareCardinality {
-                    with(vars) {
-                        for (m in 1..M) with(modularBasicVariables[m]) {
-                            for (c in 1..C)
-                                for (k in 1..K)
-                                    yield(transitionDestination[c, k] neq 0)
-                        }
+            /* Cardinality */
+            cardinality = declareCardinality {
+                with(vars) {
+                    for (m in 1..M) with(modularBasicVariables[m]) {
+                        for (c in 1..C)
+                            for (k in 1..K)
+                                yield(transitionDestination[c, k] neq 0)
                     }
                 }
-
-                /* Constraints */
-                declareParallelModularAutomatonStructureConstraints(vars)
-                if (Globals.IS_BFS_AUTOMATON) declareParallelModularAutomatonBfsConstraints(vars)
-                declarePositiveParallelModularMappingConstraints(vars, isEncodeReverseImplication)
-                declareAdhocConstraints()
             }
 
-            /* Initial cardinality constraints */
-            updateCardinalityLessThan(maxTransitions?.let { it + 1 })
-
+            /* Constraints */
+            declareParallelModularAutomatonStructureConstraints(vars)
+            if (Globals.IS_BFS_AUTOMATON) declareParallelModularAutomatonBfsConstraints(vars)
+            declarePositiveParallelModularMappingConstraints(vars, isEncodeReverseImplication)
+            declareAdhocConstraints()
         }
+
+        /* Initial cardinality constraints */
+        updateCardinalityLessThan(maxTransitions?.let { it + 1 })
+
         val nvarDiff = solver.numberOfVariables - nvarStart
         val nconDiff = solver.numberOfClauses - nconStart
         log.info(
             "ParallelModularBasicTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s.".format(
-                timeDeclare.seconds
+                timeSince(timeStart).seconds
             )
         )
     }

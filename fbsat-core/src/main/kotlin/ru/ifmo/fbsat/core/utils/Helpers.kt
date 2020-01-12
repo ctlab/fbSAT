@@ -5,7 +5,6 @@ import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.TimeSpan
-import com.soywiz.klock.measureTime
 import com.soywiz.klock.microseconds
 import okio.BufferedSource
 import okio.Source
@@ -109,14 +108,6 @@ fun copyFile(source: File, destination: File) {
             b.writeAll(a)
         }
     }
-}
-
-@UseExperimental(ExperimentalContracts::class)
-inline fun measureTimeOnce(callback: () -> Unit): TimeSpan {
-    contract {
-        callsInPlace(callback, InvocationKind.EXACTLY_ONCE)
-    }
-    return measureTime(callback)
 }
 
 fun timeSince(timeStart: TimeSpan): TimeSpan =

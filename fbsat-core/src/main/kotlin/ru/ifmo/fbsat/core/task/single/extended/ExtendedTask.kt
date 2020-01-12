@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.task.single.extended
 
+import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.constraints.declareGuardConditionsBfsConstraints
@@ -14,7 +15,7 @@ import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.checkMapping
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.measureTimeOnce
+import ru.ifmo.fbsat.core.utils.timeSince
 import java.io.File
 
 @Suppress("LocalVariableName")
@@ -45,39 +46,38 @@ class ExtendedTask(
     internal val cardinality: Cardinality
 
     init {
+        val timeStart = PerformanceCounter.reference
         val nvarStart = solver.numberOfVariables
         val nconStart = solver.numberOfClauses
-        val timeDeclare = measureTimeOnce {
 
-            with(solver) {
-                /* Variables */
-                vars = declareExtendedVariables(basicVars = basicTask.vars, P = maxGuardSize)
+        with(solver) {
+            /* Variables */
+            vars = declareExtendedVariables(basicVars = basicTask.vars, P = maxGuardSize)
 
-                /* Cardinality */
-                cardinality = declareCardinality {
-                    with(vars) {
-                        for (c in 1..C)
-                            for (k in 1..K)
-                                for (p in 1..P)
-                                    yield(nodeType[c, k, p] neq NodeType.NONE)
-                    }
+            /* Cardinality */
+            cardinality = declareCardinality {
+                with(vars) {
+                    for (c in 1..C)
+                        for (k in 1..K)
+                            for (p in 1..P)
+                                yield(nodeType[c, k, p] neq NodeType.NONE)
                 }
-
-                /* Constraints */
-                declarePositiveGuardConditionsConstraints(vars)
-                if (Globals.IS_BFS_GUARD) declareGuardConditionsBfsConstraints(vars)
-                declareAdhocConstraints()
             }
 
-            /* Initial cardinality constraints */
-            updateCardinalityLessThan(maxTotalGuardsSize?.let { it + 1 })
-
+            /* Constraints */
+            declarePositiveGuardConditionsConstraints(vars)
+            if (Globals.IS_BFS_GUARD) declareGuardConditionsBfsConstraints(vars)
+            declareAdhocConstraints()
         }
+
+        /* Initial cardinality constraints */
+        updateCardinalityLessThan(maxTotalGuardsSize?.let { it + 1 })
+
         val nvarDiff = solver.numberOfVariables - nvarStart
         val nconDiff = solver.numberOfClauses - nconStart
         log.info(
             "ExtendedTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s.".format(
-                timeDeclare.seconds
+                timeSince(timeStart).seconds
             )
         )
     }
