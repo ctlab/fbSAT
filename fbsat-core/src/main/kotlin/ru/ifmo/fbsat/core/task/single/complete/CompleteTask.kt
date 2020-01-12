@@ -1,6 +1,5 @@
 package ru.ifmo.fbsat.core.task.single.complete
 
-import com.soywiz.klock.DateTime
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.constraints.declareNegativeAutomatonStructureConstraints
@@ -20,7 +19,7 @@ import ru.ifmo.fbsat.core.task.single.extended.ExtendedTask
 import ru.ifmo.fbsat.core.task.single.extended.toAutomaton
 import ru.ifmo.fbsat.core.utils.checkMapping
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.secondsSince
+import ru.ifmo.fbsat.core.utils.measureTimeOnce
 import java.io.File
 
 @Suppress("LocalVariableName")
@@ -51,37 +50,39 @@ class CompleteTask(
     )
 
     init {
-        val timeStart = DateTime.nowLocal()
         val nvarStart = solver.numberOfVariables
         val nconStart = solver.numberOfClauses
+        val timeDeclare = measureTimeOnce {
 
-        with(solver) {
-            /* Variables */
-            vars = declareCompleteVariables(
-                extendedVars = extendedTask.vars,
-                negativeScenarioTree = negativeScenarioTree ?: NegativeScenarioTree(
-                    inputEvents = scenarioTree.inputEvents,
-                    outputEvents = scenarioTree.outputEvents,
-                    inputNames = scenarioTree.inputNames,
-                    outputNames = scenarioTree.outputNames
+            with(solver) {
+                /* Variables */
+                vars = declareCompleteVariables(
+                    extendedVars = extendedTask.vars,
+                    negativeScenarioTree = negativeScenarioTree ?: NegativeScenarioTree(
+                        inputEvents = scenarioTree.inputEvents,
+                        outputEvents = scenarioTree.outputEvents,
+                        inputNames = scenarioTree.inputNames,
+                        outputNames = scenarioTree.outputNames
+                    )
                 )
-            )
 
-            /* Cardinality */
-            cardinality = extendedTask.cardinality
+                /* Cardinality */
+                cardinality = extendedTask.cardinality
+            }
+
+            /* Initial cardinality constraints */
+            updateCardinalityLessThan(maxTotalGuardsSize)
+
+            /* Initial negative constraints */
+            updateNegativeReduction()
+
         }
-
-        /* Initial cardinality constraints */
-        updateCardinalityLessThan(maxTotalGuardsSize)
-
-        /* Initial negative constraints */
-        updateNegativeReduction()
-
         val nvarDiff = solver.numberOfVariables - nvarStart
         val nconDiff = solver.numberOfClauses - nconStart
         log.info(
-            "CompleteTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s"
-                .format(secondsSince(timeStart))
+            "CompleteTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s.".format(
+                timeDeclare.seconds
+            )
         )
     }
 

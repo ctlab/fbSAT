@@ -189,7 +189,7 @@ private class IncrementalSolver(command: String) : Solver() {
 
         log.debug { "Solving..." }
         val (answer, solvingTime) = measureTimeWithResult { processOutput.readUtf8Line() }
-        log.debug { "Done solving in %.2f".format(solvingTime.seconds) }
+        log.debug { "Done solving in %.2f seconds".format(solvingTime.seconds) }
 
         if (answer == null) {
             // log.error("Solver returned nothing")
@@ -198,7 +198,8 @@ private class IncrementalSolver(command: String) : Solver() {
 
         when (answer) {
             "SAT" -> {
-                // log.success("SAT in %.2f s".format(solvingTime))
+
+                // log.success("SAT in %.2f s.".format(solvingTime))
                 val line = processOutput.readUtf8Line() ?: return null
                 return line.trim()
                     .splitToSequence(" ")
@@ -209,7 +210,7 @@ private class IncrementalSolver(command: String) : Solver() {
                     .let { RawAssignment(it) }
             }
             "UNSAT" -> {
-                // log.failure("UNSAT in %.2f s".format(solvingTime))
+                // log.failure("UNSAT in %.2f s.".format(solvingTime))
                 return null
             }
             else -> {

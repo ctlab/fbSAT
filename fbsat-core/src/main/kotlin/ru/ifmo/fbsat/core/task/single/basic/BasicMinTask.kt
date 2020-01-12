@@ -1,10 +1,10 @@
 package ru.ifmo.fbsat.core.task.single.basic
 
+import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.timeIt
 import java.io.File
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -40,14 +40,14 @@ class BasicMinTask(
                     autoFinalize = false,
                     isEncodeReverseImplication = isEncodeReverseImplication
                 )
-                val (automaton, runningTime) = timeIt { task.infer() }
+                val (automaton, runningTime) = measureTimeWithResult { task.infer() }
                 if (automaton != null) {
-                    log.success("BasicMinTask: C = $C -> SAT in %.2f s".format(runningTime))
+                    log.success("BasicMinTask: C = $C -> SAT in %.2f s.".format(runningTime.seconds))
                     log.info("BasicMinTask: minimal C = $C")
                     best = automaton
                     break
                 } else {
-                    log.failure("BasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
+                    log.failure("BasicMinTask: C = $C -> UNSAT in %.2f s.".format(runningTime.seconds))
                     task.finalize2()
                 }
             }
@@ -64,11 +64,11 @@ class BasicMinTask(
                 autoFinalize = false,
                 isEncodeReverseImplication = isEncodeReverseImplication
             )
-            val (automaton, runningTime) = timeIt { task.infer() }
+            val (automaton, runningTime) = measureTimeWithResult { task.infer() }
             if (automaton != null)
-                log.success("BasicMinTask: C = $C -> SAT in %.2f s".format(runningTime))
+                log.success("BasicMinTask: C = $C -> SAT in %.2f s.".format(runningTime.seconds))
             else
-                log.failure("BasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
+                log.failure("BasicMinTask: C = $C -> UNSAT in %.2f s.".format(runningTime.seconds))
             best = automaton
         }
 
@@ -77,15 +77,12 @@ class BasicMinTask(
             while (true) {
                 val T = best!!.numberOfTransitions
                 task.updateCardinalityLessThan(T)
-                val (automaton, runningTime) = timeIt { task.infer() }
+                val (automaton, runningTime) = measureTimeWithResult { task.infer() }
                 if (automaton != null) {
-                    log.success(
-                        "BasicMinTask: T < $T -> ${automaton.numberOfTransitions} in %.2f s"
-                            .format(runningTime)
-                    )
+                    log.success("BasicMinTask: T < $T -> ${automaton.numberOfTransitions} in %.2f s.".format(runningTime.seconds))
                     best = automaton
                 } else {
-                    log.failure("BasicMinTask: T < $T -> UNSAT in %.2f".format(runningTime))
+                    log.failure("BasicMinTask: T < $T -> UNSAT in %.2f s.".format(runningTime.seconds))
                     log.info("BasicMinTask: minimal T = ${best.numberOfTransitions}")
                     break
                 }

@@ -3,10 +3,9 @@ package ru.ifmo.fbsat.core.utils
 import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
-import com.soywiz.klock.DateTime
-import com.soywiz.klock.DateTimeTz
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.TimeSpan
+import com.soywiz.klock.measureTime
 import com.soywiz.klock.microseconds
 import okio.BufferedSource
 import okio.Source
@@ -112,26 +111,16 @@ fun copyFile(source: File, destination: File) {
     }
 }
 
-data class TimeItResult<T>(val result: T, val runningTime: Double)
-
-/**
- * Measures the [block] execution time and returns a [TimeItResult](`result`, `runningTime`)
- * @param[block] code to execute.
- * @return [TimeItResult] of [block] execution result and running time (in seconds).
- */
-inline fun <T> timeIt(block: () -> T): TimeItResult<T> {
-    val start = PerformanceCounter.microseconds
-    val result: T = block()
-    val end = PerformanceCounter.microseconds
-    return TimeItResult(result, (end - start).microseconds.seconds)
+@UseExperimental(ExperimentalContracts::class)
+inline fun measureTimeOnce(callback: () -> Unit): TimeSpan {
+    contract {
+        callsInPlace(callback, InvocationKind.EXACTLY_ONCE)
+    }
+    return measureTime(callback)
 }
 
 fun timeSince(timeStart: TimeSpan): TimeSpan =
     (PerformanceCounter.microseconds - timeStart.microseconds).microseconds
-
-fun secondsSince(timeStart: DateTime): Double = (DateTime.now() - timeStart).seconds
-
-fun secondsSince(timeStart: DateTimeTz): Double = (DateTime.nowLocal() - timeStart).seconds
 
 fun File.sourceAutoGzip(): Source =
     if (extension == "gz")

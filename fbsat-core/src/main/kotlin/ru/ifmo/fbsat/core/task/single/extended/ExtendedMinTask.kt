@@ -1,11 +1,11 @@
 package ru.ifmo.fbsat.core.task.single.extended
 
+import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.single.basic.BasicMinTask
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.timeIt
 import java.io.File
 
 class ExtendedMinTask(
@@ -52,14 +52,15 @@ class ExtendedMinTask(
             autoFinalize = false,
             isEncodeReverseImplication = isEncodeReverseImplication
         )
-        val (automaton, runningTime) = timeIt { task.infer() }
+        val (automaton, runningTime) = measureTimeWithResult { task.infer() }
         if (automaton != null) {
             log.success(
-                "ExtMinTask: initial N = $initialMaxTotalGuardsSize -> ${automaton.totalGuardsSize} in %.2f s"
-                    .format(runningTime)
+                "ExtMinTask: initial N = $initialMaxTotalGuardsSize -> ${automaton.totalGuardsSize} in %.2f s.".format(
+                    runningTime.seconds
+                )
             )
         } else {
-            log.failure("ExtMinTask: initial N = $initialMaxTotalGuardsSize -> UNSAT in %.2f s".format(runningTime))
+            log.failure("ExtMinTask: initial N = $initialMaxTotalGuardsSize -> UNSAT in %.2f s.".format(runningTime.seconds))
         }
         var best: Automaton? = automaton
 
@@ -67,12 +68,12 @@ class ExtendedMinTask(
             while (true) {
                 val N = best!!.totalGuardsSize
                 task.updateCardinalityLessThan(N)
-                val (automaton, runningTime) = timeIt { task.infer() }
+                val (automaton, runningTime) = measureTimeWithResult { task.infer() }
                 if (automaton != null) {
-                    log.success("ExtMinTask: N < $N -> ${automaton.totalGuardsSize} in %.2f s".format(runningTime))
+                    log.success("ExtMinTask: N < $N -> ${automaton.totalGuardsSize} in %.2f s.".format(runningTime.seconds))
                     best = automaton
                 } else {
-                    log.failure("ExtMinTask: N < $N -> UNSAT in %.2f s".format(runningTime))
+                    log.failure("ExtMinTask: N < $N -> UNSAT in %.2f s.".format(runningTime.seconds))
                     log.info("ExtMinTask: minimal N = ${best.totalGuardsSize}")
                     break
                 }

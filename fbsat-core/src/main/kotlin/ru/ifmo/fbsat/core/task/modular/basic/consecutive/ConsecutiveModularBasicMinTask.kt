@@ -1,10 +1,10 @@
 package ru.ifmo.fbsat.core.task.modular.basic.consecutive
 
+import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.timeIt
 import java.io.File
 import kotlin.properties.Delegates
 
@@ -42,14 +42,14 @@ class ConsecutiveModularBasicMinTask(
                     autoFinalize = false,
                     isEncodeReverseImplication = isEncodeReverseImplication
                 )
-                val (automaton, runningTime) = timeIt { task.infer() }
+                val (automaton, runningTime) = measureTimeWithResult { task.infer() }
                 if (automaton != null) {
-                    log.success("ConsecutiveModularBasicMinTask: C = $C -> SAT in %.2f s".format(runningTime))
+                    log.success("ConsecutiveModularBasicMinTask: C = $C -> SAT in %.2f s.".format(runningTime.seconds))
                     log.info("ConsecutiveModularBasicMinTask: minimal C = $C")
                     best = automaton
                     break
                 } else {
-                    log.failure("ConsecutiveModularBasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
+                    log.failure("ConsecutiveModularBasicMinTask: C = $C -> UNSAT in %.2f s.".format(runningTime.seconds))
                     task.finalize2()
                 }
             }
@@ -67,11 +67,11 @@ class ConsecutiveModularBasicMinTask(
                 autoFinalize = false,
                 isEncodeReverseImplication = isEncodeReverseImplication
             )
-            val (automaton, runningTime) = timeIt { task.infer() }
+            val (automaton, runningTime) = measureTimeWithResult { task.infer() }
             if (automaton != null)
-                log.success("ConsecutiveModularBasicMinTask: C = $C -> SAT in %.2f s".format(runningTime))
+                log.success("ConsecutiveModularBasicMinTask: C = $C -> SAT in %.2f s.".format(runningTime.seconds))
             else
-                log.failure("ConsecutiveModularBasicMinTask: C = $C -> UNSAT in %.2f s".format(runningTime))
+                log.failure("ConsecutiveModularBasicMinTask: C = $C -> UNSAT in %.2f s.".format(runningTime.seconds))
             best = automaton
         }
 
@@ -80,15 +80,16 @@ class ConsecutiveModularBasicMinTask(
             while (true) {
                 val T = best!!.numberOfTransitions
                 task.updateCardinalityLessThan(T)
-                val (automaton, runningTime) = timeIt { task.infer() }
+                val (automaton, runningTime) = measureTimeWithResult { task.infer() }
                 if (automaton != null) {
                     log.success(
-                        "ConsecutiveModularBasicMinTask: T < $T -> ${automaton.numberOfTransitions} in %.2f s"
-                            .format(runningTime)
+                        "ConsecutiveModularBasicMinTask: T < $T -> ${automaton.numberOfTransitions} in %.2f s.".format(
+                            runningTime.seconds
+                        )
                     )
                     best = automaton
                 } else {
-                    log.failure("ConsecutiveModularBasicMinTask: T < $T -> UNSAT in %.2f".format(runningTime))
+                    log.failure("ConsecutiveModularBasicMinTask: T < $T -> UNSAT in %.2f s.".format(runningTime.seconds))
                     log.info("ConsecutiveModularBasicMinTask: minimal T = ${best.numberOfTransitions}")
                     break
                 }

@@ -1,6 +1,5 @@
 package ru.ifmo.fbsat.core.task.modular.extended.consecutive
 
-import com.soywiz.klock.DateTime
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularGuardConditionsBfsConstraints
@@ -14,7 +13,7 @@ import ru.ifmo.fbsat.core.solver.implyImply
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicTask
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.secondsSince
+import ru.ifmo.fbsat.core.utils.measureTimeOnce
 import java.io.File
 
 @Suppress("LocalVariableName")
@@ -47,42 +46,44 @@ class ConsecutiveModularExtendedTask(
     internal val cardinality: Cardinality
 
     init {
-        val timeStart = DateTime.nowLocal()
         val nvarStart = solver.numberOfVariables
         val nconStart = solver.numberOfClauses
+        val timeDeclare = measureTimeOnce {
 
-        with(solver) {
-            /* Variables */
-            vars = declareConsecutiveModularExtendedVariables(
-                basicVars = basicTask.vars,
-                P = maxGuardSize
-            )
+            with(solver) {
+                /* Variables */
+                vars = declareConsecutiveModularExtendedVariables(
+                    basicVars = basicTask.vars,
+                    P = maxGuardSize
+                )
 
-            /* Cardinality */
-            cardinality = declareCardinality {
-                with(vars) {
-                    for (m in 1..M) with(modularExtendedVariables[m]) {
-                        for (c in 1..C)
-                            for (k in 1..K)
-                                for (p in 1..P)
-                                    yield(nodeType[c, k, p] neq NodeType.NONE)
+                /* Cardinality */
+                cardinality = declareCardinality {
+                    with(vars) {
+                        for (m in 1..M) with(modularExtendedVariables[m]) {
+                            for (c in 1..C)
+                                for (k in 1..K)
+                                    for (p in 1..P)
+                                        yield(nodeType[c, k, p] neq NodeType.NONE)
+                        }
                     }
                 }
+
+                /* Constraints */
+                declareConsecutiveModularGuardConditionsConstraints(vars)
+                if (Globals.IS_BFS_GUARD) declareConsecutiveModularGuardConditionsBfsConstraints(vars)
+                declareAdhocConstraints()
             }
 
-            /* Constraints */
-            declareConsecutiveModularGuardConditionsConstraints(vars)
-            if (Globals.IS_BFS_GUARD) declareConsecutiveModularGuardConditionsBfsConstraints(vars)
-            declareAdhocConstraints()
+            updateCardinalityLessThan(maxTotalGuardsSize?.let { it + 1 })
+
         }
-
-        updateCardinalityLessThan(maxTotalGuardsSize?.let { it + 1 })
-
         val nvarDiff = solver.numberOfVariables - nvarStart
         val nconDiff = solver.numberOfClauses - nconStart
         log.info(
-            "ConsecutiveModularExtendedTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s"
-                .format(secondsSince(timeStart))
+            "ConsecutiveModularExtendedTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s.".format(
+                timeDeclare.seconds
+            )
         )
     }
 

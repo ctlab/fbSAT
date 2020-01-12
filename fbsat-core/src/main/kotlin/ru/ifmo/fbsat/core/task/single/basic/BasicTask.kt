@@ -1,6 +1,5 @@
 package ru.ifmo.fbsat.core.task.single.basic
 
-import com.soywiz.klock.DateTime
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.constraints.declareAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareAutomatonStructureConstraints
@@ -12,7 +11,7 @@ import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.checkMapping
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.secondsSince
+import ru.ifmo.fbsat.core.utils.measureTimeOnce
 import java.io.File
 
 @Suppress("LocalVariableName")
@@ -30,42 +29,44 @@ class BasicTask(
     internal val cardinality: Cardinality
 
     init {
-        val timeStart = DateTime.nowLocal()
         val nvarStart = solver.numberOfVariables
         val nconStart = solver.numberOfClauses
+        val timeDeclare = measureTimeOnce {
 
-        with(solver) {
-            /* Variables */
-            vars = declareBasicVariables(
-                scenarioTree,
-                C = numberOfStates,
-                K = maxOutgoingTransitions ?: numberOfStates
-            )
+            with(solver) {
+                /* Variables */
+                vars = declareBasicVariables(
+                    scenarioTree,
+                    C = numberOfStates,
+                    K = maxOutgoingTransitions ?: numberOfStates
+                )
 
-            /* Cardinality */
-            cardinality = declareCardinality {
-                with(vars) {
-                    for (c in 1..C)
-                        for (k in 1..K)
-                            yield(transitionDestination[c, k] neq 0)
+                /* Cardinality */
+                cardinality = declareCardinality {
+                    with(vars) {
+                        for (c in 1..C)
+                            for (k in 1..K)
+                                yield(transitionDestination[c, k] neq 0)
+                    }
                 }
+
+                /* Constraints */
+                declareAutomatonStructureConstraints(vars)
+                if (Globals.IS_BFS_AUTOMATON) declareAutomatonBfsConstraints(vars)
+                declarePositiveMappingConstraints(vars, isEncodeReverseImplication = isEncodeReverseImplication)
+                declareAdhocConstraints()
             }
 
-            /* Constraints */
-            declareAutomatonStructureConstraints(vars)
-            if (Globals.IS_BFS_AUTOMATON) declareAutomatonBfsConstraints(vars)
-            declarePositiveMappingConstraints(vars, isEncodeReverseImplication = isEncodeReverseImplication)
-            declareAdhocConstraints()
+            /* Initial cardinality constraints */
+            updateCardinalityLessThan(maxTransitions?.let { it + 1 })
+
         }
-
-        /* Initial cardinality constraints */
-        updateCardinalityLessThan(maxTransitions?.let { it + 1 })
-
         val nvarDiff = solver.numberOfVariables - nvarStart
         val nconDiff = solver.numberOfClauses - nconStart
         log.info(
-            "BasicTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s"
-                .format(secondsSince(timeStart))
+            "BasicTask: Done declaring variables ($nvarDiff) and constraints ($nconDiff) in %.2f s.".format(
+                timeDeclare.seconds
+            )
         )
     }
 
