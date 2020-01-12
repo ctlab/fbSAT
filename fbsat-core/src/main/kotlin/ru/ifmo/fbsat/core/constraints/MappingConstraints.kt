@@ -15,7 +15,7 @@ import ru.ifmo.fbsat.core.solver.implyIff
 import ru.ifmo.fbsat.core.solver.implyIffAnd
 import ru.ifmo.fbsat.core.solver.implyIffIte
 import ru.ifmo.fbsat.core.solver.implyImply
-import ru.ifmo.fbsat.core.solver.implyImplyIff
+import ru.ifmo.fbsat.core.solver.implyImplyImply
 import ru.ifmo.fbsat.core.solver.implyOr
 import ru.ifmo.fbsat.core.solver.sign
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicVariables
@@ -692,48 +692,33 @@ private fun Solver.declareArbitraryModularMappingConstraintsForActiveNode(
 
     // mapping[v] = actualTransition[mapping[tp(v)],tie(v),tin(v)]
     // (mapping[p]=i) => ( (inputIndex[v]=u) => ((mapping[v]=j) <=> (actualTransition[i,u]=j)) )
+    // Note: implyImplyImply vs implyImplyIff
     for (i in 1..C)
         for (j in 1..C)
             for (u in 1..U)
-                implyImplyIff(
+                implyImplyImply(
                     mapping[p] eq i,
                     inputIndex[v] eq u,
                     mapping[v] eq j,
                     actualTransitionFunction[i, u] eq j
                 )
 
-    // redundant
+    // redundant?
     // actualTransition[mapping[tp(v)], inputIndex[v]] != 0
     // (mapping[p]=c) => ((inputIndex[v]=u) => (actualTransition[c,u] != 0))
-    for (c in 1..C)
-        for (u in 1..U)
-            implyImply(
-                mapping[p] eq c,
-                inputIndex[v] eq u,
-                actualTransitionFunction[c, u] neq 0
-            )
+    // for (c in 1..C)
+    //     for (u in 1..U)
+    //         implyImply(
+    //             mapping[p] eq c,
+    //             inputIndex[v] eq u,
+    //             actualTransitionFunction[c, u] neq 0
+    //         )
 
     fun getOutboundVarPin(m: Int, z: Int): Int {
         return (m - 1) * Z + z
     }
 
-    // (mapping[p]=q') => (inputIndex[v]=u) => (actualTransition[q',u]=q) => ...
-    // ... => (pinComputedValue[v,z] <=> ITE(pinComputedValue[p,z], stateAlgorithm{Top/Bot}[q,z]))
-    // for (i in 1..C)
-    //     for (u in 1..U)
-    //         for (j in 1..C)
-    //             for (z in 1..Z)
-    //                 implyImplyImplyIffIte(
-    //                     mapping[p] eq i,
-    //                     inputIndex[v] eq u,
-    //                     actualTransitionFunction[i, u] eq j,
-    //                     outboundVarPinComputedValue[v, z],
-    //                     outboundVarPinComputedValue[p, z],
-    //                     stateAlgorithmTop[j, z],
-    //                     stateAlgorithmBot[j, z]
-    //                 )
-    // BETTER:
-    // (mapping[v]=q) => (pinComputedValue[v,z] <=> ITE(pinComputedValue[p,z], stateAlgorithm{Top/Bot}[q,z]))
+    // (mapping[v]=c) => (pinComputedValue[v,z] <=> ITE(pinComputedValue[p,z], stateAlgorithm{Top/Bot}[c,z]))
     for (c in 1..C)
         for (z in 1..Z) {
             val pin = getOutboundVarPin(m, z)
