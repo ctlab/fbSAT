@@ -13,6 +13,7 @@ import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
 import com.soywiz.klock.DateTime
+import com.soywiz.klock.measureTime
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
@@ -40,7 +41,6 @@ import ru.ifmo.fbsat.core.utils.inputNamesPnP
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.outputNamesPnP
 import java.io.File
-import kotlin.system.measureTimeMillis
 
 enum class Method(val s: String) {
     Basic("basic"),
@@ -826,7 +826,7 @@ class FbSAT : CliktCommand() {
 
 fun main(args: Array<String>) {
     log.br(DateTime.nowLocal().format("yyyy-MM-dd HH:mm:ss"))
-    val runningTime = measureTimeMillis { FbSAT().main(args) }
+    val runningTime = measureTime { FbSAT().main(args) }
     log.br(DateTime.nowLocal().format("yyyy-MM-dd HH:mm:ss"))
-    log.success("All done in %.3f seconds".format(runningTime / 1000.0))
+    log.success("All done in %.3f seconds".format(runningTime.seconds))
 }
