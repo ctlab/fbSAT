@@ -158,8 +158,9 @@ fun <T> cartesianProduct(iterables: Iterable<Iterable<T>>): Sequence<List<T>> =
     }
 
 fun <T> Iterable<T>.pairs(): Sequence<Pair<T, T>> = sequence {
-    for ((i, v) in withIndex()) {
-        yieldAll(drop(i + 1).map { v to it })
+    val pool = this@pairs.toList()
+    for ((i, v) in pool.withIndex()) {
+        yieldAll(pool.drop(i + 1).map { v to it })
     }
 }
 
