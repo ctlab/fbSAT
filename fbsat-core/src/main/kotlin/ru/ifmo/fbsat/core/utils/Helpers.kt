@@ -6,6 +6,7 @@ import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.DateTimeTz
 import com.soywiz.klock.PerformanceCounter
+import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.microseconds
 import okio.BufferedSource
 import okio.Source
@@ -124,6 +125,9 @@ inline fun <T> timeIt(block: () -> T): TimeItResult<T> {
     val end = PerformanceCounter.microseconds
     return TimeItResult(result, (end - start).microseconds.seconds)
 }
+
+fun timeSince(timeStart: TimeSpan): TimeSpan =
+    (PerformanceCounter.microseconds - timeStart.microseconds).microseconds
 
 fun secondsSince(timeStart: DateTime): Double = (DateTime.now() - timeStart).seconds
 
