@@ -3,9 +3,9 @@ package ru.ifmo.fbsat.core.constraints
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
 import ru.ifmo.fbsat.core.solver.BoolVarArray
+import ru.ifmo.fbsat.core.solver.DomainVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.VarArray
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.implyImply
@@ -89,7 +89,7 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
     P: Int,
     X: Int,
     transitionDestination: IntVarArray,
-    nodeType: VarArray<NodeType>,
+    nodeType: DomainVarArray<NodeType>,
     nodeInputVariable: IntVarArray,
     nodeParent: IntVarArray,
     nodeChild: IntVarArray
@@ -275,7 +275,7 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
     K: Int,
     P: Int,
     X: Int,
-    nodeType: VarArray<NodeType>,
+    nodeType: DomainVarArray<NodeType>,
     nodeInputVariable: IntVarArray,
     nodeChild: IntVarArray,
     nodeValue: BoolVarArray

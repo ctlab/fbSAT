@@ -20,7 +20,7 @@ fun BoolVarArray.convert(raw: RawAssignment): BooleanMultiArray =
 fun IntVarArray.convert(raw: RawAssignment): IntMultiArray =
     mapValuesToInt { it.convert(raw) ?: error("So sad :c") }
 
-fun <T> VarArray<T>.convert(raw: RawAssignment): MultiArray<T> =
+fun <T> DomainVarArray<T>.convert(raw: RawAssignment): MultiArray<T> =
     mapValues { it.convert(raw) ?: error("So sad :c") }
 
 @JvmName("multiArrayBoolVarArrayConvert")
@@ -32,5 +32,5 @@ fun MultiArray<IntVarArray>.convert(raw: RawAssignment): MultiArray<IntMultiArra
     mapValues { it.convert(raw) }
 
 @JvmName("multiArrayVarArrayConvert")
-fun <T> MultiArray<VarArray<T>>.convert(raw: RawAssignment): MultiArray<MultiArray<T>> =
+fun <T> MultiArray<DomainVarArray<T>>.convert(raw: RawAssignment): MultiArray<MultiArray<T>> =
     mapValues { it.convert(raw) }

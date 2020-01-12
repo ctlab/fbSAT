@@ -3,9 +3,9 @@ package ru.ifmo.fbsat.core.task.single.extended
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
+import ru.ifmo.fbsat.core.solver.DomainVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.VarArray
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 
 @Suppress("PropertyName")
@@ -34,7 +34,7 @@ class ExtendedVariables(
     /* Mapping variables */
     val mapping: IntVarArray,
     /* Guard conditions variables */
-    val nodeType: VarArray<NodeType>,
+    val nodeType: DomainVarArray<NodeType>,
     val nodeInputVariable: IntVarArray,
     val nodeParent: IntVarArray,
     val nodeChild: IntVarArray,
@@ -46,7 +46,7 @@ fun Solver.declareExtendedVariables(
     P: Int
 ): ExtendedVariables = with(basicVars) {
     /* Guard conditions variables */
-    val nodeType = newVarArray(C, K, P) { NodeType.values().asIterable() }
+    val nodeType = newDomainVarArray(C, K, P) { NodeType.values().asIterable() }
     val nodeInputVariable = newIntVarArray(C, K, P) { 0..X }
     val nodeParent = newIntVarArray(C, K, P) { (_, _, p) -> 0 until p }
     val nodeChild = newIntVarArray(C, K, P) { (_, _, p) -> ((p + 1)..P) + 0 }

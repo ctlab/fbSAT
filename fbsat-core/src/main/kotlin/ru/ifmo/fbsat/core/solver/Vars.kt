@@ -16,7 +16,7 @@ enum class VarEncoding {
     ONEHOT_BINARY,
 }
 
-interface Var<T> {
+interface DomainVar<T> {
     val domain: Set<T>
     val literals: Collection<Literal> // Note: proper order is *not* guaranteed
     val bits: List<Literal> // Note: bits[0] is LSB
@@ -34,14 +34,14 @@ interface Var<T> {
             solver: Solver,
             encoding: VarEncoding,
             init: (T) -> Literal
-        ): Var<T> = when (encoding) {
-            VarEncoding.ONEHOT -> object : AbstractOneHotVar<T>(domain, solver, init) {}
-            VarEncoding.ONEHOT_BINARY -> object : AbstractOneHotBinaryVar<T>(domain, solver, init) {}
+        ): DomainVar<T> = when (encoding) {
+            VarEncoding.ONEHOT -> object : AbstractOneHotDomainVar<T>(domain, solver, init) {}
+            VarEncoding.ONEHOT_BINARY -> object : AbstractOneHotBinaryDomainVar<T>(domain, solver, init) {}
         }
     }
 }
 
-interface IntVar : Var<Int> {
+interface IntVar : DomainVar<Int> {
     companion object Factory {
         @JvmStatic
         fun create(
@@ -50,15 +50,15 @@ interface IntVar : Var<Int> {
             encoding: VarEncoding,
             init: (Int) -> Literal
         ): IntVar = when (encoding) {
-            VarEncoding.ONEHOT -> object : IntVar, AbstractOneHotVar<Int>(domain, solver, init) {}
-            VarEncoding.ONEHOT_BINARY -> object : IntVar, AbstractOneHotBinaryVar<Int>(domain, solver, init) {}
+            VarEncoding.ONEHOT -> object : IntVar, AbstractOneHotDomainVar<Int>(domain, solver, init) {}
+            VarEncoding.ONEHOT_BINARY -> object : IntVar, AbstractOneHotBinaryDomainVar<Int>(domain, solver, init) {}
         }
     }
 }
 
-private abstract class AbstractVar<T> internal constructor(
+private abstract class AbstractDomainVar<T> internal constructor(
     private val storage: Map<T, Literal>
-) : Var<T> {
+) : DomainVar<T> {
     final override val domain: Set<T> = storage.keys
     final override val literals: Collection<Literal> = storage.values
 
@@ -73,11 +73,11 @@ private abstract class AbstractVar<T> internal constructor(
         storage.entries.firstOrNull { raw[it.value] }?.key
 }
 
-private abstract class AbstractOneHotVar<T>(
+private abstract class AbstractOneHotDomainVar<T>(
     domain: Iterable<T>,
     solver: Solver,
     init: (T) -> Literal
-) : Var<T>, AbstractVar<T>(domain, init) {
+) : DomainVar<T>, AbstractDomainVar<T>(domain, init) {
     // Note: LSP is violated intentionally
     override val bits: List<Literal>
         get() = error("OneHotVar does not have associated bitwise representation")
@@ -88,11 +88,11 @@ private abstract class AbstractOneHotVar<T>(
     }
 }
 
-private abstract class AbstractOneHotBinaryVar<T>(
+private abstract class AbstractOneHotBinaryDomainVar<T>(
     domain: Iterable<T>,
     solver: Solver,
     init: (T) -> Literal
-) : Var<T>, AbstractVar<T>(domain, init) {
+) : DomainVar<T>, AbstractDomainVar<T>(domain, init) {
     @Suppress("LeakingThis")
     override val bits: List<Literal> = solver.encodeOneHotBinary(this)
 }
@@ -118,4 +118,4 @@ class BoolVarArray private constructor(
 
 typealias IntVarArray = MultiArray<IntVar>
 
-typealias VarArray<T> = MultiArray<Var<T>>
+typealias DomainVarArray<T> = MultiArray<DomainVar<T>>

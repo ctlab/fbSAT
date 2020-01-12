@@ -3,11 +3,11 @@ package ru.ifmo.fbsat.core.solver
 import kotlin.math.ceil
 import kotlin.math.log2
 
-fun <T> Solver.encodeOneHot(v: Var<T>) {
+fun <T> Solver.encodeOneHot(v: DomainVar<T>) {
     exactlyOne(v.literals)
 }
 
-fun <T> Solver.encodeOneHotBinary(v: Var<T>): List<Literal> {
+fun <T> Solver.encodeOneHotBinary(v: DomainVar<T>): List<Literal> {
     /* OneHot+Binary encoding:
         o0 \/ o1 \/ o2 \/ o3
         o0 -> ~b0 /\ ~b1

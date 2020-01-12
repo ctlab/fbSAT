@@ -18,11 +18,11 @@ interface Solver {
 
     fun newLiteral(): Literal
 
-    fun <T> newVar(
+    fun <T> newDomainVar(
         domain: Iterable<T>,
         encoding: VarEncoding = Globals.defaultVarEncoding,
         init: (T) -> Literal = { newLiteral() }
-    ): Var<T>
+    ): DomainVar<T>
 
     fun newIntVar(
         domain: Iterable<Int>,
@@ -35,11 +35,11 @@ interface Solver {
         init: (IntArray) -> Literal = { newLiteral() }
     ): BoolVarArray
 
-    fun <T> Solver.newVarArray(
+    fun <T> Solver.newDomainVarArray(
         vararg shape: Int,
         encoding: VarEncoding = Globals.defaultVarEncoding,
         domain: (IntArray) -> Iterable<T>
-    ): VarArray<T>
+    ): DomainVarArray<T>
 
     fun Solver.newIntVarArray(
         vararg shape: Int,
@@ -89,11 +89,11 @@ private abstract class AbstractSolver : Solver {
 
     final override fun newLiteral(): Literal = ++numberOfVariables
 
-    final override fun <T> newVar(
+    final override fun <T> newDomainVar(
         domain: Iterable<T>,
         encoding: VarEncoding,
         init: (T) -> Literal
-    ): Var<T> = Var.create(domain, this, encoding, init)
+    ): DomainVar<T> = DomainVar.create(domain, this, encoding, init)
 
     final override fun newIntVar(
         domain: Iterable<Int>,
@@ -106,11 +106,11 @@ private abstract class AbstractSolver : Solver {
         init: (IntArray) -> Literal
     ): BoolVarArray = BoolVarArray.create(shape, init)
 
-    final override fun <T> Solver.newVarArray(
+    final override fun <T> Solver.newDomainVarArray(
         vararg shape: Int,
         encoding: VarEncoding,
         domain: (IntArray) -> Iterable<T>
-    ): VarArray<T> = VarArray.create(shape) { index -> newVar(domain(index), encoding) }
+    ): DomainVarArray<T> = DomainVarArray.create(shape) { index -> newDomainVar(domain(index), encoding) }
 
     final override fun Solver.newIntVarArray(
         vararg shape: Int,

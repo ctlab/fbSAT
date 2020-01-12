@@ -5,9 +5,9 @@ import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
+import ru.ifmo.fbsat.core.solver.DomainVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.VarArray
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
 
 /*
@@ -42,7 +42,7 @@ class CompleteVariables(
     /* Mapping variables */
     val mapping: IntVarArray,
     /* Guard conditions variables */
-    val nodeType: VarArray<NodeType>,
+    val nodeType: DomainVarArray<NodeType>,
     val nodeInputVariable: IntVarArray,
     val nodeParent: IntVarArray,
     val nodeChild: IntVarArray,
