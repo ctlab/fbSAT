@@ -408,6 +408,9 @@ fun Solver.declarePositiveArbitraryModularMappingConstraints(
             comment("External inbound pins (output variables) must be connected to something")
             for (pin in externalInboundVarPins)
                 clause(inboundVarPinParent[pin] neq 0)
+
+            comment("ADHOC: inputIndex{m=1}[v=1] = 1")
+            clause(modularInputIndex[1][1] eq 1)
         }
     }
 }
