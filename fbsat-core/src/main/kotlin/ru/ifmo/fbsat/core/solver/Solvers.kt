@@ -198,7 +198,6 @@ private class IncrementalSolver(command: String) : Solver() {
 
         when (answer) {
             "SAT" -> {
-
                 // log.success("SAT in %.2f s.".format(solvingTime))
                 val line = processOutput.readUtf8Line() ?: return null
                 return line.trim()

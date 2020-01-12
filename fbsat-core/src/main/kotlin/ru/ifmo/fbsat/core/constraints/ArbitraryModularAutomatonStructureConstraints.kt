@@ -13,7 +13,6 @@ import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.exhaustive
 
-
 fun Solver.declareArbitraryModularAutomatonStructureConstraints(
     arbitraryModularBasicVariables: ArbitraryModularBasicVariables
 ) {
@@ -160,4 +159,3 @@ private fun Solver.declareModuleAutomatonStructureConstraints(
                     }
                 })
 }
-
