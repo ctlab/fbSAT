@@ -127,12 +127,12 @@ private class DefaultSolver(private val command: String) : Solver() {
                 when {
                     line == "s SATISFIABLE" -> {
                         val solvingTime = timeSince(timeStart)
-                        log.success("SAT in %.2f seconds".format(solvingTime))
+                        log.success("SAT in %.2f seconds".format(solvingTime.seconds))
                         isSat = true
                     }
                     line == "s UNSATISFIABLE" -> {
                         val solvingTime = timeSince(timeStart)
-                        log.failure("UNSAT in %.2f seconds".format(solvingTime))
+                        log.failure("UNSAT in %.2f seconds".format(solvingTime.seconds))
                         isSat = false
                         continue@label
                     }
