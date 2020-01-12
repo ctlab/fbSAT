@@ -17,6 +17,7 @@ dependencies {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
+    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
 }
 
 tasks.withType<Test> {
