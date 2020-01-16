@@ -725,6 +725,10 @@ class FbSAT : CliktCommand() {
                         automaton.pprint()
                         automaton.dump(outDir, "the_module-$m")
                     }
+                    modularAutomaton.dumpFbt(
+                        outDir.resolve("modularAutomaton.fbt"),
+                        name = "ModularController"
+                    )
                     if (modularAutomaton.verify(tree))
                         log.success("Verify: OK")
                     else {
@@ -758,10 +762,10 @@ class FbSAT : CliktCommand() {
                         automaton.pprint()
                         automaton.dump(outDir, "the_module-$m")
                     }
-                    // modularAutomaton.dumpFbt(
-                    //     outDir.resolve("modularAutomaton.fbt"),
-                    //     name = "ModularController"
-                    // )
+                    modularAutomaton.dumpFbt(
+                        outDir.resolve("modularAutomaton.fbt"),
+                        name = "ModularController"
+                    )
                     if (modularAutomaton.verify(tree))
                         log.success("Verify: OK")
                     else {
