@@ -1,8 +1,5 @@
 package ru.ifmo.fbsat.core.utils
 
-import com.github.lipen.multiarray.BooleanMultiArray
-import com.github.lipen.multiarray.IntMultiArray
-import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.microseconds
@@ -182,26 +179,3 @@ fun algorithmChoice(
 
 fun <T> Iterable<T>.joinPadded(length: Int, separator: String = " "): String =
     joinToString(separator) { it.toString().padStart(length) }
-
-val <T> MultiArray<T>.multiIndices: Sequence<IntArray>
-    get() = cartesianProduct(shape.map { 1..it }).map { it.toIntArray() }
-
-fun <T> MultiArray<T>.withMultiIndex(): Sequence<Pair<IntArray, T>> =
-    multiIndices.zip(values.asSequence())
-
-fun <T, R> MultiArray<T>.mapMultiIndexed(transform: (IntArray, T) -> R): Sequence<R> =
-    withMultiIndex().map { (index, value) -> transform(index, value) }
-
-fun <T, R> MultiArray<T>.mapValues(transform: (T) -> R): MultiArray<R> =
-    MultiArray.create(shape) { index -> transform(get(*index)) }
-
-fun <T> MultiArray<T>.mapValuesToInt(transform: (T) -> Int): IntMultiArray =
-    IntMultiArray.create(shape) { index -> transform(get(*index)) }
-
-fun <T> MultiArray<T>.mapValuesToBoolean(transform: (T) -> Boolean): BooleanMultiArray =
-    BooleanMultiArray.create(shape) { index -> transform(get(*index)) }
-
-// fun <T, R> MultiArray<T>.mapValuesMultiIndexed(transform: (IntArray, T) -> R): MultiArray<R> =
-//     MultiArray.create(shape) { index -> transform(index, get(*index)) }
-
-fun <T> T.applyIfNotNull(block: (T.() -> Unit)?): T = apply { if (block != null) block() }

@@ -17,8 +17,8 @@ class ConsecutiveModularAutomaton(
     val outputNames: List<String>
 ) {
     val M: Int = modules.shape[0]
-    val numberOfTransitions: Int = modules.sumBy { it.numberOfTransitions }
-    val totalGuardsSize: Int = modules.sumBy { it.totalGuardsSize }
+    val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
+    val totalGuardsSize: Int = modules.values.sumBy { it.totalGuardsSize }
 
     constructor(modules: MultiArray<Automaton>, scenarioTree: ScenarioTree) : this(
         modules,
@@ -30,10 +30,10 @@ class ConsecutiveModularAutomaton(
 
     init {
         require(M >= 2)
-        require(modules.all { it.inputEvents == inputEvents })
-        require(modules.all { it.inputNames == inputNames })
-        require(modules.all { it.outputEvents == outputEvents })
-        require(modules.all { it.outputNames == outputNames })
+        require(modules.values.all { it.inputEvents == inputEvents })
+        require(modules.values.all { it.inputNames == inputNames })
+        require(modules.values.all { it.outputEvents == outputEvents })
+        require(modules.values.all { it.outputNames == outputNames })
     }
 
     fun verify(scenario: PositiveScenario): Boolean {

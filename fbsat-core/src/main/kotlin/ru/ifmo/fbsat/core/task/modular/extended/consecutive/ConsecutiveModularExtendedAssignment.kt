@@ -27,12 +27,12 @@ class ConsecutiveModularExtendedAssignment(
      * Number of transitions.
      */
     @Suppress("PropertyName")
-    val T: Int = modularExtendedAssignment.sumBy { it.T }
+    val T: Int = modularExtendedAssignment.values.sumBy { it.T }
     /**
      * Total guards size (total number of nodes in all parse trees).
      */
     @Suppress("PropertyName")
-    val N: Int = modularExtendedAssignment.sumBy { it.N }
+    val N: Int = modularExtendedAssignment.values.sumBy { it.N }
 
     companion object {
         @Suppress("LocalVariableName")

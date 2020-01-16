@@ -28,20 +28,20 @@ class ParallelModularAutomaton(
             (1..Z).filter { z -> outputVariableModule[z] == m }
         }
 
-    val inputEvents: List<InputEvent> = modules.first().inputEvents
-    val outputEvents: List<OutputEvent> = modules.first().outputEvents
-    val inputNames: List<String> = modules.first().inputNames
+    val inputEvents: List<InputEvent> = modules.values.first().inputEvents
+    val outputEvents: List<OutputEvent> = modules.values.first().outputEvents
+    val inputNames: List<String> = modules.values.first().inputNames
     val outputNames: List<String> = (1..Z).map { z ->
         val m = outputVariableModule[z]
         modules[m].outputNames[moduleOutputVariables[m].indexOf(z)]
     }
 
-    val numberOfTransitions: Int = modules.sumBy { it.numberOfTransitions }
+    val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
 
     init {
-        require(modules.all { it.inputEvents == inputEvents })
-        require(modules.all { it.outputEvents == outputEvents })
-        require(modules.all { it.inputNames == inputNames })
+        require(modules.values.all { it.inputEvents == inputEvents })
+        require(modules.values.all { it.outputEvents == outputEvents })
+        require(modules.values.all { it.inputNames == inputNames })
     }
 
     private fun gather(outputs: MultiArray<OutputValues>): OutputValues {
@@ -81,8 +81,8 @@ class ParallelModularAutomaton(
                     currentValues = currentValues[m]
                 )
             }
-            val outputEvent = result.mapNotNull { it.outputAction.event }.firstOrNull()
-            check(result.mapNotNull { it.outputAction.event }.all { it == outputEvent })
+            val outputEvent = result.values.mapNotNull { it.outputAction.event }.firstOrNull()
+            check(result.values.mapNotNull { it.outputAction.event }.all { it == outputEvent })
             val outputValues = gather(MultiArray.create(M) { (m) -> result[m].outputAction.values })
 
             if (OutputAction(outputEvent, outputValues) == element.outputAction) {

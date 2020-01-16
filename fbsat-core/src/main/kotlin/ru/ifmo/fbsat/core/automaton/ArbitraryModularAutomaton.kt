@@ -2,13 +2,13 @@ package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.PinVars
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.mapValues
 
 class ArbitraryModularAutomaton(
     val modules: MultiArray<Automaton>,
@@ -21,8 +21,8 @@ class ArbitraryModularAutomaton(
     /** Number of modules */
     @Suppress("PropertyName")
     val M: Int = modules.shape[0]
-    val numberOfTransitions: Int = modules.sumBy { it.numberOfTransitions }
-    val totalGuardsSize: Int = modules.sumBy { it.totalGuardsSize }
+    val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
+    val totalGuardsSize: Int = modules.values.sumBy { it.totalGuardsSize }
 
     constructor(
         modules: MultiArray<Automaton>,
@@ -64,9 +64,9 @@ class ArbitraryModularAutomaton(
         val Z = outputNames.size
 
         with(PinVars(M, X, Z, E, O)) {
-            val currentModularState = modules.mapValues { it.initialState }
-            val currentModularOutputValues = modules.mapValues { OutputValues.zeros(it.outputNames.size) }
-            val currentModularOutputEvent: MultiArray<OutputEvent?> = modules.mapValues { null }
+            val currentModularState = modules.map { it.initialState }
+            val currentModularOutputValues = modules.map { OutputValues.zeros(it.outputNames.size) }
+            val currentModularOutputEvent: MultiArray<OutputEvent?> = modules.map { null }
             val currentInboundVarPinComputedValue = BooleanMultiArray.create(allInboundVarPins.size)
             val currentOutboundVarPinComputedValue = BooleanMultiArray.create(allOutboundVarPins.size)
             var currentOutputValues = OutputValues.zeros(Z)
@@ -135,7 +135,7 @@ class ArbitraryModularAutomaton(
                 EvalResult(
                     inputAction,
                     OutputAction(outputEvent, currentOutputValues),
-                    currentModularState.mapValues { it },
+                    currentModularState.map { it },
                     MultiArray.create(M) { (m) ->
                         OutputAction(currentModularOutputEvent[m], currentModularOutputValues[m])
                     }
@@ -156,7 +156,7 @@ class ArbitraryModularAutomaton(
                 log.error("element.outputAction = ${element.outputAction}")
                 log.error("element = $element")
                 log.error("result.modularDestination = ${result.modularDestination.map { it.id }}")
-                log.error("result.modularOutputAction = ${result.modularOutputAction.toList()}")
+                log.error("result.modularOutputAction = ${result.modularOutputAction.values}")
                 return false
             } else {
                 log.success("i = $i: OK")

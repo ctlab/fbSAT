@@ -49,7 +49,7 @@ class ArbitraryModularBasicAssignment(
      * Number of transitions.
      */
     @Suppress("PropertyName")
-    val T: Int = (1..M).sumBy { m -> modularTransitionDestination[m].count { it != 0 } }
+    val T: Int = (1..M).sumBy { m -> modularTransitionDestination[m].values.count { it != 0 } }
 
     init {
         for (m in 1..M) {

@@ -40,6 +40,7 @@ import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.outputNamesPnP
+import ru.ifmo.fbsat.core.utils.withIndex
 import java.io.File
 
 enum class Method(val s: String) {
@@ -517,9 +518,9 @@ class FbSAT : CliktCommand() {
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
                 } else {
-                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules:")
-                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
-                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.values.size} modules:")
+                    for ((m, automaton) in modularAutomaton.modules.values.withIndex(start = 1)) {
+                        log.info("Automaton #$m has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
                         automaton.pprint()
                         automaton.dump(outDir, "the_module-$m")
                     }
@@ -561,9 +562,9 @@ class FbSAT : CliktCommand() {
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
                 } else {
-                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules:")
-                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
-                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.values.size} modules:")
+                    for ((m, automaton) in modularAutomaton.modules.values.withIndex(start = 1)) {
+                        log.info("Automaton #$m has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
                         automaton.pprint()
                         automaton.dump(outDir, "the_module-$m")
                     }
@@ -605,9 +606,9 @@ class FbSAT : CliktCommand() {
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
                 } else {
-                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules, ${modularAutomaton.numberOfTransitions} transitions:")
-                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
-                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.values.size} modules, ${modularAutomaton.numberOfTransitions} transitions:")
+                    for ((m, automaton) in modularAutomaton.modules.values.withIndex(start = 1)) {
+                        log.info("Automaton #$m has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
                         automaton.pprint()
                         automaton.dump(outDir, "the_module-$m")
                     }
@@ -642,9 +643,9 @@ class FbSAT : CliktCommand() {
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
                 } else {
-                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules, ${modularAutomaton.numberOfTransitions} transitions:")
-                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
-                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.values.size} modules, ${modularAutomaton.numberOfTransitions} transitions:")
+                    for ((m, automaton) in modularAutomaton.modules.values.withIndex(start = 1)) {
+                        log.info("Automaton #$m has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
                         automaton.pprint()
                         automaton.dump(outDir, "the_module-$m")
                     }
@@ -681,9 +682,9 @@ class FbSAT : CliktCommand() {
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
                 } else {
-                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules, ${modularAutomaton.numberOfTransitions} transitions, ${modularAutomaton.totalGuardsSize} nodes:")
-                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
-                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes:")
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.values.size} modules, ${modularAutomaton.numberOfTransitions} transitions, ${modularAutomaton.totalGuardsSize} nodes:")
+                    for ((m, automaton) in modularAutomaton.modules.values.withIndex(start = 1)) {
+                        log.info("Automaton #$m has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes:")
                         automaton.pprint()
                         automaton.dump(outDir, "the_module-$m")
                     }
@@ -718,9 +719,9 @@ class FbSAT : CliktCommand() {
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
                 } else {
-                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules, ${modularAutomaton.numberOfTransitions} transitions:")
-                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
-                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.values.size} modules, ${modularAutomaton.numberOfTransitions} transitions:")
+                    for ((m, automaton) in modularAutomaton.modules.values.withIndex(start = 1)) {
+                        log.info("Automaton #$m has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
                         automaton.pprint()
                         automaton.dump(outDir, "the_module-$m")
                     }
@@ -751,9 +752,9 @@ class FbSAT : CliktCommand() {
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
                 } else {
-                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.size} modules, ${modularAutomaton.numberOfTransitions} transitions:")
-                    for ((m, automaton) in modularAutomaton.modules.withIndex()) {
-                        log.info("Automaton #${m + 1} has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.values.size} modules, ${modularAutomaton.numberOfTransitions} transitions:")
+                    for ((m, automaton) in modularAutomaton.modules.values.withIndex(start = 1)) {
+                        log.info("Automaton #$m has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
                         automaton.pprint()
                         automaton.dump(outDir, "the_module-$m")
                     }

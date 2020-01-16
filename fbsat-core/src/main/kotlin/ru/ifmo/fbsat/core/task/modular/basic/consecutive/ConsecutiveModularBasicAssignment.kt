@@ -26,7 +26,7 @@ class ConsecutiveModularBasicAssignment(
      * Number of transitions.
      */
     @Suppress("PropertyName")
-    val T: Int = modularBasicAssignment.sumBy { it.T }
+    val T: Int = modularBasicAssignment.values.sumBy { it.T }
 
     companion object {
         @Suppress("LocalVariableName")

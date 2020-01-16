@@ -39,7 +39,7 @@ class BasicAssignment(
      * Number of transitions.
      */
     @Suppress("PropertyName")
-    val T: Int = transitionDestination.count { it != 0 }
+    val T: Int = transitionDestination.values.count { it != 0 }
 
     companion object {
         fun fromRaw(

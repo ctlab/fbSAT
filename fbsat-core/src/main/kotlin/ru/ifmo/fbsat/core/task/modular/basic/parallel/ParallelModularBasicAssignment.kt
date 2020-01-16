@@ -30,7 +30,7 @@ class ParallelModularBasicAssignment(
     val moduleControllingOutputVariable: IntMultiArray // [Z] : 1..M
 ) {
     @Suppress("PropertyName")
-    val T: Int = (1..M).sumBy { m -> modularBasicAssignment[m].transitionDestination.count { it != 0 } }
+    val T: Int = (1..M).sumBy { m -> modularBasicAssignment[m].transitionDestination.values.count { it != 0 } }
 
     /** `[M] : {1..Z}` */
     val moduleOutputVariables: MultiArray<List<Int>> =

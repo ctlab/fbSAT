@@ -95,7 +95,7 @@ fun Solver.declareTotalizer(block: suspend SequenceScope<Int>.() -> Unit): BoolV
  */
 fun Solver.declareComparatorLessThanOrEqual(totalizer: BoolVarArray, x: Int, declared: Int? = null) {
     require(totalizer.shape.size == 1) { "Totalizer must be 1-dimensional." }
-    val max = declared ?: totalizer.size
+    val max = declared ?: totalizer.values.size
     comment("Comparator(<=$x up to $max)")
     for (i in max downTo x + 1) {
         clause(-totalizer[i])

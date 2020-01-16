@@ -46,12 +46,12 @@ class ExtendedAssignment(
      * Number of transitions.
      */
     @Suppress("PropertyName")
-    val T: Int = transitionDestination.count { it != 0 }
+    val T: Int = transitionDestination.values.count { it != 0 }
     /**
      * Total guards size (total number of nodes in all parse trees).
      */
     @Suppress("PropertyName")
-    val N: Int = nodeType.count { it != NodeType.NONE }
+    val N: Int = nodeType.values.count { it != NodeType.NONE }
 
     companion object {
         fun fromRaw(

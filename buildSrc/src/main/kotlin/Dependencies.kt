@@ -7,7 +7,7 @@ object Versions {
     const val clikt = "2.2.0"
     const val junit = "5.5.1"
     const val kluent = "1.56"
-    const val multiarray = "0.4.0"
+    const val multiarray = "0.6.0"
     const val shadow = "5.1.0"
     const val okio = "2.4.1"
     const val gradle_versions = "0.27.0"

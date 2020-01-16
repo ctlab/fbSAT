@@ -3,8 +3,8 @@ package ru.ifmo.fbsat.core.solver
 import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
-import ru.ifmo.fbsat.core.utils.mapValues
-import ru.ifmo.fbsat.core.utils.mapValuesToInt
+import com.github.lipen.multiarray.map
+import com.github.lipen.multiarray.mapToInt
 
 class RawAssignment(private val data: BooleanArray) {
     operator fun get(v: Literal): Boolean = when (v) {
@@ -15,22 +15,22 @@ class RawAssignment(private val data: BooleanArray) {
 }
 
 fun BoolVarArray.convert(raw: RawAssignment): BooleanMultiArray =
-    BooleanMultiArray.create(shape) { index -> raw[getBy(index)] }
+    BooleanMultiArray.create(shape) { index -> raw[getAt(index)] }
 
 fun IntVarArray.convert(raw: RawAssignment): IntMultiArray =
-    mapValuesToInt { it.convert(raw) ?: error("So sad :c") }
+    mapToInt { it.convert(raw) ?: error("So sad :c") }
 
-fun <T> DomainVarArray<T>.convert(raw: RawAssignment): MultiArray<T> =
-    mapValues { it.convert(raw) ?: error("So sad :c") }
+inline fun <reified T> DomainVarArray<T>.convert(raw: RawAssignment): MultiArray<T> =
+    map { it.convert(raw) ?: error("So sad :c") }
 
 @JvmName("multiArrayBoolVarArrayConvert")
 fun MultiArray<BoolVarArray>.convert(raw: RawAssignment): MultiArray<BooleanMultiArray> =
-    mapValues { it.convert(raw) }
+    map { it.convert(raw) }
 
 @JvmName("multiArrayIntVarArrayConvert")
 fun MultiArray<IntVarArray>.convert(raw: RawAssignment): MultiArray<IntMultiArray> =
-    mapValues { it.convert(raw) }
+    map { it.convert(raw) }
 
-@JvmName("multiArrayVarArrayConvert")
-fun <T> MultiArray<DomainVarArray<T>>.convert(raw: RawAssignment): MultiArray<MultiArray<T>> =
-    mapValues { it.convert(raw) }
+@JvmName("multiArrayDomainVarArrayConvert")
+inline fun <reified T> MultiArray<DomainVarArray<T>>.convert(raw: RawAssignment): MultiArray<MultiArray<T>> =
+    map { it.convert(raw) }
