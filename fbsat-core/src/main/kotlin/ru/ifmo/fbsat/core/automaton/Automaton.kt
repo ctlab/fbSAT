@@ -218,7 +218,7 @@ class Automaton(
         }
     }
 
-    inner class EvalResult(val destination: State, val outputAction: OutputAction)
+    data class EvalResult(val destination: State, val outputAction: OutputAction)
 
     fun eval(
         inputAction: InputAction,

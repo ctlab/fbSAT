@@ -7,6 +7,7 @@ import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.PinVars
+import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.mapValues
 
 class ArbitraryModularAutomaton(
@@ -48,10 +49,11 @@ class ArbitraryModularAutomaton(
     //     TODO()
     // }
 
-    inner class EvalResult(
+    data class EvalResult(
+        val inputAction: InputAction,
+        val outputAction: OutputAction,
         val modularDestination: MultiArray<Automaton.State>,
-        val modularOutputActions: MultiArray<OutputAction>,
-        val outputAction: OutputAction
+        val modularOutputAction: MultiArray<OutputAction>
     )
 
     @Suppress("LocalVariableName")
@@ -64,8 +66,10 @@ class ArbitraryModularAutomaton(
         with(PinVars(M, X, Z, E, O)) {
             val currentModularState = modules.mapValues { it.initialState }
             val currentModularOutputValues = modules.mapValues { OutputValues.zeros(it.outputNames.size) }
+            val currentModularOutputEvent: MultiArray<OutputEvent?> = modules.mapValues { null }
             val currentInboundVarPinComputedValue = BooleanMultiArray.create(allInboundVarPins.size)
             val currentOutboundVarPinComputedValue = BooleanMultiArray.create(allOutboundVarPins.size)
+            var currentOutputValues = OutputValues.zeros(Z)
 
             return inputActions.map { inputAction ->
                 for (x in 1..X) {
@@ -83,16 +87,25 @@ class ArbitraryModularAutomaton(
                     }
 
                     // eval module
-                    val inputValues =
-                        InputValues(modularInboundVarPins[m].map { currentInboundVarPinComputedValue[it] })
-                    val result = modules[m].eval(
-                        inputAction = InputAction(InputEvent("REQ"), inputValues),
-                        state = currentModularState[m],
-                        values = currentModularOutputValues[m]
+                    val inputValues = InputValues(
+                        modularInboundVarPins[m].map { currentInboundVarPinComputedValue[it] }
                     )
+                    val result =
+                        if (m == 1 || currentModularOutputEvent[m - 1] != null)
+                            modules[m].eval(
+                                inputAction = InputAction(InputEvent("REQ"), inputValues),
+                                state = currentModularState[m],
+                                values = currentModularOutputValues[m]
+                            )
+                        else
+                            Automaton.EvalResult(
+                                currentModularState[m],
+                                OutputAction(null, currentModularOutputValues[m])
+                            )
 
                     // save new state and output values (modular)
                     currentModularState[m] = result.destination
+                    currentModularOutputEvent[m] = result.outputAction.event
                     currentModularOutputValues[m] = result.outputAction.values
 
                     // update outbound pins
@@ -110,13 +123,22 @@ class ArbitraryModularAutomaton(
                     }
                 }
 
-                // save output values (composite)
-                val outputValues = OutputValues(externalInboundVarPins.map { currentInboundVarPinComputedValue[it] })
+                // merge output events
+                val outputEvent = currentModularOutputEvent[M]
+
+                // merge output values (composite)
+                if (outputEvent != null)
+                    currentOutputValues = OutputValues(
+                        externalInboundVarPins.map { currentInboundVarPinComputedValue[it] }
+                    )
 
                 EvalResult(
+                    inputAction,
+                    OutputAction(outputEvent, currentOutputValues),
                     currentModularState.mapValues { it },
-                    currentModularOutputValues.mapValues { OutputAction(OutputEvent("CNF"), it) },
-                    OutputAction(OutputEvent("CNF"), outputValues)
+                    MultiArray.create(M) { (m) ->
+                        OutputAction(currentModularOutputEvent[m], currentModularOutputValues[m])
+                    }
                 )
             }
         }
@@ -124,7 +146,24 @@ class ArbitraryModularAutomaton(
 
     @Suppress("LocalVariableName")
     fun verify(scenario: PositiveScenario): Boolean {
-        TODO()
+        val elements = scenario.elements.asSequence()
+        var i = 1
+        for ((element, result) in elements.zip(eval(elements.map { it.inputAction }))) {
+            if (result.outputAction != element.outputAction) {
+                log.error("i = $i: FAILED")
+                log.error("Bad output action: result.outputAction != element.outputAction")
+                log.error("result.outputAction = ${result.outputAction}")
+                log.error("element.outputAction = ${element.outputAction}")
+                log.error("element = $element")
+                log.error("result.modularDestination = ${result.modularDestination.map { it.id }}")
+                log.error("result.modularOutputAction = ${result.modularOutputAction.toList()}")
+                return false
+            } else {
+                log.success("i = $i: OK")
+            }
+            i++
+        }
+        return true
     }
 
     fun verify(scenarioTree: ScenarioTree): Boolean =

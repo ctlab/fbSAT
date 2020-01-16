@@ -724,12 +724,11 @@ class FbSAT : CliktCommand() {
                         automaton.pprint()
                         automaton.dump(outDir, "the_module-$m")
                     }
-                    log.warn("Verify: Not implemented yet")
-                    // if (modularAutomaton.verify(tree))
-                    //     log.success("Verify: OK")
-                    // else {
-                    //     log.failure("Verify: FAILED")
-                    // }
+                    if (modularAutomaton.verify(tree))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                    }
                 }
 
                 log.br()
@@ -762,12 +761,11 @@ class FbSAT : CliktCommand() {
                     //     outDir.resolve("modularAutomaton.fbt"),
                     //     name = "ModularController"
                     // )
-                    log.warn("Verify: Not implemented yet")
-                    // if (modularAutomaton.verify(tree))
-                    //     log.success("Verify: OK")
-                    // else {
-                    //     log.failure("Verify: FAILED")
-                    // }
+                    if (modularAutomaton.verify(tree))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                    }
                 }
 
                 log.br()

@@ -7,6 +7,7 @@ import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.core.automaton.InputEvent
+import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.automaton.OutputEvent
 import ru.ifmo.fbsat.core.automaton.TruthTableGuard
 import ru.ifmo.fbsat.core.automaton.endowed
@@ -52,17 +53,17 @@ class ArbitraryModularBasicAssignment(
 
     init {
         for (m in 1..M) {
-            log.success("modularInputIndex[m = $m] = ${(1..V).map { v -> modularInputIndex[m][v] }}")
+            log.debug { "modularInputIndex[m = $m] = ${(1..V).map { v -> modularInputIndex[m][v] }}" }
         }
         with(PinVars(M, X, Z, E, O)) {
             for (m in 1..M) {
-                log.success("inboundVarPinParent for module m = $m: ${modularInboundVarPins[m].map { pin -> inboundVarPinParent[pin] }}")
+                log.debug { "inboundVarPinParent for module m = $m: ${modularInboundVarPins[m].map { pin -> inboundVarPinParent[pin] }}" }
             }
-            log.success("inboundVarPinParent for external output variables: ${externalInboundVarPins.map { pin -> inboundVarPinParent[pin] }}")
+            log.debug { "inboundVarPinParent for external output variables: ${externalInboundVarPins.map { pin -> inboundVarPinParent[pin] }}" }
 
-            log.success("input variables connections: " + (1..X).joinToString(", ") { x -> "x$x:${allInboundVarPins.filter { inboundVarPinParent[it] == externalOutboundVarPins[x - 1] }}" })
+            log.debug { "input variables connections: " + (1..X).joinToString(", ") { x -> "x$x:${allInboundVarPins.filter { inboundVarPinParent[it] == externalOutboundVarPins[x - 1] }}" } }
             for (m in 1..M) {
-                log.success("output variables connections for module m = $m: " + (1..Z).joinToString(", ") { z -> "z$z:${allInboundVarPins.filter { inboundVarPinParent[it] == modularOutboundVarPins[m][z - 1] }}" })
+                log.debug { "output variables connections for module m = $m: " + (1..Z).joinToString(", ") { z -> "z$z:${allInboundVarPins.filter { inboundVarPinParent[it] == modularOutboundVarPins[m][z - 1] }}" } }
             }
         }
     }
@@ -110,16 +111,19 @@ fun ArbitraryModularBasicAssignment.toAutomaton(): ArbitraryModularAutomaton {
             transitionInputEvent = { _, _ -> InputEvent("REQ") },
             transitionGuard = { c, k ->
                 TruthTableGuard(
-                    truthTable = (1..scenarioTree.uniqueInputs.size)
-                        .asSequence()
-                        .associate { u ->
-                            scenarioTree.uniqueInputs[u - 1] to
-                                when {
-                                    modularNotFired[m][c, k, u] -> false
-                                    modularFirstFired[m][c, u] == k -> true
-                                    else -> null
-                                }
-                        },
+                    truthTable = (1..U).associate { u ->
+                        InputValues((u - 1).toString(2).padStart(X, '0').reversed().map {
+                            when (it) {
+                                '1' -> true
+                                '0' -> false
+                                else -> error("Bad bit '$it'")
+                            }
+                        }) to when {
+                            modularNotFired[m][c, k, u] -> false
+                            modularFirstFired[m][c, u] == k -> true
+                            else -> null
+                        }
+                    },
                     inputNames = scenarioTree.inputNames,
                     uniqueInputs = scenarioTree.uniqueInputs
                 )
