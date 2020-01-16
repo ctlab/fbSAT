@@ -125,7 +125,7 @@ class ParallelModularAutomaton(
         for (m in 1..M) {
             modules[m].dumpFbt(file.resolveSibling("module_$m.fbt"), "module_$m")
         }
-        if (M != 2) writeEventMerger(file.resolveSibling("E_MERGE$M.fbt"), "E_MERGE$M")
+        if (M != 2) writeEventMerger(M, file.resolveSibling("E_MERGE$M.fbt"), "E_MERGE$M")
         file.writeText(toFbtString(name))
     }
 
