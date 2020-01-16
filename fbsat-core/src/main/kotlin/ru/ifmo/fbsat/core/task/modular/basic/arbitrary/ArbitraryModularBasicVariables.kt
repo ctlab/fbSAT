@@ -96,7 +96,6 @@ fun Solver.declareArbitraryModularBasicVariables(
         val modularInputIndex = MultiArray.create(M) {
             newIntVarArray(V, encoding = VarEncoding.ONEHOT_BINARY) { 1..U }
         }
-        // val inboundVarPinComputedValue = newBoolVarArray(V, allInboundVarPins.size)
         val inboundVarPinComputedValue = newBoolVarArray(V, allInboundVarPins.size) { (v, p) ->
             if (p in externalInboundVarPins) {
                 newLiteral()
