@@ -166,7 +166,8 @@ class FbSAT : CliktCommand() {
         help = "Solver backend (default: IncrementalSolver)"
     ).switch(
         "--incremental" to SolverBackend.INCREMENTAL,
-        "--no-incremental" to SolverBackend.DEFAULT
+        "--no-incremental" to SolverBackend.DEFAULT,
+        "--filesolver" to SolverBackend.FILE
     ).default(
         SolverBackend.INCREMENTAL
     )
@@ -393,6 +394,9 @@ class FbSAT : CliktCommand() {
             }
             SolverBackend.INCREMENTAL -> {
                 { Solver.incremental(solverCmd) }
+            }
+            SolverBackend.FILE -> {
+                { Solver.filesolver(File("cnf"), solverCmd) }
             }
         }
 
