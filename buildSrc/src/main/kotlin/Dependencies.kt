@@ -9,7 +9,7 @@ object Versions {
     const val kluent = "1.56"
     const val multiarray = "0.6.0"
     const val shadow = "5.1.0"
-    const val okio = "2.4.1"
+    const val okio = "2.4.3"
     const val gradle_versions = "0.27.0"
     const val mordant = "1.2.1"
     const val xml_builder = "1.5.3"
