@@ -6,6 +6,7 @@ import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.atLeastOne
+import ru.ifmo.fbsat.core.solver.atMostOne
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffImply
@@ -409,8 +410,13 @@ fun Solver.declarePositiveArbitraryModularMappingConstraints(
             for (pin in externalInboundVarPins)
                 clause(inboundVarPinParent[pin] neq 0)
 
-            comment("ADHOC: inputIndex{m=1}[v=1] = 1")
-            clause(modularInputIndex[1][1] eq 1)
+            comment("Module output pins cannot have two external output pins as children")
+            for (m in 1..M)
+                for (pin in modularOutboundVarPins[m])
+                    atMostOne {
+                        for (extPin in externalInboundVarPins)
+                            yield(inboundVarPinParent[extPin] eq pin)
+                    }
         }
     }
 }

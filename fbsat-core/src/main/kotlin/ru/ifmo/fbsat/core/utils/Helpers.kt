@@ -3,6 +3,7 @@ package ru.ifmo.fbsat.core.utils
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.microseconds
+import okio.BufferedSink
 import okio.BufferedSource
 import okio.Source
 import okio.buffer
@@ -14,6 +15,7 @@ import ru.ifmo.fbsat.core.automaton.OutputEvent
 import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import java.io.File
+import kotlin.math.pow
 import kotlin.random.Random
 
 fun String.toBooleanArray(): BooleanArray {
@@ -98,6 +100,12 @@ inline fun <T> Source.useLines(block: (Sequence<String>) -> T): T =
 fun BufferedSource.lineSequence(): Sequence<String> =
     sequence<String> { while (true) yield(readUtf8Line() ?: break) }.constrainOnce()
 
+fun BufferedSink.write(s: String): BufferedSink = writeUtf8(s)
+
+fun BufferedSink.writeln(s: String): BufferedSink = write(s).writeByte(10) // 10 is '\n'
+
+fun <R> BufferedSink.useWith(block: BufferedSink.() -> R): R = use(block)
+
 fun copyFile(source: File, destination: File) {
     // Note: destination folder existence must be ensured externally!
     source.source().use { a ->
@@ -179,3 +187,16 @@ fun algorithmChoice(
 
 fun <T> Iterable<T>.joinPadded(length: Int, separator: String = " "): String =
     joinToString(separator) { it.toString().padStart(length) }
+
+/**
+ * Convert number to its [n]-bit binary representation.
+ *
+ * **Note**: bits are ordered from LSB to MSB, _e.g._ `4.toBinary(4) = [0010]`, in contrast to `4=0b100`.
+ */
+fun Int.toBinary(n: Int): List<Boolean> =
+    List(n) { this shr it and 1 != 0 }
+
+fun Int.pow(n: Int): Int = toDouble().pow(n).toInt()
+
+fun <K, V : Any> Map<K, V?>.dropNulls(): Map<K, V> =
+    filterValues { it != null }.mapValues { it.value!! }

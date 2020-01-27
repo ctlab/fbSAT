@@ -6,12 +6,13 @@ import com.github.ajalt.mordant.TermColors
 object log {
     private val t = TermColors()
 
-    private fun debug(msg: String) {
+    @Suppress("FunctionName")
+    fun _debug(msg: String) {
         println(t.white("[.] $msg"))
     }
 
-    fun debug(msg: () -> String) {
-        if (Globals.IS_DEBUG) debug(msg())
+    inline fun debug(msg: () -> String) {
+        if (Globals.IS_DEBUG) _debug(msg())
     }
 
     fun info(msg: String) {

@@ -4,6 +4,8 @@ import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import com.soywiz.klock.DateTime
+import okio.buffer
+import okio.sink
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
@@ -12,7 +14,12 @@ import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.PinVars
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.pow
 import ru.ifmo.fbsat.core.utils.random
+import ru.ifmo.fbsat.core.utils.toBinary
+import ru.ifmo.fbsat.core.utils.toBinaryString
+import ru.ifmo.fbsat.core.utils.useWith
+import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
 
 class ArbitraryModularAutomaton(
@@ -57,6 +64,7 @@ class ArbitraryModularAutomaton(
     data class EvalResult(
         val inputAction: InputAction,
         val outputAction: OutputAction,
+        val modularInputAction: MultiArray<InputAction>,
         val modularDestination: MultiArray<Automaton.State>,
         val modularOutputAction: MultiArray<OutputAction>
     )
@@ -70,6 +78,7 @@ class ArbitraryModularAutomaton(
 
         with(PinVars(M, X, Z, E, O)) {
             val currentModularState = modules.map { it.initialState }
+            val currentModularInputAction = modules.map { InputAction(null, InputValues.zeros(it.inputNames.size)) }
             val currentModularOutputValues = modules.map { OutputValues.zeros(it.outputNames.size) }
             val currentModularOutputEvent: MultiArray<OutputEvent?> = modules.map { null }
             val currentInboundVarPinComputedValue = BooleanMultiArray.create(allInboundVarPins.size)
@@ -92,24 +101,25 @@ class ArbitraryModularAutomaton(
                     }
 
                     // eval module
-                    val inputValues = InputValues(
+                    val moduleInputEvent: InputEvent? =
+                        if (m == 1) inputAction.event
+                        else currentModularOutputEvent[m - 1]?.let {
+                            check(it.name == "CNF")
+                            InputEvent("REQ")
+                        }
+                    val moduleInputValues = InputValues(
                         modularInboundVarPins[m].map { currentInboundVarPinComputedValue[it] }
                     )
-                    val result =
-                        if (m == 1 || currentModularOutputEvent[m - 1] != null)
-                            modules[m].eval(
-                                inputAction = InputAction(InputEvent("REQ"), inputValues),
-                                state = currentModularState[m],
-                                values = currentModularOutputValues[m]
-                            )
-                        else
-                            Automaton.EvalResult(
-                                currentModularState[m],
-                                OutputAction(null, currentModularOutputValues[m])
-                            )
+                    val moduleInputAction = InputAction(moduleInputEvent, moduleInputValues)
+                    val result = modules[m].eval(
+                        inputAction = moduleInputAction,
+                        state = currentModularState[m],
+                        values = currentModularOutputValues[m]
+                    )
 
-                    // save new state and output values (modular)
+                    // update current state etc
                     currentModularState[m] = result.destination
+                    currentModularInputAction[m] = moduleInputAction
                     currentModularOutputEvent[m] = result.outputAction.event
                     currentModularOutputValues[m] = result.outputAction.values
 
@@ -140,6 +150,7 @@ class ArbitraryModularAutomaton(
                 EvalResult(
                     inputAction,
                     OutputAction(outputEvent, currentOutputValues),
+                    currentModularInputAction.map { it },
                     currentModularState.map { it },
                     MultiArray.create(M) { (m) ->
                         OutputAction(currentModularOutputEvent[m], currentModularOutputValues[m])
@@ -160,8 +171,9 @@ class ArbitraryModularAutomaton(
                 log.error("result.outputAction = ${result.outputAction}")
                 log.error("element.outputAction = ${element.outputAction}")
                 log.error("element = $element")
-                log.error("result.modularDestination = ${result.modularDestination.map { it.id }}")
-                log.error("result.modularOutputAction = ${result.modularOutputAction.values}")
+                log.error("result.modularInputAction = ${result.modularInputAction.values.map { "${it.event}[${it.values.values.toBinaryString()}]" }}")
+                log.error("result.modularDestination = ${result.modularDestination.values.map { it.id }}")
+                log.error("result.modularOutputAction = ${result.modularOutputAction.values.map { "${it.event}[${it.values.values.toBinaryString()}]" }}")
                 return false
             } else {
                 log.success("i = $i: OK")
@@ -291,7 +303,7 @@ class ArbitraryModularAutomaton(
                     }
                     "DataConnections" {
                         for (m in 1..M) {
-                            for ((x0, inputName) in inputNames.withIndex()) {
+                            for ((x0, moduleInputName) in inputNames.withIndex()) {
                                 val pin = modularInboundVarPins[m][x0]
                                 when (val parent = inboundVarPinParent[pin]) {
                                     0 -> {
@@ -299,25 +311,25 @@ class ArbitraryModularAutomaton(
                                     }
                                     in externalOutboundVarPins -> {
                                         val extx0 = externalOutboundVarPins.indexOf(parent)
-                                        val extInputName = inputNames[extx0]
+                                        val externalInputName = inputNames[extx0]
                                         "Connection"(
-                                            "Source" to extInputName,
-                                            "Destination" to "M$m.$inputName"
+                                            "Source" to externalInputName,
+                                            "Destination" to "M$m.$moduleInputName"
                                         )
                                     }
                                     else -> {
                                         val mp = (parent - 1) / Z + 1
                                         val zp0 = modularOutboundVarPins[mp].indexOf(parent)
-                                        val outputName = outputNames[zp0]
+                                        val parentModuleOutputName = outputNames[zp0]
                                         "Connection"(
-                                            "Source" to "M$mp.$outputName",
-                                            "Destination" to "M$m.$inputName"
+                                            "Source" to "M$mp.$parentModuleOutputName",
+                                            "Destination" to "M$m.$moduleInputName"
                                         )
                                     }
                                 }
                             }
                         }
-                        for ((z0, outputName) in outputNames.withIndex()) {
+                        for ((z0, externalOutputName) in outputNames.withIndex()) {
                             val pin = externalInboundVarPins[z0]
                             when (val parent = inboundVarPinParent[pin]) {
                                 0 -> {
@@ -325,19 +337,19 @@ class ArbitraryModularAutomaton(
                                 }
                                 in externalOutboundVarPins -> {
                                     val extx0 = externalOutboundVarPins.indexOf(parent)
-                                    val extInputName = inputNames[extx0]
+                                    val externalInputName = inputNames[extx0]
                                     "Connection"(
-                                        "Source" to extInputName,
-                                        "Destination" to outputName
+                                        "Source" to externalInputName,
+                                        "Destination" to externalOutputName
                                     )
                                 }
                                 else -> {
                                     val mp = (parent - 1) / Z + 1
                                     val zp0 = modularOutboundVarPins[mp].indexOf(parent)
-                                    val outputName = outputNames[zp0]
+                                    val parentModuleOutputName = outputNames[zp0]
                                     "Connection"(
-                                        "Source" to "M$mp.$outputName",
-                                        "Destination" to outputName
+                                        "Source" to "M$mp.$parentModuleOutputName",
+                                        "Destination" to externalOutputName
                                     )
                                 }
                             }
@@ -345,6 +357,105 @@ class ArbitraryModularAutomaton(
                     }
                 }
             }.toString(Globals.xmlPrintOptions)
+        }
+    }
+}
+
+fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: ScenarioTree) {
+    println("=======================")
+
+    val modularEffectiveInputs = MultiArray.create(M) { mutableListOf<InputValues>() }
+    for (scenario in scenarioTree.scenarios) {
+        val elements = scenario.elements.asSequence()
+        val results = eval(elements.map { it.inputAction })
+        for (result in results) {
+            for (m in 1..M) {
+                modularEffectiveInputs[m].add(result.modularInputAction[m].values)
+            }
+        }
+    }
+
+    for (m in 1..M) {
+        modularEffectiveInputs[m].sortBy { it.values.toBinaryString() }
+        log.info("Module #$m effective inputs (${modularEffectiveInputs[m].size} total):")
+        for (input in modularEffectiveInputs[m]) {
+            log.info("    ${input.values.toBinaryString()}")
+        }
+    }
+
+    println("=======================")
+
+    for (m in 1..M) with(modules[m]) {
+        log.info("Minimizing guards for module #$m...")
+        val T = numberOfTransitions
+        val X = inputNames.size
+        val U = 2.pow(X)
+        val allInputValues: List<InputValues> = (1..U).map { u -> InputValues((u - 1).toBinary(X)) }
+        val moduleInputValues: List<InputValues> = modularEffectiveInputs[m]
+
+        val inputFile = File("pla-m$m.in")
+        log.debug { "Writing PLA to '$inputFile'..." }
+        inputFile.sink().buffer().useWith {
+            writeln(".i $X")
+            writeln(".o $T")
+            writeln(".ilb " + inputNames.joinToString(" "))
+            // TODO: .ob <output_names...>
+            // Boom requires some 'type' (and seems to support only "fr")
+            // Espresso does not require 'type' at all
+            writeln(".type fr")
+            for (input in moduleInputValues) {
+                val evaluation = transitions.map {
+                    (it.guard as TruthTableGuard).truthTable[input]
+                }
+                val s = evaluation.map {
+                    when (it) {
+                        true -> '1'
+                        false -> '0'
+                        null -> '-'
+                    }
+                }.joinToString("")
+                writeln("${input.values.toBinaryString()} $s")
+            }
+            for (input in allInputValues - moduleInputValues) {
+                writeln("${input.values.toBinaryString()} " + "-".repeat(T))
+            }
+            writeln(".e")
+        }
+        log.debug { "Done writing PLA to '$inputFile'" }
+
+        // val command = "boom -SD -Si100 $inputFile"
+        val command = "espresso $inputFile"
+        log.debug { "Executing '$command'..." }
+        val process = Runtime.getRuntime().exec(command)
+
+        val guardProducts: List<MutableList<List<String>>> = List(T) { mutableListOf<List<String>>() }
+        process.inputStream.bufferedReader().useLines { lines ->
+            for (line in lines) {
+                if (line.startsWith('.')) continue
+
+                val (productString, guardsString) = line.split(' ', limit = 2)
+                for ((i, c) in guardsString.withIndex()) {
+                    if (c == '1') {
+                        val literals = productString.mapIndexedNotNull { i, c ->
+                            when (c) {
+                                '0' -> "~" + inputNames[i]
+                                '1' -> inputNames[i]
+                                else -> null
+                            }
+                        }
+                        guardProducts[i].add(literals)
+                    }
+                }
+            }
+        }
+        process.destroy()
+
+        for ((i, transition) in transitions.withIndex()) {
+            val products: List<List<String>> = guardProducts[i]
+            // val dnf = makeDnfString(products)
+            // log.debug { "Minimized guard: $dnf" }
+            transition.guard = DnfGuard(products, inputNames)
+            log.debug { "Minimized guard: ${transition.guard.toSimpleString()}" }
         }
     }
 }

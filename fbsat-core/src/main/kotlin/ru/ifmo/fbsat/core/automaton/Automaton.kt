@@ -116,7 +116,7 @@ class Automaton(
         inner class Transition(
             val destination: State,
             val inputEvent: InputEvent?,
-            val guard: Guard
+            var guard: Guard
         ) {
             val source: State = this@State
             val k: Int = this@State.transitions.size + 1 // Note: 1-based
@@ -155,6 +155,7 @@ class Automaton(
         }
 
         fun eval(inputAction: InputAction, currentValues: OutputValues): EvalResult {
+            // TODO: check if input event is not null -- if so, we do not need to eval all transitions at all
             for (transition in transitions) {
                 if (transition.eval(inputAction)) {
                     val destination = transition.destination

@@ -15,6 +15,7 @@ import com.github.ajalt.clikt.parameters.types.int
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.measureTime
 import ru.ifmo.fbsat.core.automaton.Automaton
+import ru.ifmo.fbsat.core.automaton.minimizeTruthTableGuards
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
@@ -532,8 +533,8 @@ class FbSAT : CliktCommand() {
                         log.info("Module #$m: ${vars.joinToString(" ")}")
                     }
                     modularAutomaton.dumpFbt(
-                        outDir.resolve("modularAutomaton.fbt"),
-                        name = "ModularController"
+                        outDir.resolve("CentralController.fbt"),
+                        name = "CentralController"
                     )
                     if (modularAutomaton.verify(tree))
                         log.success("Verify: OK")
@@ -576,8 +577,8 @@ class FbSAT : CliktCommand() {
                         log.info("Module #$m: ${vars.joinToString(" ")}")
                     }
                     modularAutomaton.dumpFbt(
-                        outDir.resolve("modularAutomaton.fbt"),
-                        name = "ModularController"
+                        outDir.resolve("CentralController.fbt"),
+                        name = "CentralController"
                     )
                     if (modularAutomaton.verify(tree))
                         log.success("Verify: OK")
@@ -613,8 +614,8 @@ class FbSAT : CliktCommand() {
                         automaton.dump(outDir, "the_module-$m")
                     }
                     // modularAutomaton.dumpFbt(
-                    //     outDir.resolve("modularAutomaton.fbt"),
-                    //     name = "ModularController"
+                    //     outDir.resolve("CentralController.fbt"),
+                    //     name = "CentralController"
                     // )
                     if (modularAutomaton.verify(tree))
                         log.success("Verify: OK")
@@ -650,8 +651,8 @@ class FbSAT : CliktCommand() {
                         automaton.dump(outDir, "the_module-$m")
                     }
                     // modularAutomaton.dumpFbt(
-                    //     outDir.resolve("modularAutomaton.fbt"),
-                    //     name = "ModularController"
+                    //     outDir.resolve("CentralController.fbt"),
+                    //     name = "CentralController"
                     // )
                     if (modularAutomaton.verify(tree))
                         log.success("Verify: OK")
@@ -715,6 +716,7 @@ class FbSAT : CliktCommand() {
                     solver = solverProvider()
                 )
                 val modularAutomaton = task.infer()
+                modularAutomaton?.minimizeTruthTableGuards(tree)
 
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
@@ -726,8 +728,8 @@ class FbSAT : CliktCommand() {
                         automaton.dump(outDir, "the_module-$m")
                     }
                     modularAutomaton.dumpFbt(
-                        outDir.resolve("modularAutomaton.fbt"),
-                        name = "ModularController"
+                        outDir.resolve("CentralController.fbt"),
+                        name = "CentralController"
                     )
                     if (modularAutomaton.verify(tree))
                         log.success("Verify: OK")
@@ -752,6 +754,7 @@ class FbSAT : CliktCommand() {
                     outDir = outDir
                 )
                 val modularAutomaton = task.infer()
+                modularAutomaton?.minimizeTruthTableGuards(tree)
 
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
@@ -763,8 +766,8 @@ class FbSAT : CliktCommand() {
                         automaton.dump(outDir, "the_module-$m")
                     }
                     modularAutomaton.dumpFbt(
-                        outDir.resolve("modularAutomaton.fbt"),
-                        name = "ModularController"
+                        outDir.resolve("CentralController.fbt"),
+                        name = "CentralController"
                     )
                     if (modularAutomaton.verify(tree))
                         log.success("Verify: OK")

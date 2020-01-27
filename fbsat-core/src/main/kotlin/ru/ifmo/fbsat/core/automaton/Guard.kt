@@ -3,7 +3,8 @@ package ru.ifmo.fbsat.core.automaton
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.toBinaryString
+import ru.ifmo.fbsat.core.utils.makeDnfString
+import kotlin.math.absoluteValue
 
 interface Guard {
     val size: Int
@@ -44,9 +45,6 @@ class UnconditionalGuard : Guard {
     override fun toString(): String {
         return "UnconditionalGuard()"
     }
-
-    // Allow companion object extensions
-    companion object
 }
 
 class TruthTableGuard(
@@ -54,71 +52,46 @@ class TruthTableGuard(
     private val inputNames: List<String>,
     private val uniqueInputs: List<InputValues>
 ) : Guard {
-    override val size: Int
-        get() {
-            // log.warn("TruthTableGuard has no meaningful size")
-            return 0
-        }
+    val cnf: List<List<Int>> = emptyList()
+    // minimizeToCNF(
+    //     minterms = truthTable.filter { (_, value) -> value == true }.keys.map { it.number },
+    //     dontcares = truthTable.filter { (_, value) -> value == null }.keys.map { it.number },
+    //     n = inputNames.size
+    // )
+    override val size: Int = cnf.sumBy { it.size }
 
-    init {
-        // require(truthTable.size == uniqueInputs.size) {
-        //     "Truth table size and number of unique inputs mismatch"
-        // }
-    }
+    // init {
+    //     println("Built CNF [${toSimpleString()}] from truthTable [${truthTable.values.toList().toBinaryString()}]")
+    // }
 
     override fun eval(inputValues: InputValues): Boolean {
         // return truthTable[uniqueInputs.indexOf(inputValues)] in "1x"
         return truthTable.getValue(inputValues) ?: true
     }
 
-    override fun toSimpleString(): String {
-        return "[${truthTable.values.toList().toBinaryString()}]"
-    }
+    override fun toSimpleString(): String =
+        // cnf.joinToString(" & ") { clause ->
+        //     val s = clause.joinToString(" | ") { literal -> inputNames[literal.absoluteValue - 1] }
+        //     if (clause.size == 1)
+        //         s
+        //     else
+        //         "($s)"
+        // }
+        // "[${truthTable.values.toList().toBinaryString()}]"
+        "[TruthTable]"
 
     override fun toGraphvizString(): String =
-        if (truthTable.size <= 8)
-            "[${truthTable.values.toList().toBinaryString()}]"
-        else
-            "[${truthTable.values.take(3).toBinaryString()}${Typography.ellipsis}]"
+        toSimpleString()
 
-    override fun toFbtString(): String {
-        return truthTable.entries
-            .filter { (_, value) -> value == true }
-            .joinToString(" OR ") { (input, _) ->
-                "(" + inputNames.zip(input.values).joinToString(" AND ") { (name, value) ->
-                    if (value) name
-                    else "NOT $name"
-                } + ")"
-            }
-    }
+    override fun toFbtString(): String =
+        toSimpleString()
+            .replace("&", "AND")
+            .replace("|", "OR")
+            .replace("-", "NOT ")
 
-    override fun toSmvString(): String {
-        return "TRUTH_TABLE"
-        // return truthTable
-        //     .asIterable()
-        //     .zip(uniqueInputs)
-        //     // .filter { it.first == '1' }
-        //     .filter { it.first in "1x" }
-        //     .joinToString(" | ", prefix = "(", postfix = ")") { (_, input) ->
-        //         input
-        //             .asIterable()
-        //             .zip(inputNames)
-        //             .joinToString("&") { (value, name) ->
-        //                 when (value) {
-        //                     '1' -> name
-        //                     '0' -> "!$name"
-        //                     else -> throw Exception("...")
-        //                 }
-        //             }
-        //     }
-    }
+    override fun toSmvString(): String = "TRUTH_TABLE"
 
-    override fun toString(): String {
-        return "TruthTableGuard(tt = $truthTable)"
-    }
-
-    // Allow companion object extensions
-    companion object
+    override fun toString(): String = "TruthTableGuard(tt = $truthTable)"
 }
 
 class ParseTreeGuard(
@@ -323,9 +296,6 @@ class ParseTreeGuard(
     override fun toString(): String {
         return "ParseTreeGuard(size=${nodes.size})"
     }
-
-    // Allow companion object extensions
-    companion object
 }
 
 class StringGuard(val expr: String, val inputNames: List<String>) : Guard {
@@ -362,8 +332,64 @@ class StringGuard(val expr: String, val inputNames: List<String>) : Guard {
         return expr
     }
 
-    // Allow companion object extensions
-    companion object
+    override fun toString(): String {
+        return "StringGuard(expr = $expr)"
+    }
+}
+
+class DnfGuard(
+    val dnf: List<List<String>>,
+    val inputNames: List<String>
+) : Guard {
+    // Note: `_dnf` is one-based and signed
+    private val _dnf: List<List<Int>> =
+        dnf.map { term ->
+            term.map { s ->
+                if (s.startsWith('!') || s.startsWith('~')) {
+                    -(inputNames.indexOf(s.drop(1)) + 1)
+                } else {
+                    inputNames.indexOf(s) + 1
+                }
+            }
+        }
+
+    override val size: Int = dnf.sumBy { it.size }
+
+    override fun eval(inputValues: InputValues): Boolean =
+        if (_dnf.isEmpty()) {
+            check(toSimpleString() == "0")
+            false
+        } else {
+            _dnf.any { term ->
+                term.all { literal ->
+                    (literal < 0) xor inputValues.values[literal.absoluteValue - 1]
+                }
+            }
+        }
+
+    override fun toSimpleString(): String {
+        return makeDnfString(dnf, conjunction = "&", disjunction = " | ")
+    }
+
+    override fun toGraphvizString(): String {
+        return toSimpleString()
+    }
+
+    override fun toFbtString(): String {
+        return toSimpleString()
+            .replace("|", " OR ")
+            .replace("&", " AND ")
+            .replace("~", "NOT ")
+            .replace("!", "NOT ")
+    }
+
+    override fun toSmvString(): String {
+        return toSimpleString()
+    }
+
+    override fun toString(): String {
+        return "DnfGuard(dnf = $dnf)"
+    }
 }
 
 enum class NodeType(val value: Int) {
