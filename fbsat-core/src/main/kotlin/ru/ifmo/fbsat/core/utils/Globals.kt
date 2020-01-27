@@ -5,7 +5,7 @@ import ru.ifmo.fbsat.core.solver.VarEncoding
 import kotlin.properties.Delegates
 
 enum class SolverBackend {
-    DEFAULT, INCREMENTAL;
+    DEFAULT, INCREMENTAL, FILE;
 }
 
 enum class EpsilonOutputEvents {

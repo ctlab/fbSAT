@@ -9,6 +9,7 @@ import okio.source
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeSince
+import java.io.File
 import ru.ifmo.fbsat.core.utils.write
 import ru.ifmo.fbsat.core.utils.writeln
 
@@ -82,6 +83,9 @@ abstract class Solver {
 
         @JvmStatic
         fun incremental(command: String): Solver = IncrementalSolver(command)
+
+        @JvmStatic
+        fun filesolver(file: File, command: String): Solver = FileSolver(file, command)
 
         fun mock(
             comment: (String) -> Unit = {},
@@ -223,5 +227,66 @@ private class IncrementalSolver(command: String) : Solver() {
 
     override fun finalize2() {
         process.destroy()
+    }
+}
+
+private class FileSolver(
+    val file: File,
+    val command: String
+) : Solver() {
+    private val buffer = Buffer()
+
+    override fun comment(comment: String) {
+        log.debug { "// $comment" }
+        // buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
+    }
+
+    override fun _clause(literals: List<Literal>) {
+        for (x in literals)
+            buffer.writeUtf8(x.toString()).writeUtf8(" ")
+        buffer.writeUtf8("0\n")
+    }
+
+    override fun solve(): RawAssignment? {
+        log.debug { "Solving..." }
+        val timeStart = PerformanceCounter.reference
+
+        file.sink().buffer().use {
+            it.writeUtf8("p cnf $numberOfVariables $numberOfClauses\n")
+            buffer.copyTo(it.buffer)
+        }
+        log.debug { "Written CNF to '$file' in %.2f s.".format(timeSince(timeStart).seconds) }
+
+        val process = Runtime.getRuntime().exec(command.format(file))
+        val reader = process.inputStream.bufferedReader()
+        val answer = reader.readLine()
+
+        return when {
+            answer.contains("unsat", ignoreCase = true) -> {
+                log.failure("UNSAT in %.2f seconds".format(timeSince(timeStart).seconds))
+                null
+            }
+            answer.contains("sat", ignoreCase = true) -> {
+                log.success("SAT in %.2f seconds".format(timeSince(timeStart).seconds))
+                reader.lineSequence()
+                    .map { it.trim() }
+                    .flatMap { it.splitToSequence(' ') }
+                    .mapNotNull { it.toIntOrNull() }
+                    .takeWhile { it != 0 }
+                    .map { it > 0 }
+                    .let { RawAssignment(it.toList().toBooleanArray()) }
+            }
+            else -> {
+                log.failure("answer = '$answer'")
+                error("Implicit UNSAT or ERROR")
+            }
+        }.also {
+            // reader.close()
+            process.destroy()
+        }
+    }
+
+    override fun finalize2() {
+        // Do nothing
     }
 }
