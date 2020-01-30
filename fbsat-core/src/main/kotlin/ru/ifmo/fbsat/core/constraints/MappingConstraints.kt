@@ -92,6 +92,9 @@ fun Solver.declarePositiveMappingConstraints(
                     })
 
                     imply(lhsAux, rhsAux)
+
+                    // Adhoc: other way around!
+                    imply(rhsAux, lhsAux)
                 }
         }
     }
