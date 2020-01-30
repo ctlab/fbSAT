@@ -8,6 +8,7 @@ import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.imply
+import ru.ifmo.fbsat.core.solver.implyAnd
 import ru.ifmo.fbsat.core.solver.implyImply
 import ru.ifmo.fbsat.core.solver.implyImplyIff
 import ru.ifmo.fbsat.core.solver.implyImplyIffAnd
@@ -123,6 +124,14 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
                         nodeChild[c, k, p] eq ch,
                         nodeParent[c, k, ch] eq p
                     )
+    // (nodeChild[p] = 0) => AND_{ch}(nodeParent[ch] != p)
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..P)
+                implyAnd(nodeChild[c, k, p] eq 0, sequence {
+                    for (ch in (p + 1)..P)
+                        yield(nodeParent[c, k, ch] neq p)
+                })
 
     comment("Only typed nodes, except the root, have parents")
     for (c in 1..C)
