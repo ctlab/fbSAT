@@ -17,6 +17,7 @@ import ru.ifmo.fbsat.core.solver.sign
 import ru.ifmo.fbsat.core.task.modular.extended.consecutive.ConsecutiveModularExtendedVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
+import ru.ifmo.fbsat.core.utils.Globals
 
 fun Solver.declarePositiveGuardConditionsConstraints(extendedVars: ExtendedVariables) {
     comment("Positive guard conditions constraints")
@@ -198,30 +199,32 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
                         nodeChild[c, k, p] neq 0
                     )
 
-    comment("11.3. AND/OR: hard to explain")
-    // parent[p, par] & nodetype[par, AND/OR] => child[par, p] | child[par, p-1]
-    for (c in 1..C)
-        for (k in 1..K)
-            for (par in 1..P) {
-                run {
-                    val ch = par + 1
-                    if (ch < P)
+    if (Globals.IS_ENCODE_HARD_TO_EXPLAIN) {
+        comment("11.+. AND/OR: hard to explain")
+        // parent[p, par] & nodetype[par, AND/OR] => child[par, p] | child[par, p-1]
+        for (c in 1..C)
+            for (k in 1..K)
+                for (par in 1..P) {
+                    run {
+                        val ch = par + 1
+                        if (ch < P)
+                            for (nt in listOf(NodeType.AND, NodeType.OR))
+                                clause(
+                                    nodeType[c, k, par] neq nt,
+                                    nodeParent[c, k, ch] neq par,
+                                    nodeChild[c, k, par] eq ch
+                                )
+                    }
+                    for (ch in (par + 2) until P)
                         for (nt in listOf(NodeType.AND, NodeType.OR))
                             clause(
                                 nodeType[c, k, par] neq nt,
                                 nodeParent[c, k, ch] neq par,
-                                nodeChild[c, k, par] eq ch
+                                nodeChild[c, k, par] eq ch,
+                                nodeChild[c, k, par] eq ch - 1
                             )
                 }
-                for (ch in (par + 2) until P)
-                    for (nt in listOf(NodeType.AND, NodeType.OR))
-                        clause(
-                            nodeType[c, k, par] neq nt,
-                            nodeParent[c, k, ch] neq par,
-                            nodeChild[c, k, par] eq ch,
-                            nodeChild[c, k, par] eq ch - 1
-                        )
-            }
+    }
 
     comment("Right child of binary operators follows the left one")
     // (nodeType[p] = AND/OR) & (nodeChild[p] = ch) => (nodeParent[ch+1] = p)

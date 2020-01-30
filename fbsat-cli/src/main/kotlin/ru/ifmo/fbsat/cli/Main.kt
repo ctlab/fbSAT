@@ -286,6 +286,14 @@ class FbSAT : CliktCommand() {
         default = false
     )
 
+    val isEncodeHardToExplain: Boolean by option(
+        "--encode-hard-to-explain",
+        help = "[DEBUG] Encode some hard to explain thing"
+    ).flag(
+        "--no-encode-hard-to-explain",
+        default = true
+    )
+
     val isEncodeTotalizer: Boolean by option(
         "--encode-totalizer",
         help = "Encode totalizer when upper bound is null"
@@ -326,6 +334,7 @@ class FbSAT : CliktCommand() {
         Globals.IS_ENCODE_TRANSITIONS_ORDER = isEncodeTransitionsOrder
         Globals.IS_ENCODE_TERMINALS_ORDER = isEncodeTerminalsOrder
         Globals.IS_ENCODE_TERMINALS_MINI_ORDER = isEncodeTerminalsMiniOrder
+        Globals.IS_ENCODE_HARD_TO_EXPLAIN = isEncodeHardToExplain
         Globals.IS_ENCODE_TOTALIZER = isEncodeTotalizer
         Globals.IS_DEBUG = isDebug
 
