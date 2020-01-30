@@ -9,9 +9,9 @@ import okio.source
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeSince
-import java.io.File
 import ru.ifmo.fbsat.core.utils.write
 import ru.ifmo.fbsat.core.utils.writeln
+import java.io.File
 
 // TODO: make solver able to reset
 
@@ -238,13 +238,13 @@ private class FileSolver(
 
     override fun comment(comment: String) {
         log.debug { "// $comment" }
-        // buffer.writeUtf8("c ").writeUtf8(comment).writeUtf8("\n")
+        buffer.write("c ").writeln(comment)
     }
 
     override fun _clause(literals: List<Literal>) {
         for (x in literals)
-            buffer.writeUtf8(x.toString()).writeUtf8(" ")
-        buffer.writeUtf8("0\n")
+            buffer.write(x.toString()).write(" ")
+        buffer.writeln("0")
     }
 
     override fun solve(): RawAssignment? {
@@ -252,7 +252,7 @@ private class FileSolver(
         val timeStart = PerformanceCounter.reference
 
         file.sink().buffer().use {
-            it.writeUtf8("p cnf $numberOfVariables $numberOfClauses\n")
+            it.writeln("p cnf $numberOfVariables $numberOfClauses")
             buffer.copyTo(it.buffer)
         }
         log.debug { "Written CNF to '$file' in %.2f s.".format(timeSince(timeStart).seconds) }
