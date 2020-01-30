@@ -65,7 +65,7 @@ private abstract class AbstractDomainVar<T> internal constructor(
     constructor(domain: Iterable<T>, init: (T) -> Literal) :
         this(domain.associateWith { init(it) })
 
-    final override fun eq(value: T): Literal = storage.getValue(value)
+    final override fun eq(value: T): Literal = storage[value] ?: Solver.falseVariable // storage.getValue(value)
     final override fun neq(value: T): Literal = -eq(value)
     final override fun bit(index: Int): Literal = bits[index]
 

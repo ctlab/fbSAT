@@ -45,8 +45,16 @@ fun Solver.declareExtendedVariables(
     basicVars: BasicVariables,
     P: Int
 ): ExtendedVariables = with(basicVars) {
+    check(P > 0)
+
     /* Guard conditions variables */
-    val nodeType = newDomainVarArray(C, K, P) { NodeType.values().asIterable() }
+    val nodeType = newDomainVarArray(C, K, P) {
+        when {
+            P > 2 -> NodeType.values().asIterable()
+            P == 2 -> listOf(NodeType.TERMINAL, NodeType.NOT, NodeType.NONE)
+            else -> listOf(NodeType.TERMINAL, NodeType.NONE)
+        }
+    }
     val nodeInputVariable = newIntVarArray(C, K, P) { 0..X }
     val nodeParent = newIntVarArray(C, K, P) { (_, _, p) -> 0 until p }
     val nodeChild = newIntVarArray(C, K, P) { (_, _, p) -> ((p + 1)..P) + 0 }
