@@ -337,6 +337,7 @@ class FbSAT : CliktCommand() {
         val tree = ScenarioTree.fromFile(fileScenarios, inputNamesPnP, outputNamesPnP)
         println("[*] Scenarios: ${tree.scenarios.size}")
         println("[*] Elements: ${tree.scenarios.sumBy { it.elements.size }}")
+        println("[*] Scenario tree size: ${tree.size}")
 
         val negTree = fileCounterexamples?.let {
             NegativeScenarioTree.fromFile(
