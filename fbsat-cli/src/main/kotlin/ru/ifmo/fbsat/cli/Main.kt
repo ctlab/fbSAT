@@ -267,7 +267,7 @@ class FbSAT : CliktCommand() {
         help = "[DEBUG] Encode transitions lexicographic order"
     ).flag(
         "--no-encode-transitions-order",
-        default = false
+        default = true
     )
 
     val isEncodeTerminalsOrder: Boolean by option(
