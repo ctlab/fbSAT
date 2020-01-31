@@ -12,6 +12,7 @@ import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffImply
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
+import ru.ifmo.fbsat.core.solver.implyAnd
 import ru.ifmo.fbsat.core.solver.implyIff
 import ru.ifmo.fbsat.core.solver.implyIffAnd
 import ru.ifmo.fbsat.core.solver.implyIffIte
@@ -50,7 +51,8 @@ fun Solver.declarePositiveMappingConstraints(
                 stateAlgorithmTop = stateAlgorithmTop,
                 stateAlgorithmBot = stateAlgorithmBot,
                 actualTransitionFunction = actualTransitionFunction,
-                mapping = mapping
+                mapping = mapping,
+                isPositive = true
             )
         }
 
@@ -125,7 +127,8 @@ fun Solver.declareNegativeMappingConstraints(
                 stateAlgorithmTop = stateAlgorithmTop,
                 stateAlgorithmBot = stateAlgorithmBot,
                 actualTransitionFunction = negActualTransitionFunction,
-                mapping = negMapping
+                mapping = negMapping,
+                isPositive = false
             )
         }
 
@@ -440,7 +443,8 @@ private fun Solver.declareMappingConstraintsForActiveNode(
     stateAlgorithmTop: BoolVarArray,
     stateAlgorithmBot: BoolVarArray,
     actualTransitionFunction: IntVarArray,
-    mapping: IntVarArray
+    mapping: IntVarArray,
+    isPositive: Boolean
 ) {
     val p = tree.parent(v)
     val e = tree.inputEvent(v)
@@ -448,26 +452,50 @@ private fun Solver.declareMappingConstraintsForActiveNode(
     val o = tree.outputEvent(v)
 
     comment("Mapping definition for active node v = $v")
-    // (mapping[v]=c) <=> (actualTransition[mapping[tp(v)],tie(v),tin(v)]=c) & (stateOutputEvent[c]=toe(v)) & AND_{z}(stateAlgorithm{tov(tp(v),z)}(c,z) = tov(v,z))
-    for (i in 1..C)
-        for (j in 1..C)
-            implyIffAnd(
-                mapping[p] eq i,
-                mapping[v] eq j,
-                sequence {
-                    yield(actualTransitionFunction[i, e, u] eq j)
-                    yield(stateOutputEvent[j] eq o)
-                    for (z in 1..Z)
-                        yield(
-                            algorithmChoice(
-                                tree = tree,
-                                v = v, c = j, z = z,
-                                algorithmTop = stateAlgorithmTop,
-                                algorithmBot = stateAlgorithmBot
-                            )
+    if (isPositive) {
+        // (mapping[v]=c) => (actualTransition[mapping[tp(v)],tie(v),tin(v)]=c) & (stateOutputEvent[c]=toe(v)) & AND_{z}(stateAlgorithm{tov(tp(v),z)}(c,z) = tov(v,z))
+        for (i in 1..C)
+            for (j in 1..C)
+                implyImply(
+                    mapping[p] eq i,
+                    mapping[v] eq j,
+                    actualTransitionFunction[i, e, u] eq j
+                )
+        for (c in 1..C)
+            implyAnd(mapping[v] eq c, sequence {
+                yield(stateOutputEvent[c] eq o)
+                for (z in 1..Z)
+                    yield(
+                        algorithmChoice(
+                            tree = tree,
+                            v = v, c = c, z = z,
+                            algorithmTop = stateAlgorithmTop,
+                            algorithmBot = stateAlgorithmBot
                         )
-                }
-            )
+                    )
+            })
+    } else {
+        // (mapping[v]=c) <=> (actualTransition[mapping[tp(v)],tie(v),tin(v)]=c) & (stateOutputEvent[c]=toe(v)) & AND_{z}(stateAlgorithm{tov(tp(v),z)}(c,z) = tov(v,z))
+        for (i in 1..C)
+            for (j in 1..C)
+                implyIffAnd(
+                    mapping[p] eq i,
+                    mapping[v] eq j,
+                    sequence {
+                        yield(actualTransitionFunction[i, e, u] eq j)
+                        yield(stateOutputEvent[j] eq o)
+                        for (z in 1..Z)
+                            yield(
+                                algorithmChoice(
+                                    tree = tree,
+                                    v = v, c = j, z = z,
+                                    algorithmTop = stateAlgorithmTop,
+                                    algorithmBot = stateAlgorithmBot
+                                )
+                            )
+                    }
+                )
+    }
 }
 
 private fun Solver.declareMappingConstraintsForPassiveNode(
