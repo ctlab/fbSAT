@@ -90,6 +90,24 @@ class FbSAT : CliktCommand() {
         File("out/${DateTime.nowLocal().format("yyyy-MM-dd'_'HH-mm-ss")}")
     )
 
+    val fileInputNames: File? by option(
+        "--input-names",
+        help = "File with input names [defaults to PnP names]"
+    ).file(
+        exists = true,
+        folderOkay = false,
+        readable = true
+    )
+
+    val fileOutputNames: File? by option(
+        "--output-names",
+        help = "File with output names [defaults to PnP names]"
+    ).file(
+        exists = true,
+        folderOkay = false,
+        readable = true
+    )
+
     val method: Method by option(
         "-m", "--method",
         help = "Method to use",
@@ -277,10 +295,15 @@ class FbSAT : CliktCommand() {
         // outDir.deleteRecursively()
         // outDir.walkBottomUp().forEach { if (it != outDir) it.delete() }
         outDir.mkdirs()
+        val inputNames = fileInputNames?.readLines() ?: inputNamesPnP
+        val outputNames = fileOutputNames?.readLines() ?: outputNamesPnP
+        println("[*] Input names: $inputNames")
+        println("[*] Output names: $outputNames")
 
-        val tree = ScenarioTree.fromFile(fileScenarios, inputNamesPnP, outputNamesPnP)
+        val tree = ScenarioTree.fromFile(fileScenarios, inputNames, outputNames)
         println("[*] Scenarios: ${tree.scenarios.size}")
         println("[*] Elements: ${tree.scenarios.sumBy { it.elements.size }}")
+        println("[*] Scenario tree size: ${tree.size}")
 
         val negTree = fileCounterexamples?.let {
             NegativeScenarioTree.fromFile(
