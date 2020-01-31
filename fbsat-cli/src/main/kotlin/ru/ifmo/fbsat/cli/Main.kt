@@ -335,9 +335,9 @@ class FbSAT : CliktCommand() {
         check(outDir.exists()) { "Output directory does not exist" }
 
         val tree = ScenarioTree.fromFile(fileScenarios, inputNamesPnP, outputNamesPnP)
-        println("[*] Scenarios: ${tree.scenarios.size}")
-        println("[*] Elements: ${tree.scenarios.sumBy { it.elements.size }}")
-        println("[*] Scenario tree size: ${tree.size}")
+        log.info("Scenarios: ${tree.scenarios.size}")
+        log.info("Elements: ${tree.scenarios.sumBy { it.elements.size }}")
+        log.info("Scenario tree size: ${tree.size}")
 
         val negTree = fileCounterexamples?.let {
             NegativeScenarioTree.fromFile(
@@ -347,15 +347,15 @@ class FbSAT : CliktCommand() {
                 tree.inputNames,
                 tree.outputNames
             ).also { negTree ->
-                println("[*] Negative scenarios: ${negTree.negativeScenarios.size}")
-                println("[*] Negative elements: ${negTree.negativeScenarios.sumBy { it.elements.size }}")
+                log.info("Negative scenarios: ${negTree.negativeScenarios.size}")
+                log.info("Negative elements: ${negTree.negativeScenarios.sumBy { it.elements.size }}")
             }
         }
 
         // ===
         fileVis?.let { file ->
             println("======================================")
-            println("[*] Visualizing <$file>...")
+            log.info("Visualizing <$file>...")
             val negST = NegativeScenarioTree.fromFile(
                 file,
                 tree.inputEvents,
@@ -368,19 +368,19 @@ class FbSAT : CliktCommand() {
             // Runtime.getRuntime().exec("dot -Tpng -O ce.gv").waitFor()
 
             println("======================================")
-            println("[*] Searching for multi-loops...")
+            log.info("Searching for multi-loops...")
             for (v in negST.verticesWithLoops) {
                 val loopBacks = negST.loopBacks(v)
                 if (loopBacks.size >= 2) {
-                    println("[*] Node v = $v has ${loopBacks.size} loop-backs: $loopBacks")
+                    log.info("Node v = $v has ${loopBacks.size} loop-backs: $loopBacks")
                     for ((i, ns) in negST.negativeScenarios.withIndex()) {
                         // if (ns.elements.last().nodeId == v) {
-                        //     println(" >> NegativeScenario #${i + 1} with loop position ${ns.loopPosition} (id = ${ns.elements[ns.loopPosition!! - 1].nodeId})")
+                        //     log.just(" >> NegativeScenario #${i + 1} with loop position ${ns.loopPosition} (id = ${ns.elements[ns.loopPosition!! - 1].nodeId})")
                         // }
                         if (ns.loopPosition != null &&
                             ns.elements[ns.loopPosition!! - 1].nodeId in loopBacks
                         ) {
-                            println(" >> NegativeScenario #${i + 1} with loop position ${ns.loopPosition} (id = ${ns.elements[ns.loopPosition!! - 1].nodeId})")
+                            log.just(" >> NegativeScenario #${i + 1} with loop position ${ns.loopPosition} (id = ${ns.elements[ns.loopPosition!! - 1].nodeId})")
                         }
                     }
                 }
