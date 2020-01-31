@@ -105,6 +105,24 @@ class FbSAT : CliktCommand() {
         File("out/$now")
     }
 
+    val fileInputNames: File? by option(
+        "--input-names",
+        help = "File with input names [defaults to PnP names]"
+    ).file(
+        exists = true,
+        folderOkay = false,
+        readable = true
+    )
+
+    val fileOutputNames: File? by option(
+        "--output-names",
+        help = "File with output names [defaults to PnP names]"
+    ).file(
+        exists = true,
+        folderOkay = false,
+        readable = true
+    )
+
     val method: Method by option(
         "-m", "--method",
         help = "Method to use",
@@ -343,7 +361,12 @@ class FbSAT : CliktCommand() {
         outDir.mkdirs()
         check(outDir.exists()) { "Output directory does not exist" }
 
-        val tree = ScenarioTree.fromFile(fileScenarios, inputNamesPnP, outputNamesPnP)
+        val inputNames = fileInputNames?.readLines() ?: inputNamesPnP
+        val outputNames = fileOutputNames?.readLines() ?: outputNamesPnP
+        log.info("Input names: $inputNames")
+        log.info("Output names: $outputNames")
+
+        val tree = ScenarioTree.fromFile(fileScenarios, inputNames, outputNames)
         log.info("Scenarios: ${tree.scenarios.size}")
         log.info("Elements: ${tree.scenarios.sumBy { it.elements.size }}")
         log.info("Scenario tree size: ${tree.size}")
