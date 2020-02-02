@@ -21,6 +21,7 @@ import ru.ifmo.fbsat.core.task.basic.ModularBasicMinTask
 import ru.ifmo.fbsat.core.task.basic.ModularBasicTask
 import ru.ifmo.fbsat.core.task.complete.CompleteCegisTask
 import ru.ifmo.fbsat.core.task.complete.CompleteMinCegisTask
+import ru.ifmo.fbsat.core.task.complete.CompleteMinUBCegisTask
 import ru.ifmo.fbsat.core.task.complete.CompleteTask
 import ru.ifmo.fbsat.core.task.extended.ExtendedMinTask
 import ru.ifmo.fbsat.core.task.extended.ExtendedMinUBTask
@@ -45,6 +46,7 @@ enum class Method(val s: String) {
     CompleteMin("complete-min"),
     CompleteCegis("complete-cegis"),
     CompleteMinCegis("complete-min-cegis"),
+    CompleteMinUBCegis("complete-min-ub-cegis"),
     ModularBasic("modular-basic"),
     ModularBasicMin("modular-basic-min")
 }
@@ -453,6 +455,18 @@ class FbSAT : CliktCommand() {
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxGuardSize = requireNotNull(maxGuardSize),
                     initialMaxTotalGuardsSize = maxTotalGuardsSize,
+                    smvDir = smvDir,
+                    outDir = outDir,
+                    solverProvider = solverProvider
+                )
+                task.infer()
+            }
+            Method.CompleteMinUBCegis -> {
+                val task = CompleteMinUBCegisTask(
+                    scenarioTree = tree,
+                    initialNegativeScenarioTree = negTree,
+                    initialMaxTotalGuardsSize = maxTotalGuardsSize,
+                    maxPlateauWidth = maxPlateauWidth,
                     smvDir = smvDir,
                     outDir = outDir,
                     solverProvider = solverProvider
