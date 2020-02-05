@@ -180,6 +180,7 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
         }
 
     comment("11.0b. AND/OR: left child cannot have number P")
+    // (nodeType[p] = AND/OR) => (nodeChild[p] != P)
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..(P - 2))
