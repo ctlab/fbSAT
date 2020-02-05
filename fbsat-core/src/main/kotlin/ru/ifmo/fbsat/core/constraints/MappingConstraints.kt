@@ -539,11 +539,10 @@ private fun Solver.declareMappingConstraintsForPassiveNode(
             )
 
         comment("Constraining actualTransitionFunction for passive node v = $v")
-        // (negMapping[v] != 0) => (negActualTransition[mapping[tp(v)],tie(v),tin(v)]=0)
+        // (negMapping[p] = c) => (negActualTransition[c,tie(v),tin(v)]=0)
         for (c in 1..C)
-            implyIff(
+            imply(
                 mapping[p] eq c,
-                mapping[v] eq c,
                 actualTransitionFunction[c, e, u] eq 0
             )
     }
