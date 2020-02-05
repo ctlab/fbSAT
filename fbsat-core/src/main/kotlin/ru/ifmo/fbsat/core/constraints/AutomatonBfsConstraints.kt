@@ -78,19 +78,22 @@ private fun Solver.declareAutomatonBfsConstraintsImpl(
             })
 
     comment("bfs_p definition")
-    // (p[j] = i) <=> t[i, j] & AND_{k<i}( ~t[k, j] ) :: i<j
+    // (p[j] = i) <=> t[i, j] & AND_{r<i}( ~t[r, j] ) :: i<j
     for (j in 1..C)
         for (i in 1 until j)
             iffAnd(bfsParentAutomaton[j] eq i, sequence {
                 yield(bfsTransitionAutomaton[i, j])
-                for (k in 1 until i)
-                    yield(-bfsTransitionAutomaton[k, j])
+                for (r in 1 until i)
+                    yield(-bfsTransitionAutomaton[r, j])
             })
 
     comment("BFS(p)")
-    // (p[j] = i) => (p[j+1] != k) :: LB<=k<i<j<UB
+    // (p[j] = i) => (p[j+1] != r) :: LB<=r<i<j<UB
     for (j in 3 until C)
         for (i in 2 until j)
-            for (k in 1 until i)
-                imply(bfsParentAutomaton[j] eq i, bfsParentAutomaton[j + 1] neq k)
+            for (r in 1 until i)
+                imply(
+                    bfsParentAutomaton[j] eq i,
+                    bfsParentAutomaton[j + 1] neq r
+                )
 }

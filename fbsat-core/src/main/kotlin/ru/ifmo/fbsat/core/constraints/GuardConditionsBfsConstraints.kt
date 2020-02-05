@@ -18,21 +18,24 @@ fun Solver.declareGuardConditionsBfsConstraints(extendedVars: ExtendedVariables)
                 val bfsParentGuard = newIntVarArray(P) { (j) -> 0 until j }
 
                 comment("F_p")
-                // (p[j] = i) <=> t[i, j] & AND_{k<i}( ~t[k, j] ) :: i<j
+                // (p[j] = i) <=> t[i, j] & AND_{r<i}( ~t[r, j] ) :: i<j
                 for (j in 1..P)
                     for (i in 1 until j)
                         iffAnd(bfsParentGuard[j] eq i, sequence {
                             yield(bfsTransitionGuard[i, j])
-                            for (n in 1 until i)
-                                yield(-bfsTransitionGuard[n, j])
+                            for (r in 1 until i)
+                                yield(-bfsTransitionGuard[r, j])
                         })
 
                 comment("F_BFS(p)")
-                // p[j, i] => ~p[j+1, n] :: LB<=n<i<j<UB
-                for (j in 1 until P)
-                    for (i in 1 until j)
-                        for (n in 1 until i)
-                            imply(bfsParentGuard[j] eq i, bfsParentGuard[j + 1] neq n)
+                // p[j, i] => ~p[j+1, r] :: LB<=r<i<j<UB
+                for (j in 3 until P)
+                    for (i in 2 until j)
+                        for (r in 1 until i)
+                            imply(
+                                bfsParentGuard[j] eq i,
+                                bfsParentGuard[j + 1] neq r
+                            )
             }
     }
 }
