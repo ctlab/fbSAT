@@ -514,7 +514,7 @@ private fun Solver.declareMappingConstraintsForPassiveNode(
 
     if (isPositive) {
         comment("Mapping propagation for passive node v = $v")
-        // mapping[v]=mapping[tp(v)]
+        // mapping[v] = mapping[tp(v)]
         for (c in 1..C)
             imply(
                 mapping[p] eq c,
@@ -522,7 +522,7 @@ private fun Solver.declareMappingConstraintsForPassiveNode(
             )
 
         comment("Constraining actualTransitionFunction for passive node v = $v")
-        // actualTransition[mapping[tp(v)],tie(v),tin(v)]=0
+        // actualTransition[mapping[tp(v)],tie(v),tin(v)] = 0
         for (c in 1..C)
             imply(
                 mapping[p] eq c,
@@ -530,7 +530,7 @@ private fun Solver.declareMappingConstraintsForPassiveNode(
             )
     } else {
         comment("Mapping propagation for passive node v = $v")
-        // (negMapping[v]=negMapping[tp(v)]) | (negMapping[v]=0)
+        // (negMapping[v] = negMapping[tp(v)]) | (negMapping[v] = 0)
         for (c in 1..C)
             implyOr(
                 mapping[p] eq c,
