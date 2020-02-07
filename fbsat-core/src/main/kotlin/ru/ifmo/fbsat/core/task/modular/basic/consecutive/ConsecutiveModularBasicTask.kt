@@ -10,6 +10,7 @@ import ru.ifmo.fbsat.core.constraints.declarePositiveConsecutiveModularMappingCo
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
@@ -105,6 +106,6 @@ class ConsecutiveModularBasicTask(
     }
 
     fun finalize2() {
-        solver.finalize2()
+        solver.close()
     }
 }

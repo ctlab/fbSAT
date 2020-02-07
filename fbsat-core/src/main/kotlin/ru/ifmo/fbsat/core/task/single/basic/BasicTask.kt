@@ -8,6 +8,7 @@ import ru.ifmo.fbsat.core.constraints.declarePositiveMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.checkMapping
@@ -107,6 +108,6 @@ class BasicTask(
     }
 
     fun finalize2() {
-        solver.finalize2()
+        solver.close()
     }
 }

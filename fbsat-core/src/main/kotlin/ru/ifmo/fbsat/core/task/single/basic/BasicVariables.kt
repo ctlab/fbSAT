@@ -4,6 +4,8 @@ import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.newBoolVarArray
+import ru.ifmo.fbsat.core.solver.newIntVarArray
 
 @Suppress("PropertyName")
 class BasicVariables(

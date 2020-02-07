@@ -6,6 +6,8 @@ import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.VarEncoding
+import ru.ifmo.fbsat.core.solver.newBoolVarArray
+import ru.ifmo.fbsat.core.solver.newIntVarArray
 import ru.ifmo.fbsat.core.utils.log
 import kotlin.math.pow
 

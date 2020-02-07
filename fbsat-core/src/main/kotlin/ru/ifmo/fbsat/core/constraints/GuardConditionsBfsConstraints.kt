@@ -4,6 +4,8 @@ import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.Solver.Companion.falseVariable
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.imply
+import ru.ifmo.fbsat.core.solver.newBoolVarArray
+import ru.ifmo.fbsat.core.solver.newIntVarArray
 import ru.ifmo.fbsat.core.task.modular.extended.consecutive.ConsecutiveModularExtendedVariables
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
 

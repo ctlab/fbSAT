@@ -15,6 +15,8 @@ import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Literal
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.convert
+import ru.ifmo.fbsat.core.solver.newBoolVarArray
+import ru.ifmo.fbsat.core.solver.newIntVar
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedAssignment
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedTask
 import ru.ifmo.fbsat.core.task.single.extended.toAutomaton
