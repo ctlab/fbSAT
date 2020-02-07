@@ -5,6 +5,7 @@ import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.automaton.OutputEvent
 import ru.ifmo.fbsat.core.automaton.OutputValues
 import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.NuSmvTrace
 import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
@@ -37,6 +38,22 @@ data class PositiveScenario(
 
                 scenarios
             }
+        }
+
+        fun fromTrace(trace: NuSmvTrace, inputNames: List<String>, outputNames: List<String>): PositiveScenario {
+            val elements = trace.states.zipWithNext { first, second ->
+                ScenarioElement(
+                    InputAction(
+                        InputEvent("REQ"),
+                        InputValues(first.getBooleanValues(inputNames))
+                    ),
+                    OutputAction(
+                        OutputEvent("CNF"),
+                        OutputValues(second.getBooleanValues(outputNames))
+                    )
+                )
+            }
+            return PositiveScenario(elements)
         }
 
         private val regexAction by lazy {

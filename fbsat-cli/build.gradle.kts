@@ -8,6 +8,7 @@ dependencies {
     implementation(Libs.clikt)
     implementation(Libs.multiarray)
     implementation(Libs.klock)
+    implementation(Libs.okio)
 }
 
 application {
