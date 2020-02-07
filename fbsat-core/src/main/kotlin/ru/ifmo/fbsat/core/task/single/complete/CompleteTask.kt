@@ -72,7 +72,7 @@ class CompleteTask(
         }
 
         /* Initial cardinality constraints */
-        updateCardinalityLessThan(maxTotalGuardsSize)
+        updateCardinalityLessThan(maxTotalGuardsSize?.let { it + 1 })
 
         /* Initial negative constraints */
         updateNegativeReduction()
