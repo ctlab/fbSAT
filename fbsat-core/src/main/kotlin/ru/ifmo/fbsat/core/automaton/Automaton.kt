@@ -219,7 +219,11 @@ class Automaton(
         }
     }
 
-    data class EvalResult(val destination: State, val outputAction: OutputAction)
+    data class EvalResult(val destination: State, val outputAction: OutputAction) {
+        override fun toString(): String {
+            return "EvalResult(destination = ${destination.id}, outputAction = $outputAction)"
+        }
+    }
 
     fun eval(
         inputAction: InputAction,
