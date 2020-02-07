@@ -6,7 +6,6 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.utils.copyFile
 import ru.ifmo.fbsat.core.utils.log
 import java.io.File
 
@@ -40,11 +39,7 @@ class CompleteCegisTask(
 
     private fun prepareSmvFiles() {
         // Copy smv files to output directory
-        for (name in sequenceOf("commands", "extra.smv", "plant.smv", "main.smv", "spec.smv", "Makefile")) {
-            val fileSmv = smvDir.resolve(name)
-            val fileOut = outDir.resolve(name)
-            copyFile(fileSmv, fileOut)
-        }
+        smvDir.copyRecursively(outDir, overwrite = true)
     }
 
     fun infer(): Automaton? {
