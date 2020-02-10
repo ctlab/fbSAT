@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.solver
 
+import com.github.lipen.jnisat.JMiniSat
 import com.soywiz.klock.measureTimeWithResult
 import okio.Buffer
 import okio.BufferedSource
@@ -36,7 +37,10 @@ interface Solver : AutoCloseable {
         fun incremental(): Solver = IncrementalCryptominisat()
 
         @JvmStatic
-        fun filesolver(command: String, file: File): Solver = FileSolver2(command, file)
+        fun filesolver(command: String, file: File): Solver = FileSolver(command, file)
+
+        @JvmStatic
+        fun native(): Solver = MiniSat()
 
         fun mock(
             comment: (String) -> Unit = {},
@@ -99,13 +103,14 @@ fun Solver.newIntVarArray(
     domain: (IntArray) -> Iterable<Int>
 ): IntVarArray = IntVarArray.create(shape) { index -> newIntVar(domain(index), encoding) }
 
-private abstract class AbstractSolver : Solver {
-    final override var numberOfVariables: Int = 0
-        private set
+@Suppress("FunctionName")
+abstract class AbstractSolver : Solver {
+    override var numberOfVariables: Int = 0
+        protected set
     final override var numberOfClauses: Int = 0
         private set
 
-    final override fun newLiteral(): Literal = ++numberOfVariables
+    override fun newLiteral(): Literal = ++numberOfVariables
 
     final override fun clause(literals: List<Literal>) {
         ++numberOfClauses
@@ -113,6 +118,7 @@ private abstract class AbstractSolver : Solver {
     }
 
     final override fun assume(literals: List<Literal>) {
+        log.debug { "Assuming $literals" }
         TODO()
     }
 
@@ -145,20 +151,20 @@ private abstract class AbstractSolver : Solver {
     protected abstract fun _close()
 }
 
-private class FileSolver2(
+class FileSolver(
     val command: String,
     val file: File
 ) : AbstractSolver() {
     private val buffer = Buffer()
 
-    override fun _comment(comment: String) {
-        buffer.write("c ").writeln(comment)
-    }
-
     override fun _clause(literals: List<Literal>) {
         for (x in literals)
             buffer.write(x.toString()).write(" ")
         buffer.writeln("0")
+    }
+
+    override fun _comment(comment: String) {
+        buffer.write("c ").writeln(comment)
     }
 
     override fun _solve(): RawAssignment? {
@@ -176,7 +182,29 @@ private class FileSolver2(
     override fun _close() {}
 }
 
-private class IncrementalCryptominisat : AbstractSolver() {
+private fun parseDimacsOutput(source: BufferedSource): RawAssignment? {
+    val answer = source.lineSequence().firstOrNull { it.startsWith("s ") }
+        ?: error("No answer from solver")
+    return when {
+        "UNSAT" in answer -> null
+        "SAT" in answer -> source
+            .lineSequence()
+            .filter { it.startsWith("v ") }
+            .flatMap { it.drop(2).trim().splitToSequence(' ') }
+            .map { it.toInt() }
+            .takeWhile { it != 0 }
+            .map { it > 0 }
+            .toList()
+            .toBooleanArray()
+            .let {
+                check(it.isNotEmpty()) { "No model from solver for SAT" }
+                RawAssignment(it)
+            }
+        else -> error("Bad answer (neither SAT nor UNSAT) from solver: '$answer'")
+    }
+}
+
+class IncrementalCryptominisat : AbstractSolver() {
     private val process = Runtime.getRuntime().exec("incremental-cryptominisat")
     private val processInput = process.outputStream.sink().buffer()
     private val processOutput = process.inputStream.source().buffer()
@@ -199,12 +227,13 @@ private class IncrementalCryptominisat : AbstractSolver() {
 
     override fun _solve(): RawAssignment? {
         processInput.writeln("solve 0").flush()
-        buffer.writeln("c solve")
 
-        // Dump intermediate cnf
-        File("cnf").sink().buffer().use {
-            it.writeln("p cnf $numberOfVariables $numberOfClauses")
-            buffer.copyTo(it.buffer)
+        if (Globals.IS_DEBUG) {
+            // Dump intermediate cnf
+            File("cnf").sink().buffer().use {
+                it.writeln("p cnf $numberOfVariables $numberOfClauses")
+                buffer.copyTo(it.buffer)
+            }
         }
 
         return parseIcmsOutput(processOutput)
@@ -213,28 +242,6 @@ private class IncrementalCryptominisat : AbstractSolver() {
     override fun _close() {
         // processInput.writeln("halt")
         process.destroy()
-    }
-}
-
-private fun parseDimacsOutput(source: BufferedSource): RawAssignment? {
-    val answer = source.lineSequence().firstOrNull { it.startsWith("s ") }
-        ?: error("No answer from solver")
-    return when {
-        "UNSAT" in answer -> null
-        "SAT" in answer -> source
-            .lineSequence()
-            .filter { it.startsWith("v ") }
-            .flatMap { it.drop(2).splitToSequence(' ') }
-            .map { it.toInt() }
-            .takeWhile { it != 0 }
-            .map { it > 0 }
-            .toList()
-            .toBooleanArray()
-            .let {
-                check(it.isNotEmpty()) { "No model from solver for SAT" }
-                RawAssignment(it)
-            }
-        else -> error("Bad answer (neither SAT nor UNSAT) from solver: '$answer'")
     }
 }
 
@@ -247,7 +254,7 @@ private fun parseIcmsOutput(source: BufferedSource): RawAssignment? =
                 .drop(1) // drop starting "v"
                 .map { it.toInt() }
                 .takeWhile { it != 0 }
-                .map{it > 0}
+                .map { it > 0 }
                 .toList()
                 .toBooleanArray()
                 .let {
@@ -258,3 +265,50 @@ private fun parseIcmsOutput(source: BufferedSource): RawAssignment? =
         "UNSAT" -> null
         else -> error("Bad answer (neither SAT nor UNSAT) from solver: '$answer'")
     }
+
+class MiniSat : AbstractSolver() {
+    private val backend = JMiniSat()
+    private val buffer = Buffer()
+
+    override fun newLiteral(): Literal {
+        ++numberOfVariables
+        return backend.addVariable()
+    }
+
+    override fun _clause(literals: List<Literal>) {
+        for (x in literals)
+            buffer.write(x.toString()).write(" ")
+        buffer.writeln("0")
+
+        when (literals.size) {
+            1 -> backend.addClause(literals[0])
+            2 -> backend.addClause(literals[0], literals[1])
+            3 -> backend.addClause(literals[0], literals[1], literals[2])
+            else -> backend.addClause(*literals.toIntArray())
+        }
+    }
+
+    override fun _comment(comment: String) {
+        buffer.write("c ").writeln(comment)
+    }
+
+    override fun _solve(): RawAssignment? {
+        buffer.writeln("c solve")
+
+        if (Globals.IS_DEBUG) {
+            // Dump intermediate cnf
+            File("cnf").sink().buffer().use {
+                it.writeln("p cnf $numberOfVariables $numberOfClauses")
+                buffer.copyTo(it.buffer)
+            }
+        }
+
+        if (!backend.solve()) return null
+        val model = BooleanArray(numberOfVariables) { i -> backend.getValue(i + 1) > 0 }
+        return RawAssignment(model)
+    }
+
+    override fun _close() {
+        backend.close()
+    }
+}

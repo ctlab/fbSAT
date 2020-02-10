@@ -9,6 +9,7 @@ dependencies {
     implementation(Libs.okio)
     implementation(Libs.lazycache)
     implementation(Libs.klock)
+    implementation(Libs.jnisat)
 
     testImplementation(Libs.junit_jupiter_api)
     testRuntimeOnly(Libs.junit_jupiter_engine)
