@@ -67,6 +67,6 @@ fun generateEventMerger(M: Int, name: String? = null): String {
     }.toString(Globals.xmlPrintOptions)
 }
 
-fun writeEventMerger(M:Int, file: File, name: String? = null) {
+fun writeEventMerger(M: Int, file: File, name: String? = null) {
     file.writeText(generateEventMerger(M, name))
 }

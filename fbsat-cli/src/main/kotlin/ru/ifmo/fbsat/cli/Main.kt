@@ -429,10 +429,10 @@ class FbSAT : CliktCommand() {
                 { Solver.default(solverCmd) }
             }
             SolverBackend.INCREMENTAL -> {
-                { Solver.incremental(solverCmd) }
+                { Solver.incremental() }
             }
             SolverBackend.FILE -> {
-                { Solver.filesolver(File("cnf"), solverCmd) }
+                { Solver.filesolver(solverCmd, File("cnf")) }
             }
         }
 

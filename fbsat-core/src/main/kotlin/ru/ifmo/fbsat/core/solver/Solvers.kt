@@ -1,111 +1,157 @@
 package ru.ifmo.fbsat.core.solver
 
-import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.measureTimeWithResult
 import okio.Buffer
+import okio.BufferedSource
 import okio.buffer
 import okio.sink
 import okio.source
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.lineSequence
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.write
 import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
 
-// TODO: make solver able to reset
+interface Solver : AutoCloseable {
+    val numberOfVariables: Int
+    val numberOfClauses: Int
 
-abstract class Solver {
-    var numberOfVariables: Int = 0
-        private set
-    var numberOfClauses: Int = 0
-        private set
+    fun newLiteral(): Literal
+    fun clause(literals: List<Literal>)
+    fun assume(literals: List<Literal>)
+    fun comment(comment: String)
+    fun solve(): RawAssignment?
 
-    fun newLiteral(): Literal = ++numberOfVariables
-
-    fun <T> newDomainVar(
-        domain: Iterable<T>,
-        encoding: VarEncoding = Globals.defaultVarEncoding,
-        init: (T) -> Literal = { newLiteral() }
-    ): DomainVar<T> = DomainVar.create(domain, this, encoding, init)
-
-    fun newIntVar(
-        domain: Iterable<Int>,
-        encoding: VarEncoding = Globals.defaultVarEncoding,
-        init: (Int) -> Literal = { newLiteral() }
-    ): IntVar = IntVar.create(domain, this, encoding, init)
-
-    fun newBoolVarArray(
-        vararg shape: Int,
-        init: (IntArray) -> Literal = { newLiteral() }
-    ): BoolVarArray = BoolVarArray.create(shape, init)
-
-    fun <T> newDomainVarArray(
-        vararg shape: Int,
-        encoding: VarEncoding = Globals.defaultVarEncoding,
-        domain: (IntArray) -> Iterable<T>
-    ): DomainVarArray<T> = DomainVarArray.create(shape) { index -> newDomainVar(domain(index), encoding) }
-
-    fun newIntVarArray(
-        vararg shape: Int,
-        encoding: VarEncoding = Globals.defaultVarEncoding,
-        domain: (IntArray) -> Iterable<Int>
-    ): IntVarArray = IntVarArray.create(shape) { index -> newIntVar(domain(index), encoding) }
-
-    abstract fun comment(comment: String)
-
-    @Suppress("FunctionName")
-    protected abstract fun _clause(literals: List<Literal>)
-
-    fun clause(literals: Iterable<Literal>) {
-        val pool = literals.filter { it != falseVariable }
-        if (trueVariable in pool) return
-        if (pool.isNotEmpty()) {
-            ++numberOfClauses
-            _clause(pool)
-        }
-    }
-
-    fun clause(vararg literals: Literal): Unit = clause(literals.asIterable())
-    fun clause(literals: Sequence<Literal>): Unit = clause(literals.asIterable())
-    fun clause(block: suspend SequenceScope<Literal>.() -> Unit): Unit = clause(sequence(block))
-
-    abstract fun solve(): RawAssignment?
-
-    abstract fun finalize2()
+    override fun close()
 
     companion object {
         const val trueVariable: Literal = Int.MAX_VALUE
         const val falseVariable: Literal = -trueVariable
 
         @JvmStatic
-        fun default(command: String): Solver = DefaultSolver(command)
+        fun default(command: String): Solver = TODO()
 
         @JvmStatic
-        fun incremental(command: String): Solver = IncrementalSolver(command)
+        fun incremental(): Solver = IncrementalCryptominisat()
 
         @JvmStatic
-        fun filesolver(file: File, command: String): Solver = FileSolver(file, command)
+        fun filesolver(command: String, file: File): Solver = FileSolver2(command, file)
 
         fun mock(
             comment: (String) -> Unit = {},
-            _clause: (List<Literal>) -> Unit = {},
+            clause: (List<Literal>) -> Unit = {},
             solve: () -> RawAssignment? = { TODO() },
-            finalize2: () -> Unit = {}
-        ): Solver = object : Solver() {
-            override fun comment(comment: String) = comment(comment)
-            override fun _clause(literals: List<Literal>) = _clause(literals)
-            override fun solve(): RawAssignment? = solve()
-            override fun finalize2() = finalize2()
+            close: () -> Unit = {}
+        ): Solver = object : AbstractSolver() {
+            override fun _comment(comment: String) = comment(comment)
+            override fun _clause(literals: List<Literal>) = clause(literals)
+            override fun _solve(): RawAssignment? = solve()
+            override fun _close(): Unit = close()
         }
     }
 }
 
-private class DefaultSolver(private val command: String) : Solver() {
+fun Solver.clause(literals: Iterable<Literal>) {
+    val pool = literals.filter { it != Solver.falseVariable }
+    if (Solver.trueVariable !in pool && pool.isNotEmpty())
+        clause(pool)
+}
+
+fun Solver.clause(vararg literals: Literal) {
+    clause(literals.asIterable())
+}
+
+fun Solver.clause(literals: Sequence<Literal>) {
+    clause(literals.asIterable())
+}
+
+fun Solver.clause(block: suspend SequenceScope<Literal>.() -> Unit) {
+    clause(sequence(block))
+}
+
+fun <T> Solver.newDomainVar(
+    domain: Iterable<T>,
+    encoding: VarEncoding = Globals.defaultVarEncoding,
+    init: (T) -> Literal = { newLiteral() }
+): DomainVar<T> = DomainVar.create(domain, this, encoding, init)
+
+fun Solver.newIntVar(
+    domain: Iterable<Int>,
+    encoding: VarEncoding = Globals.defaultVarEncoding,
+    init: (Int) -> Literal = { newLiteral() }
+): IntVar = IntVar.create(domain, this, encoding, init)
+
+fun Solver.newBoolVarArray(
+    vararg shape: Int,
+    init: (IntArray) -> Literal = { newLiteral() }
+): BoolVarArray = BoolVarArray.create(shape, init)
+
+fun <T> Solver.newDomainVarArray(
+    vararg shape: Int,
+    encoding: VarEncoding = Globals.defaultVarEncoding,
+    domain: (IntArray) -> Iterable<T>
+): DomainVarArray<T> = DomainVarArray.create(shape) { index -> newDomainVar(domain(index), encoding) }
+
+fun Solver.newIntVarArray(
+    vararg shape: Int,
+    encoding: VarEncoding = Globals.defaultVarEncoding,
+    domain: (IntArray) -> Iterable<Int>
+): IntVarArray = IntVarArray.create(shape) { index -> newIntVar(domain(index), encoding) }
+
+private abstract class AbstractSolver : Solver {
+    final override var numberOfVariables: Int = 0
+        private set
+    final override var numberOfClauses: Int = 0
+        private set
+
+    final override fun newLiteral(): Literal = ++numberOfVariables
+
+    final override fun clause(literals: List<Literal>) {
+        ++numberOfClauses
+        _clause(literals)
+    }
+
+    final override fun assume(literals: List<Literal>) {
+        TODO()
+    }
+
+    final override fun comment(comment: String) {
+        log.debug { "// $comment" }
+        _comment(comment)
+    }
+
+    final override fun solve(): RawAssignment? {
+        log.debug { "Solving..." }
+        val (result, solvingTime) = measureTimeWithResult { _solve() }
+        log.debug {
+            val answer = when {
+                result != null -> "SAT"
+                else -> "UNSAT"
+            }
+            "Done solving ($answer) in %.2f seconds".format(solvingTime.seconds)
+        }
+        return result
+    }
+
+    final override fun close() {
+        log.debug { "Closing solver..." }
+        _close()
+    }
+
+    protected abstract fun _clause(literals: List<Literal>)
+    protected abstract fun _comment(comment: String)
+    protected abstract fun _solve(): RawAssignment?
+    protected abstract fun _close()
+}
+
+private class FileSolver2(
+    val command: String,
+    val file: File
+) : AbstractSolver() {
     private val buffer = Buffer()
 
-    override fun comment(comment: String) {
-        log.debug { "// $comment" }
+    override fun _comment(comment: String) {
         buffer.write("c ").writeln(comment)
     }
 
@@ -115,66 +161,28 @@ private class DefaultSolver(private val command: String) : Solver() {
         buffer.writeln("0")
     }
 
-    override fun solve(): RawAssignment? {
-        val process = Runtime.getRuntime().exec(command)
-        val processInput = process.outputStream.sink().buffer()
-        processInput.writeln("p cnf $numberOfVariables $numberOfClauses")
-        buffer.copyTo(processInput.buffer)
-
-        log.debug { "Solving..." }
-        val timeStart = PerformanceCounter.reference
-        processInput.close()
-
-        var isSat: Boolean? = null
-        val answer: MutableList<Boolean> = mutableListOf()
-
-        process.inputStream.bufferedReader().useLines { lines ->
-            label@ for (line in lines.map(String::trim)) {
-                when {
-                    line == "s SATISFIABLE" -> {
-                        val solvingTime = timeSince(timeStart)
-                        log.success("SAT in %.2f seconds".format(solvingTime.seconds))
-                        isSat = true
-                    }
-                    line == "s UNSATISFIABLE" -> {
-                        val solvingTime = timeSince(timeStart)
-                        log.failure("UNSAT in %.2f seconds".format(solvingTime.seconds))
-                        isSat = false
-                        continue@label
-                    }
-                    line.startsWith("v ") -> {
-                        answer.addAll(
-                            line.splitToSequence(" ")
-                                .drop(1) // drop "v"
-                                .map { it.toInt() }
-                                .takeWhile { it != 0 }
-                                .map { it > 0 }
-                        )
-                    }
-                }
-            }
+    override fun _solve(): RawAssignment? {
+        file.sink().buffer().use {
+            it.writeln("p cnf $numberOfVariables $numberOfClauses")
+            buffer.copyTo(it.buffer)
         }
 
-        process.destroy()
+        val process = Runtime.getRuntime().exec(command.format(file))
+        val processOutput = process.inputStream.source().buffer()
 
-        return when (isSat) {
-            true -> RawAssignment(answer.toBooleanArray())
-            false -> null
-            null -> error("Implicit UNSAT or ERROR")
-        }
+        return parseDimacsOutput(processOutput)
     }
 
-    override fun finalize2() {}
+    override fun _close() {}
 }
 
-private class IncrementalSolver(command: String) : Solver() {
-    private val process = Runtime.getRuntime().exec(command)
+private class IncrementalCryptominisat : AbstractSolver() {
+    private val process = Runtime.getRuntime().exec("incremental-cryptominisat")
     private val processInput = process.outputStream.sink().buffer()
     private val processOutput = process.inputStream.source().buffer()
     private val buffer = Buffer()
 
-    override fun comment(comment: String) {
-        log.debug { "// $comment" }
+    override fun _comment(comment: String) {
         processInput.write("c ").writeln(comment)
         buffer.write("c ").writeln(comment)
     }
@@ -189,104 +197,64 @@ private class IncrementalSolver(command: String) : Solver() {
         buffer.writeln("0")
     }
 
-    override fun solve(): RawAssignment? {
-        processInput.writeln("solve 0")
-        processInput.flush()
+    override fun _solve(): RawAssignment? {
+        processInput.writeln("solve 0").flush()
+        buffer.writeln("c solve")
 
-        log.debug { "Solving..." }
-        val (answer, solvingTime) = measureTimeWithResult { processOutput.readUtf8Line() }
-        log.debug { "Done solving in %.2f seconds".format(solvingTime.seconds) }
-
-        if (answer == null) {
-            // log.error("Solver returned nothing")
-            return null
+        // Dump intermediate cnf
+        File("cnf").sink().buffer().use {
+            it.writeln("p cnf $numberOfVariables $numberOfClauses")
+            buffer.copyTo(it.buffer)
         }
 
-        when (answer) {
-            "SAT" -> {
-                // log.success("SAT in %.2f s.".format(solvingTime))
-                val line = processOutput.readUtf8Line() ?: return null
-                return line.trim()
-                    .splitToSequence(" ")
-                    .drop(1) // drop "v"
-                    .map { it.toInt() > 0 }
-                    .toList()
-                    .toBooleanArray()
-                    .let { RawAssignment(it) }
-            }
-            "UNSAT" -> {
-                // log.failure("UNSAT in %.2f s.".format(solvingTime))
-                return null
-            }
-            else -> {
-                // log.error("Implicit UNSAT or ERROR ('$answer') in %.2f s.".format(solvingTime))
-                return null
-            }
-        }
+        return parseIcmsOutput(processOutput)
     }
 
-    override fun finalize2() {
+    override fun _close() {
+        // processInput.writeln("halt")
         process.destroy()
     }
 }
 
-private class FileSolver(
-    val file: File,
-    val command: String
-) : Solver() {
-    private val buffer = Buffer()
-
-    override fun comment(comment: String) {
-        log.debug { "// $comment" }
-        buffer.write("c ").writeln(comment)
-    }
-
-    override fun _clause(literals: List<Literal>) {
-        for (x in literals)
-            buffer.write(x.toString()).write(" ")
-        buffer.writeln("0")
-    }
-
-    override fun solve(): RawAssignment? {
-        log.debug { "Solving..." }
-        val timeStart = PerformanceCounter.reference
-
-        file.sink().buffer().use {
-            it.writeln("p cnf $numberOfVariables $numberOfClauses")
-            buffer.copyTo(it.buffer)
-        }
-        log.debug { "Written CNF to '$file' in %.2f s.".format(timeSince(timeStart).seconds) }
-
-        val process = Runtime.getRuntime().exec(command.format(file))
-        val reader = process.inputStream.bufferedReader()
-        val answer = reader.readLine()
-
-        return when {
-            answer.contains("unsat", ignoreCase = true) -> {
-                log.failure("UNSAT in %.2f seconds".format(timeSince(timeStart).seconds))
-                null
+private fun parseDimacsOutput(source: BufferedSource): RawAssignment? {
+    val answer = source.lineSequence().firstOrNull { it.startsWith("s ") }
+        ?: error("No answer from solver")
+    return when {
+        "UNSAT" in answer -> null
+        "SAT" in answer -> source
+            .lineSequence()
+            .filter { it.startsWith("v ") }
+            .flatMap { it.drop(2).splitToSequence(' ') }
+            .map { it.toInt() }
+            .takeWhile { it != 0 }
+            .map { it > 0 }
+            .toList()
+            .toBooleanArray()
+            .let {
+                check(it.isNotEmpty()) { "No model from solver for SAT" }
+                RawAssignment(it)
             }
-            answer.contains("sat", ignoreCase = true) -> {
-                log.success("SAT in %.2f seconds".format(timeSince(timeStart).seconds))
-                reader.lineSequence()
-                    .map { it.trim() }
-                    .flatMap { it.splitToSequence(' ') }
-                    .mapNotNull { it.toIntOrNull() }
-                    .takeWhile { it != 0 }
-                    .map { it > 0 }
-                    .let { RawAssignment(it.toList().toBooleanArray()) }
-            }
-            else -> {
-                log.failure("answer = '$answer'")
-                error("Implicit UNSAT or ERROR")
-            }
-        }.also {
-            // reader.close()
-            process.destroy()
-        }
-    }
-
-    override fun finalize2() {
-        // Do nothing
+        else -> error("Bad answer (neither SAT nor UNSAT) from solver: '$answer'")
     }
 }
+
+private fun parseIcmsOutput(source: BufferedSource): RawAssignment? =
+    when (val answer = source.readUtf8Line() ?: error("Solver returned nothing")) {
+        "SAT" -> {
+            val line = source.readUtf8Line() ?: error("No model from solver for SAT")
+            line.trim()
+                .splitToSequence(' ')
+                .drop(1) // drop starting "v"
+                .map { it.toInt() }
+                .takeWhile { it != 0 }
+                .map{it > 0}
+                .toList()
+                .toBooleanArray()
+                .let {
+                    check(it.isNotEmpty()) { "No model from solver for SAT" }
+                    RawAssignment(it)
+                }
+        }
+        "UNSAT" -> null
+        else -> error("Bad answer (neither SAT nor UNSAT) from solver: '$answer'")
+    }

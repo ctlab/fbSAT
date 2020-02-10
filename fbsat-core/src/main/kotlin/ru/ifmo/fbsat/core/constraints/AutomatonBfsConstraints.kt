@@ -5,6 +5,8 @@ import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
+import ru.ifmo.fbsat.core.solver.newBoolVarArray
+import ru.ifmo.fbsat.core.solver.newIntVarArray
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables

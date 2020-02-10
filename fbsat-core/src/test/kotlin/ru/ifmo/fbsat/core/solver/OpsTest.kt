@@ -11,7 +11,7 @@ class OpsTest {
 
     private val solver: Solver =
         Solver.mock(
-            _clause = { literals: List<Literal> ->
+            clause = { literals: List<Literal> ->
                 clauses.add(literals)
             }
         )
