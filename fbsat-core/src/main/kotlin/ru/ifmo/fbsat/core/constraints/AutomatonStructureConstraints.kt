@@ -4,6 +4,7 @@ import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.atLeastOne
+import ru.ifmo.fbsat.core.solver.atMostOne
 import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.exactlyOne
 import ru.ifmo.fbsat.core.solver.iff
@@ -302,4 +303,13 @@ private fun Solver.declareAutomatonStructureConstraintsForInput(
                         yield(aux)
                     }
                 })
+
+    if (Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS) {
+        comment("Transitions are disjunctive (without priority function) for u = $u")
+        for (c in 1..C)
+            atMostOne {
+                for (k in 1..K)
+                    yield(transitionFiring[c, k, u])
+            }
+    }
 }

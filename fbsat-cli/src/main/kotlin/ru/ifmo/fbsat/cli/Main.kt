@@ -324,6 +324,13 @@ class FbSAT : CliktCommand() {
         default = true
     )
 
+    val isEncodeDisjunctiveTransitions: Boolean by option(
+        "--encode-disjunctive-transitions"
+    ).flag(
+        "--no-encode-disjunctive-transitions",
+        default=false
+    )
+
     val fileVerifyCE: File? by option(
         "--verify-ce"
     ).file()
@@ -358,6 +365,7 @@ class FbSAT : CliktCommand() {
         Globals.IS_ENCODE_TERMINALS_MINI_ORDER = isEncodeTerminalsMiniOrder
         Globals.IS_ENCODE_HARD_TO_EXPLAIN = isEncodeHardToExplain
         Globals.IS_ENCODE_TOTALIZER = isEncodeTotalizer
+        Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS = isEncodeDisjunctiveTransitions
         Globals.IS_DEBUG = isDebug
 
         // outDir.deleteRecursively()

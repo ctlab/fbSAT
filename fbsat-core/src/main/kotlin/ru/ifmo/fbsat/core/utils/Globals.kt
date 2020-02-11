@@ -28,6 +28,7 @@ object Globals {
     var IS_ENCODE_TERMINALS_MINI_ORDER: Boolean by Delegates.notNull()
     var IS_ENCODE_HARD_TO_EXPLAIN: Boolean by Delegates.notNull()
     var IS_ENCODE_TOTALIZER: Boolean by Delegates.notNull()
+    var IS_ENCODE_DISJUNCTIVE_TRANSITIONS: Boolean by Delegates.notNull()
     var IS_DEBUG: Boolean = false // by Delegates.notNull()
     val xmlPrintOptions: PrintOptions =
         PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = true)
