@@ -33,8 +33,7 @@ class CompleteMinCegisTask(
             maxGuardSize = maxGuardSize,
             initialMaxTotalGuardsSize = initialMaxTotalGuardsSize,
             outDir = outDir,
-            solverProvider = solverProvider,
-            isEncodeReverseImplication = true // Note: we encode reverse implication to quickly estimate an automaton
+            solverProvider = solverProvider
         )
         val automatonExtendedMin = extendedMinTask.infer()
             ?: error("ExtendedMinTask could not infer an automaton")
