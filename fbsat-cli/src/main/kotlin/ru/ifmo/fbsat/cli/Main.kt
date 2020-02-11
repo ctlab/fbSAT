@@ -189,7 +189,8 @@ class FbSAT : CliktCommand() {
         "--incremental" to SolverBackend.INCREMENTAL,
         "--no-incremental" to SolverBackend.DEFAULT,
         "--file-solver" to SolverBackend.FILE,
-        "--native-solver" to SolverBackend.NATIVE
+        "--minisat" to SolverBackend.MINISAT,
+        "--cadical" to SolverBackend.CADICAL
     ).default(
         SolverBackend.INCREMENTAL
     )
@@ -435,8 +436,11 @@ class FbSAT : CliktCommand() {
             SolverBackend.FILE -> {
                 { Solver.filesolver(solverCmd, File("cnf")) }
             }
-            SolverBackend.NATIVE -> {
-                { Solver.native() }
+            SolverBackend.MINISAT -> {
+                { Solver.minisat() }
+            }
+            SolverBackend.CADICAL -> {
+                { Solver.cadical() }
             }
         }
 

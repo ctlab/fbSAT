@@ -1,5 +1,7 @@
 package ru.ifmo.fbsat.core.solver
 
+import com.github.lipen.jnisat.JCadical
+import com.github.lipen.jnisat.JCadical.Companion.SolveResult
 import com.github.lipen.jnisat.JMiniSat
 import com.soywiz.klock.measureTimeWithResult
 import okio.Buffer
@@ -40,7 +42,10 @@ interface Solver : AutoCloseable {
         fun filesolver(command: String, file: File): Solver = FileSolver(command, file)
 
         @JvmStatic
-        fun native(): Solver = MiniSat()
+        fun minisat(): Solver = MiniSat()
+
+        @JvmStatic
+        fun cadical(): Solver = Cadical()
 
         fun mock(
             comment: (String) -> Unit = {},
@@ -305,6 +310,56 @@ class MiniSat : AbstractSolver() {
 
         if (!backend.solve()) return null
         val model = BooleanArray(numberOfVariables) { i -> backend.getValue(i + 1) > 0 }
+        return RawAssignment(model)
+    }
+
+    override fun _close() {
+        backend.close()
+    }
+}
+
+class Cadical : AbstractSolver() {
+    private val backend = JCadical()
+    private val buffer = Buffer()
+
+    override fun newLiteral(): Literal {
+        ++numberOfVariables
+        return backend.newVariable()
+    }
+
+    override fun _clause(literals: List<Literal>) {
+        for (x in literals)
+            buffer.write(x.toString()).write(" ")
+        buffer.writeln("0")
+
+        when (literals.size) {
+            1 -> backend.addClause(literals[0])
+            2 -> backend.addClause(literals[0], literals[1])
+            3 -> backend.addClause(literals[0], literals[1], literals[2])
+            else -> backend.addClause(*literals.toIntArray())
+        }
+    }
+
+    override fun _comment(comment: String) {
+        buffer.write("c ").writeln(comment)
+    }
+
+    override fun _solve(): RawAssignment? {
+        buffer.writeln("c solve")
+
+        if (Globals.IS_DEBUG) {
+            // Dump intermediate cnf
+            File("cnf").sink().buffer().use {
+                it.writeln("p cnf $numberOfVariables $numberOfClauses")
+                buffer.copyTo(it.buffer)
+            }
+        }
+
+        check(numberOfVariables == backend.numberOfVariables)
+        check(numberOfClauses == backend.numberOfClauses)
+
+        if (backend.solve() == SolveResult.UNSATISFIABLE) return null
+        val model = backend.getModel().drop(1).toBooleanArray()
         return RawAssignment(model)
     }
 
