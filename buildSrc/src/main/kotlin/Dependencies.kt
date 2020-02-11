@@ -15,6 +15,7 @@ object Versions {
     const val xml_builder = "1.5.3"
     const val lazycache = "0.3.0"
     const val klock = "1.8.6"
+    const val jnisat = "0.2.0"
 }
 
 object Libs {
@@ -28,4 +29,5 @@ object Libs {
     const val xml_builder = "org.redundent:kotlin-xml-builder:${Versions.xml_builder}"
     const val lazycache = "com.github.Lipen:kotlin-lazycache:${Versions.lazycache}"
     const val klock = "com.soywiz.korlibs.klock:klock-jvm:${Versions.klock}"
+    const val jnisat = "com.github.Lipen:kotlin-jnisat:${Versions.jnisat}"
 }
