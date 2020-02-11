@@ -5,6 +5,7 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedMinTask
+import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
 import java.io.File
 
@@ -38,10 +39,16 @@ class CompleteMinCegisTask(
         val automatonExtendedMin = extendedMinTask.infer()
             ?: error("ExtendedMinTask could not infer an automaton")
         val C = automatonExtendedMin.numberOfStates
-        // val K = maxOutgoingTransitions
         // Note: reusing K from extMinTask may fail!
-        val K = automatonExtendedMin.maxOutgoingTransitions
-        log.info("Reusing K = $K")
+        val K = if (Globals.IS_REUSE_K) {
+            automatonExtendedMin.maxOutgoingTransitions.also {
+                log.info("Reusing K = $it")
+            }
+        } else {
+            (maxOutgoingTransitions ?: C).also {
+                log.info("Using K = $it")
+            }
+        }
         val P = maxGuardSize
         var N = automatonExtendedMin.totalGuardsSize
 

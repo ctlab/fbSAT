@@ -332,6 +332,14 @@ class FbSAT : CliktCommand() {
         default = false
     )
 
+    val isReuseK: Boolean by option(
+        "--reuse-k",
+        help = "Reuse K found by ExtendedMinTask during CEGIS"
+    ).flag(
+        "--no-reuse-k",
+        default = true
+    )
+
     val fileVerifyCE: File? by option(
         "--verify-ce"
     ).file()
@@ -367,6 +375,7 @@ class FbSAT : CliktCommand() {
         Globals.IS_ENCODE_HARD_TO_EXPLAIN = isEncodeHardToExplain
         Globals.IS_ENCODE_TOTALIZER = isEncodeTotalizer
         Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS = isEncodeDisjunctiveTransitions
+        Globals.IS_REUSE_K = isReuseK
         Globals.IS_DEBUG = isDebug
 
         // outDir.deleteRecursively()
