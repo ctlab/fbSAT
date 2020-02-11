@@ -325,10 +325,11 @@ class FbSAT : CliktCommand() {
     )
 
     val isEncodeDisjunctiveTransitions: Boolean by option(
-        "--encode-disjunctive-transitions"
+        "--encode-disjunctive-transitions",
+        help = "Encode disjunctive transitions (adhocly forbid priority function)"
     ).flag(
         "--no-encode-disjunctive-transitions",
-        default=false
+        default = false
     )
 
     val fileVerifyCE: File? by option(
