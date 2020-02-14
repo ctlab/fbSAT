@@ -115,8 +115,7 @@ fun copyFile(source: File, destination: File) {
     }
 }
 
-fun timeSince(timeStart: TimeSpan): TimeSpan =
-    (PerformanceCounter.microseconds - timeStart.microseconds).microseconds
+fun timeSince(timeStart: TimeSpan): TimeSpan = PerformanceCounter.reference - timeStart
 
 fun File.sourceAutoGzip(): Source =
     if (extension == "gz")
