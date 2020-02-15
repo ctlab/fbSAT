@@ -5,6 +5,7 @@ import com.github.lipen.jnisat.JCadical.Companion.SolveResult
 import com.github.lipen.jnisat.JMiniSat
 import com.soywiz.klock.measureTimeWithResult
 import okio.Buffer
+import okio.BufferedSink
 import okio.BufferedSource
 import okio.buffer
 import okio.sink
@@ -25,6 +26,7 @@ interface Solver : AutoCloseable {
     fun assume(literals: List<Literal>)
     fun comment(comment: String)
     fun solve(): RawAssignment?
+    fun reset()
 
     override fun close()
 
@@ -51,11 +53,13 @@ interface Solver : AutoCloseable {
             comment: (String) -> Unit = {},
             clause: (List<Literal>) -> Unit = {},
             solve: () -> RawAssignment? = { TODO() },
+            reset: () -> Unit = {},
             close: () -> Unit = {}
         ): Solver = object : AbstractSolver() {
             override fun _comment(comment: String) = comment(comment)
             override fun _clause(literals: List<Literal>) = clause(literals)
             override fun _solve(): RawAssignment? = solve()
+            override fun _reset(): Unit = reset()
             override fun _close(): Unit = close()
         }
     }
@@ -145,6 +149,11 @@ abstract class AbstractSolver : Solver {
         return result
     }
 
+    final override fun reset() {
+        log.debug { "Resetting solver..." }
+        _reset()
+    }
+
     final override fun close() {
         log.debug { "Closing solver..." }
         _close()
@@ -153,6 +162,7 @@ abstract class AbstractSolver : Solver {
     protected abstract fun _clause(literals: List<Literal>)
     protected abstract fun _comment(comment: String)
     protected abstract fun _solve(): RawAssignment?
+    protected abstract fun _reset()
     protected abstract fun _close()
 }
 
@@ -184,6 +194,10 @@ class FileSolver(
         return parseDimacsOutput(processOutput)
     }
 
+    override fun _reset() {
+        buffer.clear()
+    }
+
     override fun _close() {}
 }
 
@@ -210,10 +224,14 @@ private fun parseDimacsOutput(source: BufferedSource): RawAssignment? {
 }
 
 class IncrementalCryptominisat : AbstractSolver() {
-    private val process = Runtime.getRuntime().exec("incremental-cryptominisat")
-    private val processInput = process.outputStream.sink().buffer()
-    private val processOutput = process.inputStream.source().buffer()
+    private lateinit var process: Process
+    private lateinit var processInput: BufferedSink
+    private lateinit var processOutput: BufferedSource
     private val buffer = Buffer()
+
+    init {
+        _reset()
+    }
 
     override fun _comment(comment: String) {
         processInput.write("c ").writeln(comment)
@@ -242,6 +260,13 @@ class IncrementalCryptominisat : AbstractSolver() {
         }
 
         return parseIcmsOutput(processOutput)
+    }
+
+    override fun _reset() {
+        process = Runtime.getRuntime().exec("incremental-cryptominisat")
+        processInput = process.outputStream.sink().buffer()
+        processOutput = process.inputStream.source().buffer()
+        buffer.clear()
     }
 
     override fun _close() {
@@ -313,6 +338,11 @@ class MiniSat : AbstractSolver() {
         return RawAssignment(model)
     }
 
+    override fun _reset() {
+        backend.reset()
+        buffer.clear()
+    }
+
     override fun _close() {
         backend.close()
     }
@@ -361,6 +391,11 @@ class Cadical : AbstractSolver() {
         if (backend.solve() == SolveResult.UNSATISFIABLE) return null
         val model = backend.getModel().drop(1).toBooleanArray()
         return RawAssignment(model)
+    }
+
+    override fun _reset() {
+        TODO("backend.reset()")
+        buffer.clear()
     }
 
     override fun _close() {
