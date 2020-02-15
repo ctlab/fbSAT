@@ -71,6 +71,10 @@ private class OneHotDomainVar<T>(
         @Suppress("LeakingThis")
         solver.encodeOneHot(this)
     }
+
+    override fun toString(): String {
+        return "OneHotDomainVar(domain = $domain)"
+    }
 }
 
 private class OneHotBinaryDomainVar<T>(
@@ -80,6 +84,10 @@ private class OneHotBinaryDomainVar<T>(
 ) : AbstractDomainVar<T>(domain, init) {
     @Suppress("LeakingThis")
     override val bits: List<Literal> = solver.encodeOneHotBinary(this)
+
+    override fun toString(): String {
+        return "OneHotBinaryDomainVar(domain = $domain)"
+    }
 }
 
 class BoolVarArray private constructor(
