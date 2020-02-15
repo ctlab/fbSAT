@@ -20,10 +20,20 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
 class SolverContext internal constructor(
-    val solver: Solver
-) : MutableMap<String, Any> by mutableMapOf() {
+    val solver: Solver,
+    val map: MutableMap<String, Any> = mutableMapOf()
+) {
     operator fun <T : Any> invoke(value: T): ContextProvider<T> = ContextProvider(value)
     // inline operator fun <T : Any> invoke(init: Solver.() -> T): ContextProvider<T> = invoke(solver.init())
+
+    operator fun <T> getValue(thisRef: Any?, property: KProperty<*>): T = get(property.name)
+
+    @Suppress("UNCHECKED_CAST")
+    operator fun <T> get(key: String): T = map.getValue(key) as T
+
+    operator fun set(key: String, value: Any) {
+        map[key] = value
+    }
 
     inner class ContextProvider<T : Any>(val value: T) {
         operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): ReadOnlyProperty<Any?, T> {
