@@ -16,8 +16,27 @@ import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.write
 import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
+import kotlin.properties.ReadOnlyProperty
+import kotlin.reflect.KProperty
+
+class SolverContext internal constructor(
+    val solver: Solver
+) : MutableMap<String, Any> by mutableMapOf() {
+    operator fun <T : Any> invoke(value: T): ContextProvider<T> = ContextProvider(value)
+    // inline operator fun <T : Any> invoke(init: Solver.() -> T): ContextProvider<T> = invoke(solver.init())
+
+    inner class ContextProvider<T : Any>(val value: T) {
+        operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): ReadOnlyProperty<Any?, T> {
+            this@SolverContext[property.name] = value
+            return object : ReadOnlyProperty<Any?, T> {
+                override fun getValue(thisRef: Any?, property: KProperty<*>): T = value
+            }
+        }
+    }
+}
 
 interface Solver : AutoCloseable {
+    val context: SolverContext
     val numberOfVariables: Int
     val numberOfClauses: Int
 
@@ -114,6 +133,8 @@ fun Solver.newIntVarArray(
 
 @Suppress("FunctionName")
 abstract class AbstractSolver : Solver {
+    @Suppress("LeakingThis")
+    override val context: SolverContext = SolverContext(this)
     override var numberOfVariables: Int = 0
         protected set
     final override var numberOfClauses: Int = 0
