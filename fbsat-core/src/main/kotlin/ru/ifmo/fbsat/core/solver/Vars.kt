@@ -35,28 +35,13 @@ interface DomainVar<T> {
             encoding: VarEncoding,
             init: (T) -> Literal
         ): DomainVar<T> = when (encoding) {
-            VarEncoding.ONEHOT -> object : AbstractOneHotDomainVar<T>(domain, solver, init) {}
-            VarEncoding.ONEHOT_BINARY -> object : AbstractOneHotBinaryDomainVar<T>(domain, solver, init) {}
+            VarEncoding.ONEHOT -> OneHotDomainVar(domain, solver, init)
+            VarEncoding.ONEHOT_BINARY -> OneHotBinaryDomainVar(domain, solver, init)
         }
     }
 }
 
-interface IntVar : DomainVar<Int> {
-    companion object Factory {
-        @JvmStatic
-        fun create(
-            domain: Iterable<Int>,
-            solver: Solver,
-            encoding: VarEncoding,
-            init: (Int) -> Literal
-        ): IntVar = when (encoding) {
-            VarEncoding.ONEHOT -> object : IntVar, AbstractOneHotDomainVar<Int>(domain, solver, init) {}
-            VarEncoding.ONEHOT_BINARY -> object : IntVar, AbstractOneHotBinaryDomainVar<Int>(domain, solver, init) {}
-        }
-    }
-}
-
-private abstract class AbstractDomainVar<T> internal constructor(
+private abstract class AbstractDomainVar<T>(
     private val storage: Map<T, Literal>
 ) : DomainVar<T> {
     final override val domain: Set<T> = storage.keys
@@ -73,11 +58,11 @@ private abstract class AbstractDomainVar<T> internal constructor(
         storage.entries.firstOrNull { raw[it.value] }?.key
 }
 
-private abstract class AbstractOneHotDomainVar<T>(
+private class OneHotDomainVar<T>(
     domain: Iterable<T>,
     solver: Solver,
     init: (T) -> Literal
-) : DomainVar<T>, AbstractDomainVar<T>(domain, init) {
+) : AbstractDomainVar<T>(domain, init) {
     // Note: LSP is violated intentionally
     override val bits: List<Literal>
         get() = error("OneHotVar does not have associated bitwise representation")
@@ -88,11 +73,11 @@ private abstract class AbstractOneHotDomainVar<T>(
     }
 }
 
-private abstract class AbstractOneHotBinaryDomainVar<T>(
+private class OneHotBinaryDomainVar<T>(
     domain: Iterable<T>,
     solver: Solver,
     init: (T) -> Literal
-) : DomainVar<T>, AbstractDomainVar<T>(domain, init) {
+) : AbstractDomainVar<T>(domain, init) {
     @Suppress("LeakingThis")
     override val bits: List<Literal> = solver.encodeOneHotBinary(this)
 }
@@ -115,6 +100,8 @@ class BoolVarArray private constructor(
         ): BoolVarArray = create(shape, init)
     }
 }
+
+typealias IntVar = DomainVar<Int>
 
 typealias IntVarArray = MultiArray<IntVar>
 
