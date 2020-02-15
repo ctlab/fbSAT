@@ -2,7 +2,6 @@ package ru.ifmo.fbsat.core.utils
 
 import org.redundent.kotlin.xml.PrintOptions
 import ru.ifmo.fbsat.core.solver.VarEncoding
-import kotlin.properties.Delegates
 
 enum class SolverBackend {
     DEFAULT, INCREMENTAL, FILE, MINISAT, CADICAL;
@@ -17,20 +16,20 @@ enum class StartStateAlgorithms {
 }
 
 object Globals {
-    var EPSILON_OUTPUT_EVENTS: EpsilonOutputEvents by Delegates.notNull()
-    var START_STATE_ALGORITHMS: StartStateAlgorithms by Delegates.notNull()
-    var IS_FORBID_OR: Boolean by Delegates.notNull()
-    var IS_FORBID_TRANSITIONS_TO_FIRST_STATE: Boolean by Delegates.notNull()
-    var IS_BFS_AUTOMATON: Boolean by Delegates.notNull()
-    var IS_BFS_GUARD: Boolean by Delegates.notNull()
-    var IS_ENCODE_TRANSITIONS_ORDER: Boolean by Delegates.notNull()
-    var IS_ENCODE_TERMINALS_ORDER: Boolean by Delegates.notNull()
-    var IS_ENCODE_TERMINALS_MINI_ORDER: Boolean by Delegates.notNull()
-    var IS_ENCODE_HARD_TO_EXPLAIN: Boolean by Delegates.notNull()
-    var IS_ENCODE_TOTALIZER: Boolean by Delegates.notNull()
-    var IS_ENCODE_DISJUNCTIVE_TRANSITIONS: Boolean by Delegates.notNull()
-    var IS_DEBUG: Boolean = false // by Delegates.notNull()
-    var IS_REUSE_K: Boolean by Delegates.notNull()
+    var EPSILON_OUTPUT_EVENTS: EpsilonOutputEvents = EpsilonOutputEvents.ONLYSTART
+    var START_STATE_ALGORITHMS: StartStateAlgorithms = StartStateAlgorithms.ZERO
+    var IS_FORBID_OR: Boolean = false
+    var IS_FORBID_TRANSITIONS_TO_FIRST_STATE: Boolean = true
+    var IS_BFS_AUTOMATON: Boolean = true
+    var IS_BFS_GUARD: Boolean = true
+    var IS_ENCODE_TRANSITIONS_ORDER: Boolean = true
+    var IS_ENCODE_TERMINALS_ORDER: Boolean = false
+    var IS_ENCODE_TERMINALS_MINI_ORDER: Boolean = false
+    var IS_ENCODE_HARD_TO_EXPLAIN: Boolean = true
+    var IS_ENCODE_TOTALIZER: Boolean = true
+    var IS_ENCODE_DISJUNCTIVE_TRANSITIONS: Boolean = false
+    var IS_DEBUG: Boolean = false
+    var IS_REUSE_K: Boolean = true
     val xmlPrintOptions: PrintOptions =
         PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = true)
     val defaultVarEncoding: VarEncoding = VarEncoding.ONEHOT

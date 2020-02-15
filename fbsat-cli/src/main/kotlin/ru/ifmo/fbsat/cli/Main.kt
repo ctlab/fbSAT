@@ -199,28 +199,28 @@ class FbSAT : CliktCommand() {
         "--forbid-or"
     ).flag(
         "--allow-or",
-        default = false
+        default = Globals.IS_FORBID_OR
     )
 
     val isForbidTransitionsToFirstState: Boolean by option(
         "--forbid-transitions-to-first-state"
     ).flag(
         "--allow-transitions-to-first-state",
-        default = true
+        default = Globals.IS_FORBID_TRANSITIONS_TO_FIRST_STATE
     )
 
     val isBfsAutomaton: Boolean by option(
         "--bfs-automaton"
     ).flag(
         "--no-bfs-automaton",
-        default = true
+        default = Globals.IS_BFS_AUTOMATON
     )
 
     val isBfsGuard: Boolean by option(
         "--bfs-guard"
     ).flag(
         "--no-bfs-guard",
-        default = false
+        default = Globals.IS_BFS_GUARD
     )
 
     val isOnlyC: Boolean by option(
@@ -261,7 +261,7 @@ class FbSAT : CliktCommand() {
         "onlystart" to EpsilonOutputEvents.ONLYSTART,
         "none" to EpsilonOutputEvents.NONE
     ).default(
-        EpsilonOutputEvents.ONLYSTART
+        Globals.EPSILON_OUTPUT_EVENTS
     )
 
     val startStateAlgorithms: StartStateAlgorithms by option(
@@ -273,7 +273,7 @@ class FbSAT : CliktCommand() {
         "zeronothing" to StartStateAlgorithms.ZERONOTHING,
         "any" to StartStateAlgorithms.ANY
     ).default(
-        StartStateAlgorithms.ZERO
+        Globals.START_STATE_ALGORITHMS
     )
 
     val isEncodeReverseImplication: Boolean by option(
@@ -289,7 +289,7 @@ class FbSAT : CliktCommand() {
         help = "[DEBUG] Encode transitions lexicographic order"
     ).flag(
         "--no-encode-transitions-order",
-        default = true
+        default = Globals.IS_ENCODE_TRANSITIONS_ORDER
     )
 
     val isEncodeTerminalsOrder: Boolean by option(
@@ -297,7 +297,7 @@ class FbSAT : CliktCommand() {
         help = "[DEBUG] Encode terminal numbers lexicographic order"
     ).flag(
         "--no-encode-terminals-order",
-        default = false
+        default = Globals.IS_ENCODE_TERMINALS_ORDER
     )
 
     val isEncodeTerminalsMiniOrder: Boolean by option(
@@ -305,7 +305,7 @@ class FbSAT : CliktCommand() {
         help = "[DEBUG] Encode AND/OR children-terminals order"
     ).flag(
         "--no-encode-terminals-mini-order",
-        default = false
+        default = Globals.IS_ENCODE_TERMINALS_MINI_ORDER
     )
 
     val isEncodeHardToExplain: Boolean by option(
@@ -313,7 +313,7 @@ class FbSAT : CliktCommand() {
         help = "[DEBUG] Encode some hard to explain thing"
     ).flag(
         "--no-encode-hard-to-explain",
-        default = true
+        default = Globals.IS_ENCODE_HARD_TO_EXPLAIN
     )
 
     val isEncodeTotalizer: Boolean by option(
@@ -321,7 +321,7 @@ class FbSAT : CliktCommand() {
         help = "Encode totalizer when upper bound is null"
     ).flag(
         "--no-encode-totalizer",
-        default = true
+        default = Globals.IS_ENCODE_TOTALIZER
     )
 
     val isEncodeDisjunctiveTransitions: Boolean by option(
@@ -329,7 +329,7 @@ class FbSAT : CliktCommand() {
         help = "Encode disjunctive transitions (adhocly forbid priority function)"
     ).flag(
         "--no-encode-disjunctive-transitions",
-        default = false
+        default = Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS
     )
 
     val isReuseK: Boolean by option(
@@ -337,7 +337,7 @@ class FbSAT : CliktCommand() {
         help = "Reuse K found by ExtendedMinTask during CEGIS"
     ).flag(
         "--no-reuse-k",
-        default = true
+        default = Globals.IS_REUSE_K
     )
 
     val fileVerifyCE: File? by option(
@@ -348,7 +348,7 @@ class FbSAT : CliktCommand() {
         "--debug",
         help = "Debug mode"
     ).flag(
-        default = false
+        default = Globals.IS_DEBUG
     )
 
     init {
