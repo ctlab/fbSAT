@@ -182,6 +182,7 @@ abstract class AbstractSolver : Solver {
 
     final override fun reset() {
         log.debug { "Resetting solver..." }
+        context.map.clear()
         _reset()
     }
 
