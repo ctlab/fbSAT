@@ -2,12 +2,12 @@ package ru.ifmo.fbsat.core.task.single.extended
 
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.task.single.Inferrer
+import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.single.basic.basicMin
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
 import ru.ifmo.fbsat.core.task.single.basic.declareBasic
-import ru.ifmo.fbsat.core.task.single.extendedVars
-import ru.ifmo.fbsat.core.task.single.optimizeTopDown
+import ru.ifmo.fbsat.core.task.extendedVars
+import ru.ifmo.fbsat.core.task.optimizeTopDown
 import ru.ifmo.fbsat.core.utils.checkMapping
 import ru.ifmo.fbsat.core.utils.log
 

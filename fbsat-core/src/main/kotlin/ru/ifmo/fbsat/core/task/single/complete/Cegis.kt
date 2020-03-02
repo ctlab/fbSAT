@@ -6,9 +6,9 @@ import ru.ifmo.fbsat.core.scenario.negative.Counterexample
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.task.single.Inferrer
+import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.single.basic.declareBasic
-import ru.ifmo.fbsat.core.task.single.completeVars
+import ru.ifmo.fbsat.core.task.completeVars
 import ru.ifmo.fbsat.core.task.single.extended.declareExtended
 import ru.ifmo.fbsat.core.task.single.extended.extendedMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB

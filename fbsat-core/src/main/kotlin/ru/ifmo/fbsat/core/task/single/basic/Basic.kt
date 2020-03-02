@@ -3,9 +3,9 @@ package ru.ifmo.fbsat.core.task.single.basic
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.task.single.Inferrer
-import ru.ifmo.fbsat.core.task.single.basicVars
-import ru.ifmo.fbsat.core.task.single.optimizeTopDown
+import ru.ifmo.fbsat.core.task.Inferrer
+import ru.ifmo.fbsat.core.task.basicVars
+import ru.ifmo.fbsat.core.task.optimizeTopDown
 import ru.ifmo.fbsat.core.utils.checkMapping
 import ru.ifmo.fbsat.core.utils.log
 

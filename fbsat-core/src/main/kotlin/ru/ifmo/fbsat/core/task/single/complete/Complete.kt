@@ -3,7 +3,7 @@ package ru.ifmo.fbsat.core.task.single.complete
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.task.single.Inferrer
+import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
 import ru.ifmo.fbsat.core.task.single.basic.declareBasic
 import ru.ifmo.fbsat.core.task.single.extended.declareExtended

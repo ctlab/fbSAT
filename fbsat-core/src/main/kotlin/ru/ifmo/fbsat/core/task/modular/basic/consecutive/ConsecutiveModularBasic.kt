@@ -3,9 +3,9 @@ package ru.ifmo.fbsat.core.task.modular.basic.consecutive
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.task.single.Inferrer
-import ru.ifmo.fbsat.core.task.single.consecutiveModularBasicVars
-import ru.ifmo.fbsat.core.task.single.optimizeTopDown
+import ru.ifmo.fbsat.core.task.Inferrer
+import ru.ifmo.fbsat.core.task.consecutiveModularBasicVars
+import ru.ifmo.fbsat.core.task.optimizeTopDown
 import ru.ifmo.fbsat.core.utils.log
 
 fun Inferrer.inferConsecutiveModularBasic(): ConsecutiveModularAutomaton? {

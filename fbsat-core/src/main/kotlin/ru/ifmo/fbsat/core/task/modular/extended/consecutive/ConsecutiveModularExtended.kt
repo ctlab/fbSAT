@@ -3,8 +3,8 @@ package ru.ifmo.fbsat.core.task.modular.extended.consecutive
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.declareConsecutiveModularBasic
-import ru.ifmo.fbsat.core.task.single.Inferrer
-import ru.ifmo.fbsat.core.task.single.consecutiveModularExtendedVars
+import ru.ifmo.fbsat.core.task.Inferrer
+import ru.ifmo.fbsat.core.task.consecutiveModularExtendedVars
 
 fun Inferrer.inferConsecutiveModularExtended(): ConsecutiveModularAutomaton? {
     val rawAssignment = solver.solve() ?: return null

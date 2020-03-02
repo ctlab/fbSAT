@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.core.task.single
+package ru.ifmo.fbsat.core.task
 
 import ru.ifmo.fbsat.core.solver.Solver
 import java.io.File

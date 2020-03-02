@@ -6,7 +6,7 @@ import ru.ifmo.fbsat.core.constraints.declareAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.single.BASIC_VARS
+import ru.ifmo.fbsat.core.task.BASIC_VARS
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeSince

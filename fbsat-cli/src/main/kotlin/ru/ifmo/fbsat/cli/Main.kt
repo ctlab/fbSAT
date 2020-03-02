@@ -26,7 +26,7 @@ import ru.ifmo.fbsat.core.task.modular.basic.consecutive.consecutiveModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasicMin
 import ru.ifmo.fbsat.core.task.modular.extended.consecutive.consecutiveModularExtended
-import ru.ifmo.fbsat.core.task.single.Inferrer
+import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.single.basic.basic
 import ru.ifmo.fbsat.core.task.single.basic.basicMin
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC

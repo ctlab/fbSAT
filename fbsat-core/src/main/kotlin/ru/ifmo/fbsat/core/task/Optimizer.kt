@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.core.task.single
+package ru.ifmo.fbsat.core.task
 
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.utils.log

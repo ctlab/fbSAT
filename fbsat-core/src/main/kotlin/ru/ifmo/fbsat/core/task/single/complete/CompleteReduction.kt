@@ -12,9 +12,9 @@ import ru.ifmo.fbsat.core.solver.Literal
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.newBoolVarArray
 import ru.ifmo.fbsat.core.solver.newIntVar
-import ru.ifmo.fbsat.core.task.single.COMPLETE_VARS
-import ru.ifmo.fbsat.core.task.single.completeVars
-import ru.ifmo.fbsat.core.task.single.extendedVars
+import ru.ifmo.fbsat.core.task.COMPLETE_VARS
+import ru.ifmo.fbsat.core.task.completeVars
+import ru.ifmo.fbsat.core.task.extendedVars
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeSince
 

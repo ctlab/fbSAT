@@ -6,8 +6,8 @@ import ru.ifmo.fbsat.core.constraints.declareArbitraryModularAutomatonStructureC
 import ru.ifmo.fbsat.core.constraints.declarePositiveArbitraryModularMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.single.ARBITRARY_MODULAR_BASIC_VARS
-import ru.ifmo.fbsat.core.task.single.arbitraryModularBasicVars
+import ru.ifmo.fbsat.core.task.ARBITRARY_MODULAR_BASIC_VARS
+import ru.ifmo.fbsat.core.task.arbitraryModularBasicVars
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeSince
