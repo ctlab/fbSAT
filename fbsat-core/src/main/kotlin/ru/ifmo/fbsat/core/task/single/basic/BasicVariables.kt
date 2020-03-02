@@ -2,8 +2,10 @@ package ru.ifmo.fbsat.core.task.single.basic
 
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.newBoolVarArray
 import ru.ifmo.fbsat.core.solver.newIntVarArray
 
@@ -30,7 +32,9 @@ class BasicVariables(
     val stateAlgorithmTop: BoolVarArray,
     val stateAlgorithmBot: BoolVarArray,
     /* Mapping variables */
-    val mapping: IntVarArray
+    val mapping: IntVarArray,
+    /* Cardinality */
+    val cardinality: Cardinality
 )
 
 fun Solver.declareBasicVariables(
@@ -56,6 +60,12 @@ fun Solver.declareBasicVariables(
     val stateAlgorithmTop = newBoolVarArray(C, Z)
     /* Mapping variables */
     val mapping = newIntVarArray(V) { 1..C }
+    /* Cardinality */
+    val cardinality = declareCardinality {
+        for (c in 1..C)
+            for (k in 1..K)
+                yield(transitionDestination[c, k] neq 0)
+    }
 
     return BasicVariables(
         scenarioTree = scenarioTree,
@@ -70,6 +80,7 @@ fun Solver.declareBasicVariables(
         stateOutputEvent = stateOutputEvent,
         stateAlgorithmTop = stateAlgorithmTop,
         stateAlgorithmBot = stateAlgorithmBot,
-        mapping = mapping
+        mapping = mapping,
+        cardinality = cardinality
     )
 }

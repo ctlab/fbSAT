@@ -163,7 +163,7 @@ abstract class AbstractSolver : Solver {
     }
 
     final override fun comment(comment: String) {
-        log.debug { "// $comment" }
+        // log.debug { "// $comment" }
         _comment(comment)
     }
 
@@ -175,7 +175,7 @@ abstract class AbstractSolver : Solver {
                 result != null -> "SAT"
                 else -> "UNSAT"
             }
-            "Done solving ($answer) in %.2f seconds".format(solvingTime.seconds)
+            "Done solving ($answer) in %.3f seconds".format(solvingTime.seconds)
         }
         return result
     }
@@ -260,9 +260,11 @@ class IncrementalCryptominisat : AbstractSolver() {
     private lateinit var processInput: BufferedSink
     private lateinit var processOutput: BufferedSource
     private val buffer = Buffer()
+    private var isInitialized = false
 
     init {
         _reset()
+        isInitialized = true
     }
 
     override fun _comment(comment: String) {
@@ -295,6 +297,7 @@ class IncrementalCryptominisat : AbstractSolver() {
     }
 
     override fun _reset() {
+        if (isInitialized) process.destroy()
         process = Runtime.getRuntime().exec("incremental-cryptominisat")
         processInput = process.outputStream.sink().buffer()
         processOutput = process.inputStream.source().buffer()
@@ -381,8 +384,12 @@ class MiniSat : AbstractSolver() {
 }
 
 class Cadical : AbstractSolver() {
-    private val backend = JCadical()
+    private lateinit var backend: JCadical
     private val buffer = Buffer()
+
+    init {
+        _reset()
+    }
 
     override fun newLiteral(): Literal {
         ++numberOfVariables
@@ -417,16 +424,22 @@ class Cadical : AbstractSolver() {
             }
         }
 
-        check(numberOfVariables == backend.numberOfVariables)
-        check(numberOfClauses == backend.numberOfClauses)
-
         if (backend.solve() == SolveResult.UNSATISFIABLE) return null
         val model = backend.getModel().drop(1).toBooleanArray()
         return RawAssignment(model)
     }
 
+    fun getValue(lit: Literal): Boolean {
+        return backend.getValue(lit)
+    }
+
+    fun getModel(): BooleanArray {
+        return backend.getModel()
+    }
+
     override fun _reset() {
-        TODO("backend.reset()")
+        // TODO: proper backend.reset()
+        backend = JCadical()
         buffer.clear()
     }
 
