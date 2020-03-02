@@ -86,6 +86,69 @@ fun Solver.declareConsecutiveModularGuardConditionsConstraints(
     }
 }
 
+fun Solver.declareGuardConditionsAdhocConstraints(extendedVars: ExtendedVariables) {
+    comment("Adhoc guard conditions constraints")
+    with(extendedVars) {
+        comment("Forbid double negation")
+        // (nodeType[p] = NOT) & (nodeChild[p] = ch) => (nodeType[ch] != NOT)
+        for (c in 1..C)
+            for (k in 1..K)
+                for (p in 1 until P)
+                    for (ch in (p + 1)..P)
+                        implyImply(
+                            nodeType[c, k, p] eq NodeType.NOT,
+                            nodeChild[c, k, p] eq ch,
+                            nodeType[c, k, ch] neq NodeType.NOT
+                        )
+
+        comment("Distinct transitions")
+        // TODO: Distinct transitions
+
+        if (Globals.IS_FORBID_OR) {
+            comment("Forbid ORs")
+            for (c in 1..C)
+                for (k in 1..K)
+                    for (p in 1..P)
+                        clause(nodeType[c, k, p] neq NodeType.OR)
+        }
+
+        if (Globals.IS_ENCODE_TERMINALS_ORDER) {
+            comment("Terminals order")
+            // terminal[p, x] => AND_{p'<p, x'>=x}( ~terminal[r_, x_] )
+            for (c in 1..C)
+                for (k in 1..K)
+                    for (p in 1..P)
+                        for (x in 1..X)
+                            implyAnd(nodeInputVariable[c, k, p] eq x, sequence {
+                                for (p_ in 1 until p)
+                                    for (x_ in x..X)
+                                        yield(nodeInputVariable[c, k, p_] neq x_)
+                            })
+        }
+
+        if (Globals.IS_ENCODE_TERMINALS_MINI_ORDER) {
+            // Note: this constraint seems to be very expensive, but does not provide visible speed-up
+            comment("Terminals mini-order: AND/OR children-terminals order")
+            // (nodeType[p] = AND/OR) & (nodeChild[p] = ch) & (nodeType[ch] = TERMINAL) & (nodeType[ch+1] = TERMINAL) => (nodeInputVariable[ch] < nodeInputVariable[ch+1])
+            for (c in 1..C)
+                for (k in 1..K)
+                    for (p in 1..P)
+                        for (t in listOf(NodeType.AND, NodeType.OR))
+                            for (ch in (p + 1) until P)
+                                for (x in 1..X)
+                                    for (x_ in 1..x)
+                                        clause(
+                                            nodeType[c, k, p] neq t,
+                                            nodeChild[c, k, p] neq ch,
+                                            nodeType[c, k, ch] neq NodeType.NOT,
+                                            nodeType[c, k, ch + 1] neq NodeType.NOT,
+                                            nodeInputVariable[c, k, ch] neq x,
+                                            nodeInputVariable[c, k, ch + 1] neq x_
+                                        )
+        }
+    }
+}
+
 private fun Solver.declareGuardConditionsConstraintsInputless(
     C: Int,
     K: Int,

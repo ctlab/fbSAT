@@ -3,9 +3,11 @@ package ru.ifmo.fbsat.core.task.single.extended
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.DomainVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.newBoolVarArray
 import ru.ifmo.fbsat.core.solver.newDomainVarArray
 import ru.ifmo.fbsat.core.solver.newIntVarArray
@@ -41,7 +43,9 @@ class ExtendedVariables(
     val nodeInputVariable: IntVarArray,
     val nodeParent: IntVarArray,
     val nodeChild: IntVarArray,
-    val nodeValue: BoolVarArray
+    val nodeValue: BoolVarArray,
+    /* Cardinality */
+    val cardinality: Cardinality
 )
 
 fun Solver.declareExtendedVariables(
@@ -56,6 +60,13 @@ fun Solver.declareExtendedVariables(
     val nodeValue = newBoolVarArray(C, K, P, U) { (c, k, p, u) ->
         if (p == 1) transitionFiring[c, k, u]
         else newLiteral()
+    }
+    /* Cardinality */
+    val cardinality = declareCardinality {
+        for (c in 1..C)
+            for (k in 1..K)
+                for (p in 1..P)
+                    yield(nodeType[c, k, p] neq NodeType.NONE)
     }
 
     ExtendedVariables(
@@ -76,6 +87,7 @@ fun Solver.declareExtendedVariables(
         nodeInputVariable = nodeInputVariable,
         nodeParent = nodeParent,
         nodeChild = nodeChild,
-        nodeValue = nodeValue
+        nodeValue = nodeValue,
+        cardinality = cardinality
     )
 }

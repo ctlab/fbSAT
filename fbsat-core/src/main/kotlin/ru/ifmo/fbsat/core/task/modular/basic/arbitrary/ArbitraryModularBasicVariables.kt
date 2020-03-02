@@ -3,9 +3,11 @@ package ru.ifmo.fbsat.core.task.modular.basic.arbitrary
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.VarEncoding
+import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.newBoolVarArray
 import ru.ifmo.fbsat.core.solver.newIntVarArray
 import ru.ifmo.fbsat.core.utils.log
@@ -34,6 +36,8 @@ class ArbitraryModularBasicVariables(
     val modularStateAlgorithmBot: MultiArray<BoolVarArray>,
     /* Mapping variables */
     val modularMapping: MultiArray<IntVarArray>,
+    /* Cardinality */
+    val cardinality: Cardinality,
     /* Modular variables */
     val inboundVarPinParent: IntVarArray,
     val inboundEventPinParent: IntVarArray,
@@ -74,6 +78,14 @@ fun Solver.declareArbitraryModularBasicVariables(
     val modularStateAlgorithmBot = MultiArray.create(M) { newBoolVarArray(C, Z) }
     /* Mapping variables */
     val modularMapping = MultiArray.create(M) { newIntVarArray(V) { 1..C } }
+    /* Cardinality */
+    val cardinality = declareCardinality {
+        for (m in 1..M) {
+            for (c in 1..C)
+                for (k in 1..K)
+                    yield(modularTransitionDestination[m][c, k] neq 0)
+        }
+    }
     /* Modular variables */
     with(PinVars(M, X, Z, E, O)) {
         val inboundVarPinParent = newIntVarArray(allInboundVarPins.size) { (p) ->
@@ -123,6 +135,7 @@ fun Solver.declareArbitraryModularBasicVariables(
             modularStateAlgorithmTop = modularStateAlgorithmTop,
             modularStateAlgorithmBot = modularStateAlgorithmBot,
             modularMapping = modularMapping,
+            cardinality = cardinality,
             inboundVarPinParent = inboundVarPinParent,
             inboundEventPinParent = inboundEventPinParent,
             modularInputIndex = modularInputIndex,

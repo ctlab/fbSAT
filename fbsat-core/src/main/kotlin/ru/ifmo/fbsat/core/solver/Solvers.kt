@@ -5,6 +5,7 @@ import com.github.lipen.jnisat.JCadical.Companion.SolveResult
 import com.github.lipen.jnisat.JMiniSat
 import com.soywiz.klock.measureTimeWithResult
 import okio.Buffer
+import okio.BufferedSink
 import okio.BufferedSource
 import okio.buffer
 import okio.sink
@@ -15,8 +16,37 @@ import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.write
 import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
+import kotlin.properties.ReadOnlyProperty
+import kotlin.reflect.KProperty
+
+class SolverContext internal constructor(
+    val solver: Solver,
+    val map: MutableMap<String, Any> = mutableMapOf()
+) {
+    operator fun <T : Any> invoke(value: T): ContextProvider<T> = ContextProvider(value)
+    // inline operator fun <T : Any> invoke(init: Solver.() -> T): ContextProvider<T> = invoke(solver.init())
+
+    operator fun <T> getValue(thisRef: Any?, property: KProperty<*>): T = get(property.name)
+
+    @Suppress("UNCHECKED_CAST")
+    operator fun <T> get(key: String): T = map.getValue(key) as T
+
+    operator fun set(key: String, value: Any) {
+        map[key] = value
+    }
+
+    inner class ContextProvider<T : Any>(val value: T) {
+        operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): ReadOnlyProperty<Any?, T> {
+            this@SolverContext[property.name] = value
+            return object : ReadOnlyProperty<Any?, T> {
+                override fun getValue(thisRef: Any?, property: KProperty<*>): T = value
+            }
+        }
+    }
+}
 
 interface Solver : AutoCloseable {
+    val context: SolverContext
     val numberOfVariables: Int
     val numberOfClauses: Int
 
@@ -25,6 +55,7 @@ interface Solver : AutoCloseable {
     fun assume(literals: List<Literal>)
     fun comment(comment: String)
     fun solve(): RawAssignment?
+    fun reset()
 
     override fun close()
 
@@ -51,11 +82,13 @@ interface Solver : AutoCloseable {
             comment: (String) -> Unit = {},
             clause: (List<Literal>) -> Unit = {},
             solve: () -> RawAssignment? = { TODO() },
+            reset: () -> Unit = {},
             close: () -> Unit = {}
         ): Solver = object : AbstractSolver() {
             override fun _comment(comment: String) = comment(comment)
             override fun _clause(literals: List<Literal>) = clause(literals)
             override fun _solve(): RawAssignment? = solve()
+            override fun _reset(): Unit = reset()
             override fun _close(): Unit = close()
         }
     }
@@ -110,6 +143,8 @@ fun Solver.newIntVarArray(
 
 @Suppress("FunctionName")
 abstract class AbstractSolver : Solver {
+    @Suppress("LeakingThis")
+    override val context: SolverContext = SolverContext(this)
     override var numberOfVariables: Int = 0
         protected set
     final override var numberOfClauses: Int = 0
@@ -128,7 +163,7 @@ abstract class AbstractSolver : Solver {
     }
 
     final override fun comment(comment: String) {
-        log.debug { "// $comment" }
+        // log.debug { "// $comment" }
         _comment(comment)
     }
 
@@ -140,9 +175,15 @@ abstract class AbstractSolver : Solver {
                 result != null -> "SAT"
                 else -> "UNSAT"
             }
-            "Done solving ($answer) in %.2f seconds".format(solvingTime.seconds)
+            "Done solving ($answer) in %.3f seconds".format(solvingTime.seconds)
         }
         return result
+    }
+
+    final override fun reset() {
+        log.debug { "Resetting solver..." }
+        context.map.clear()
+        _reset()
     }
 
     final override fun close() {
@@ -153,6 +194,7 @@ abstract class AbstractSolver : Solver {
     protected abstract fun _clause(literals: List<Literal>)
     protected abstract fun _comment(comment: String)
     protected abstract fun _solve(): RawAssignment?
+    protected abstract fun _reset()
     protected abstract fun _close()
 }
 
@@ -184,6 +226,10 @@ class FileSolver(
         return parseDimacsOutput(processOutput)
     }
 
+    override fun _reset() {
+        buffer.clear()
+    }
+
     override fun _close() {}
 }
 
@@ -210,10 +256,16 @@ private fun parseDimacsOutput(source: BufferedSource): RawAssignment? {
 }
 
 class IncrementalCryptominisat : AbstractSolver() {
-    private val process = Runtime.getRuntime().exec("incremental-cryptominisat")
-    private val processInput = process.outputStream.sink().buffer()
-    private val processOutput = process.inputStream.source().buffer()
+    private lateinit var process: Process
+    private lateinit var processInput: BufferedSink
+    private lateinit var processOutput: BufferedSource
     private val buffer = Buffer()
+    private var isInitialized = false
+
+    init {
+        _reset()
+        isInitialized = true
+    }
 
     override fun _comment(comment: String) {
         processInput.write("c ").writeln(comment)
@@ -242,6 +294,14 @@ class IncrementalCryptominisat : AbstractSolver() {
         }
 
         return parseIcmsOutput(processOutput)
+    }
+
+    override fun _reset() {
+        if (isInitialized) process.destroy()
+        process = Runtime.getRuntime().exec("incremental-cryptominisat")
+        processInput = process.outputStream.sink().buffer()
+        processOutput = process.inputStream.source().buffer()
+        buffer.clear()
     }
 
     override fun _close() {
@@ -313,14 +373,23 @@ class MiniSat : AbstractSolver() {
         return RawAssignment(model)
     }
 
+    override fun _reset() {
+        backend.reset()
+        buffer.clear()
+    }
+
     override fun _close() {
         backend.close()
     }
 }
 
 class Cadical : AbstractSolver() {
-    private val backend = JCadical()
+    private lateinit var backend: JCadical
     private val buffer = Buffer()
+
+    init {
+        _reset()
+    }
 
     override fun newLiteral(): Literal {
         ++numberOfVariables
@@ -355,12 +424,23 @@ class Cadical : AbstractSolver() {
             }
         }
 
-        check(numberOfVariables == backend.numberOfVariables)
-        check(numberOfClauses == backend.numberOfClauses)
-
         if (backend.solve() == SolveResult.UNSATISFIABLE) return null
         val model = backend.getModel().drop(1).toBooleanArray()
         return RawAssignment(model)
+    }
+
+    fun getValue(lit: Literal): Boolean {
+        return backend.getValue(lit)
+    }
+
+    fun getModel(): BooleanArray {
+        return backend.getModel()
+    }
+
+    override fun _reset() {
+        // TODO: proper backend.reset()
+        backend = JCadical()
+        buffer.clear()
     }
 
     override fun _close() {

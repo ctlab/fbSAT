@@ -223,6 +223,13 @@ private fun Solver.declareAutomatonStructureConstraintsInputless(
                 transitionDestination[c, k] eq 0,
                 transitionInputEvent[c, k] eq 0
             )
+
+    if (Globals.IS_FORBID_TRANSITIONS_TO_FIRST_STATE) {
+        comment("Ad-hoc: no transitions to the first state")
+        for (c in 1..C)
+            for (k in 1..K)
+                clause(transitionDestination[c, k] neq 1)
+    }
 }
 
 private fun Solver.declareAutomatonStructureConstraintsForInput(

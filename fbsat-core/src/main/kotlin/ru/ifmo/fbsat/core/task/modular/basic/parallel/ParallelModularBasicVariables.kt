@@ -2,8 +2,10 @@ package ru.ifmo.fbsat.core.task.modular.basic.parallel
 
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.newIntVarArray
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
@@ -24,16 +26,10 @@ class ParallelModularBasicVariables(
     /* Modularized BasicVariables */
     val modularBasicVariables: MultiArray<BasicVariables>,
     /* Interface variables */
-    val moduleControllingOutputVariable: IntVarArray
-) {
-    /* Cardinality variables */
-    var totalizer: IntArray? = null
-        internal set
-    var maxTransitions: Int? = null
-        internal set
-    val T: Int?
-        get() = maxTransitions
-}
+    val moduleControllingOutputVariable: IntVarArray,
+    /* Cardinality */
+    val cardinality: Cardinality
+)
 
 fun Solver.declareParallelModularBasicVariables(
     scenarioTree: ScenarioTree,
@@ -57,12 +53,21 @@ fun Solver.declareParallelModularBasicVariables(
     }
     /* Interface variables */
     val moduleControllingOutputVariable = newIntVarArray(Z) { 1..M }
+    /* Cardinality */
+    val cardinality = declareCardinality {
+        for (m in 1..M) with(modularBasicVariables[m]) {
+            for (c in 1..C)
+                for (k in 1..K)
+                    yield(transitionDestination[c, k] neq 0)
+        }
+    }
 
     return ParallelModularBasicVariables(
         scenarioTree = scenarioTree,
         M = M, C = C, K = K,
         V = V, E = E, O = O, X = X, Z = Z, U = U,
         modularBasicVariables = modularBasicVariables,
-        moduleControllingOutputVariable = moduleControllingOutputVariable
+        moduleControllingOutputVariable = moduleControllingOutputVariable,
+        cardinality = cardinality
     )
 }

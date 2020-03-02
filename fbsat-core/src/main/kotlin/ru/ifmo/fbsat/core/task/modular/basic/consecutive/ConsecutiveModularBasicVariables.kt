@@ -3,7 +3,9 @@ package ru.ifmo.fbsat.core.task.modular.basic.consecutive
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.newBoolVarArray
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
@@ -24,7 +26,9 @@ class ConsecutiveModularBasicVariables(
     /* Modularized BasicVariables */
     val modularBasicVariables: MultiArray<BasicVariables>,
     /* Mapping variables */
-    val modularComputedOutputValue: MultiArray<BoolVarArray>
+    val modularComputedOutputValue: MultiArray<BoolVarArray>,
+    /* Cardinality */
+    val cardinality: Cardinality
 )
 
 fun Solver.declareConsecutiveModularBasicVariables(
@@ -55,12 +59,21 @@ fun Solver.declareConsecutiveModularBasicVariables(
     }
     /* Mapping variables */
     val modularComputedOutputValue = MultiArray.create(M) { newBoolVarArray(V, Z) }
+    /* Cardinality */
+    val cardinality = declareCardinality {
+        for (m in 1..M) with(modularBasicVariables[m]) {
+            for (c in 1..C)
+                for (k in 1..K)
+                    yield(transitionDestination[c, k] neq 0)
+        }
+    }
 
     return ConsecutiveModularBasicVariables(
         scenarioTree = scenarioTree,
         M = M, C = C, K = K,
         V = V, E = E, O = O, X = X, Z = Z, U = U,
         modularBasicVariables = modularBasicVariables,
-        modularComputedOutputValue = modularComputedOutputValue
+        modularComputedOutputValue = modularComputedOutputValue,
+        cardinality = cardinality
     )
 }

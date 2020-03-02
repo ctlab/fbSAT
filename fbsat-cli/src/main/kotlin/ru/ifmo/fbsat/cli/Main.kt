@@ -19,22 +19,23 @@ import ru.ifmo.fbsat.core.automaton.minimizeTruthTableGuards
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicMinTask
-import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicTask
-import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicMinTask
-import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicTask
-import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicMinTask
-import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicTask
-import ru.ifmo.fbsat.core.task.modular.extended.consecutive.ConsecutiveModularExtendedTask
-import ru.ifmo.fbsat.core.task.single.basic.BasicMinTask
-import ru.ifmo.fbsat.core.task.single.basic.BasicTask
-import ru.ifmo.fbsat.core.task.single.complete.CompleteCegisTask
-import ru.ifmo.fbsat.core.task.single.complete.CompleteMinCegisTask
-import ru.ifmo.fbsat.core.task.single.complete.CompleteMinUBCegisTask
-import ru.ifmo.fbsat.core.task.single.complete.CompleteTask
-import ru.ifmo.fbsat.core.task.single.extended.ExtendedMinTask
-import ru.ifmo.fbsat.core.task.single.extended.ExtendedMinUBTask
-import ru.ifmo.fbsat.core.task.single.extended.ExtendedTask
+import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.arbitraryModularBasic
+import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.arbitraryModularBasicMin
+import ru.ifmo.fbsat.core.task.modular.basic.consecutive.consecutiveModularBasic
+import ru.ifmo.fbsat.core.task.modular.basic.consecutive.consecutiveModularBasicMin
+import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasic
+import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasicMin
+import ru.ifmo.fbsat.core.task.modular.extended.consecutive.consecutiveModularExtended
+import ru.ifmo.fbsat.core.task.single.Inferrer
+import ru.ifmo.fbsat.core.task.single.basic.basic
+import ru.ifmo.fbsat.core.task.single.basic.basicMin
+import ru.ifmo.fbsat.core.task.single.basic.basicMinC
+import ru.ifmo.fbsat.core.task.single.complete.cegis
+import ru.ifmo.fbsat.core.task.single.complete.cegisMin
+import ru.ifmo.fbsat.core.task.single.complete.complete
+import ru.ifmo.fbsat.core.task.single.extended.extended
+import ru.ifmo.fbsat.core.task.single.extended.extendedMin
+import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.SolverBackend
@@ -50,12 +51,11 @@ enum class Method(val s: String) {
     BasicMin("basic-min"),
     Extended("extended"),
     ExtendedMin("extended-min"),
-    ExtendedMinUb("extended-min-ub"),
+    ExtendedMinUB("extended-min-ub"),
     Complete("complete"),
     CompleteMin("complete-min"),
-    CompleteCegis("complete-cegis"),
-    CompleteMinCegis("complete-min-cegis"),
-    CompleteMinUBCegis("complete-min-ub-cegis"),
+    Cegis("cegis"),
+    CegisMin("cegis-min"),
     ModularBasic("modular-basic"),
     ModularBasicMin("modular-basic-min"),
     ConsecutiveModularBasic("modular-consecutive-basic"),
@@ -464,134 +464,88 @@ class FbSAT : CliktCommand() {
 
         // TODO: warn about ignored specified parameters
 
+        val inferrer = Inferrer(solverProvider(), outDir)
+
         val automaton: Automaton? = when (method) {
             Method.Basic -> {
-                val task = BasicTask(
+                inferrer.basic(
                     scenarioTree = tree,
                     numberOfStates = requireNotNull(numberOfStates),
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxTransitions = maxTransitions,
-                    solver = solverProvider(),
-                    outDir = outDir,
                     isEncodeReverseImplication = isEncodeReverseImplication
                 )
-                task.infer()
             }
             Method.BasicMin -> {
-                val task = BasicMinTask(
-                    scenarioTree = tree,
-                    numberOfStates = numberOfStates,
-                    maxOutgoingTransitions = maxOutgoingTransitions,
-                    initialMaxTransitions = maxTransitions,
-                    solverProvider = solverProvider,
-                    outDir = outDir,
-                    isOnlyC = isOnlyC,
-                    isEncodeReverseImplication = isEncodeReverseImplication
-                )
-                task.infer()
+                if (isOnlyC)
+                    inferrer.basicMinC(scenarioTree = tree)
+                else
+                    inferrer.basicMin(scenarioTree = tree)
             }
             Method.Extended -> {
-                val task = ExtendedTask(
+                inferrer.extended(
                     scenarioTree = tree,
                     numberOfStates = requireNotNull(numberOfStates),
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxGuardSize = requireNotNull(maxGuardSize),
+                    maxTransitions = maxTransitions,
                     maxTotalGuardsSize = maxTotalGuardsSize,
-                    outDir = outDir,
-                    solver = solverProvider(),
                     isEncodeReverseImplication = isEncodeReverseImplication
                 )
-                task.infer()
             }
             Method.ExtendedMin -> {
-                val task = ExtendedMinTask(
+                inferrer.extendedMin(
                     scenarioTree = tree,
-                    numberOfStates = numberOfStates,
-                    maxOutgoingTransitions = maxOutgoingTransitions,
-                    maxGuardSize = requireNotNull(maxGuardSize),
-                    initialMaxTotalGuardsSize = maxTotalGuardsSize,
-                    outDir = outDir,
-                    solverProvider = solverProvider,
-                    isEncodeReverseImplication = isEncodeReverseImplication
+                    maxGuardSize = requireNotNull(maxGuardSize)
                 )
-                task.infer()
             }
-            Method.ExtendedMinUb -> {
-                val task = ExtendedMinUBTask(
+            Method.ExtendedMinUB -> {
+                inferrer.extendedMinUB(
                     scenarioTree = tree,
-                    initialMaxTotalGuardsSize = maxTotalGuardsSize,
-                    maxPlateauWidth = maxPlateauWidth,
-                    outDir = outDir,
-                    solverProvider = solverProvider,
-                    isEncodeReverseImplication = isEncodeReverseImplication
+                    maxPlateauWidth = maxPlateauWidth
                 )
-                task.infer()
             }
             Method.Complete -> {
-                val task = CompleteTask(
+                inferrer.complete(
                     scenarioTree = tree,
                     negativeScenarioTree = negTree,
                     numberOfStates = requireNotNull(numberOfStates),
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxGuardSize = requireNotNull(maxGuardSize),
-                    maxTotalGuardsSize = maxTotalGuardsSize,
-                    outDir = outDir,
-                    solver = solverProvider()
+                    maxTransitions = maxTransitions,
+                    maxTotalGuardsSize = maxTotalGuardsSize
                 )
-                task.infer()
             }
             Method.CompleteMin -> TODO("complete-min method")
-            Method.CompleteCegis -> {
-                val task = CompleteCegisTask(
+            Method.Cegis -> {
+                inferrer.cegis(
                     scenarioTree = tree,
                     negativeScenarioTree = negTree,
                     numberOfStates = requireNotNull(numberOfStates),
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxGuardSize = requireNotNull(maxGuardSize),
+                    maxTransitions = maxTransitions,
                     maxTotalGuardsSize = maxTotalGuardsSize,
-                    smvDir = smvDir,
-                    outDir = outDir,
-                    solver = solverProvider()
+                    smvDir = smvDir
                 )
-                task.infer()
             }
-            Method.CompleteMinCegis -> {
-                val task = CompleteMinCegisTask(
+            Method.CegisMin -> {
+                inferrer.cegisMin(
                     scenarioTree = tree,
                     initialNegativeScenarioTree = negTree,
-                    numberOfStates = numberOfStates,
-                    maxOutgoingTransitions = maxOutgoingTransitions,
-                    maxGuardSize = requireNotNull(maxGuardSize),
-                    initialMaxTotalGuardsSize = maxTotalGuardsSize,
-                    smvDir = smvDir,
-                    outDir = outDir,
-                    solverProvider = solverProvider
-                )
-                task.infer()
-            }
-            Method.CompleteMinUBCegis -> {
-                val task = CompleteMinUBCegisTask(
-                    scenarioTree = tree,
-                    initialNegativeScenarioTree = negTree,
-                    initialMaxTotalGuardsSize = maxTotalGuardsSize,
+                    maxGuardSize = maxGuardSize,
                     maxPlateauWidth = maxPlateauWidth,
-                    smvDir = smvDir,
-                    outDir = outDir,
-                    solverProvider = solverProvider
+                    smvDir = smvDir
                 )
-                task.infer()
             }
             Method.ModularBasic -> {
-                val task = ParallelModularBasicTask(
+                val modularAutomaton = inferrer.parallelModularBasic(
                     scenarioTree = tree,
                     numberOfModules = requireNotNull(numberOfModules),
                     numberOfStates = requireNotNull(numberOfStates),
                     maxOutgoingTransitions = maxOutgoingTransitions,
-                    maxTransitions = maxTransitions,
-                    outDir = outDir,
-                    solver = solverProvider()
+                    maxTransitions = maxTransitions
                 )
-                val modularAutomaton = task.infer()
 
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
@@ -626,16 +580,10 @@ class FbSAT : CliktCommand() {
                 null
             }
             Method.ModularBasicMin -> {
-                val task = ParallelModularBasicMinTask(
+                val modularAutomaton = inferrer.parallelModularBasicMin(
                     scenarioTree = tree,
-                    numberOfModules = requireNotNull(numberOfModules),
-                    numberOfStates = numberOfStates,
-                    maxOutgoingTransitions = maxOutgoingTransitions,
-                    initialMaxTransitions = maxTransitions,
-                    solverProvider = solverProvider,
-                    outDir = outDir
+                    numberOfModules = requireNotNull(numberOfModules)
                 )
-                val modularAutomaton = task.infer()
 
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
@@ -670,16 +618,13 @@ class FbSAT : CliktCommand() {
                 null
             }
             Method.ConsecutiveModularBasic -> {
-                val task = ConsecutiveModularBasicTask(
+                val modularAutomaton = inferrer.consecutiveModularBasic(
                     scenarioTree = tree,
                     numberOfModules = requireNotNull(numberOfModules),
                     numberOfStates = requireNotNull(numberOfStates),
                     maxOutgoingTransitions = maxOutgoingTransitions,
-                    maxTransitions = maxTransitions,
-                    outDir = outDir,
-                    solver = solverProvider()
+                    maxTransitions = maxTransitions
                 )
-                val modularAutomaton = task.infer()
 
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
@@ -707,16 +652,10 @@ class FbSAT : CliktCommand() {
                 null
             }
             Method.ConsecutiveModularBasicMin -> {
-                val task = ConsecutiveModularBasicMinTask(
+                val modularAutomaton = inferrer.consecutiveModularBasicMin(
                     scenarioTree = tree,
-                    numberOfModules = requireNotNull(numberOfModules),
-                    numberOfStates = numberOfStates,
-                    maxOutgoingTransitions = maxOutgoingTransitions,
-                    initialMaxTransitions = maxTransitions,
-                    solverProvider = solverProvider,
-                    outDir = outDir
+                    numberOfModules = requireNotNull(numberOfModules)
                 )
-                val modularAutomaton = task.infer()
 
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
@@ -744,18 +683,16 @@ class FbSAT : CliktCommand() {
                 null
             }
             Method.ConsecutiveModularExtended -> {
-                val task = ConsecutiveModularExtendedTask(
+                val modularAutomaton = inferrer.consecutiveModularExtended(
                     scenarioTree = tree,
                     numberOfModules = requireNotNull(numberOfModules),
                     numberOfStates = requireNotNull(numberOfStates),
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxGuardSize = requireNotNull(maxGuardSize),
+                    maxTransitions = maxTransitions,
                     maxTotalGuardsSize = maxTotalGuardsSize,
-                    outDir = outDir,
-                    solver = solverProvider(),
                     isEncodeReverseImplication = isEncodeReverseImplication
                 )
-                val modularAutomaton = task.infer()
 
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
@@ -783,16 +720,14 @@ class FbSAT : CliktCommand() {
                 null
             }
             Method.ArbitraryModularBasic -> {
-                val task = ArbitraryModularBasicTask(
+                val modularAutomaton = inferrer.arbitraryModularBasic(
                     scenarioTree = tree,
                     numberOfModules = requireNotNull(numberOfModules),
                     numberOfStates = requireNotNull(numberOfStates),
                     maxOutgoingTransitions = maxOutgoingTransitions,
                     maxTransitions = maxTransitions,
-                    outDir = outDir,
-                    solver = solverProvider()
+                    isEncodeReverseImplication = isEncodeReverseImplication
                 )
-                val modularAutomaton = task.infer()
                 modularAutomaton?.minimizeTruthTableGuards(tree)
 
                 if (modularAutomaton == null) {
@@ -821,16 +756,10 @@ class FbSAT : CliktCommand() {
                 null
             }
             Method.ArbitraryModularBasicMin -> {
-                val task = ArbitraryModularBasicMinTask(
+                val modularAutomaton = inferrer.arbitraryModularBasicMin(
                     scenarioTree = tree,
-                    numberOfModules = requireNotNull(numberOfModules),
-                    numberOfStates = numberOfStates,
-                    maxOutgoingTransitions = maxOutgoingTransitions,
-                    initialMaxTransitions = maxTransitions,
-                    solverProvider = solverProvider,
-                    outDir = outDir
+                    numberOfModules = requireNotNull(numberOfModules)
                 )
-                val modularAutomaton = task.infer()
                 modularAutomaton?.minimizeTruthTableGuards(tree)
 
                 if (modularAutomaton == null) {
