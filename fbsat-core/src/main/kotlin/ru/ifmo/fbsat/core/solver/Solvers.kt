@@ -181,6 +181,8 @@ abstract class AbstractSolver : Solver {
 
     final override fun reset() {
         log.debug { "Resetting solver..." }
+        numberOfVariables = 0
+        numberOfClauses = 0
         context.map.clear()
         _reset()
     }
