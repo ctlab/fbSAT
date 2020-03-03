@@ -1,7 +1,6 @@
 package ru.ifmo.fbsat.core.solver
 
 import com.github.lipen.jnisat.JCadical
-import com.github.lipen.jnisat.JCadical.Companion.SolveResult
 import com.github.lipen.jnisat.JMiniSat
 import com.soywiz.klock.measureTimeWithResult
 import okio.Buffer
@@ -337,7 +336,7 @@ class MiniSat : AbstractSolver() {
 
     override fun newLiteral(): Literal {
         ++numberOfVariables
-        return backend.addVariable()
+        return backend.newVariable()
     }
 
     override fun _clause(literals: List<Literal>) {
@@ -369,7 +368,7 @@ class MiniSat : AbstractSolver() {
         }
 
         if (!backend.solve()) return null
-        val model = BooleanArray(numberOfVariables) { i -> backend.getValue(i + 1) > 0 }
+        val model = backend.getModel().drop(1).toBooleanArray()
         return RawAssignment(model)
     }
 
@@ -405,7 +404,7 @@ class Cadical : AbstractSolver() {
             1 -> backend.addClause(literals[0])
             2 -> backend.addClause(literals[0], literals[1])
             3 -> backend.addClause(literals[0], literals[1], literals[2])
-            else -> backend.addClause(*literals.toIntArray())
+            else -> backend.addClause(literals.toIntArray())
         }
     }
 
@@ -424,7 +423,7 @@ class Cadical : AbstractSolver() {
             }
         }
 
-        if (backend.solve() == SolveResult.UNSATISFIABLE) return null
+        if (!backend.solve()) return null
         val model = backend.getModel().drop(1).toBooleanArray()
         return RawAssignment(model)
     }

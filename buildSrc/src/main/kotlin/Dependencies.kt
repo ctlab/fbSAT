@@ -15,7 +15,7 @@ object Versions {
     const val xml_builder = "1.5.3"
     const val lazycache = "0.3.0"
     const val klock = "1.8.6"
-    const val jnisat = "0.4.0"
+    const val jnisat = "0.6.0"
 }
 
 object Libs {
