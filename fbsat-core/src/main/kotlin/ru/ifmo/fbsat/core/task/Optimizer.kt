@@ -30,7 +30,7 @@ fun <T : Any> optimizeTopDown(
         if (x <= end) break
         val (result, runningTime) = measureTimeWithResult { next(x) }
         if (result != null) {
-            log.success("optimizeTopDown: < $x -> ${query(best)} in %.2f s".format(runningTime.seconds))
+            log.success("optimizeTopDown: < $x -> ${query(result)} in %.2f s".format(runningTime.seconds))
             best = result
         } else {
             log.failure("optimizeTopDown: < $x -> UNSAT in %.2f s.".format(runningTime.seconds))
