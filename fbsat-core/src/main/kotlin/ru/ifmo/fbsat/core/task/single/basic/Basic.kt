@@ -33,7 +33,7 @@ fun Inferrer.optimizeT(start: Int? = null, end: Int = 0): Automaton? {
     return optimizeTopDown(
         start = start,
         end = end,
-        nextStart = { T ->
+        nextInitial = { T ->
             vars.cardinality.updateUpperBoundLessThanOrEqual(T)
             inferBasic()
         },

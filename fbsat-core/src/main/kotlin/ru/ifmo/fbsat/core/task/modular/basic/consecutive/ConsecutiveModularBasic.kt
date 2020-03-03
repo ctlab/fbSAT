@@ -26,7 +26,7 @@ fun Inferrer.optimizeConsecutiveModularT(start: Int? = null, end: Int = 0): Cons
     return optimizeTopDown(
         start = start,
         end = end,
-        nextStart = { T ->
+        nextInitial = { T ->
             vars.cardinality.updateUpperBoundLessThanOrEqual(T)
             inferConsecutiveModularBasic()
         },

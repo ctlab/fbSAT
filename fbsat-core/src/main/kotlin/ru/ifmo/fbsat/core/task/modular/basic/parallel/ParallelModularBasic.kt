@@ -26,7 +26,7 @@ fun Inferrer.optimizeParallelModularT(start: Int? = null, end: Int = 0): Paralle
     return optimizeTopDown(
         start = start,
         end = end,
-        nextStart = { T ->
+        nextInitial = { T ->
             vars.cardinality.updateUpperBoundLessThanOrEqual(T)
             inferParallelModularBasic()
         },

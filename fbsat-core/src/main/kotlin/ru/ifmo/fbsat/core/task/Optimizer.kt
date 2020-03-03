@@ -6,7 +6,7 @@ import ru.ifmo.fbsat.core.utils.log
 fun <T : Any> optimizeTopDown(
     start: Int? = null,
     end: Int = 0,
-    nextStart: (Int?) -> T?,
+    nextInitial: (Int?) -> T?,
     next: (Int) -> T?,
     query: (T) -> Int
 ): T? {
@@ -14,7 +14,7 @@ fun <T : Any> optimizeTopDown(
     if (start != null) require(start >= 0)
     require(end >= 0)
 
-    val (initialResult, runningTime) = measureTimeWithResult { nextStart(start) }
+    val (initialResult, runningTime) = measureTimeWithResult { nextInitial(start) }
     if (initialResult != null) {
         log.success("optimizeTopDown: <= $start -> ${query(initialResult)} in %.2f s".format(runningTime.seconds))
     } else {

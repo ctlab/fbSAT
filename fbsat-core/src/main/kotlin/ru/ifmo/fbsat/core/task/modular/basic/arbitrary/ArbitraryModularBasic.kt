@@ -26,7 +26,7 @@ fun Inferrer.optimizeArbitraryModularT(start: Int? = null, end: Int = 0): Arbitr
     return optimizeTopDown(
         start = start,
         end = end,
-        nextStart = { T ->
+        nextInitial = { T ->
             vars.cardinality.updateUpperBoundLessThanOrEqual(T)
             inferArbitraryModularBasic()
         },
