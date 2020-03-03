@@ -15,8 +15,6 @@ fun <T : Any> optimizeTopDown(
     require(end >= 0)
 
     val (initialResult, runningTime) = measureTimeWithResult { nextStart(start) }
-    // vars.cardinality.updateUpperBoundLessThanOrEqual(start)
-    // val (basicAutomaton, runningTime) = measureTimeWithResult { inferBasic() }
     if (initialResult != null) {
         log.success("optimizeTopDown: <= $start -> ${query(initialResult)} in %.2f s".format(runningTime.seconds))
     } else {
