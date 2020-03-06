@@ -19,6 +19,7 @@ import ru.ifmo.fbsat.core.automaton.minimizeTruthTableGuards
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.arbitraryModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.arbitraryModularBasicMin
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.consecutiveModularBasic
@@ -26,7 +27,6 @@ import ru.ifmo.fbsat.core.task.modular.basic.consecutive.consecutiveModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasicMin
 import ru.ifmo.fbsat.core.task.modular.extended.consecutive.consecutiveModularExtended
-import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.single.basic.basic
 import ru.ifmo.fbsat.core.task.single.basic.basicMin
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
@@ -36,6 +36,8 @@ import ru.ifmo.fbsat.core.task.single.complete.complete
 import ru.ifmo.fbsat.core.task.single.extended.extended
 import ru.ifmo.fbsat.core.task.single.extended.extendedMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
+import ru.ifmo.fbsat.core.task.single.extforest.extForest
+import ru.ifmo.fbsat.core.task.single.extforest.extForestMin
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.SolverBackend
@@ -52,6 +54,8 @@ enum class Method(val s: String) {
     Extended("extended"),
     ExtendedMin("extended-min"),
     ExtendedMinUB("extended-min-ub"),
+    ExtForest("extforest"),
+    ExtForestMin("extforest-min"),
     Complete("complete"),
     CompleteMin("complete-min"),
     Cegis("cegis"),
@@ -503,6 +507,23 @@ class FbSAT : CliktCommand() {
                 inferrer.extendedMinUB(
                     scenarioTree = tree,
                     maxPlateauWidth = maxPlateauWidth
+                )
+            }
+            Method.ExtForest -> {
+                inferrer.extForest(
+                    scenarioTree = tree,
+                    numberOfStates = requireNotNull(numberOfStates),
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    totalNodes = requireNotNull(maxGuardSize),
+                    maxTransitions = maxTransitions,
+                    maxTotalGuardsSize = maxTotalGuardsSize,
+                    isEncodeReverseImplication = isEncodeReverseImplication
+                )
+            }
+            Method.ExtForestMin -> {
+                inferrer.extForestMin(
+                    scenarioTree = tree,
+                    totalNodes = requireNotNull(maxGuardSize)
                 )
             }
             Method.Complete -> {

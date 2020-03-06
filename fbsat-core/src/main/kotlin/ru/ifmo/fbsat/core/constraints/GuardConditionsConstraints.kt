@@ -18,6 +18,8 @@ import ru.ifmo.fbsat.core.solver.sign
 import ru.ifmo.fbsat.core.task.modular.extended.consecutive.ConsecutiveModularExtendedVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
+import ru.ifmo.fbsat.core.task.single.extforest.ExtForestVariables
+import ru.ifmo.fbsat.core.task.single.extforest.ck2p
 import ru.ifmo.fbsat.core.utils.Globals
 
 fun Solver.declarePositiveGuardConditionsConstraints(extendedVars: ExtendedVariables) {
@@ -421,4 +423,151 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
                     nodeType[c, k, p] eq NodeType.NONE,
                     -nodeValue[c, k, p, u]
                 )
+}
+
+fun Solver.declareExtForestGuardConditionsConstraints(extForestVars: ExtForestVariables) {
+    comment("ExtForest guard conditions constraints")
+    with(extForestVars) {
+        comment("Parent-child relation")
+        // (nodeChild[p] = ch) => (nodeParent[ch] = p)
+        for (p in 1..P)
+            for (ch in nodeChild[p].domain - 0)
+                imply(
+                    nodeChild[p] eq ch,
+                    nodeParent[ch] eq p
+                )
+
+        comment("Only null-transitions have no guard (root is none-typed)")
+        // (transitionDestination[c,k] = 0) <=> (nodeType[p] = NONE)
+        for (c in 1..C)
+            for (k in 1..K) {
+                val p = ck2p(c, k, K)
+                iff(
+                    transitionDestination[c, k] eq 0,
+                    nodeType[p] eq NodeType.NONE
+                )
+            }
+
+        // These constrains seems to be redundant
+        comment("Types constraints for last nodes")
+        clause(nodeType[P] neq NodeType.AND)
+        clause(nodeType[P] neq NodeType.OR)
+        clause(nodeType[P] neq NodeType.NOT)
+        clause(nodeType[P - 1] neq NodeType.AND)
+        clause(nodeType[P - 1] neq NodeType.OR)
+
+        comment("TERMINAL: no children")
+        for (p in 1..P)
+            imply(
+                nodeType[p] eq NodeType.TERMINAL,
+                nodeChild[p] eq 0
+            )
+
+        comment("TERMINAL: input variable")
+        for (p in 1..P)
+            iff(
+                nodeType[p] eq NodeType.TERMINAL,
+                nodeInputVariable[p] neq 0
+            )
+
+        comment("TERMINAL: value")
+        for (p in 1..P)
+            for (x in 1..X)
+                for (u in 1..U)
+                    imply(
+                        nodeInputVariable[p] eq x,
+                        nodeValue[p, u] sign scenarioTree.uniqueInputs[u - 1][x - 1]
+                    )
+
+        comment("AND/OR/NOT: left child")
+        for (p in 1..P)
+            for (t in listOf(NodeType.AND, NodeType.OR, NodeType.NOT))
+                imply(
+                    nodeType[p] eq t,
+                    nodeChild[p] neq 0
+                )
+        for (p in 1 until P)
+            for (t in listOf(NodeType.AND, NodeType.OR))
+                imply(
+                    nodeType[p] eq t,
+                    nodeChild[p] neq P
+                )
+
+        comment("AND/OR: right child")
+        for (p in 1..P)
+            for (ch in nodeChild[p].domain - 0)
+                if (ch <= P - 1)
+                    for (t in listOf(NodeType.AND, NodeType.OR))
+                        implyImply(
+                            nodeType[p] eq t,
+                            nodeChild[p] eq ch,
+                            nodeParent[ch + 1] eq p
+                        )
+
+        comment("AND: value")
+        for (p in 1..P)
+            for (ch in nodeChild[p].domain - 0)
+                if (ch <= P - 1)
+                    for (u in 1..U)
+                        implyImplyIffAnd(
+                            nodeType[p] eq NodeType.AND,
+                            nodeChild[p] eq ch,
+                            nodeValue[p, u],
+                            nodeValue[ch, u],
+                            nodeValue[ch + 1, u]
+                        )
+
+        comment("OR: value")
+        for (p in 1..P)
+            for (ch in nodeChild[p].domain - 0)
+                if (ch <= P - 1)
+                    for (u in 1..U)
+                        implyImplyIffOr(
+                            nodeType[p] eq NodeType.OR,
+                            nodeChild[p] eq ch,
+                            nodeValue[p, u],
+                            nodeValue[ch, u],
+                            nodeValue[ch + 1, u]
+                        )
+
+        comment("NOT: value")
+        for (p in 1..P)
+            for (ch in nodeChild[p].domain - 0)
+                for (u in 1..U)
+                    implyImplyIff(
+                        nodeType[p] eq NodeType.NOT,
+                        nodeChild[p] eq ch,
+                        nodeValue[p, u],
+                        -nodeValue[ch, u]
+                    )
+
+        comment("NONE: propagation")
+        for (p in (C * K + 1) until P)
+            imply(
+                nodeType[p] eq NodeType.NONE,
+                nodeType[p + 1] eq NodeType.NONE
+            )
+
+        comment("NONE: no parent -- only for (C*K+1)..P")
+        for (p in (C * K + 1)..P)
+            iff(
+                nodeType[p] eq NodeType.NONE,
+                nodeParent[p] eq 0
+            )
+
+        comment("NONE: no children")
+        for (p in 1..P)
+            imply(
+                nodeType[p] eq NodeType.NONE,
+                nodeChild[p] eq 0
+            )
+
+        comment("NONE: value is false")
+        for (p in 1..P)
+            for (u in 1..U)
+                imply(
+                    nodeType[p] eq NodeType.NONE,
+                    -nodeValue[p, u]
+                )
+    }
 }
