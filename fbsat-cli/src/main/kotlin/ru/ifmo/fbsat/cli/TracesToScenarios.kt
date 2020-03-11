@@ -11,20 +11,26 @@ import ru.ifmo.fbsat.core.utils.useWith
 import ru.ifmo.fbsat.core.utils.write
 import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
+import kotlin.system.exitProcess
 
-fun main() {
-    // val dir = File("data/sim-lily19")
-    val dir = File("data/sim-lily21")
+fun main(args: Array<String>) {
+    if (args.size != 1) {
+        println("Usage: java -jar convertTracesToScenarios.jar <dir>")
+        exitProcess(42)
+    }
+
+    val dir = File(args[0])
+
     val fileInput = dir.resolve("traces")
-    val fileOutput = dir.resolve("scenarios")
+    val traces = NuSmvTrace.fromFile(fileInput)
+    log.info("Total traces: ${traces.size}")
+    log.info("Traces lengths: ${traces.map { it.states.size }}")
+
+    val fileOutput = dir.resolve("scenarios-k${traces.size}-l${traces.first().states.size}")
     val fileInputNames = dir.resolve("input-names")
     val fileOutputNames = dir.resolve("output-names")
     val inputNames = fileInputNames.readLines()
     val outputNames = fileOutputNames.readLines()
-
-    val traces = NuSmvTrace.fromFile(fileInput)
-    log.info("Total traces: ${traces.size}")
-    log.info("Traces lengths: ${traces.map { it.states.size }}")
 
     val scenarios = traces.map { trace ->
         PositiveScenario.fromTrace(trace, inputNames, outputNames)
