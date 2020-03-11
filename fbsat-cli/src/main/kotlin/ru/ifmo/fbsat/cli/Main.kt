@@ -3,22 +3,19 @@ package ru.ifmo.fbsat.cli
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.context
 import com.github.ajalt.clikt.output.CliktHelpFormatter
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.defaultLazy
-import com.github.ajalt.clikt.parameters.options.flag
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.required
-import com.github.ajalt.clikt.parameters.options.switch
+import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.measureTime
 import ru.ifmo.fbsat.core.automaton.Automaton
+import ru.ifmo.fbsat.core.automaton.OutputValues
 import ru.ifmo.fbsat.core.automaton.minimizeTruthTableGuards
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.arbitraryModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.arbitraryModularBasicMin
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.consecutiveModularBasic
@@ -26,7 +23,6 @@ import ru.ifmo.fbsat.core.task.modular.basic.consecutive.consecutiveModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasicMin
 import ru.ifmo.fbsat.core.task.modular.extended.consecutive.consecutiveModularExtended
-import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.single.basic.basic
 import ru.ifmo.fbsat.core.task.single.basic.basicMin
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
@@ -36,14 +32,7 @@ import ru.ifmo.fbsat.core.task.single.complete.complete
 import ru.ifmo.fbsat.core.task.single.extended.extended
 import ru.ifmo.fbsat.core.task.single.extended.extendedMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
-import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
-import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.SolverBackend
-import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
-import ru.ifmo.fbsat.core.utils.inputNamesPnP
-import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.outputNamesPnP
-import ru.ifmo.fbsat.core.utils.withIndex
+import ru.ifmo.fbsat.core.utils.*
 import java.io.File
 
 enum class Method(val s: String) {
@@ -271,7 +260,9 @@ class FbSAT : CliktCommand() {
         "nothing" to StartStateAlgorithms.NOTHING,
         "zero" to StartStateAlgorithms.ZERO,
         "zeronothing" to StartStateAlgorithms.ZERONOTHING,
-        "any" to StartStateAlgorithms.ANY
+        "any" to StartStateAlgorithms.ANY,
+        "init" to StartStateAlgorithms.INIT,
+        "initnothing" to StartStateAlgorithms.INITNOTHING
     ).default(
         Globals.START_STATE_ALGORITHMS
     )
@@ -351,6 +342,10 @@ class FbSAT : CliktCommand() {
         default = Globals.IS_DEBUG
     )
 
+    val initialOutputValues: String? by option(
+        "--initial-output-values"
+    ).validate { it.matches(Regex("[01]+")) }
+
     init {
         context {
             helpFormatter = CliktHelpFormatter(
@@ -377,6 +372,9 @@ class FbSAT : CliktCommand() {
         Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS = isEncodeDisjunctiveTransitions
         Globals.IS_REUSE_K = isReuseK
         Globals.IS_DEBUG = isDebug
+        Globals.INITIAL_OUTPUT_VALUES = initialOutputValues?.let {
+            OutputValues(it.map { c -> c == '1' }.toList())
+        }
 
         // outDir.deleteRecursively()
         // outDir.walkBottomUp().forEach { if (it != outDir) it.delete() }
@@ -392,6 +390,12 @@ class FbSAT : CliktCommand() {
         log.info("Scenarios: ${tree.scenarios.size}")
         log.info("Elements: ${tree.scenarios.sumBy { it.elements.size }}")
         log.info("Scenario tree size: ${tree.size}")
+
+        Globals.INITIAL_OUTPUT_VALUES?.let {
+            check(tree.outputNames.size == it.size) {
+                "Initial values size must be equal to the number of output variables"
+            }
+        }
 
         val negTree = fileCounterexamples?.let {
             NegativeScenarioTree.fromFile(

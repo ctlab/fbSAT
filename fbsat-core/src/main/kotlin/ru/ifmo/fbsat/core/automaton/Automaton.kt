@@ -12,11 +12,7 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.graph
-import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.mutableListOfNulls
-import ru.ifmo.fbsat.core.utils.random
+import ru.ifmo.fbsat.core.utils.*
 import java.io.File
 
 class Automaton(
@@ -232,17 +228,20 @@ class Automaton(
     ): EvalResult =
         state.eval(inputAction, values)
 
+    private fun outputValues() =
+        Globals.INITIAL_OUTPUT_VALUES ?: OutputValues.zeros(outputNames.size)
+
     fun eval(
         inputActions: Iterable<InputAction>,
         startState: State = initialState,
-        startValues: OutputValues = OutputValues.zeros(outputNames.size)
+        startValues: OutputValues = outputValues()
     ): List<EvalResult> =
         eval(inputActions.asSequence(), startState, startValues).toList()
 
     fun eval(
         inputActions: Sequence<InputAction>,
         startState: State = initialState,
-        startValues: OutputValues = OutputValues.zeros(outputNames.size)
+        startValues: OutputValues = outputValues()
     ): Sequence<EvalResult> {
         var currentState = startState
         var currentValues = startValues
@@ -556,8 +555,7 @@ class Automaton(
                     // Note: INIT algorithm zeroes out all variables
                     "ST"(
                         "Text" to BinaryAlgorithm(
-                            BooleanArray(Z) { false },
-                            BooleanArray(Z) { false }
+                            Globals.INITIAL_OUTPUT_VALUES?.getArray() ?: BooleanArray(Z) { false }
                         ).toST(outputNames)
                     )
                 }

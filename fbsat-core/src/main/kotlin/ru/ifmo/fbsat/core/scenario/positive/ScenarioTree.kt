@@ -11,6 +11,7 @@ import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
+import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import java.io.File
 
@@ -123,7 +124,7 @@ class ScenarioTree(
                 OutputAction(
                     event = null,
                     // event = OutputEvent("INITO"),
-                    values = OutputValues.zeros(scenario.elements.first().outputValues.values.size)
+                    values = Globals.INITIAL_OUTPUT_VALUES ?: OutputValues.zeros(outputNames.size)
                 )
             ),
             parent = null
