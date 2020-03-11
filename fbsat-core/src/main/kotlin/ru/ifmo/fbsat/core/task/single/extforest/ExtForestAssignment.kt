@@ -56,16 +56,6 @@ class ExtForestAssignment(
     @Suppress("PropertyName")
     val N: Int = nodeType.values.count { it != NodeType.NONE }
 
-    init {
-        for (t in NodeType.values()) {
-            println("${t.value}: $t")
-        }
-        println("nodeType = ${nodeType.values.map { it.value }}")
-        println("nodeInputVariable = ${nodeInputVariable.values}")
-        println("nodeParent = ${nodeParent.values}")
-        println("nodeChild = ${nodeChild.values}")
-    }
-
     companion object {
         fun fromRaw(
             raw: RawAssignment,
@@ -131,17 +121,6 @@ fun ExtForestAssignment.toAutomaton(): Automaton =
             }
             check(nodes.isNotEmpty()) { "Empty parse tree for c = $c, k = $k" }
             val G = nodes.size
-            // println("")
-            // println("c = $c, k = $k, G = $G")
-            // println("nodeType = ${MultiArray.create(G) { (p) ->
-            //     nodeType[nodes[p - 1]]
-            // }.values}")
-            // println("parent = ${IntMultiArray.create(G) { (p) ->
-            //     nodeParent[nodes[p - 1]].let { if (it != 0) nodes.indexOf(it) + 1 else 0 }
-            // }.values}")
-            // println("childLeft = ${IntMultiArray.create(G) { (p) ->
-            //     nodeChild[nodes[p - 1]].let { if (it != 0) nodes.indexOf(it) + 1 else 0 }
-            // }.values}")
             ParseTreeGuard(
                 nodeType = MultiArray.create(G) { (p) ->
                     nodeType[nodes[p - 1]]
