@@ -448,7 +448,7 @@ fun Solver.declareExtForestGuardConditionsConstraints(extForestVars: ExtForestVa
                 )
             }
 
-        // These constrains seems to be redundant
+        // Note: these constrains are redundant, but do not make anything bad (minor speedup sometimes)
         comment("Types constraints for last nodes")
         clause(nodeType[P] neq NodeType.AND)
         clause(nodeType[P] neq NodeType.OR)
@@ -540,6 +540,16 @@ fun Solver.declareExtForestGuardConditionsConstraints(extForestVars: ExtForestVa
                         nodeValue[p, u],
                         -nodeValue[ch, u]
                     )
+
+        // Note: this constraint does a major slowdown
+        // comment("NOT: forbid double-negation")
+        // for (p in 1..P)
+        //     for (ch in nodeChild[p].domain - 0 - P)
+        //         implyImply(
+        //             nodeType[p] eq NodeType.NOT,
+        //             nodeChild[p] eq ch,
+        //             nodeType[ch] neq NodeType.NOT
+        //         )
 
         comment("NONE: propagation")
         for (p in (C * K + 1) until P)
