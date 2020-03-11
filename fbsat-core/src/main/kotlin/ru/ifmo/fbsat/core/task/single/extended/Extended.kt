@@ -5,6 +5,7 @@ import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.extendedVars
 import ru.ifmo.fbsat.core.task.optimizeTopDown
+import ru.ifmo.fbsat.core.task.single.basic.basic
 import ru.ifmo.fbsat.core.task.single.basic.basicMin
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
 import ru.ifmo.fbsat.core.task.single.basic.declareBasic
@@ -73,9 +74,10 @@ fun Inferrer.extended(
 
 fun Inferrer.extendedMin(
     scenarioTree: ScenarioTree,
+    numberOfStates: Int? = null,
     maxGuardSize: Int // P
 ): Automaton? {
-    basicMinC(scenarioTree)
+    basicMinC(scenarioTree, start = numberOfStates ?: 1)
     solver.declareExtended(maxGuardSize = maxGuardSize)
     return optimizeN()
 }
@@ -83,6 +85,7 @@ fun Inferrer.extendedMin(
 @Suppress("LocalVariableName")
 fun Inferrer.extendedMinUB(
     scenarioTree: ScenarioTree,
+    numberOfStates: Int? = null,
     start: Int = 1, // P_start
     end: Int = 20, // P_end
     maxPlateauWidth: Int? = null // w, =Inf if null
@@ -91,7 +94,9 @@ fun Inferrer.extendedMinUB(
     require(end >= 1)
     require(start <= end)
 
-    val basicAutomaton = basicMin(scenarioTree) ?: return null
+    val basicAutomaton =
+        (if (numberOfStates != null) basic(scenarioTree, numberOfStates)
+        else basicMin(scenarioTree)) ?: return null
     val C = basicAutomaton.numberOfStates
     val Tmin = basicAutomaton.numberOfTransitions
     var best: Automaton? = null

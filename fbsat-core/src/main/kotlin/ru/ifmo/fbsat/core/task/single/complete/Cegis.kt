@@ -7,8 +7,8 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.task.single.basic.declareBasic
 import ru.ifmo.fbsat.core.task.completeVars
+import ru.ifmo.fbsat.core.task.single.basic.declareBasic
 import ru.ifmo.fbsat.core.task.single.extended.declareExtended
 import ru.ifmo.fbsat.core.task.single.extended.extendedMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
@@ -96,14 +96,15 @@ fun Inferrer.cegis(
 fun Inferrer.cegisMin(
     scenarioTree: ScenarioTree,
     initialNegativeScenarioTree: NegativeScenarioTree? = null,
+    numberOfStates: Int? = null,
     maxGuardSize: Int? = null, // P, search if null
     maxPlateauWidth: Int? = null, // w, =Inf if null
     smvDir: File
 ): Automaton? {
     val extendedAutomaton = if (maxGuardSize == null) {
-        extendedMinUB(scenarioTree, maxPlateauWidth = maxPlateauWidth)
+        extendedMinUB(scenarioTree, numberOfStates = numberOfStates, maxPlateauWidth = maxPlateauWidth)
     } else {
-        extendedMin(scenarioTree, maxGuardSize = maxGuardSize)
+        extendedMin(scenarioTree, numberOfStates = numberOfStates, maxGuardSize = maxGuardSize)
     }
     checkNotNull(extendedAutomaton)
     val C = extendedAutomaton.numberOfStates

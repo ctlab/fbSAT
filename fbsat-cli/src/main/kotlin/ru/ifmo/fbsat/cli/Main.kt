@@ -502,12 +502,14 @@ class FbSAT : CliktCommand() {
             Method.ExtendedMin -> {
                 inferrer.extendedMin(
                     scenarioTree = tree,
+                    numberOfStates = numberOfStates,
                     maxGuardSize = requireNotNull(maxGuardSize)
                 )
             }
             Method.ExtendedMinUB -> {
                 inferrer.extendedMinUB(
                     scenarioTree = tree,
+                    numberOfStates = numberOfStates,
                     maxPlateauWidth = maxPlateauWidth
                 )
             }
@@ -539,6 +541,7 @@ class FbSAT : CliktCommand() {
                 inferrer.cegisMin(
                     scenarioTree = tree,
                     initialNegativeScenarioTree = negTree,
+                    numberOfStates = numberOfStates,
                     maxGuardSize = maxGuardSize,
                     maxPlateauWidth = maxPlateauWidth,
                     smvDir = smvDir
