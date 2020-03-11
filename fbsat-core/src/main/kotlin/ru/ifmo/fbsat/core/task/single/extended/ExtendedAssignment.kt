@@ -77,7 +77,9 @@ class ExtendedAssignment(
                 nodeParent = nodeParent.convert(raw),
                 nodeChild = nodeChild.convert(raw),
                 nodeValue = nodeValue.convert(raw)
-            )
+            ).also {
+                check(it.N == cardinality.totalizer.convert(raw).values.count { b -> b })
+            }
         }
     }
 }

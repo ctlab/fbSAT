@@ -60,7 +60,9 @@ class BasicAssignment(
                 stateAlgorithmTop = stateAlgorithmTop.convert(raw),
                 stateAlgorithmBot = stateAlgorithmBot.convert(raw),
                 mapping = mapping.convert(raw)
-            )
+            ).also {
+                check(it.T == cardinality.totalizer.convert(raw).values.count { b -> b })
+            }
         }
     }
 }
