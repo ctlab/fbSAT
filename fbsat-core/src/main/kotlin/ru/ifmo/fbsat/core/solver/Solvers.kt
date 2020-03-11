@@ -250,7 +250,7 @@ private fun parseDimacsOutput(source: BufferedSource): RawAssignment? {
             .toBooleanArray()
             .let {
                 check(it.isNotEmpty()) { "No model from solver for SAT" }
-                RawAssignment(it)
+                RawAssignment0(it)
             }
         else -> error("Bad answer (neither SAT nor UNSAT) from solver: '$answer'")
     }
@@ -325,7 +325,7 @@ private fun parseIcmsOutput(source: BufferedSource): RawAssignment? =
                 .toBooleanArray()
                 .let {
                     check(it.isNotEmpty()) { "No model from solver for SAT" }
-                    RawAssignment(it)
+                    RawAssignment0(it)
                 }
         }
         "UNSAT" -> null
@@ -370,8 +370,8 @@ class MiniSat : AbstractSolver() {
         }
 
         if (!backend.solve()) return null
-        val model = backend.getModel().drop(1).toBooleanArray()
-        return RawAssignment(model)
+        val model = backend.getModel()
+        return RawAssignment1(model)
     }
 
     override fun _reset() {
@@ -426,8 +426,8 @@ class Cadical : AbstractSolver() {
         }
 
         if (!backend.solve()) return null
-        val model = backend.getModel().drop(1).toBooleanArray()
-        return RawAssignment(model)
+        val model = backend.getModel()
+        return RawAssignment1(model)
     }
 
     fun getValue(lit: Literal): Boolean {

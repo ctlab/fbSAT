@@ -6,11 +6,23 @@ import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import com.github.lipen.multiarray.mapToInt
 
-class RawAssignment(private val data: BooleanArray) {
-    operator fun get(v: Literal): Boolean = when (v) {
+interface RawAssignment {
+    operator fun get(v: Literal): Boolean
+}
+
+class RawAssignment0(private val data: BooleanArray) : RawAssignment {
+    override operator fun get(v: Literal): Boolean = when (v) {
         Solver.trueVariable -> true
         Solver.falseVariable -> false
         else -> data[v - 1]
+    }
+}
+
+class RawAssignment1(private val data: BooleanArray) : RawAssignment {
+    override operator fun get(v: Literal): Boolean = when (v) {
+        Solver.trueVariable -> true
+        Solver.falseVariable -> false
+        else -> data[v]
     }
 }
 
