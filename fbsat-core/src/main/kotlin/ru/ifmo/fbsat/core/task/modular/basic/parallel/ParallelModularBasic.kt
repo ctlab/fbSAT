@@ -74,12 +74,12 @@ fun Inferrer.parallelModularBasicMinC(
         )
         val (result, runningTime) = measureTimeWithResult { inferParallelModularBasic() }
         if (result != null) {
-            log.success("ParallelModularBasicMin: C = $C -> SAT in %.2f s.".format(runningTime.seconds))
+            log.success("ParallelModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
             log.info("ParallelModularBasicMin: minimal C = $C")
             best = result
             break
         } else {
-            log.failure("ParallelModularBasicMin: C = $C -> UNSAT in %.2f s.".format(runningTime.seconds))
+            log.failure("ParallelModularBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
         }
     }
     return checkNotNull(best) { "ParallelModularBasicMin: automaton not found." }

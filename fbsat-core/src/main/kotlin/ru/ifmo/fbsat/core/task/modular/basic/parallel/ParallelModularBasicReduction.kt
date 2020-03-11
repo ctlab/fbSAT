@@ -46,7 +46,7 @@ fun Solver.declareParallelModularBasic(
     val nvarDiff = numberOfVariables - nvarStart
     val nconDiff = numberOfClauses - nconStart
     log.info(
-        "Done declaring parallel modular basic variables ($nvarDiff) and constraints ($nconDiff) in %.2f s."
+        "Done declaring parallel modular basic variables ($nvarDiff) and constraints ($nconDiff) in %.3f s."
             .format(timeSince(timeStart).seconds)
     )
 }

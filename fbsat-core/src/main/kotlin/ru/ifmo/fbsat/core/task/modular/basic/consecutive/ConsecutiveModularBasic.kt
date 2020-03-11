@@ -74,12 +74,12 @@ fun Inferrer.consecutiveModularBasicMinC(
         )
         val (result, runningTime) = measureTimeWithResult { inferConsecutiveModularBasic() }
         if (result != null) {
-            log.success("ConsecutiveModularBasicMin: C = $C -> SAT in %.2f s.".format(runningTime.seconds))
+            log.success("ConsecutiveModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
             log.info("ConsecutiveModularBasicMin: minimal C = $C")
             best = result
             break
         } else {
-            log.failure("ConsecutiveModularBasicMin: C = $C -> UNSAT in %.2f s.".format(runningTime.seconds))
+            log.failure("ConsecutiveModularBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
         }
     }
     return checkNotNull(best) { "ConsecutiveModularBasicMin: automaton not found." }

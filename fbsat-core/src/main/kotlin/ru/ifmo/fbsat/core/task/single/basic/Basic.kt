@@ -74,12 +74,12 @@ fun Inferrer.basicMinC(
         solver.declareBasic(scenarioTree, numberOfStates = C)
         val (result, runningTime) = measureTimeWithResult { inferBasic() }
         if (result != null) {
-            log.success("BasicMin: C = $C -> SAT in %.2f s.".format(runningTime.seconds))
+            log.success("BasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
             log.info("BasicMin: minimal C = $C")
             best = result
             break
         } else {
-            log.failure("BasicMin: C = $C -> UNSAT in %.2f s.".format(runningTime.seconds))
+            log.failure("BasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
         }
     }
     return checkNotNull(best) { "BasicMin: automaton not found." }

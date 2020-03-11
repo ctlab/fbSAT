@@ -16,9 +16,9 @@ fun <T : Any> optimizeTopDown(
 
     val (initialResult, runningTime) = measureTimeWithResult { nextInitial(start) }
     if (initialResult != null) {
-        log.success("optimizeTopDown: <= $start -> ${query(initialResult)} in %.2f s".format(runningTime.seconds))
+        log.success("optimizeTopDown: <= $start -> ${query(initialResult)} in %.3f s".format(runningTime.seconds))
     } else {
-        log.failure("optimizeTopDown: <= $start -> UNSAT in %.2f s.".format(runningTime.seconds))
+        log.failure("optimizeTopDown: <= $start -> UNSAT in %.3f s.".format(runningTime.seconds))
         return null
     }
 
@@ -28,10 +28,10 @@ fun <T : Any> optimizeTopDown(
         if (x <= end) break
         val (result, runningTime) = measureTimeWithResult { next(x) }
         if (result != null) {
-            log.success("optimizeTopDown: < $x -> ${query(result)} in %.2f s".format(runningTime.seconds))
+            log.success("optimizeTopDown: < $x -> ${query(result)} in %.3f s".format(runningTime.seconds))
             best = result
         } else {
-            log.failure("optimizeTopDown: < $x -> UNSAT in %.2f s.".format(runningTime.seconds))
+            log.failure("optimizeTopDown: < $x -> UNSAT in %.3f s.".format(runningTime.seconds))
             break
         }
     }

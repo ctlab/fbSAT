@@ -47,7 +47,7 @@ fun Solver.declareComplete(
     val nvarDiff = numberOfVariables - nvarStart
     val nconDiff = numberOfClauses - nconStart
     log.info(
-        "Done declaring complete variables ($nvarDiff) and constraints ($nconDiff) in %.2f s."
+        "Done declaring complete variables ($nvarDiff) and constraints ($nconDiff) in %.3f s."
             .format(timeSince(timeStart).seconds)
     )
 }

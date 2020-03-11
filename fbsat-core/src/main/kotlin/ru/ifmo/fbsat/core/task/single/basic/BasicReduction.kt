@@ -42,7 +42,7 @@ fun Solver.declareBasic(
     val nvarDiff = numberOfVariables - nvarStart
     val nconDiff = numberOfClauses - nconStart
     log.info(
-        "Done declaring Basic variables ($nvarDiff) and constraints ($nconDiff) in %.2f s."
+        "Done declaring Basic variables ($nvarDiff) and constraints ($nconDiff) in %.3f s."
             .format(timeSince(timeStart).seconds)
     )
 }
