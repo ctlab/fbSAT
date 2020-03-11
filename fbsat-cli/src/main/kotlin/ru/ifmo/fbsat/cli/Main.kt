@@ -32,7 +32,16 @@ import ru.ifmo.fbsat.core.task.single.complete.complete
 import ru.ifmo.fbsat.core.task.single.extended.extended
 import ru.ifmo.fbsat.core.task.single.extended.extendedMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
-import ru.ifmo.fbsat.core.utils.*
+import ru.ifmo.fbsat.core.task.single.extforest.extForest
+import ru.ifmo.fbsat.core.task.single.extforest.extForestMin
+import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
+import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.SolverBackend
+import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
+import ru.ifmo.fbsat.core.utils.inputNamesPnP
+import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.outputNamesPnP
+import ru.ifmo.fbsat.core.utils.withIndex
 import java.io.File
 
 enum class Method(val s: String) {
@@ -41,6 +50,8 @@ enum class Method(val s: String) {
     Extended("extended"),
     ExtendedMin("extended-min"),
     ExtendedMinUB("extended-min-ub"),
+    ExtForest("extforest"),
+    ExtForestMin("extforest-min"),
     Complete("complete"),
     CompleteMin("complete-min"),
     Cegis("cegis"),
@@ -511,6 +522,23 @@ class FbSAT : CliktCommand() {
                     scenarioTree = tree,
                     numberOfStates = numberOfStates,
                     maxPlateauWidth = maxPlateauWidth
+                )
+            }
+            Method.ExtForest -> {
+                inferrer.extForest(
+                    scenarioTree = tree,
+                    numberOfStates = requireNotNull(numberOfStates),
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    totalNodes = requireNotNull(maxGuardSize),
+                    maxTransitions = maxTransitions,
+                    maxTotalGuardsSize = maxTotalGuardsSize,
+                    isEncodeReverseImplication = isEncodeReverseImplication
+                )
+            }
+            Method.ExtForestMin -> {
+                inferrer.extForestMin(
+                    scenarioTree = tree,
+                    totalNodes = requireNotNull(maxGuardSize)
                 )
             }
             Method.Complete -> {

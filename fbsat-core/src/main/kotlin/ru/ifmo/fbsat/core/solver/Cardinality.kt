@@ -4,8 +4,8 @@ import java.util.ArrayDeque
 import java.util.Deque
 
 class Cardinality(
-    private val solver: Solver,
-    private var totalizer: BoolVarArray
+    val totalizer: BoolVarArray,
+    private val solver: Solver
 ) {
     var upperBound: Int? = null // sum(totalizer) <= upperBound
         private set
@@ -28,8 +28,8 @@ class Cardinality(
 
 fun Solver.declareCardinality(variables: Iterable<Int>): Cardinality =
     Cardinality(
-        solver = this,
-        totalizer = declareTotalizer(variables)
+        totalizer = declareTotalizer(variables),
+        solver = this
     )
 
 fun Solver.declareCardinality(variables: Sequence<Int>): Cardinality =
