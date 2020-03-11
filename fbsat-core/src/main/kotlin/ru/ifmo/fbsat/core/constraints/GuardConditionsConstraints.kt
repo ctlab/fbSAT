@@ -569,5 +569,14 @@ fun Solver.declareExtForestGuardConditionsConstraints(extForestVars: ExtForestVa
                     nodeType[p] eq NodeType.NONE,
                     -nodeValue[p, u]
                 )
+
+        comment("BFS")
+        for (p in 1..P)
+            for (ch in nodeChild[p].domain - 0)
+                if (ch < P)
+                    implyAnd(nodeParent[ch] eq p, sequence {
+                        for (s in 1 until p)
+                            yield(nodeParent[ch + 1] neq s)
+                    })
     }
 }
