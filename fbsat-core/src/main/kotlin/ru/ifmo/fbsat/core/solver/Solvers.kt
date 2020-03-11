@@ -338,7 +338,7 @@ class MiniSat : AbstractSolver() {
 
     override fun newLiteral(): Literal {
         ++numberOfVariables
-        return backend.newVariable()
+        return backend.newVariable(eliminate = false)
     }
 
     override fun _clause(literals: List<Literal>) {
