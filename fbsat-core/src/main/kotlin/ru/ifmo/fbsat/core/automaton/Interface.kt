@@ -44,9 +44,14 @@ inline class InputValues(val values: List<Boolean>) {
 }
 
 inline class OutputValues(val values: List<Boolean>) {
+    val size: Int
+        get() = values.size
+
     operator fun get(index: Int): Boolean {
         return values[index]
     }
+
+    fun getArray() = values.toBooleanArray()
 
     // override fun toString(): String {
     //     return values.toString()

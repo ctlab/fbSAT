@@ -1,16 +1,6 @@
 package ru.ifmo.fbsat.core.constraints
 
-import ru.ifmo.fbsat.core.solver.BoolVarArray
-import ru.ifmo.fbsat.core.solver.IntVarArray
-import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.atLeastOne
-import ru.ifmo.fbsat.core.solver.atMostOne
-import ru.ifmo.fbsat.core.solver.clause
-import ru.ifmo.fbsat.core.solver.exactlyOne
-import ru.ifmo.fbsat.core.solver.iff
-import ru.ifmo.fbsat.core.solver.iffAnd
-import ru.ifmo.fbsat.core.solver.iffOr
-import ru.ifmo.fbsat.core.solver.imply
+import ru.ifmo.fbsat.core.solver.*
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
@@ -203,6 +193,26 @@ private fun Solver.declareAutomatonStructureConstraintsInputless(
         }
         StartStateAlgorithms.ANY -> {
             comment("Start state algorithms may be arbitrary")
+        }
+        StartStateAlgorithms.INIT -> {
+            comment("Start state algorithms are the same as init state algorithms")
+            for (z in 1..Z) {
+                val initVal = Globals.INITIAL_OUTPUT_VALUES!![z - 1]
+                val botLiteral = stateAlgorithmBot[1, z]
+                val topLiteral = stateAlgorithmTop[1, z]
+                clause(if (initVal) botLiteral else -botLiteral)
+                clause(if (initVal) topLiteral else -topLiteral)
+            }
+        }
+        StartStateAlgorithms.INITNOTHING -> {
+            comment("Start state does not change initial values")
+            for (z in 1..Z) {
+                val initVal = Globals.INITIAL_OUTPUT_VALUES!![z - 1]
+                if (initVal)
+                    clause(stateAlgorithmTop[1, z])
+                else
+                    clause(-stateAlgorithmBot[1, z])
+            }
         }
     }.exhaustive
 
