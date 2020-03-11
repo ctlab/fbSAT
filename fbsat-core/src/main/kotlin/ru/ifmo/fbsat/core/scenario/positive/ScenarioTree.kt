@@ -124,7 +124,7 @@ class ScenarioTree(
                 OutputAction(
                     event = null,
                     // event = OutputEvent("INITO"),
-                    values = Globals.INITIAL_OUTPUT_VALUES ?: OutputValues.zeros(outputNames.size)
+                    values = Globals.INITIAL_OUTPUT_VALUES
                 )
             ),
             parent = null

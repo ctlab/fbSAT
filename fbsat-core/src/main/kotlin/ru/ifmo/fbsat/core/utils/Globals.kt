@@ -3,6 +3,7 @@ package ru.ifmo.fbsat.core.utils
 import org.redundent.kotlin.xml.PrintOptions
 import ru.ifmo.fbsat.core.automaton.OutputValues
 import ru.ifmo.fbsat.core.solver.VarEncoding
+import kotlin.properties.Delegates
 
 enum class SolverBackend {
     DEFAULT, INCREMENTAL, FILE, MINISAT, CADICAL;
@@ -17,7 +18,7 @@ enum class StartStateAlgorithms {
 }
 
 object Globals {
-    var INITIAL_OUTPUT_VALUES: OutputValues? = null
+    var INITIAL_OUTPUT_VALUES: OutputValues by Delegates.notNull()
     var EPSILON_OUTPUT_EVENTS: EpsilonOutputEvents = EpsilonOutputEvents.ONLYSTART
     var START_STATE_ALGORITHMS: StartStateAlgorithms = StartStateAlgorithms.ZERO
     var IS_FORBID_OR: Boolean = false

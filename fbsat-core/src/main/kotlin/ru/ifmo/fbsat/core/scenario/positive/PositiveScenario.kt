@@ -43,7 +43,6 @@ data class PositiveScenario(
 
         fun fromString(s: String, preprocess: Boolean = true): PositiveScenario {
             var lastOutputValues = Globals.INITIAL_OUTPUT_VALUES
-                ?: OutputValues.zeros(regexOutputValues.find(s)!!.groups[1]!!.value.length)
             val elements: List<ScenarioElement> = s
                 .splitToSequence(";")
                 .map { it.trim() }

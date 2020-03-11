@@ -228,20 +228,17 @@ class Automaton(
     ): EvalResult =
         state.eval(inputAction, values)
 
-    private fun outputValues() =
-        Globals.INITIAL_OUTPUT_VALUES ?: OutputValues.zeros(outputNames.size)
-
     fun eval(
         inputActions: Iterable<InputAction>,
         startState: State = initialState,
-        startValues: OutputValues = outputValues()
+        startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES
     ): List<EvalResult> =
         eval(inputActions.asSequence(), startState, startValues).toList()
 
     fun eval(
         inputActions: Sequence<InputAction>,
         startState: State = initialState,
-        startValues: OutputValues = outputValues()
+        startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES
     ): Sequence<EvalResult> {
         var currentState = startState
         var currentValues = startValues

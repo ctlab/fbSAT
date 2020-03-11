@@ -372,9 +372,6 @@ class FbSAT : CliktCommand() {
         Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS = isEncodeDisjunctiveTransitions
         Globals.IS_REUSE_K = isReuseK
         Globals.IS_DEBUG = isDebug
-        Globals.INITIAL_OUTPUT_VALUES = initialOutputValues?.let {
-            OutputValues(it.map { c -> c == '1' }.toList())
-        }
 
         // outDir.deleteRecursively()
         // outDir.walkBottomUp().forEach { if (it != outDir) it.delete() }
@@ -385,6 +382,11 @@ class FbSAT : CliktCommand() {
         val outputNames = fileOutputNames?.readLines() ?: outputNamesPnP
         log.info("Input names: $inputNames")
         log.info("Output names: $outputNames")
+
+        Globals.INITIAL_OUTPUT_VALUES = if (initialOutputValues != null)
+            OutputValues(initialOutputValues!!.map { c -> c == '1' }.toList())
+        else
+            OutputValues.zeros(outputNames.size)
 
         val tree = ScenarioTree.fromFile(fileScenarios, inputNames, outputNames)
         log.info("Scenarios: ${tree.scenarios.size}")
