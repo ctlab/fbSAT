@@ -2,7 +2,6 @@ package ru.ifmo.fbsat.core.utils
 
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.TimeSpan
-import com.soywiz.klock.microseconds
 import okio.BufferedSink
 import okio.BufferedSource
 import okio.Source

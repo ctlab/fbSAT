@@ -8,7 +8,6 @@ import ru.ifmo.fbsat.core.task.basicVars
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeSince
 
-
 fun Solver.declareExtForest(
     totalNodes: Int, // P
     maxTotalGuardsSize: Int? = null // N, unconstrained if null

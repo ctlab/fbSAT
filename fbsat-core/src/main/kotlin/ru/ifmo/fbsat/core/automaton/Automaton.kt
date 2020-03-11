@@ -12,7 +12,11 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.utils.*
+import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.graph
+import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mutableListOfNulls
+import ru.ifmo.fbsat.core.utils.random
 import java.io.File
 
 class Automaton(

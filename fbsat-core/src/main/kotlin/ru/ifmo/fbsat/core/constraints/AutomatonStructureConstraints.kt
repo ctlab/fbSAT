@@ -1,6 +1,16 @@
 package ru.ifmo.fbsat.core.constraints
 
-import ru.ifmo.fbsat.core.solver.*
+import ru.ifmo.fbsat.core.solver.BoolVarArray
+import ru.ifmo.fbsat.core.solver.IntVarArray
+import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.atLeastOne
+import ru.ifmo.fbsat.core.solver.atMostOne
+import ru.ifmo.fbsat.core.solver.clause
+import ru.ifmo.fbsat.core.solver.exactlyOne
+import ru.ifmo.fbsat.core.solver.iff
+import ru.ifmo.fbsat.core.solver.iffAnd
+import ru.ifmo.fbsat.core.solver.iffOr
+import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables

@@ -11,7 +11,7 @@ class BinaryAlgorithm(val algorithm0: BooleanArray, val algorithm1: BooleanArray
     constructor(algorithm0: Collection<Boolean>, algorithm1: Collection<Boolean>) :
         this(algorithm0.toBooleanArray(), algorithm1.toBooleanArray())
 
-    constructor(anyway: BooleanArray): this(anyway, anyway)
+    constructor(anyway: BooleanArray) : this(anyway, anyway)
 
     init {
         require(algorithm0.size == algorithm1.size) {

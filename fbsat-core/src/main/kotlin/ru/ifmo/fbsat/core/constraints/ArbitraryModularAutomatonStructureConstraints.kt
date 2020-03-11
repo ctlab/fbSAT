@@ -1,6 +1,13 @@
 package ru.ifmo.fbsat.core.constraints
 
-import ru.ifmo.fbsat.core.solver.*
+import ru.ifmo.fbsat.core.solver.BoolVarArray
+import ru.ifmo.fbsat.core.solver.IntVarArray
+import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.clause
+import ru.ifmo.fbsat.core.solver.iff
+import ru.ifmo.fbsat.core.solver.iffAnd
+import ru.ifmo.fbsat.core.solver.iffOr
+import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicVariables
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals

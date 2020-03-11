@@ -4,8 +4,16 @@ import ru.ifmo.fbsat.core.automaton.InputEvent
 import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.automaton.OutputEvent
 import ru.ifmo.fbsat.core.automaton.OutputValues
-import ru.ifmo.fbsat.core.scenario.*
-import ru.ifmo.fbsat.core.utils.*
+import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.OutputAction
+import ru.ifmo.fbsat.core.scenario.Scenario
+import ru.ifmo.fbsat.core.scenario.ScenarioElement
+import ru.ifmo.fbsat.core.scenario.preprocessed
+import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.sourceAutoGzip
+import ru.ifmo.fbsat.core.utils.toBooleanList
+import ru.ifmo.fbsat.core.utils.useLines
 import java.io.File
 
 data class PositiveScenario(

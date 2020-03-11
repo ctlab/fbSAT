@@ -70,13 +70,13 @@ class TruthTableGuard(
     }
 
     override fun toSimpleString(): String =
-        // cnf.joinToString(" & ") { clause ->
-        //     val s = clause.joinToString(" | ") { literal -> inputNames[literal.absoluteValue - 1] }
-        //     if (clause.size == 1)
-        //         s
-        //     else
-        //         "($s)"
-        // }
+    // cnf.joinToString(" & ") { clause ->
+    //     val s = clause.joinToString(" | ") { literal -> inputNames[literal.absoluteValue - 1] }
+    //     if (clause.size == 1)
+    //         s
+    //     else
+    //         "($s)"
+    // }
         // "[${truthTable.values.toList().toBinaryString()}]"
         "[TruthTable]"
 
