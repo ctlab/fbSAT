@@ -441,6 +441,7 @@ class Cadical : AbstractSolver() {
     override fun _reset() {
         // TODO: proper backend.reset()
         backend = JCadical()
+        backend.setLongOption("--elim=0")
         buffer.clear()
     }
 
