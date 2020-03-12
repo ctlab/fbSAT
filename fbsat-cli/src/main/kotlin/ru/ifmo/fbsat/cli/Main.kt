@@ -183,10 +183,10 @@ class FbSAT : CliktCommand() {
 
     val solverCmd: String by option(
         "--solver",
-        help = "SAT-solver",
+        help = "SAT-solver command for FileSolver backend (Note: use %s as a placeholder for filename)",
         metavar = "<cmd>"
     ).default(
-        "incremental-cryptominisat"
+        "cadical %s"
     )
 
     val solverBackend: SolverBackend by option(
