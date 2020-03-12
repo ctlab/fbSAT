@@ -19,6 +19,7 @@ toc::[]
 
 To build fbSAT, use shipped gradle wrapper:
 
+[source,bash]
 ----
 ## on Unix:
 ./gradlew
@@ -33,6 +34,7 @@ By default, it runs `clean build installDist` gradle tasks.
 
 Gradle task `installDist` produces fbSAT binaries in `fbsat-cli/build/install/fbSAT/bin/` directory:
 
+[source,bash]
 ----
 ## on Unix:
 ./fbsat-cli/build/install/cli/bin/fbSAT -h
@@ -43,6 +45,7 @@ fbsat-cli\build\install\cli\bin\fbSAT.bat -h
 
 There are also simple binaries (link:fbsat[] and link:fbsat.bat[]), which first build (`gradlew installDist`) and then run fbSAT with specified arguments.
 
+[source,bash]
 ----
 ## on Unix:
 ./fbsat -h
