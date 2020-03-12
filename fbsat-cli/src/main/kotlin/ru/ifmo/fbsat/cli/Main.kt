@@ -283,6 +283,13 @@ class FbSAT : CliktCommand() {
         Globals.START_STATE_ALGORITHMS
     )
 
+    val initialOutputValues: String? by option(
+        "--initial-output-values",
+        help = "Initial output values"
+    ).validate {
+        it.matches(Regex("[01]+"))
+    }
+
     val isEncodeReverseImplication: Boolean by option(
         "--encode-reverse-implication",
         help = "Encode reverse implication"
@@ -357,10 +364,6 @@ class FbSAT : CliktCommand() {
     ).flag(
         default = Globals.IS_DEBUG
     )
-
-    val initialOutputValues: String? by option(
-        "--initial-output-values"
-    ).validate { it.matches(Regex("[01]+")) }
 
     init {
         context {
