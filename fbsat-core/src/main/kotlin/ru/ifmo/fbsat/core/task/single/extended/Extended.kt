@@ -36,12 +36,12 @@ fun Inferrer.optimizeN(start: Int? = null, end: Int = 0): Automaton? {
     return optimizeTopDown(
         start = start,
         end = end,
-        nextInitial = { T ->
-            vars.cardinality.updateUpperBoundLessThanOrEqual(T)
+        nextInitial = { N ->
+            vars.cardinality.updateUpperBoundLessThanOrEqual(N)
             inferExtended()
         },
-        next = { T ->
-            vars.cardinality.updateUpperBoundLessThan(T)
+        next = { N ->
+            vars.cardinality.updateUpperBoundLessThan(N)
             inferExtended()
         },
         query = { it.totalGuardsSize }

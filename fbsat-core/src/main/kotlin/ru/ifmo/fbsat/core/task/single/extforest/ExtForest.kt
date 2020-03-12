@@ -33,12 +33,12 @@ fun Inferrer.optimizeN_Forest(start: Int? = null, end: Int = 0): Automaton? {
     return optimizeTopDown(
         start = start,
         end = end,
-        nextInitial = { T ->
-            vars.cardinality.updateUpperBoundLessThanOrEqual(T)
+        nextInitial = { N ->
+            vars.cardinality.updateUpperBoundLessThanOrEqual(N)
             inferExtForest()
         },
-        next = { T ->
-            vars.cardinality.updateUpperBoundLessThan(T)
+        next = { N ->
+            vars.cardinality.updateUpperBoundLessThan(N)
             inferExtForest()
         },
         query = { it.totalGuardsSize }
