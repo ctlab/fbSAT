@@ -21,6 +21,8 @@ import java.io.File
 fun Inferrer.performCegis(
     smvDir: File
 ): Automaton? {
+    log.info("Performing CEGIS...")
+
     // Copy smv files to output directory
     smvDir.copyRecursively(outDir, overwrite = true)
 
@@ -30,11 +32,17 @@ fun Inferrer.performCegis(
     lateinit var lastNegativeScenarios: List<NegativeScenario>
 
     for (iterationNumber in 1 until 10000) {
-        log.info("CEGIS iteration #$iterationNumber")
+        // log.info("CEGIS iteration #$iterationNumber")
+        val timeStart = PerformanceCounter.reference
+
         // Update to take into account possible extension of the negative scenario tree
         solver.updateNegativeReduction()
         // Infer update
-        val automaton: Automaton = inferExtended() ?: return null
+        val automaton = inferExtended()
+        if (automaton == null) {
+            log.failure("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
+            return null
+        }
         // ==============
         // Dump intermediate automaton
         automaton.dump(outDir, "_automaton_iter%04d".format(iterationNumber))
@@ -42,6 +50,7 @@ fun Inferrer.performCegis(
         // Verify automaton with NuSMV
         val counterexamples = automaton.verifyWithNuSMV(outDir)
         if (counterexamples.isEmpty()) {
+            log.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
             log.success("These is no counterexamples, nice!")
             return automaton
         }
@@ -65,6 +74,7 @@ fun Inferrer.performCegis(
             error("Stale")
         }
         lastNegativeScenarios = negativeScenarios
+        log.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
     }
     return null
 }
