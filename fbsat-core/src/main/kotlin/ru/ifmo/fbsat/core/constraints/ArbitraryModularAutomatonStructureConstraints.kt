@@ -82,7 +82,7 @@ private fun Solver.declareModuleAutomatonStructureConstraints(
         StartStateAlgorithms.INIT -> {
             comment("Start state does the same as init state")
             for (z in 1..Z) {
-                val initVal = Globals.INITIAL_OUTPUT_VALUES!![z - 1]
+                val initVal = Globals.INITIAL_OUTPUT_VALUES[z - 1]
                 val botLiteral = stateAlgorithmBot[1, z]
                 val topLiteral = stateAlgorithmTop[1, z]
                 clause(if (initVal) botLiteral else -botLiteral)
@@ -92,7 +92,7 @@ private fun Solver.declareModuleAutomatonStructureConstraints(
         StartStateAlgorithms.INITNOTHING -> {
             comment("Start state does not change initial values")
             for (z in 1..Z) {
-                val initVal = Globals.INITIAL_OUTPUT_VALUES!![z - 1]
+                val initVal = Globals.INITIAL_OUTPUT_VALUES[z - 1]
                 if (initVal)
                     clause(stateAlgorithmTop[1, z])
                 else

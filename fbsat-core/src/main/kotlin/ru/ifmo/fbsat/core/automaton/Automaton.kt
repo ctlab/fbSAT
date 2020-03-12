@@ -556,7 +556,7 @@ class Automaton(
                     // Note: INIT algorithm zeroes out all variables
                     "ST"(
                         "Text" to BinaryAlgorithm(
-                            Globals.INITIAL_OUTPUT_VALUES?.getArray() ?: BooleanArray(Z) { false }
+                            Globals.INITIAL_OUTPUT_VALUES.getArray()
                         ).toST(outputNames)
                     )
                 }

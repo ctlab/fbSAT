@@ -207,7 +207,7 @@ private fun Solver.declareAutomatonStructureConstraintsInputless(
         StartStateAlgorithms.INIT -> {
             comment("Start state algorithms are the same as init state algorithms")
             for (z in 1..Z) {
-                val initVal = Globals.INITIAL_OUTPUT_VALUES!![z - 1]
+                val initVal = Globals.INITIAL_OUTPUT_VALUES[z - 1]
                 val botLiteral = stateAlgorithmBot[1, z]
                 val topLiteral = stateAlgorithmTop[1, z]
                 clause(if (initVal) botLiteral else -botLiteral)
@@ -217,7 +217,7 @@ private fun Solver.declareAutomatonStructureConstraintsInputless(
         StartStateAlgorithms.INITNOTHING -> {
             comment("Start state does not change initial values")
             for (z in 1..Z) {
-                val initVal = Globals.INITIAL_OUTPUT_VALUES!![z - 1]
+                val initVal = Globals.INITIAL_OUTPUT_VALUES[z - 1]
                 if (initVal)
                     clause(stateAlgorithmTop[1, z])
                 else
