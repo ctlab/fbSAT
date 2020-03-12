@@ -335,7 +335,7 @@ class MiniSat : AbstractSolver() {
 
     override fun newLiteral(): Literal {
         ++numberOfVariables
-        return backend.newVariable(eliminate = false)
+        return backend.newVariable()
     }
 
     override fun _clause(literals: List<Literal>) {
@@ -343,12 +343,7 @@ class MiniSat : AbstractSolver() {
             buffer.write(x.toString()).write(" ")
         buffer.writeln("0")
 
-        when (literals.size) {
-            1 -> backend.addClause(literals[0])
-            2 -> backend.addClause(literals[0], literals[1])
-            3 -> backend.addClause(literals[0], literals[1], literals[2])
-            else -> backend.addClause(*literals.toIntArray())
-        }
+        backend.addClause_(literals.toIntArray())
     }
 
     override fun _comment(comment: String) {
@@ -399,12 +394,7 @@ class Cadical : AbstractSolver() {
             buffer.write(x.toString()).write(" ")
         buffer.writeln("0")
 
-        when (literals.size) {
-            1 -> backend.addClause(literals[0])
-            2 -> backend.addClause(literals[0], literals[1])
-            3 -> backend.addClause(literals[0], literals[1], literals[2])
-            else -> backend.addClause(literals.toIntArray())
-        }
+        backend.addClause_(literals.toIntArray())
     }
 
     override fun _comment(comment: String) {
