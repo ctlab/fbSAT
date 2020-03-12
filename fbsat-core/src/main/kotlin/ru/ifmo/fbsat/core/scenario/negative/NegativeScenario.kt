@@ -75,7 +75,7 @@ data class NegativeScenario(
             return if (loopPosition == 1) {
                 log.warn("loopPosition = 1, duplicating ${elements.size} elements...")
                 // Duplicate elements
-                NegativeScenario(elements + elements, 1)
+                NegativeScenario(elements + elements, elements.size)
             } else {
                 // Note: subtract 1. Just because.
                 NegativeScenario(elements, loopPosition - 1)
