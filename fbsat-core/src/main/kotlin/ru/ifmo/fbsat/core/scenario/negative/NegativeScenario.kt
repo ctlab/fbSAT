@@ -73,7 +73,7 @@ data class NegativeScenario(
 
             val loopPosition = counterexample.loopPosition!!
             return if (loopPosition == 1) {
-                log.warn("loopPositive = 1, duplicating ${elements.size} elements...")
+                log.warn("loopPosition = 1, duplicating ${elements.size} elements...")
                 // Duplicate elements
                 NegativeScenario(elements + elements, 1)
             } else {
