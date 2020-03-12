@@ -49,22 +49,38 @@ fbSAT -h
 Usage: fbsat [OPTIONS]
 
 Options:
-* -i, --scenarios <path>             File with scenarios (required)
-  --smvdir <path>                    Directory with SMV files (default: data/pnp/smv)
-  -o, --outdir <path>                Output directory (default: out/2019-06-16THH:06:SS)
-* -m, --method <method>              Method to use (required)
-  -C <int>                           Number of automaton states
-  -K <int>                           Maximum number of transitions from each state
-  -P <int>                           Maximum guard size (number of parse tree nodes)
-  -T <int>                           Upper bound for the total number of transitions
-  -N <int>                           Upper bound for the total size of guards
-  -w <int>                           Maximum plateau width
-  -M <int>                           Number of modules
-  --solver <cmd>                     SAT-solver (default: incremental-cryptominisat)
-  --incremental / --no-incremental   Use IncrementalSolver backend
-  --bfs-automaton / --no-bfs-automat
+* -i, --scenarios <path>                             File with scenarios (required)
+  --smvdir <path>                                    Directory with SMV files (default: data/pnp/smv)
+  -o, --outdir <path>                                Output directory
+  --input-names FILE                                 File with input names [defaults to PnP names]
+  --output-names FILE                                File with output names [defaults to PnP names]
+* -m, --method <method>                              Method to use (required)
+  -C <int>                                           Number of automaton states
+  -K <int>                                           Maximum number of transitions from each state
+  -P <int>                                           Maximum guard size (number of parse tree nodes)
+  -T <int>                                           Upper bound for the total number of transitions
+  -N <int>                                           Upper bound for the total size of guards
+  -w <int>                                           Maximum plateau width
+  -M <int>                                           Number of modules
+  --solver <cmd>                                     SAT-solver for FileSolver backend (use %s placeholder for filename) (default: cadical %s)
+  --icms, --filesolver, --minisat, --cadical         Solver backend (default: IncrementalSolver)
+  --bfs-automaton / --no-bfs-automaton
   --bfs-guard / --no-bfs-guard
-  -h, --help                         Show this message and exit
+  --epsilon-output-events
+    [start|onlystart|none]                           Epsilon output events (default: ONLYSTART)
+  --start-state-algorithms
+    [nothing|zero|zeronothing|any|init|initnothing]  Start state algorithms (default: ZERO)
+  --initial-output-values <[01]+>                    Initial output values (as a bitstring)
+  --encode-reverse-implication                       Encode reverse implication
+  --encode-transitions-order                         [DEBUG] Encode transitions lexicographic order
+  --encode-terminals-order                           [DEBUG] Encode terminal numbers lexicographic order
+  --encode-terminals-mini-order                      [DEBUG] Encode AND/OR children-terminals order
+  --encode-hard-to-explain                           [DEBUG] Encode some hard to explain thing
+  --encode-totalizer                                 Encode totalizer when upper bound is null
+  --encode-disjunctive-transitions                   Encode disjunctive transitions (adhocly forbid priority function)
+  --reuse-k / --no-reuse-k                           Reuse K found by ExtendedMinTask during CEGIS
+  --debug                                            Debug mode
+  -h, --help                                         Show this message and exit
 ----
 
 == SAT solver
