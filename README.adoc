@@ -41,6 +41,16 @@ Gradle task `installDist` produces fbSAT binaries in `fbsat-cli/build/install/fb
 fbsat-cli\build\install\cli\bin\fbSAT.bat -h
 ----
 
+There are also simple binaries (link:fbsat[] and link:fbsat.bat[]), which first build (`gradlew installDist`) and then run fbSAT with specified arguments.
+
+----
+## on Unix:
+./fbsat -h
+
+## on Windows:
+fbsat.bat -h
+----
+
 == CLI
 
 ----
