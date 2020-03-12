@@ -183,7 +183,7 @@ class FbSAT : CliktCommand() {
 
     val solverCmd: String by option(
         "--solver",
-        help = "SAT-solver command for FileSolver backend (Note: use %s as a placeholder for filename)",
+        help = "SAT-solver for FileSolver backend (use %s placeholder for filename)",
         metavar = "<cmd>"
     ).default(
         "cadical %s"
@@ -285,7 +285,8 @@ class FbSAT : CliktCommand() {
 
     val initialOutputValues: String? by option(
         "--initial-output-values",
-        help = "Initial output values"
+        help = "Initial output values (as a bitstring)",
+        metavar = "<[01]+>"
     ).validate {
         it.matches(Regex("[01]+"))
     }
