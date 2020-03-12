@@ -98,9 +98,11 @@ Options:
 
 == SAT solver
 
-fbSAT is able to use any SAT solver, supporting link:http://www.domagoj-babic.com/uploads/ResearchProjects/Spear/dimacs-cnf.pdf[DIMACS] input. You can specify it with `--solver <cmd>` flag.
+fbSAT is able to use any SAT solver, supporting link:http://www.domagoj-babic.com/uploads/ResearchProjects/Spear/dimacs-cnf.pdf[DIMACS] input.
+You can specify it with `--solver <cmd>` flag.
 
-If you already have your favorite SAT solver, use it. If not, check out link:https://github.com/msoos/cryptominisat[cryptominisat], link:http://www.labri.fr/perso/lsimon/glucose[glucose], link:http://fmv.jku.at/cadical[cadical], link:http://fmv.jku.at/lingeling[lingeling], or any other.
+If you already have your favorite SAT solver, use it.
+If not, check out link:https://github.com/msoos/cryptominisat[cryptominisat], link:http://www.labri.fr/perso/lsimon/glucose[glucose], link:http://fmv.jku.at/cadical[cadical], link:http://fmv.jku.at/lingeling[lingeling], or any other.
 
 Note, that you have to specify the `--no-incremental` flag, if your SAT solver is not able to process incremental problems via stdin.
 This is true for all standard SAT solvers, which are only able to read the single one non-incremental SAT problem written in DIMACS format.
@@ -142,7 +144,7 @@ docker rm -f cms
 During inferring minimal models and performing the CEGIS, the fbSAT heavily relies on the ability of SAT solvers to solve _incrementally_ -- continue solving the SAT problem after adding new constraints (tighter upper bound during minimization; new counterexamples to forbid during CEGIS).
 However, such feature is only available via the native interface, and not via the standard input in some format for CNF similar to DIMACS.
 Hence, we developed link:https://github.com/lipen/incremental-cryptominisat[a small wrapper] around the cryptominisat library, which is able to process the incremental SAT problems written in iCNF format via stdin.
-In order to enforce fbSAT to use it, specify path to wrapper  via `--solver` and use `--incremental` flag (which is turned on by default).
+In order to enforce fbSAT to use it, specify path to wrapper via `--solver` and use `--incremental` flag (which is turned on by default).
 
 [source,bash]
 ----
@@ -156,7 +158,8 @@ docker rm -f icms
 
 === TL;DR
 
-NOTE: Add link:scripts[`scripts`] folder to your PATH and execute link:scripts/start-icms[`start-icms`]. After this you will be able to use fbSAT without any specific solver-related arguments.
+NOTE: Add link:scripts[`scripts`] folder to your PATH and execute link:scripts/start-icms[`start-icms`].
+After this you will be able to use fbSAT without any specific solver-related arguments.
 
 == Usage example
 
