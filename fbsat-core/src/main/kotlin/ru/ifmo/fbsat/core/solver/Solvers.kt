@@ -63,10 +63,7 @@ interface Solver : AutoCloseable {
         const val falseVariable: Literal = -trueVariable
 
         @JvmStatic
-        fun default(command: String): Solver = TODO()
-
-        @JvmStatic
-        fun incremental(): Solver = IncrementalCryptominisat()
+        fun icms(): Solver = IncrementalCryptominisat()
 
         @JvmStatic
         fun filesolver(command: String, file: File): Solver = FileSolver(command, file)

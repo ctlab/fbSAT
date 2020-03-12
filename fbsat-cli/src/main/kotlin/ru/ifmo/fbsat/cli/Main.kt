@@ -186,13 +186,12 @@ class FbSAT : CliktCommand() {
     val solverBackend: SolverBackend by option(
         help = "Solver backend (default: IncrementalSolver)"
     ).switch(
-        "--incremental" to SolverBackend.INCREMENTAL,
-        "--no-incremental" to SolverBackend.DEFAULT,
-        "--file-solver" to SolverBackend.FILE,
+        "--icms" to SolverBackend.INCREMENTAL_CRYPTOMINISAT,
+        "--filesolver" to SolverBackend.FILE,
         "--minisat" to SolverBackend.MINISAT,
         "--cadical" to SolverBackend.CADICAL
     ).default(
-        SolverBackend.INCREMENTAL
+        SolverBackend.INCREMENTAL_CRYPTOMINISAT
     )
 
     val isForbidOr: Boolean by option(
@@ -462,11 +461,8 @@ class FbSAT : CliktCommand() {
         // ===
 
         val solverProvider: () -> Solver = when (solverBackend) {
-            SolverBackend.DEFAULT -> {
-                { Solver.default(solverCmd) }
-            }
-            SolverBackend.INCREMENTAL -> {
-                { Solver.incremental() }
+            SolverBackend.INCREMENTAL_CRYPTOMINISAT -> {
+                { Solver.icms() }
             }
             SolverBackend.FILE -> {
                 { Solver.filesolver(solverCmd, File("cnf")) }
