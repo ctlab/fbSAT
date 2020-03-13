@@ -458,7 +458,6 @@ class Automaton(
      */
     fun toFbtString(name: String? = null): String {
         fun r() = "%.3f".format((1.0..1000.0).random())
-        val Z = outputNames.size
 
         return xml("FBType") {
             if (name != null) {
