@@ -56,8 +56,6 @@ interface Solver : AutoCloseable {
     fun solve(): RawAssignment?
     fun reset()
 
-    override fun close()
-
     companion object {
         const val trueVariable: Literal = Int.MAX_VALUE
         const val falseVariable: Literal = -trueVariable
