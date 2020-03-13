@@ -659,9 +659,6 @@ class Automaton(
     override fun toString(): String {
         return "Automaton(numberOfStates=$numberOfStates, numberOfTransitions=$numberOfTransitions, totalGuardsSize=$totalGuardsSize, inputEvents=$inputEvents, outputEvents=$outputEvents, inputNames=$inputNames, outputNames=$outputNames)"
     }
-
-    // Allow companion object extensions
-    companion object
 }
 
 fun Automaton.endow(
