@@ -3,13 +3,13 @@ package ru.ifmo.fbsat.cli
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.context
 import com.github.ajalt.clikt.output.CliktHelpFormatter
+import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.defaultLazy
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.switch
-import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
@@ -78,9 +78,9 @@ class FbSAT : CliktCommand() {
         help = "File with scenarios",
         metavar = "<path>"
     ).file(
-        exists = true,
-        folderOkay = false,
-        readable = true
+        mustExist = true,
+        canBeDir = false,
+        mustBeReadable = true
     ).required()
 
     val fileCounterexamples: File? by option(
@@ -88,9 +88,9 @@ class FbSAT : CliktCommand() {
         help = "File with counter-examples",
         metavar = "<path>"
     ).file(
-        exists = true,
-        folderOkay = false,
-        readable = true
+        mustExist = true,
+        canBeDir = false,
+        mustBeReadable = true
     )
 
     val smvDir: File by option(
@@ -98,8 +98,8 @@ class FbSAT : CliktCommand() {
         help = "Directory with SMV files",
         metavar = "<path>"
     ).file(
-        exists = true,
-        fileOkay = false
+        mustExist = true,
+        canBeFile = false
     ).default(
         File("data/pnp/smv")
     )
@@ -117,18 +117,18 @@ class FbSAT : CliktCommand() {
         "--input-names",
         help = "File with input names [defaults to PnP names]"
     ).file(
-        exists = true,
-        folderOkay = false,
-        readable = true
+        mustExist = true,
+        canBeDir = false,
+        mustBeReadable = true
     )
 
     val fileOutputNames: File? by option(
         "--output-names",
         help = "File with output names [defaults to PnP names]"
     ).file(
-        exists = true,
-        folderOkay = false,
-        readable = true
+        mustExist = true,
+        canBeDir = false,
+        mustBeReadable = true
     )
 
     val method: Method by option(
@@ -253,10 +253,21 @@ class FbSAT : CliktCommand() {
         "--vis",
         help = "[DEBUG] Visualize given counterexamples via graphviz"
     ).file(
-        exists = true,
-        folderOkay = false,
-        readable = true
+        mustExist = true,
+        canBeDir = false,
+        mustBeReadable = true
     )
+
+    val initialOutputValues: OutputValues? by option(
+        "--initial-output-values",
+        help = "Initial output values (as a bitstring)",
+        metavar = "<[01]+>"
+    ).convert {
+        require(it.matches(Regex("[01]+"))) {
+            "--initial-output-values must match [01]+"
+        }
+        OutputValues(it.map { c -> c == '1' })
+    }
 
     val epsilonOutputEvents: EpsilonOutputEvents by option(
         "--epsilon-output-events",
@@ -282,14 +293,6 @@ class FbSAT : CliktCommand() {
     ).default(
         Globals.START_STATE_ALGORITHMS
     )
-
-    val initialOutputValues: String? by option(
-        "--initial-output-values",
-        help = "Initial output values (as a bitstring)",
-        metavar = "<[01]+>"
-    ).validate {
-        it.matches(Regex("[01]+"))
-    }
 
     val isEncodeReverseImplication: Boolean by option(
         "--encode-reverse-implication",
@@ -412,21 +415,15 @@ class FbSAT : CliktCommand() {
         log.info("Input names: $inputNames")
         log.info("Output names: $outputNames")
 
-        Globals.INITIAL_OUTPUT_VALUES = if (initialOutputValues != null)
-            OutputValues(initialOutputValues!!.map { c -> c == '1' }.toList())
-        else
-            OutputValues.zeros(outputNames.size)
+        Globals.INITIAL_OUTPUT_VALUES = initialOutputValues ?: OutputValues.zeros(outputNames.size)
+        check(Globals.INITIAL_OUTPUT_VALUES.size == outputNames.size) {
+            "Initial values size must be equal to the number of output variables"
+        }
 
         val tree = ScenarioTree.fromFile(fileScenarios, inputNames, outputNames)
         log.info("Scenarios: ${tree.scenarios.size}")
         log.info("Elements: ${tree.scenarios.sumBy { it.elements.size }}")
         log.info("Scenario tree size: ${tree.size}")
-
-        Globals.INITIAL_OUTPUT_VALUES?.let {
-            check(tree.outputNames.size == it.size) {
-                "Initial values size must be equal to the number of output variables"
-            }
-        }
 
         val negTree = fileCounterexamples?.let {
             NegativeScenarioTree.fromFile(

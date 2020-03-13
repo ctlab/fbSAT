@@ -4,7 +4,7 @@ object Versions {
     const val kotlin = "1.3.70"
     const val jgitver = "0.8.0"
     const val ktlint = "8.2.0"
-    const val clikt = "2.2.0"
+    const val clikt = "2.5.0"
     const val junit = "5.5.1"
     const val kluent = "1.56"
     const val multiarray = "0.6.0"
