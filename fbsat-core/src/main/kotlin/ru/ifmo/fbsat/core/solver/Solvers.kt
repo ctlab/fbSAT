@@ -57,8 +57,8 @@ interface Solver : AutoCloseable {
     fun reset()
 
     companion object {
-        const val trueVariable: Literal = Int.MAX_VALUE
-        const val falseVariable: Literal = -trueVariable
+        const val trueLiteral: Literal = Int.MAX_VALUE
+        const val falseLiteral: Literal = -trueLiteral
 
         @JvmStatic
         fun icms(): Solver = IncrementalCryptominisat()
@@ -89,8 +89,8 @@ interface Solver : AutoCloseable {
 }
 
 fun Solver.clause(literals: Iterable<Literal>) {
-    val pool = literals.filter { it != Solver.falseVariable }
-    if (Solver.trueVariable !in pool && pool.isNotEmpty())
+    val pool = literals.filter { it != Solver.falseLiteral }
+    if (Solver.trueLiteral !in pool && pool.isNotEmpty())
         clause(pool)
 }
 

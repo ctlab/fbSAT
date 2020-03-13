@@ -12,16 +12,16 @@ interface RawAssignment {
 
 class RawAssignment0(private val data: BooleanArray) : RawAssignment {
     override operator fun get(v: Literal): Boolean = when (v) {
-        Solver.trueVariable -> true
-        Solver.falseVariable -> false
+        Solver.trueLiteral -> true
+        Solver.falseLiteral -> false
         else -> data[v - 1]
     }
 }
 
 class RawAssignment1(private val data: BooleanArray) : RawAssignment {
     override operator fun get(v: Literal): Boolean = when (v) {
-        Solver.trueVariable -> true
-        Solver.falseVariable -> false
+        Solver.trueLiteral -> true
+        Solver.falseLiteral -> false
         else -> data[v]
     }
 }
