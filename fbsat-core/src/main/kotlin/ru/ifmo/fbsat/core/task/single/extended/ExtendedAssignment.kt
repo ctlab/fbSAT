@@ -47,6 +47,7 @@ class ExtendedAssignment(
      */
     @Suppress("PropertyName")
     val T: Int = transitionDestination.values.count { it != 0 }
+
     /**
      * Total guards size (total number of nodes in all parse trees).
      */

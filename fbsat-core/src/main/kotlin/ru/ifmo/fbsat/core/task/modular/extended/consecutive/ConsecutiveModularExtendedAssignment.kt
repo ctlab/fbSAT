@@ -28,6 +28,7 @@ class ConsecutiveModularExtendedAssignment(
      */
     @Suppress("PropertyName")
     val T: Int = modularExtendedAssignment.values.sumBy { it.T }
+
     /**
      * Total guards size (total number of nodes in all parse trees).
      */

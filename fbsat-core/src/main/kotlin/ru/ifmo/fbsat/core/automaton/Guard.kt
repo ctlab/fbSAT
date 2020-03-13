@@ -54,6 +54,7 @@ class TruthTableGuard(
     private val uniqueInputs: List<InputValues>
 ) : Guard {
     val cnf: List<List<Int>> = emptyList()
+
     // minimizeToCNF(
     //     minterms = truthTable.filter { (_, value) -> value == true }.keys.map { it.number },
     //     dontcares = truthTable.filter { (_, value) -> value == null }.keys.map { it.number },

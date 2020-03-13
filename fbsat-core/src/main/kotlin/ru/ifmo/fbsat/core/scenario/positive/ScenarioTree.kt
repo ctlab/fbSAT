@@ -43,6 +43,7 @@ class ScenarioTree(
     override val uniqueOutputs: List<OutputValues> by lazyCache {
         nodes.asSequence().drop(1).map { it.outputValues }.toSet().toList().sortedBy { it.values.toBinaryString() }
     }
+
     /**
      * List of **active** vertices, i.e. vertices with **non-null** output event.
      * The root is excluded explicitly.
@@ -54,6 +55,7 @@ class ScenarioTree(
             .map { it.id }
             .toList()
     }
+
     /**
      * List of **passive** vertices, i.e. vertices with **null** (aka empty/epsilon) output event.
      * The root is excluded explicitly.

@@ -80,14 +80,17 @@ fun ClosedRange<Double>.random(): Double {
  * Pick-and-Place manipulator input events.
  */
 val inputEventsPnP = listOf("REQ").map(::InputEvent)
+
 /**
  * Pick-and-Place manipulator output events.
  */
 val outputEventsPnP = listOf("CNF").map(::OutputEvent)
+
 /**
  * Pick-and-Place manipulator input variables names.
  */
 val inputNamesPnP = listOf("c1Home", "c1End", "c2Home", "c2End", "vcHome", "vcEnd", "pp1", "pp2", "pp3", "vac")
+
 /**
  * Pick-and-Place manipulator output variables names.
  */

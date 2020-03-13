@@ -60,6 +60,7 @@ class CompleteVariables(
         internal set
     var onlyNegUIs: List<InputValues> = emptyList() // Actually `negUIs - posUIs`, but is initially empty
         internal set
+
     // These variables (until negMapping) use U in domain, so must be redeclared for negU
     lateinit var negTransitionFiring: BoolVarArray
         internal set
@@ -71,6 +72,7 @@ class CompleteVariables(
         internal set
     lateinit var negNodeValue: BoolVarArray
         internal set
+
     lateinit var negMapping: IntVarArray
         internal set
     val forbiddenLoops: MutableSet<Pair<Int, Int>> = mutableSetOf()
