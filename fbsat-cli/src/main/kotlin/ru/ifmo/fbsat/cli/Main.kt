@@ -416,7 +416,7 @@ class FbSAT : CliktCommand() {
         log.info("Output names: $outputNames")
 
         Globals.INITIAL_OUTPUT_VALUES = initialOutputValues ?: OutputValues.zeros(outputNames.size)
-        check(Globals.INITIAL_OUTPUT_VALUES.size == outputNames.size) {
+        check(Globals.INITIAL_OUTPUT_VALUES.values.size == outputNames.size) {
             "Initial values size must be equal to the number of output variables"
         }
 
