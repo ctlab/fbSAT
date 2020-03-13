@@ -657,7 +657,7 @@ class Automaton(
     companion object
 }
 
-fun Automaton.endowed(
+fun Automaton.endow(
     C: Int,
     K: Int,
     stateOutputEvent: (c: Int) -> OutputEvent?,

@@ -7,7 +7,7 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.automaton.ParseTreeGuard
-import ru.ifmo.fbsat.core.automaton.endowed
+import ru.ifmo.fbsat.core.automaton.endow
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.solver.convert
@@ -85,7 +85,7 @@ class ExtendedAssignment(
 }
 
 fun ExtendedAssignment.toAutomaton(): Automaton =
-    Automaton(scenarioTree).endowed(
+    Automaton(scenarioTree).endow(
         C = C, K = K,
         stateOutputEvent = { c ->
             stateOutputEvent[c].let { o ->
