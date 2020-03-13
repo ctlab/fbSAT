@@ -553,11 +553,9 @@ class Automaton(
                     }
                 }
                 "Algorithm"("Name" to "INIT") {
-                    // Note: INIT algorithm zeroes out all variables
+                    val a = Globals.INITIAL_OUTPUT_VALUES.values.toBooleanArray()
                     "ST"(
-                        "Text" to BinaryAlgorithm(
-                            Globals.INITIAL_OUTPUT_VALUES.getArray()
-                        ).toST(outputNames)
+                        "Text" to BinaryAlgorithm(a, a).toST(outputNames)
                     )
                 }
                 for (state in states) {
