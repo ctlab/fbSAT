@@ -41,12 +41,12 @@ fun BooleanArray.toBinaryString(): String {
     return joinToString("") { if (it) "1" else "0" }
 }
 
-fun List<Boolean>.toBinaryString(): String {
+fun Iterable<Boolean>.toBinaryString(): String {
     return joinToString("") { if (it) "1" else "0" }
 }
 
 @JvmName("toBinaryStringNullable")
-fun List<Boolean?>.toBinaryString(): String {
+fun Iterable<Boolean?>.toBinaryString(): String {
     return joinToString("") {
         when (it) {
             true -> "1"
