@@ -201,3 +201,9 @@ fun Int.pow(n: Int): Int = toDouble().pow(n).toInt()
 
 fun <K, V : Any> Map<K, V?>.dropNulls(): Map<K, V> =
     filterValues { it != null }.mapValues { it.value!! }
+
+@Suppress("FunctionName")
+fun <T> Iterable<T>.toList_(): List<T> = when (this) {
+    is List<T> -> this
+    else -> toList()
+}
