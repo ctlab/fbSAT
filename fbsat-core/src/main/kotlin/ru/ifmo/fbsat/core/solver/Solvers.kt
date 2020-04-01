@@ -44,15 +44,20 @@ class SolverContext internal constructor(
     }
 }
 
+@Suppress("FunctionName")
 interface Solver : AutoCloseable {
     val context: SolverContext
     val numberOfVariables: Int
     val numberOfClauses: Int
 
     fun newLiteral(): Literal
-    fun clause(literals: List<Literal>)
-    fun assume(literals: List<Literal>)
+
     fun comment(comment: String)
+
+    fun clause(vararg literals: Literal)
+    fun clause_(literals: IntArray)
+    fun clause_(literals: List<Literal>)
+
     fun solve(): RawAssignment?
     fun reset()
 
@@ -80,6 +85,7 @@ interface Solver : AutoCloseable {
             close: () -> Unit = {}
         ): Solver = object : AbstractSolver() {
             override fun _comment(comment: String) = comment(comment)
+            override fun _clause(literals: IntArray): Unit = _clause(literals.toList())
             override fun _clause(literals: List<Literal>) = clause(literals)
             override fun _solve(): RawAssignment? = solve()
             override fun _reset(): Unit = reset()
@@ -88,22 +94,18 @@ interface Solver : AutoCloseable {
     }
 }
 
+fun Solver.clause(literals: Sequence<Literal>) {
+    clause_(literals.toList())
+}
+
+fun Solver.clause(block: suspend SequenceScope<Literal>.() -> Unit) {
+    clause(sequence(block).constrainOnce())
+}
+
 fun Solver.clause(literals: Iterable<Literal>) {
     val pool = literals.filter { it != Solver.falseLiteral }
     if (Solver.trueLiteral !in pool && pool.isNotEmpty())
         clause(pool)
-}
-
-fun Solver.clause(vararg literals: Literal) {
-    clause(literals.asIterable())
-}
-
-fun Solver.clause(literals: Sequence<Literal>) {
-    clause(literals.asIterable())
-}
-
-fun Solver.clause(block: suspend SequenceScope<Literal>.() -> Unit) {
-    clause(sequence(block))
 }
 
 fun <T> Solver.newDomainVar(
@@ -146,19 +148,23 @@ abstract class AbstractSolver : Solver {
 
     override fun newLiteral(): Literal = ++numberOfVariables
 
-    final override fun clause(literals: List<Literal>) {
+    final override fun comment(comment: String) {
+        // log.debug { "// $comment" }
+        _comment(comment)
+    }
+
+    final override fun clause(vararg literals: Literal) {
+        clause_(literals)
+    }
+
+    final override fun clause_(literals: IntArray) {
         ++numberOfClauses
         _clause(literals)
     }
 
-    final override fun assume(literals: List<Literal>) {
-        log.debug { "Assuming $literals" }
-        TODO()
-    }
-
-    final override fun comment(comment: String) {
-        // log.debug { "// $comment" }
-        _comment(comment)
+    final override fun clause_(literals: List<Literal>) {
+        ++numberOfClauses
+        _clause(literals)
     }
 
     final override fun solve(): RawAssignment? {
@@ -187,6 +193,7 @@ abstract class AbstractSolver : Solver {
         _close()
     }
 
+    protected abstract fun _clause(literals: IntArray)
     protected abstract fun _clause(literals: List<Literal>)
     protected abstract fun _comment(comment: String)
     protected abstract fun _solve(): RawAssignment?
@@ -200,14 +207,18 @@ class FileSolver(
 ) : AbstractSolver() {
     private val buffer = Buffer()
 
+    override fun _comment(comment: String) {
+        buffer.write("c ").writeln(comment)
+    }
+
+    override fun _clause(literals: IntArray) {
+        _clause(literals.toList())
+    }
+
     override fun _clause(literals: List<Literal>) {
         for (x in literals)
             buffer.write(x.toString()).write(" ")
         buffer.writeln("0")
-    }
-
-    override fun _comment(comment: String) {
-        buffer.write("c ").writeln(comment)
     }
 
     override fun _solve(): RawAssignment? {
@@ -266,6 +277,10 @@ class IncrementalCryptominisat : AbstractSolver() {
     override fun _comment(comment: String) {
         processInput.write("c ").writeln(comment)
         buffer.write("c ").writeln(comment)
+    }
+
+    override fun _clause(literals: IntArray) {
+        _clause(literals.toList())
     }
 
     override fun _clause(literals: List<Literal>) {
@@ -336,7 +351,11 @@ class MiniSat : AbstractSolver() {
         return backend.newVariable()
     }
 
-    override fun _clause(literals: List<Literal>) {
+    override fun _comment(comment: String) {
+        buffer.write("c ").writeln(comment)
+    }
+
+    override fun _clause(literals: IntArray) {
         for (x in literals)
             buffer.write(x.toString()).write(" ")
         buffer.writeln("0")
@@ -344,8 +363,8 @@ class MiniSat : AbstractSolver() {
         backend.addClause_(literals.toIntArray())
     }
 
-    override fun _comment(comment: String) {
-        buffer.write("c ").writeln(comment)
+    override fun _clause(literals: List<Literal>) {
+        _clause(literals.toIntArray())
     }
 
     override fun _solve(): RawAssignment? {
@@ -387,7 +406,11 @@ class Cadical : AbstractSolver() {
         return backend.newVariable()
     }
 
-    override fun _clause(literals: List<Literal>) {
+    override fun _comment(comment: String) {
+        buffer.write("c ").writeln(comment)
+    }
+
+    override fun _clause(literals: IntArray) {
         for (x in literals)
             buffer.write(x.toString()).write(" ")
         buffer.writeln("0")
@@ -395,8 +418,8 @@ class Cadical : AbstractSolver() {
         backend.addClause_(literals.toIntArray())
     }
 
-    override fun _comment(comment: String) {
-        buffer.write("c ").writeln(comment)
+    override fun _clause(literals: List<Literal>) {
+        _clause(literals.toIntArray())
     }
 
     override fun _solve(): RawAssignment? {

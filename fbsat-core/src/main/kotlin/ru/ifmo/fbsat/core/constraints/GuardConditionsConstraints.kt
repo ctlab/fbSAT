@@ -6,7 +6,6 @@ import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.DomainVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.implyAnd
