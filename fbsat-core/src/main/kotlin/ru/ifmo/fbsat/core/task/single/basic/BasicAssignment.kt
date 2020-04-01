@@ -9,6 +9,7 @@ import ru.ifmo.fbsat.core.automaton.endowed
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.solver.convert
+import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.withIndex
 
 class BasicAssignment(
@@ -91,11 +92,15 @@ fun BasicAssignment.toAutomaton(): Automaton =
             TruthTableGuard(
                 truthTable = scenarioTree.uniqueInputs.withIndex(start = 1)
                     .associate { (u, input) ->
-                        input to when {
-                            notFired[c, k, u] -> false
-                            firstFired[c, u] == k -> true
-                            else -> null
-                        }
+                        input to
+                            if (Globals.IS_PARTIAL_TRUTH_TABLES)
+                                when {
+                                    notFired[c, k, u] -> false
+                                    firstFired[c, u] == k -> true
+                                    else -> null
+                                }
+                            else
+                                transitionFiring[c, k, u]
                     },
                 inputNames = scenarioTree.inputNames,
                 uniqueInputs = scenarioTree.uniqueInputs
