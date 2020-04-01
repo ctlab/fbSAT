@@ -99,7 +99,7 @@ fun Solver.clause(literals: Sequence<Literal>) {
 }
 
 fun Solver.clause(block: suspend SequenceScope<Literal>.() -> Unit) {
-    clause(sequence(block).constrainOnce())
+    clause(sequence(block))
 }
 
 fun Solver.clause(literals: Iterable<Literal>) {
