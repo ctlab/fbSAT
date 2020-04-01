@@ -140,7 +140,7 @@ fun Solver.newIntVarArray(
 @Suppress("FunctionName")
 abstract class AbstractSolver : Solver {
     @Suppress("LeakingThis")
-    override val context: SolverContext = SolverContext(this)
+    final override val context: SolverContext = SolverContext(this)
     override var numberOfVariables: Int = 0
         protected set
     final override var numberOfClauses: Int = 0
