@@ -4,6 +4,7 @@ import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.makeDnfString
+import ru.ifmo.fbsat.core.utils.toBinaryString
 import kotlin.math.absoluteValue
 
 interface Guard {
@@ -69,16 +70,13 @@ class TruthTableGuard(
         return truthTable.getValue(inputValues) ?: true
     }
 
-    override fun toSimpleString(): String =
-    // cnf.joinToString(" & ") { clause ->
-    //     val s = clause.joinToString(" | ") { literal -> inputNames[literal.absoluteValue - 1] }
-    //     if (clause.size == 1)
-    //         s
-    //     else
-    //         "($s)"
-    // }
-        // "[${truthTable.values.toList().toBinaryString()}]"
-        "[TruthTable]"
+    override fun toSimpleString(): String {
+        val s = truthTable.values.toBinaryString()
+        return when {
+            s.length <= 32 -> "[$s]"
+            else -> "[${s.substring(0..15)}...]"
+        }
+    }
 
     override fun toGraphvizString(): String =
         toSimpleString()
