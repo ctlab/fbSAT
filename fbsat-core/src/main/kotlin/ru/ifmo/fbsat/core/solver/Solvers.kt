@@ -12,6 +12,7 @@ import okio.source
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.lineSequence
 import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.toList_
 import ru.ifmo.fbsat.core.utils.write
 import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
@@ -85,7 +86,6 @@ interface Solver : AutoCloseable {
             close: () -> Unit = {}
         ): Solver = object : AbstractSolver() {
             override fun _comment(comment: String) = comment(comment)
-            override fun _clause(literals: IntArray): Unit = _clause(literals.toList())
             override fun _clause(literals: List<Literal>) = clause(literals)
             override fun _solve(): RawAssignment? = solve()
             override fun _reset(): Unit = reset()
@@ -103,9 +103,7 @@ fun Solver.clause(block: suspend SequenceScope<Literal>.() -> Unit) {
 }
 
 fun Solver.clause(literals: Iterable<Literal>) {
-    val pool = literals.filter { it != Solver.falseLiteral }
-    if (Solver.trueLiteral !in pool && pool.isNotEmpty())
-        clause_(pool)
+    clause_(literals.toList_())
 }
 
 fun <T> Solver.newDomainVar(
@@ -158,13 +156,15 @@ abstract class AbstractSolver : Solver {
     }
 
     final override fun clause_(literals: IntArray) {
-        ++numberOfClauses
-        _clause(literals)
+        clause_(literals.toList())
     }
 
     final override fun clause_(literals: List<Literal>) {
-        ++numberOfClauses
-        _clause(literals)
+        val pool = literals.filter { it != Solver.falseLiteral }
+        if (Solver.trueLiteral !in pool) {
+            ++numberOfClauses
+            _clause(pool)
+        }
     }
 
     final override fun solve(): RawAssignment? {
@@ -193,7 +193,6 @@ abstract class AbstractSolver : Solver {
         _close()
     }
 
-    protected abstract fun _clause(literals: IntArray)
     protected abstract fun _clause(literals: List<Literal>)
     protected abstract fun _comment(comment: String)
     protected abstract fun _solve(): RawAssignment?
@@ -209,10 +208,6 @@ class FileSolver(
 
     override fun _comment(comment: String) {
         buffer.write("c ").writeln(comment)
-    }
-
-    override fun _clause(literals: IntArray) {
-        _clause(literals.toList())
     }
 
     override fun _clause(literals: List<Literal>) {
@@ -277,10 +272,6 @@ class IncrementalCryptominisat : AbstractSolver() {
     override fun _comment(comment: String) {
         processInput.write("c ").writeln(comment)
         buffer.write("c ").writeln(comment)
-    }
-
-    override fun _clause(literals: IntArray) {
-        _clause(literals.toList())
     }
 
     override fun _clause(literals: List<Literal>) {
@@ -355,16 +346,12 @@ class MiniSat : AbstractSolver() {
         buffer.write("c ").writeln(comment)
     }
 
-    override fun _clause(literals: IntArray) {
+    override fun _clause(literals: List<Literal>) {
         for (x in literals)
             buffer.write(x.toString()).write(" ")
         buffer.writeln("0")
 
         backend.addClause_(literals.toIntArray())
-    }
-
-    override fun _clause(literals: List<Literal>) {
-        _clause(literals.toIntArray())
     }
 
     override fun _solve(): RawAssignment? {
@@ -410,16 +397,12 @@ class Cadical : AbstractSolver() {
         buffer.write("c ").writeln(comment)
     }
 
-    override fun _clause(literals: IntArray) {
+    override fun _clause(literals: List<Literal>) {
         for (x in literals)
             buffer.write(x.toString()).write(" ")
         buffer.writeln("0")
 
         backend.addClause_(literals.toIntArray())
-    }
-
-    override fun _clause(literals: List<Literal>) {
-        _clause(literals.toIntArray())
     }
 
     override fun _solve(): RawAssignment? {
