@@ -105,7 +105,7 @@ fun Solver.clause(block: suspend SequenceScope<Literal>.() -> Unit) {
 fun Solver.clause(literals: Iterable<Literal>) {
     val pool = literals.filter { it != Solver.falseLiteral }
     if (Solver.trueLiteral !in pool && pool.isNotEmpty())
-        clause(pool)
+        clause_(pool)
 }
 
 fun <T> Solver.newDomainVar(
