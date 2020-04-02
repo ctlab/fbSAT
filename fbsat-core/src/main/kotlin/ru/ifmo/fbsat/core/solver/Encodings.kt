@@ -25,6 +25,8 @@ fun <T> Solver.encodeOneHotBinary(v: DomainVar<T>): List<Literal> {
         uU ->  x1 /\  x2 /\.../\  xX
     */
 
+    require(v.literals.isNotEmpty())
+
     atLeastOne(v.literals)
 
     val n = v.domain.size
