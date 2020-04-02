@@ -287,6 +287,7 @@ class IncrementalCryptominisat : AbstractSolver() {
 
     override fun _solve(): RawAssignment? {
         processInput.writeln("solve 0").flush()
+        buffer.writeln("c solve")
 
         if (Globals.IS_DEBUG) {
             // Dump intermediate cnf
