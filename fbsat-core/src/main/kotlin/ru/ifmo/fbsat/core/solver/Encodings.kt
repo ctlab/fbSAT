@@ -4,7 +4,9 @@ import kotlin.math.ceil
 import kotlin.math.log2
 
 fun <T> Solver.encodeOneHot(v: DomainVar<T>) {
-    exactlyOne(v.literals)
+    if (v.literals.isNotEmpty()) {
+        exactlyOne(v.literals)
+    }
 }
 
 fun <T> Solver.encodeOneHotBinary(v: DomainVar<T>): List<Literal> {
