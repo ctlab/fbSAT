@@ -163,6 +163,7 @@ abstract class AbstractSolver : Solver {
         val pool = literals.filter { it != Solver.falseLiteral }
         if (Solver.trueLiteral !in pool) {
             ++numberOfClauses
+            if (pool.isEmpty()) log.warn("Declaring empty clause!")
             _clause(pool)
         }
     }
