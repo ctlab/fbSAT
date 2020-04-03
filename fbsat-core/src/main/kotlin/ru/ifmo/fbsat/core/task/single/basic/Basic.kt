@@ -66,12 +66,13 @@ fun Inferrer.basic(
 fun Inferrer.basicMinC(
     scenarioTree: ScenarioTree,
     start: Int = 1, // C_start
-    end: Int = 20 // C_end
+    end: Int = 20, // C_end
+    isEncodeReverseImplication: Boolean = true
 ): Automaton {
     var best: Automaton? = null
     for (C in start..end) {
         reset()
-        solver.declareBasic(scenarioTree, numberOfStates = C)
+        solver.declareBasic(scenarioTree, numberOfStates = C, isEncodeReverseImplication = isEncodeReverseImplication)
         val (result, runningTime) = measureTimeWithResult { inferBasic() }
         if (result != null) {
             log.success("BasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
@@ -85,7 +86,10 @@ fun Inferrer.basicMinC(
     return checkNotNull(best) { "BasicMin: automaton not found." }
 }
 
-fun Inferrer.basicMin(scenarioTree: ScenarioTree): Automaton? {
-    basicMinC(scenarioTree)
+fun Inferrer.basicMin(
+    scenarioTree: ScenarioTree,
+    isEncodeReverseImplication: Boolean = true
+): Automaton? {
+    basicMinC(scenarioTree, isEncodeReverseImplication = isEncodeReverseImplication)
     return optimizeT()
 }

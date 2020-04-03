@@ -507,9 +507,15 @@ class FbSAT : CliktCommand() {
             }
             Method.BasicMin -> {
                 if (isOnlyC)
-                    inferrer.basicMinC(scenarioTree = tree)
+                    inferrer.basicMinC(
+                        scenarioTree = tree,
+                        isEncodeReverseImplication = isEncodeReverseImplication
+                    )
                 else
-                    inferrer.basicMin(scenarioTree = tree)
+                    inferrer.basicMin(
+                        scenarioTree = tree,
+                        isEncodeReverseImplication = isEncodeReverseImplication
+                    )
             }
             Method.Extended -> {
                 inferrer.extended(
