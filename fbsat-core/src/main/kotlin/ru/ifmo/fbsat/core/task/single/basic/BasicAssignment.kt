@@ -9,6 +9,7 @@ import ru.ifmo.fbsat.core.automaton.endow
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.solver.convert
+import ru.ifmo.fbsat.core.utils.countTrue
 import ru.ifmo.fbsat.core.utils.withIndex
 
 class BasicAssignment(
@@ -63,7 +64,7 @@ class BasicAssignment(
                 stateAlgorithmBot = stateAlgorithmBot.convert(raw),
                 mapping = mapping.convert(raw)
             ).also {
-                check(it.T == cardinality.totalizer.convert(raw).values.count { b -> b })
+                check(it.T == cardinality.totalizer.convert(raw).values.countTrue())
             }
         }
     }

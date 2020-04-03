@@ -207,3 +207,11 @@ fun <T> Iterable<T>.toList_(): List<T> = when (this) {
     is List<T> -> this
     else -> toList()
 }
+
+fun Iterable<Boolean>.countTrue(): Int {
+    return count { it }
+}
+
+fun Iterable<Boolean>.countFalse(): Int {
+    return count { !it }
+}
