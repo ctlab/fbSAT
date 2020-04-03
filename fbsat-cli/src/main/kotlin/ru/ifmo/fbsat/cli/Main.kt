@@ -35,6 +35,7 @@ import ru.ifmo.fbsat.core.task.single.basic.basicMinC
 import ru.ifmo.fbsat.core.task.single.complete.cegis
 import ru.ifmo.fbsat.core.task.single.complete.cegisMin
 import ru.ifmo.fbsat.core.task.single.complete.complete
+import ru.ifmo.fbsat.core.task.single.complete.completeMin
 import ru.ifmo.fbsat.core.task.single.extended.extended
 import ru.ifmo.fbsat.core.task.single.extended.extendedMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
@@ -570,7 +571,13 @@ class FbSAT : CliktCommand() {
                     maxTotalGuardsSize = maxTotalGuardsSize
                 )
             }
-            Method.CompleteMin -> TODO("complete-min method")
+            Method.CompleteMin -> {
+                inferrer.completeMin(
+                    scenarioTree = tree,
+                    negativeScenarioTree = negTree,
+                    maxGuardSize = requireNotNull(maxGuardSize)
+                )
+            }
             Method.Cegis -> {
                 inferrer.cegis(
                     scenarioTree = tree,
