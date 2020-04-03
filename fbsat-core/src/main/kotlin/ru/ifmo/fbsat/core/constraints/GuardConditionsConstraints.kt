@@ -34,18 +34,15 @@ fun Solver.declarePositiveGuardConditionsConstraints(extendedVars: ExtendedVaria
             nodeChild = nodeChild
         )
 
-        for (u in 1..U) {
-            comment("Positive guard conditions constraints: for input u = $u")
-            declareGuardConditionsConstraintsForInput(
-                u = u,
-                tree = scenarioTree,
-                C = C, K = K, P = P, X = X,
-                nodeType = nodeType,
-                nodeInputVariable = nodeInputVariable,
-                nodeChild = nodeChild,
-                nodeValue = nodeValue
-            )
-        }
+        comment("Positive guard conditions constraints: for inputs")
+        declareGuardConditionsConstraintsForInputs(
+            tree = scenarioTree,
+            C = C, K = K, P = P, X = X, Us = 1..U,
+            nodeType = nodeType,
+            nodeInputVariable = nodeInputVariable,
+            nodeChild = nodeChild,
+            nodeValue = nodeValue
+        )
     }
 }
 
@@ -58,18 +55,15 @@ fun Solver.declareNegativeGuardConditionsConstraints(
         // Note: no inputless constraints
 
         // Note: be very careful with positive/negative variables!
-        for (u in Us) {
-            comment("Negative guard conditions constraints: for input u = $u")
-            declareGuardConditionsConstraintsForInput(
-                u = u,
-                tree = negativeScenarioTree,
-                C = C, K = K, P = P, X = X,
-                nodeType = nodeType,
-                nodeInputVariable = nodeInputVariable,
-                nodeChild = nodeChild,
-                nodeValue = negNodeValue
-            )
-        }
+        comment("Negative guard conditions constraints: for inputs")
+        declareGuardConditionsConstraintsForInputs(
+            tree = negativeScenarioTree,
+            C = C, K = K, P = P, X = X, Us = Us,
+            nodeType = nodeType,
+            nodeInputVariable = nodeInputVariable,
+            nodeChild = nodeChild,
+            nodeValue = negNodeValue
+        )
     }
 }
 
@@ -346,13 +340,13 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
                 )
 }
 
-private fun Solver.declareGuardConditionsConstraintsForInput(
-    u: Int,
+private fun Solver.declareGuardConditionsConstraintsForInputs(
     tree: ScenarioTreeInterface,
     C: Int,
     K: Int,
     P: Int,
     X: Int,
+    Us: Iterable<Int>,
     nodeType: DomainVarArray<NodeType>,
     nodeInputVariable: IntVarArray,
     nodeChild: IntVarArray,
@@ -364,10 +358,11 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
         for (k in 1..K)
             for (p in 1..P)
                 for (x in 1..X)
-                    imply(
-                        nodeInputVariable[c, k, p] eq x,
-                        nodeValue[c, k, p, u] sign tree.uniqueInputs[u - 1][x - 1]
-                    )
+                    for (u in Us)
+                        imply(
+                            nodeInputVariable[c, k, p] eq x,
+                            nodeValue[c, k, p, u] sign tree.uniqueInputs[u - 1][x - 1]
+                        )
 
     comment("AND: value is calculated as a conjunction of children values")
     // (nodeType[p] = AND) & (nodeChild[p] = ch) =>
@@ -376,13 +371,14 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
         for (k in 1..K)
             for (p in 1..P)
                 for (ch in (p + 1) until P)
-                    implyImplyIffAnd(
-                        nodeType[c, k, p] eq NodeType.AND,
-                        nodeChild[c, k, p] eq ch,
-                        nodeValue[c, k, p, u],
-                        nodeValue[c, k, ch, u],
-                        nodeValue[c, k, ch + 1, u]
-                    )
+                    for (u in Us)
+                        implyImplyIffAnd(
+                            nodeType[c, k, p] eq NodeType.AND,
+                            nodeChild[c, k, p] eq ch,
+                            nodeValue[c, k, p, u],
+                            nodeValue[c, k, ch, u],
+                            nodeValue[c, k, ch + 1, u]
+                        )
 
     comment("OR: value is calculated as a disjunction of children values")
     // (nodeType[p] = OR) & (nodeChild[p] = ch) =>
@@ -391,13 +387,14 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
         for (k in 1..K)
             for (p in 1..P)
                 for (ch in (p + 1) until P)
-                    implyImplyIffOr(
-                        nodeType[c, k, p] eq NodeType.OR,
-                        nodeChild[c, k, p] eq ch,
-                        nodeValue[c, k, p, u],
-                        nodeValue[c, k, ch, u],
-                        nodeValue[c, k, ch + 1, u]
-                    )
+                    for (u in Us)
+                        implyImplyIffOr(
+                            nodeType[c, k, p] eq NodeType.OR,
+                            nodeChild[c, k, p] eq ch,
+                            nodeValue[c, k, p, u],
+                            nodeValue[c, k, ch, u],
+                            nodeValue[c, k, ch + 1, u]
+                        )
 
     comment("NOT: value is calculated as a negation of a child value")
     // (nodeType[p] = OR) & (nodeChild[p] = ch) =>
@@ -406,22 +403,24 @@ private fun Solver.declareGuardConditionsConstraintsForInput(
         for (k in 1..K)
             for (p in 1..P)
                 for (ch in (p + 1)..P)
-                    implyImplyIff(
-                        nodeType[c, k, p] eq NodeType.NOT,
-                        nodeChild[c, k, p] eq ch,
-                        nodeValue[c, k, p, u],
-                        -nodeValue[c, k, ch, u]
-                    )
+                    for (u in Us)
+                        implyImplyIff(
+                            nodeType[c, k, p] eq NodeType.NOT,
+                            nodeChild[c, k, p] eq ch,
+                            nodeValue[c, k, p, u],
+                            -nodeValue[c, k, ch, u]
+                        )
 
     comment("None-type nodes have False values")
     // (nodeType[p] = NONE) => AND_{u}( ~nodeValue[p,u] )
     for (c in 1..C)
         for (k in 1..K)
             for (p in 1..P)
-                imply(
-                    nodeType[c, k, p] eq NodeType.NONE,
-                    -nodeValue[c, k, p, u]
-                )
+                for (u in Us)
+                    imply(
+                        nodeType[c, k, p] eq NodeType.NONE,
+                        -nodeValue[c, k, p, u]
+                    )
 }
 
 fun Solver.declareExtForestGuardConditionsConstraints(extForestVars: ExtForestVariables) {

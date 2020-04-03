@@ -33,6 +33,7 @@ class CompleteVariables(
     val actualTransitionFunction: IntVarArray,
     val transitionDestination: IntVarArray,
     val transitionInputEvent: IntVarArray,
+    val transitionTruthTable: BoolVarArray,
     val transitionFiring: BoolVarArray,
     val firstFired: IntVarArray,
     val notFired: BoolVarArray,
@@ -62,6 +63,8 @@ class CompleteVariables(
         internal set
 
     // These variables (until negMapping) use U in domain, so must be redeclared for negU
+    lateinit var negTransitionTruthTable: BoolVarArray
+        internal set
     lateinit var negTransitionFiring: BoolVarArray
         internal set
     lateinit var negFirstFired: IntVarArray
@@ -90,6 +93,7 @@ fun Solver.declareCompleteVariables(
         actualTransitionFunction = actualTransitionFunction,
         transitionDestination = transitionDestination,
         transitionInputEvent = transitionInputEvent,
+        transitionTruthTable = transitionTruthTable,
         transitionFiring = transitionFiring,
         firstFired = firstFired,
         notFired = notFired,

@@ -10,7 +10,7 @@ fun Solver.declareGuardConditionsBfsConstraints(extendedVars: ExtendedVariables)
     with(extendedVars) {
         for (c in 1..C)
             for (k in 1..K) {
-                comment("BFS for c = $c, k = $k")
+                comment("Guard conditions BFS constraints: for c = $c, k = $k")
                 for (j in 3 until P)
                     for (i in 2 until j)
                         for (s in 1 until i)

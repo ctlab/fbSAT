@@ -16,6 +16,10 @@ class RawAssignment0(private val data: BooleanArray) : RawAssignment {
         Solver.falseLiteral -> false
         else -> data[v - 1]
     }
+
+    override fun toString(): String {
+        return "RawAssignment0(data = ${data.toList()})"
+    }
 }
 
 class RawAssignment1(private val data: BooleanArray) : RawAssignment {
@@ -23,6 +27,10 @@ class RawAssignment1(private val data: BooleanArray) : RawAssignment {
         Solver.trueLiteral -> true
         Solver.falseLiteral -> false
         else -> data[v]
+    }
+
+    override fun toString(): String {
+        return "RawAssignment1(data = ${data.toList()})"
     }
 }
 

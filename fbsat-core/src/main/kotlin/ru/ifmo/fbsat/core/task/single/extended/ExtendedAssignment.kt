@@ -27,9 +27,10 @@ class ExtendedAssignment(
     val actualTransitionFunction: IntMultiArray, // [C, E, U] : [0..C]
     val transitionDestination: IntMultiArray, // [C, K] : 0..C
     val transitionInputEvent: IntMultiArray, // [C, K]  0..E
-    val transitionFiring: BooleanMultiArray, // [C, K, U] : Boolean
-    val firstFired: IntMultiArray, // [C, U] : 0..K
-    val notFired: BooleanMultiArray, // [C, K, U] : Boolean
+    val transitionTruthTable: BooleanMultiArray, // [C, K, U] : Boolean
+    val transitionFiring: BooleanMultiArray, // [C, K, E, U] : Boolean
+    val firstFired: IntMultiArray, // [C, E, U] : 0..K
+    val notFired: BooleanMultiArray, // [C, K, E, U] : Boolean
     val stateOutputEvent: IntMultiArray, // [C] : 0..O
     val stateAlgorithmTop: BooleanMultiArray, // [C, Z] : Boolean
     val stateAlgorithmBot: BooleanMultiArray, // [C, Z] : Boolean
@@ -66,6 +67,7 @@ class ExtendedAssignment(
                 actualTransitionFunction = actualTransitionFunction.convert(raw),
                 transitionDestination = transitionDestination.convert(raw),
                 transitionInputEvent = transitionInputEvent.convert(raw),
+                transitionTruthTable = transitionTruthTable.convert(raw),
                 transitionFiring = transitionFiring.convert(raw),
                 firstFired = firstFired.convert(raw),
                 notFired = notFired.convert(raw),

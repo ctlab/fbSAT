@@ -359,14 +359,6 @@ class FbSAT : CliktCommand() {
         default = Globals.IS_REUSE_K
     )
 
-    val isPartialTruthTables: Boolean by option(
-        "--partial-truth-tables",
-        help = "[basic] Extract partial truth tables"
-    ).flag(
-        "--total-truth-tables",
-        default = Globals.IS_PARTIAL_TRUTH_TABLES
-    )
-
     val fileVerifyCE: File? by option(
         "--verify-ce"
     ).file()
@@ -403,7 +395,6 @@ class FbSAT : CliktCommand() {
         Globals.IS_ENCODE_TOTALIZER = isEncodeTotalizer
         Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS = isEncodeDisjunctiveTransitions
         Globals.IS_REUSE_K = isReuseK
-        Globals.IS_PARTIAL_TRUTH_TABLES = isPartialTruthTables
         Globals.IS_DEBUG = isDebug
 
         // outDir.deleteRecursively()

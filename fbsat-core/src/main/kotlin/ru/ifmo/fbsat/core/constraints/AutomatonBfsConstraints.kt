@@ -53,8 +53,7 @@ fun Solver.declareArbitraryModularAutomatonBfsConstraints(
         for (m in 1..M) {
             comment("Automaton BFS constraints: for module m = $m")
             declareAutomatonBfsConstraintsImpl(
-                C = C,
-                K = K,
+                C = C, K = K,
                 transitionDestination = modularTransitionDestination[m]
             )
         }

@@ -11,6 +11,7 @@ import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.solver.convert
 import ru.ifmo.fbsat.core.task.single.basic.BasicAssignment
+import ru.ifmo.fbsat.core.utils.withIndex
 
 class ParallelModularBasicAssignment(
     val scenarioTree: ScenarioTree,
@@ -86,15 +87,10 @@ fun ParallelModularBasicAssignment.toAutomaton(): ParallelModularAutomaton {
                 },
                 transitionGuard = { c, k ->
                     TruthTableGuard(
-                        truthTable = (1..scenarioTree.uniqueInputs.size)
-                            .asSequence()
-                            .associate { u ->
-                                scenarioTree.uniqueInputs[u - 1] to
-                                    when {
-                                        notFired[c, k, u] -> false
-                                        firstFired[c, u] == k -> true
-                                        else -> null
-                                    }
+                        truthTable = scenarioTree.uniqueInputs
+                            .withIndex(start = 1)
+                            .associate { (u, input) ->
+                                input to transitionTruthTable[c, k, u]
                             },
                         inputNames = scenarioTree.inputNames,
                         uniqueInputs = scenarioTree.uniqueInputs

@@ -30,6 +30,7 @@ class ExtendedVariables(
     val actualTransitionFunction: IntVarArray,
     val transitionDestination: IntVarArray,
     val transitionInputEvent: IntVarArray,
+    val transitionTruthTable: BoolVarArray,
     val transitionFiring: BoolVarArray,
     val firstFired: IntVarArray,
     val notFired: BoolVarArray,
@@ -58,7 +59,7 @@ fun Solver.declareExtendedVariables(
     val nodeParent = newIntVarArray(C, K, P) { (_, _, p) -> 0 until p }
     val nodeChild = newIntVarArray(C, K, P) { (_, _, p) -> ((p + 1)..P) + 0 }
     val nodeValue = newBoolVarArray(C, K, P, U) { (c, k, p, u) ->
-        if (p == 1) transitionFiring[c, k, u]
+        if (p == 1) transitionTruthTable[c, k, u]
         else newLiteral()
     }
     /* Cardinality */
@@ -76,6 +77,7 @@ fun Solver.declareExtendedVariables(
         actualTransitionFunction = actualTransitionFunction,
         transitionDestination = transitionDestination,
         transitionInputEvent = transitionInputEvent,
+        transitionTruthTable = transitionTruthTable,
         transitionFiring = transitionFiring,
         firstFired = firstFired,
         notFired = notFired,

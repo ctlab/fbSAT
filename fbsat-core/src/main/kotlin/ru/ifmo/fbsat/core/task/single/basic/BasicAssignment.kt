@@ -9,7 +9,6 @@ import ru.ifmo.fbsat.core.automaton.endow
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.solver.convert
-import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.withIndex
 
 class BasicAssignment(
@@ -27,9 +26,10 @@ class BasicAssignment(
     val actualTransitionFunction: IntMultiArray, // [C, E, U] : [0..C]
     val transitionDestination: IntMultiArray, // [C, K] : 0..C
     val transitionInputEvent: IntMultiArray, // [C, K]  0..E
-    val transitionFiring: BooleanMultiArray, // [C, K, U] : Boolean
-    val firstFired: IntMultiArray, // [C, U] : 0..K
-    val notFired: BooleanMultiArray, // [C, K, U] : Boolean
+    val transitionTruthTable: BooleanMultiArray, // [C, K, E, U] : Boolean
+    val transitionFiring: BooleanMultiArray, // [C, K, E, U] : Boolean
+    val firstFired: IntMultiArray, // [C, E, U] : 0..K
+    val notFired: BooleanMultiArray, // [C, K, E, U] : Boolean
     val stateOutputEvent: IntMultiArray, // [C] : 0..O
     val stateAlgorithmTop: BooleanMultiArray, // [C, Z] : Boolean
     val stateAlgorithmBot: BooleanMultiArray, // [C, Z] : Boolean
@@ -54,6 +54,7 @@ class BasicAssignment(
                 actualTransitionFunction = actualTransitionFunction.convert(raw),
                 transitionDestination = transitionDestination.convert(raw),
                 transitionInputEvent = transitionInputEvent.convert(raw),
+                transitionTruthTable = transitionTruthTable.convert(raw),
                 transitionFiring = transitionFiring.convert(raw),
                 firstFired = firstFired.convert(raw),
                 notFired = notFired.convert(raw),
@@ -90,17 +91,10 @@ fun BasicAssignment.toAutomaton(): Automaton =
         },
         transitionGuard = { c, k ->
             TruthTableGuard(
-                truthTable = scenarioTree.uniqueInputs.withIndex(start = 1)
+                truthTable = scenarioTree.uniqueInputs
+                    .withIndex(start = 1)
                     .associate { (u, input) ->
-                        input to
-                            if (Globals.IS_PARTIAL_TRUTH_TABLES)
-                                when {
-                                    notFired[c, k, u] -> false
-                                    firstFired[c, u] == k -> true
-                                    else -> null
-                                }
-                            else
-                                transitionFiring[c, k, u]
+                        input to transitionTruthTable[c, k, u]
                     },
                 inputNames = scenarioTree.inputNames,
                 uniqueInputs = scenarioTree.uniqueInputs

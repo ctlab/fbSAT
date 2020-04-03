@@ -25,6 +25,7 @@ class BasicVariables(
     val actualTransitionFunction: IntVarArray,
     val transitionDestination: IntVarArray,
     val transitionInputEvent: IntVarArray,
+    val transitionTruthTable: BoolVarArray,
     val transitionFiring: BoolVarArray,
     val firstFired: IntVarArray,
     val notFired: BoolVarArray,
@@ -52,9 +53,10 @@ fun Solver.declareBasicVariables(
     val actualTransitionFunction = newIntVarArray(C, E, U) { 0..C }
     val transitionDestination = newIntVarArray(C, K) { 0..C }
     val transitionInputEvent = newIntVarArray(C, K) { 0..E }
-    val transitionFiring = newBoolVarArray(C, K, U)
-    val firstFired = newIntVarArray(C, U) { 0..K }
-    val notFired = newBoolVarArray(C, K, U)
+    val transitionTruthTable = newBoolVarArray(C, K, U)
+    val transitionFiring = newBoolVarArray(C, K, E, U)
+    val firstFired = newIntVarArray(C, E, U) { 0..K }
+    val notFired = newBoolVarArray(C, K, E, U)
     val stateOutputEvent = newIntVarArray(C) { 0..O }
     val stateAlgorithmBot = newBoolVarArray(C, Z)
     val stateAlgorithmTop = newBoolVarArray(C, Z)
@@ -74,6 +76,7 @@ fun Solver.declareBasicVariables(
         actualTransitionFunction = actualTransitionFunction,
         transitionDestination = transitionDestination,
         transitionInputEvent = transitionInputEvent,
+        transitionTruthTable = transitionTruthTable,
         transitionFiring = transitionFiring,
         firstFired = firstFired,
         notFired = notFired,

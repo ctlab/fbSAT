@@ -8,7 +8,6 @@ import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonStructur
 import ru.ifmo.fbsat.core.constraints.declarePositiveConsecutiveModularMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.task.CONSECUTIVE_MODULAR_BASIC_VARS
 import ru.ifmo.fbsat.core.task.consecutiveModularBasicVars
 import ru.ifmo.fbsat.core.utils.Globals

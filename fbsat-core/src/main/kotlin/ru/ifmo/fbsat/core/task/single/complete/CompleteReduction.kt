@@ -99,21 +99,26 @@ fun Solver.updateNegativeReduction() {
         val newOnlyNegUs = newOnlyNegUIs.map(::getNegU)
 
         /* Variables */
-        negTransitionFiring = newBoolVarArray(C, K, negU) { (c, k, u) ->
+        negTransitionTruthTable = newBoolVarArray(C, K, negU) { (c, k, u) ->
             inputChoice(u,
-                { negTransitionFiring[c, k, it] },
-                { transitionFiring[c, k, it] })
+                { negTransitionTruthTable[c, k, it] },
+                { transitionTruthTable[c, k, it] })
         }
-        negFirstFired = IntVarArray.create(C, negU) { (c, u) ->
+        negTransitionFiring = newBoolVarArray(C, K, E, negU) { (c, k, e, u) ->
             inputChoice(u,
-                { negFirstFired[c, it] },
-                { firstFired[c, it] },
+                { negTransitionFiring[c, k, e, it] },
+                { transitionFiring[c, k, e, it] })
+        }
+        negFirstFired = IntVarArray.create(C, E, negU) { (c, e, u) ->
+            inputChoice(u,
+                { negFirstFired[c, e, it] },
+                { firstFired[c, e, it] },
                 { newIntVar(0..K) })
         }
-        negNotFired = newBoolVarArray(C, K, negU) { (c, k, u) ->
+        negNotFired = newBoolVarArray(C, K, E, negU) { (c, k, e, u) ->
             inputChoice(u,
-                { negNotFired[c, k, it] },
-                { notFired[c, k, it] })
+                { negNotFired[c, k, e, it] },
+                { notFired[c, k, e, it] })
         }
         negActualTransitionFunction = IntVarArray.create(C, E, negU) { (c, e, u) ->
             inputChoice(u,
@@ -122,7 +127,7 @@ fun Solver.updateNegativeReduction() {
                 { newIntVar(0..C) })
         }
         negNodeValue = newBoolVarArray(C, K, P, negU) { (c, k, p, u) ->
-            if (p == 1) negTransitionFiring[c, k, u]
+            if (p == 1) negTransitionTruthTable[c, k, u]
             else inputChoice(u,
                 { negNodeValue[c, k, p, it] },
                 { nodeValue[c, k, p, it] })

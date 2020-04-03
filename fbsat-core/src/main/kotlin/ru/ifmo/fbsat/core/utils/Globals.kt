@@ -33,7 +33,6 @@ object Globals {
     var IS_ENCODE_DISJUNCTIVE_TRANSITIONS: Boolean = false
     var IS_DEBUG: Boolean = false
     var IS_REUSE_K: Boolean = true
-    var IS_PARTIAL_TRUTH_TABLES: Boolean = false
     val xmlPrintOptions: PrintOptions =
         PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = true)
     val defaultVarEncoding: VarEncoding = VarEncoding.ONEHOT
