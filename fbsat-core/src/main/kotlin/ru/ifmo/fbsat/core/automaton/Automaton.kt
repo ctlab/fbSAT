@@ -38,7 +38,7 @@ class Automaton(
     /**
      * Automaton transitions.
      */
-    val transitions: Collection<State.Transition> by lazyCache {
+    val transitions: Collection<Transition> by lazyCache {
         states.flatMap { it.transitions }
     }
 
@@ -116,45 +116,8 @@ class Automaton(
         val transitions: List<Transition> = _transitions
 
         fun addTransition(destination: State, inputEvent: InputEvent, guard: Guard) {
-            _transitions.add(Transition(destination, inputEvent, guard))
+            _transitions.add(Transition(this, destination, inputEvent, guard))
             this@Automaton.lazyCache.invalidate()
-        }
-
-        inner class Transition(
-            val destination: State,
-            val inputEvent: InputEvent?,
-            var guard: Guard
-        ) {
-            val source: State = this@State
-            val k: Int = this@State.transitions.size + 1 // Note: 1-based
-
-            fun eval(inputAction: InputAction): Boolean {
-                return inputAction.event == inputEvent && guard.eval(inputAction.values)
-            }
-
-            fun toSimpleString(): String {
-                return "${source.id} to ${destination.id} on ${inputEvent?.name ?: 'ε'} if ${guard.toSimpleString()}"
-            }
-
-            fun toGraphvizString(): String {
-                return "$k:${inputEvent?.name ?: 'ε'}/${guard.toGraphvizString()}"
-            }
-
-            fun toFbtString(): String {
-                return "${inputEvent?.name ?: 'ε'}&${guard.toFbtString()}"
-            }
-
-            fun toSmvString(): String {
-                return if (inputEvent != null)
-                    "_state=${source.toSmvString()} & ${inputEvent.name} & (${guard.toSmvString()})"
-                else
-                    "_state=${source.toSmvString()} & (${guard.toSmvString()})"
-            }
-
-            override fun toString(): String {
-                return "Transition(k=$k, source=${source.id}, destination=${destination.id}, $inputEvent=${inputEvent?.name
-                    ?: 'ε'}, guard=$guard)"
-            }
         }
 
         fun eval(currentValues: OutputValues): OutputAction {
@@ -223,6 +186,43 @@ class Automaton(
         override fun toString(): String {
             return "State(id=$id, outputEvent=${outputEvent?.name
                 ?: 'ε'}, algorithm=$algorithm, transitions=${transitions.map { it.destination.id }})"
+        }
+    }
+
+    inner class Transition(
+        val source: State,
+        val destination: State,
+        val inputEvent: InputEvent?,
+        var guard: Guard
+    ) {
+        val k: Int = source.transitions.size + 1 // Note: 1-based
+
+        fun eval(inputAction: InputAction): Boolean {
+            return inputAction.event == inputEvent && guard.eval(inputAction.values)
+        }
+
+        fun toSimpleString(): String {
+            return "${source.id} to ${destination.id} on ${inputEvent?.name ?: 'ε'} if ${guard.toSimpleString()}"
+        }
+
+        fun toGraphvizString(): String {
+            return "$k:${inputEvent?.name ?: 'ε'}/${guard.toGraphvizString()}"
+        }
+
+        fun toFbtString(): String {
+            return "${inputEvent?.name ?: 'ε'}&${guard.toFbtString()}"
+        }
+
+        fun toSmvString(): String {
+            return if (inputEvent != null)
+                "_state=${source.toSmvString()} & ${inputEvent.name} & (${guard.toSmvString()})"
+            else
+                "_state=${source.toSmvString()} & (${guard.toSmvString()})"
+        }
+
+        override fun toString(): String {
+            return "Transition(k=$k, source=${source.id}, destination=${destination.id}, $inputEvent=${inputEvent?.name
+                ?: 'ε'}, guard=$guard)"
         }
     }
 
