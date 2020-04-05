@@ -11,13 +11,7 @@ class Cardinality(
         private set
 
     fun updateUpperBoundLessThanOrEqual(newUpperBound: Int?) {
-        upperBound?.let { curUpperBound ->
-            check(newUpperBound != null && newUpperBound <= curUpperBound) { "Cannot soften UB" }
-        }
-
-        if (newUpperBound == null) return
-
-        solver.declareComparatorLessThanOrEqual(totalizer, newUpperBound, upperBound)
+        solver.declareComparatorLessThanOrEqual(totalizer, newUpperBound)
         upperBound = newUpperBound
     }
 
@@ -90,14 +84,16 @@ fun Solver.declareTotalizer(block: suspend SequenceScope<Int>.() -> Unit): BoolV
     declareTotalizer(sequence(block).constrainOnce())
 
 /**
- * Declares cardinality constraint `sum(totalizer) <= x`
- * @param[declared] previously declared upper bound.
+ * Declares cardinality constraint **sum**([totalizer]) <= [x]
  */
-fun Solver.declareComparatorLessThanOrEqual(totalizer: BoolVarArray, x: Int, declared: Int? = null) {
+fun Solver.declareComparatorLessThanOrEqual(totalizer: BoolVarArray, x: Int?) {
     require(totalizer.shape.size == 1) { "Totalizer must be 1-dimensional." }
-    val max = declared ?: totalizer.values.size
-    comment("Comparator(<=$x up to $max)")
-    for (i in max downTo x + 1) {
-        clause(-totalizer[i])
+    assumptions.clear()
+    if (x != null) {
+        for (i in (x + 1)..totalizer.shape[0])
+            assumptions.add(-totalizer[i])
+        // if (x + 1 <= totalizer.shape[0]) {
+        //     assumptions.add(-totalizer[x + 1])
+        // }
     }
 }

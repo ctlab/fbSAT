@@ -50,6 +50,7 @@ interface Solver : AutoCloseable {
     val context: SolverContext
     val numberOfVariables: Int
     val numberOfClauses: Int
+    val assumptions: MutableList<Literal>
 
     fun newLiteral(): Literal
 
@@ -143,6 +144,7 @@ abstract class AbstractSolver : Solver {
         protected set
     final override var numberOfClauses: Int = 0
         private set
+    final override val assumptions: MutableList<Literal> = mutableListOf()
 
     override fun newLiteral(): Literal = ++numberOfVariables
 
@@ -218,6 +220,10 @@ class FileSolver(
     }
 
     override fun _solve(): RawAssignment? {
+        if (assumptions.isNotEmpty()) {
+            error("${this.javaClass.simpleName} does not support solving with assumptions!")
+        }
+
         file.sink().buffer().use {
             it.writeln("p cnf $numberOfVariables $numberOfClauses")
             buffer.copyTo(it.buffer)
@@ -286,6 +292,10 @@ class IncrementalCryptominisat : AbstractSolver() {
     }
 
     override fun _solve(): RawAssignment? {
+        if (assumptions.isNotEmpty()) {
+            error("${this.javaClass.simpleName} does not support solving with assumptions!")
+        }
+
         processInput.writeln("solve 0").flush()
         buffer.writeln("c solve")
 
@@ -367,7 +377,7 @@ class MiniSat : AbstractSolver() {
             }
         }
 
-        if (!backend.solve()) return null
+        if (!backend.solve_(assumptions.toIntArray())) return null
         val model = backend.getModel()
         return RawAssignment1(model)
     }
@@ -418,7 +428,7 @@ class Cadical : AbstractSolver() {
             }
         }
 
-        if (!backend.solve()) return null
+        if (!backend.solve_(assumptions.toIntArray())) return null
         val model = backend.getModel()
         return RawAssignment1(model)
     }

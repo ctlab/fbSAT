@@ -34,6 +34,7 @@ import ru.ifmo.fbsat.core.task.single.basic.basicMin
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
 import ru.ifmo.fbsat.core.task.single.complete.cegis
 import ru.ifmo.fbsat.core.task.single.complete.cegisMin
+import ru.ifmo.fbsat.core.task.single.complete.cegisMinA
 import ru.ifmo.fbsat.core.task.single.complete.complete
 import ru.ifmo.fbsat.core.task.single.complete.completeMin
 import ru.ifmo.fbsat.core.task.single.extended.extended
@@ -63,6 +64,7 @@ enum class Method(val s: String) {
     CompleteMin("complete-min"),
     Cegis("cegis"),
     CegisMin("cegis-min"),
+    CegisMinA("cegis-min-a"),
     ModularBasic("modular-basic"),
     ModularBasicMin("modular-basic-min"),
     ConsecutiveModularBasic("modular-consecutive-basic"),
@@ -583,6 +585,16 @@ class FbSAT : CliktCommand() {
             }
             Method.CegisMin -> {
                 inferrer.cegisMin(
+                    scenarioTree = tree,
+                    initialNegativeScenarioTree = negTree,
+                    numberOfStates = numberOfStates,
+                    maxGuardSize = maxGuardSize,
+                    maxPlateauWidth = maxPlateauWidth,
+                    smvDir = smvDir
+                )
+            }
+            Method.CegisMinA -> {
+                inferrer.cegisMinA(
                     scenarioTree = tree,
                     initialNegativeScenarioTree = negTree,
                     numberOfStates = numberOfStates,

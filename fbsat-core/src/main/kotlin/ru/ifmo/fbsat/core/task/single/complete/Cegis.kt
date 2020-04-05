@@ -8,11 +8,13 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.completeVars
+import ru.ifmo.fbsat.core.task.extendedVars
 import ru.ifmo.fbsat.core.task.single.basic.declareBasic
 import ru.ifmo.fbsat.core.task.single.extended.declareExtended
 import ru.ifmo.fbsat.core.task.single.extended.extendedMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
 import ru.ifmo.fbsat.core.task.single.extended.inferExtended
+import ru.ifmo.fbsat.core.task.single.extended.optimizeN
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeSince
@@ -161,6 +163,81 @@ fun Inferrer.cegisMin(
     }
     return null
 }
+
+@Suppress("LocalVariableName")
+fun Inferrer.cegisMinA(
+    scenarioTree: ScenarioTree,
+    initialNegativeScenarioTree: NegativeScenarioTree? = null,
+    numberOfStates: Int? = null,
+    maxGuardSize: Int? = null, // P, search if null
+    maxPlateauWidth: Int? = null, // w, =Inf if null
+    smvDir: File
+): Automaton? {
+    val extendedAutomaton = if (maxGuardSize == null) {
+        extendedMinUB(scenarioTree, numberOfStates = numberOfStates, maxPlateauWidth = maxPlateauWidth)
+    } else {
+        extendedMin(scenarioTree, numberOfStates = numberOfStates, maxGuardSize = maxGuardSize)
+    }
+    checkNotNull(extendedAutomaton)
+    val C = extendedAutomaton.numberOfStates
+    // Note: reusing K from extMinTask may fail!
+    val K = if (Globals.IS_REUSE_K) extendedAutomaton.maxOutgoingTransitions else C
+    log.info("Using K = $K")
+    val P = extendedAutomaton.maxGuardSize
+    var N = extendedAutomaton.totalGuardsSize
+
+    log.info("extendedAutomaton:")
+    extendedAutomaton.pprint()
+    log.info("extendedAutomaton has C = $C, P = $P, N = $N")
+
+    val negativeScenarioTree = initialNegativeScenarioTree ?: NegativeScenarioTree(
+        inputEvents = scenarioTree.inputEvents,
+        outputEvents = scenarioTree.outputEvents,
+        inputNames = scenarioTree.inputNames,
+        outputNames = scenarioTree.outputNames
+    )
+
+    reset()
+    solver.declareBasic(
+        scenarioTree = scenarioTree,
+        numberOfStates = C,
+        maxOutgoingTransitions = K,
+        isEncodeReverseImplication = false
+    )
+    solver.declareExtended(maxGuardSize = P)
+    solver.declareComplete(negativeScenarioTree)
+    var Nstart: Int? = null
+
+    for (loopNumber in 1..100) {
+        log.just("===== Loop number #$loopNumber, N = $N =====")
+
+        optimizeN(start=Nstart, end = N)
+        solver.extendedVars.cardinality.updateUpperBoundLessThanOrEqual(N)
+        val automaton = performCegis(smvDir)
+
+        if (automaton != null) {
+            log.success("Hooray! Minimal full verified automaton has been found!")
+            return automaton
+        } else {
+            log.failure("UNSAT, probably N = $N is too small")
+            log.info("Trying to re-optimize...")
+            val automaton2 = optimizeN(end = N + 1)
+            if (automaton2 != null) {
+                N = automaton2.totalGuardsSize
+                Nstart = N
+            } else {
+                log.failure("UNSAT, probably P or C are too small")
+                break
+            }
+            if (N > C * K * P) {
+                log.error("N reached upper bound C*K*P = ${C * K * P}")
+                break
+            }
+        }
+    }
+    return null
+}
+
 
 fun Automaton.verifyWithNuSMV(dir: File): List<Counterexample> {
     // Save automaton to smv directory
