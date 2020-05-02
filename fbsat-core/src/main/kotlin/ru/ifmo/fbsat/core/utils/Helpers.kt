@@ -138,8 +138,10 @@ val <T> T.exhaustive: T
 
 inline fun <reified T> mutableListOfNulls(size: Int): MutableList<T?> = MutableList(size) { null }
 
-fun <T> Iterable<T>.withIndex(start: Int): Sequence<Pair<Int, T>> =
-    asSequence().mapIndexed { index, value -> (start + index) to value }
+fun <T> Sequence<T>.withIndex(start: Int): Sequence<Pair<Int, T>> =
+    mapIndexed { index, value -> Pair(start + index, value) }
+
+fun <T> Iterable<T>.withIndex(start: Int): Sequence<Pair<Int, T>> = asSequence().withIndex(start)
 
 fun <T> Iterable<T>.firstIndexed(predicate: (Int, T) -> Boolean): T =
     withIndex().first { (index, value) -> predicate(index, value) }.value
