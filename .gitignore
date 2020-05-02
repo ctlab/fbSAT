@@ -21,6 +21,7 @@ target/
 *.bat
 *.py
 /logs/
+/data/
 
 # Gradle
 !/gradle/wrapper/gradle-wrapper.jar
