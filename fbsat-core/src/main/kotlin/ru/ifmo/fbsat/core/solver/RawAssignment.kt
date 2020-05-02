@@ -6,7 +6,6 @@ import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import com.github.lipen.multiarray.mapToInt
 import kotlin.math.absoluteValue
-import kotlin.math.sign
 
 interface RawAssignment {
     operator fun get(v: Literal): Boolean
