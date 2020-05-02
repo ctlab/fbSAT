@@ -20,6 +20,7 @@ import ru.ifmo.fbsat.core.automaton.OutputValues
 import ru.ifmo.fbsat.core.automaton.minimizeTruthTableGuards
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario2.positive.ScenarioTree2
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.arbitraryModularBasic
@@ -32,6 +33,9 @@ import ru.ifmo.fbsat.core.task.modular.extended.consecutive.consecutiveModularEx
 import ru.ifmo.fbsat.core.task.single.basic.basic
 import ru.ifmo.fbsat.core.task.single.basic.basicMin
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
+import ru.ifmo.fbsat.core.task.single.basic2.basic2
+import ru.ifmo.fbsat.core.task.single.basic2.basicMin2
+import ru.ifmo.fbsat.core.task.single.basic2.basicMinC2
 import ru.ifmo.fbsat.core.task.single.complete.cegis
 import ru.ifmo.fbsat.core.task.single.complete.cegisMin
 import ru.ifmo.fbsat.core.task.single.complete.complete
@@ -54,6 +58,8 @@ import java.io.File
 enum class Method(val s: String) {
     Basic("basic"),
     BasicMin("basic-min"),
+    Basic2("basic2"),
+    BasicMin2("basic-min2"),
     Extended("extended"),
     ExtendedMin("extended-min"),
     ExtendedMinUB("extended-min-ub"),
@@ -412,10 +418,21 @@ class FbSAT : CliktCommand() {
             "Initial values size must be equal to the number of output variables"
         }
 
-        val tree = ScenarioTree.fromFile(fileScenarios, inputNames, outputNames)
-        log.info("Scenarios: ${tree.scenarios.size}")
-        log.info("Elements: ${tree.scenarios.sumBy { it.elements.size }}")
-        log.info("Scenario tree size: ${tree.size}")
+        val tree: ScenarioTree by lazy {
+            val t = ScenarioTree.fromFile(fileScenarios, inputNames, outputNames)
+            log.info("Scenarios: ${t.scenarios.size}")
+            log.info("Elements: ${t.scenarios.sumBy { it.elements.size }}")
+            log.info("Scenario tree size: ${t.size}")
+            t
+        }
+
+        val tree2: ScenarioTree2 by lazy {
+            val t = ScenarioTree2.fromFile(fileScenarios, inputNames, outputNames)
+            log.info("Scenarios: ${t.scenarios.size}")
+            log.info("Elements: ${t.scenarios.sumBy { it.elements.size }}")
+            log.info("Scenario tree size: ${t.size}")
+            t
+        }
 
         val negTree = fileCounterexamples?.let {
             NegativeScenarioTree.fromFile(
@@ -508,6 +525,58 @@ class FbSAT : CliktCommand() {
                         scenarioTree = tree,
                         isEncodeReverseImplication = isEncodeReverseImplication
                     )
+            }
+            Method.Basic2 -> {
+                val ecc = inferrer.basic2(
+                    scenarioTree = tree2,
+                    numberOfStates = requireNotNull(numberOfStates),
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    maxTransitions = maxTransitions,
+                    isEncodeReverseImplication = isEncodeReverseImplication
+                )
+                if (ecc == null) {
+                    log.failure("ECC not found")
+                } else {
+                    log.info("Inferred ECC:")
+                    ecc.pprint()
+                    log.info("Inferred ECC has ${ecc.numberOfStates} states, ${ecc.numberOfTransitions} transitions and ${ecc.totalGuardsSize} nodes")
+
+                    if (ecc.verify(tree2))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                        if (failIfSTVerifyFailed) error("ST verification failed")
+                    }
+                }
+
+                null
+            }
+            Method.BasicMin2 -> {
+                val ecc = if (isOnlyC)
+                    inferrer.basicMinC2(
+                        scenarioTree = tree2,
+                        isEncodeReverseImplication = isEncodeReverseImplication
+                    )
+                else
+                    inferrer.basicMin2(
+                        scenarioTree = tree2,
+                        isEncodeReverseImplication = isEncodeReverseImplication
+                    )
+                if (ecc == null) {
+                    log.failure("ECC not found")
+                } else {
+                    log.info("Inferred ECC:")
+                    ecc.pprint()
+                    log.info("Inferred ECC has ${ecc.numberOfStates} states, ${ecc.numberOfTransitions} transitions and ${ecc.totalGuardsSize} nodes")
+
+                    if (ecc.verify(tree2))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                        if (failIfSTVerifyFailed) error("ST verification failed")
+                    }
+                }
+                null
             }
             Method.Extended -> {
                 inferrer.extended(
@@ -818,7 +887,7 @@ class FbSAT : CliktCommand() {
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
                 } else {
-                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.values.size} modules, ${modularAutomaton.numberOfTransitions} transitions:")
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.values.size} modules and ${modularAutomaton.numberOfTransitions} transitions with guards of size ${modularAutomaton.totalGuardsSize}:")
                     for ((m, automaton) in modularAutomaton.modules.values.withIndex(start = 1)) {
                         log.info("Automaton #$m has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
                         automaton.pprint()

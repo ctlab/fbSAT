@@ -6,6 +6,7 @@ import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.extended.consecutive.ConsecutiveModularExtendedVariables
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
+import ru.ifmo.fbsat.core.task.single.basic2.BasicVariables2
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
 import ru.ifmo.fbsat.core.task.single.extforest.ExtForestVariables
@@ -20,6 +21,7 @@ const val CONSECUTIVE_MODULAR_EXTENDED_VARS: String = "consecutiveModularExtende
 const val EXTFOREST_VARS: String = "extForestVariables"
 
 val Solver.basicVars: BasicVariables get() = context[BASIC_VARS]
+val Solver.basicVars2: BasicVariables2 get() = context[BASIC_VARS]
 val Solver.extendedVars: ExtendedVariables get() = context[EXTENDED_VARS]
 val Solver.completeVars: CompleteVariables get() = context[COMPLETE_VARS]
 val Solver.parallelModularBasicVars: ParallelModularBasicVariables get() = context[PARALLEL_MODULAR_BASIC_VARS]

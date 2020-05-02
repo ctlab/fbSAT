@@ -1,5 +1,7 @@
 package ru.ifmo.fbsat.core.automaton
 
+import ru.ifmo.fbsat.core.utils.toBinaryString
+
 inline class InputEvent(val name: String) {
     // override fun toString(): String {
     //     return name
@@ -33,9 +35,9 @@ inline class InputValues(val values: List<Boolean>) {
         return values[index]
     }
 
-    // override fun toString(): String {
-    //     return values.toString()
-    // }
+    override fun toString(): String {
+        return "[${values.toBinaryString()}]"
+    }
 
     companion object {
         fun empty(): InputValues = InputValues(emptyList())
@@ -48,9 +50,9 @@ inline class OutputValues(val values: List<Boolean>) {
         return values[index]
     }
 
-    // override fun toString(): String {
-    //     return values.toString()
-    // }
+    override fun toString(): String {
+        return "[${values.toBinaryString()}]"
+    }
 
     companion object {
         fun empty(): OutputValues = OutputValues(emptyList())

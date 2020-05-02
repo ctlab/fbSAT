@@ -50,8 +50,8 @@ class UnconditionalGuard : Guard {
 
 class TruthTableGuard(
     val truthTable: Map<InputValues, Boolean?>,
-    private val inputNames: List<String>,
-    private val uniqueInputs: List<InputValues>
+    private val inputNames: List<String> = emptyList(),
+    private val uniqueInputs: List<InputValues> = emptyList()
 ) : Guard {
     val cnf: List<List<Int>> = emptyList()
 

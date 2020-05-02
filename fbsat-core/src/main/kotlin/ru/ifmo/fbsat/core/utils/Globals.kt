@@ -21,6 +21,7 @@ object Globals {
     var INITIAL_OUTPUT_VALUES: OutputValues by Delegates.notNull()
     var EPSILON_OUTPUT_EVENTS: EpsilonOutputEvents = EpsilonOutputEvents.ONLYSTART
     var START_STATE_ALGORITHMS: StartStateAlgorithms = StartStateAlgorithms.ZERO
+    var OUTPUT_ACTIONS_MULTIPLICITY: Int = 2
     var IS_FORBID_OR: Boolean = false
     var IS_FORBID_TRANSITIONS_TO_FIRST_STATE: Boolean = true
     var IS_BFS_AUTOMATON: Boolean = true

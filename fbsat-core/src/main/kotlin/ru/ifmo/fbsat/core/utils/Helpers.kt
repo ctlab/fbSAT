@@ -12,6 +12,7 @@ import okio.source
 import ru.ifmo.fbsat.core.automaton.InputEvent
 import ru.ifmo.fbsat.core.automaton.OutputEvent
 import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
+import ru.ifmo.fbsat.core.scenario2.positive.ScenarioTree2
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import java.io.File
 import kotlin.math.pow
@@ -184,6 +185,32 @@ fun algorithmChoice(
         true to false -> -algorithmTop[c, z]
         false to true -> algorithmBot[c, z]
         false to false -> -algorithmBot[c, z]
+        else -> error("Weird combination of values: $values")
+    }
+}
+
+fun algorithmChoice2(
+    tree: ScenarioTree2,
+    v: Int,
+    c: Int,
+    z: Int,
+    a: Int,
+    algorithmTop: BoolVarArray,
+    algorithmBot: BoolVarArray
+): Int {
+    val outputActions = tree.nodes[v - 1].outputActions
+    val outputAction = outputActions[a - 1]
+    val previousOutputValues =
+        if (a > 1) outputActions[a - 2].values
+        else tree.nodes[v - 1].parent?.finalOutputValues ?: tree.initialOutputValues
+    val currentOutputValues = outputAction.values
+    val oldValue = previousOutputValues[z - 1]
+    val newValue = currentOutputValues[z - 1]
+    return when (val values = oldValue to newValue) {
+        true to true -> algorithmTop[c, a, z]
+        true to false -> -algorithmTop[c, a, z]
+        false to true -> algorithmBot[c, a, z]
+        false to false -> -algorithmBot[c, a, z]
         else -> error("Weird combination of values: $values")
     }
 }
