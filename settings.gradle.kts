@@ -1,5 +1,16 @@
 rootProject.name = "fbSAT"
 
+plugins {
+    id("com.gradle.enterprise") version "3.2.1"
+}
+
+gradleEnterprise {
+    buildScan {
+        termsOfServiceUrl = "https://gradle.com/terms-of-service"
+        termsOfServiceAgree = "yes"
+    }
+}
+
 include("core")
 project(":core").projectDir = file("fbsat-core")
 

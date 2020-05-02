@@ -3,7 +3,6 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 plugins {
     idea
-    `build-scan`
     kotlin("jvm") version Versions.kotlin
     id("fr.brouillard.oss.gradle.jgitver") version Versions.jgitver
     id("com.github.ben-manes.versions") version Versions.gradle_versions
@@ -43,13 +42,8 @@ idea {
     }
 }
 
-buildScan {
-    termsOfServiceUrl = "https://gradle.com/terms-of-service"
-    termsOfServiceAgree = "yes"
-}
-
 tasks.wrapper {
-    gradleVersion = "5.6.4"
+    gradleVersion = "6.3"
     distributionType = Wrapper.DistributionType.ALL
 }
 
