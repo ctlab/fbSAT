@@ -1,7 +1,7 @@
 @file:Suppress("PublicApiImplicitType")
 
 object Versions {
-    const val kotlin = "1.3.70"
+    const val kotlin = "1.3.72"
     const val jgitver = "0.8.0"
     const val ktlint = "8.2.0"
     const val clikt = "2.5.0"
