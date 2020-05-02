@@ -26,6 +26,7 @@ dependencies {
 
     testImplementation(Libs.junit_jupiter_api)
     testRuntimeOnly(Libs.junit_jupiter_engine)
+    testImplementation(Libs.junit_jupiter_params)
     testImplementation(Libs.kluent)
 
     // "jmhImplementation"(kotlin("stdlib"))
