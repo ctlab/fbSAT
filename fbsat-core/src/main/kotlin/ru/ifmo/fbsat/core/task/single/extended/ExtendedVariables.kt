@@ -8,10 +8,12 @@ import ru.ifmo.fbsat.core.solver.DomainVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
+import ru.ifmo.fbsat.core.solver.literals
 import ru.ifmo.fbsat.core.solver.newBoolVarArray
 import ru.ifmo.fbsat.core.solver.newDomainVarArray
 import ru.ifmo.fbsat.core.solver.newIntVarArray
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
+import ru.ifmo.fbsat.core.utils.Globals
 
 @Suppress("PropertyName")
 class ExtendedVariables(
@@ -68,6 +70,15 @@ fun Solver.declareExtendedVariables(
             for (k in 1..K)
                 for (p in 1..P)
                     yield(nodeType[c, k, p] neq NodeType.NONE)
+    }
+
+    if (Globals.IS_DUMP_VARS_IN_CNF) {
+        comment("nodeType = ${nodeType.literals}")
+        comment("nodeInputVariable = ${nodeInputVariable.literals}")
+        comment("nodeParent = ${nodeParent.literals}")
+        comment("nodeChild = ${nodeChild.literals}")
+        comment("nodeValue = ${nodeValue.literals}")
+        comment("totalizerN = ${cardinality.totalizer.literals}")
     }
 
     ExtendedVariables(

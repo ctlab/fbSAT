@@ -359,6 +359,14 @@ class FbSAT : CliktCommand() {
         default = Globals.IS_REUSE_K
     )
 
+    val isDumpVarsInCnf: Boolean  by option(
+        "--dump-vars-in-cnf",
+        help = "Dump variables in CNF"
+    ).flag(
+        "--no-dump-vars-in-cnf",
+        default = Globals.IS_DUMP_VARS_IN_CNF
+    )
+
     val fileVerifyCE: File? by option(
         "--verify-ce"
     ).file()
@@ -395,6 +403,7 @@ class FbSAT : CliktCommand() {
         Globals.IS_ENCODE_TOTALIZER = isEncodeTotalizer
         Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS = isEncodeDisjunctiveTransitions
         Globals.IS_REUSE_K = isReuseK
+        Globals.IS_DUMP_VARS_IN_CNF = isDumpVarsInCnf
         Globals.IS_DEBUG = isDebug
 
         // outDir.deleteRecursively()

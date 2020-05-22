@@ -6,8 +6,10 @@ import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
+import ru.ifmo.fbsat.core.solver.literals
 import ru.ifmo.fbsat.core.solver.newBoolVarArray
 import ru.ifmo.fbsat.core.solver.newIntVarArray
+import ru.ifmo.fbsat.core.utils.Globals
 
 @Suppress("PropertyName")
 class BasicVariables(
@@ -67,6 +69,21 @@ fun Solver.declareBasicVariables(
         for (c in 1..C)
             for (k in 1..K)
                 yield(transitionDestination[c, k] neq 0)
+    }
+
+    if (Globals.IS_DUMP_VARS_IN_CNF) {
+        comment("actualTransitionFunction = ${actualTransitionFunction.literals}")
+        comment("transitionDestination = ${transitionDestination.literals}")
+        comment("transitionInputEvent = ${transitionInputEvent.literals}")
+        comment("transitionTruthTable = ${transitionTruthTable.literals}")
+        comment("transitionFiring = ${transitionFiring.literals}")
+        comment("firstFired = ${firstFired.literals}")
+        comment("notFired = ${notFired.literals}")
+        comment("stateOutputEvent = ${stateOutputEvent.literals}")
+        comment("stateAlgorithmBot = ${stateAlgorithmBot.literals}")
+        comment("stateAlgorithmTop = ${stateAlgorithmTop.literals}")
+        comment("mapping = ${mapping.literals}")
+        comment("totalizerT = ${cardinality.totalizer.literals}")
     }
 
     return BasicVariables(

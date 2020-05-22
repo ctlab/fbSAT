@@ -114,3 +114,7 @@ typealias IntVar = DomainVar<Int>
 typealias IntVarArray = MultiArray<IntVar>
 
 typealias DomainVarArray<T> = MultiArray<DomainVar<T>>
+
+val BoolVarArray.literals: List<Literal> get() = values
+
+val <T> DomainVarArray<T>.literals: List<Literal> get() = values.flatMap { it.literals }
