@@ -5,7 +5,7 @@ import ru.ifmo.fbsat.core.constraints.declareGuardConditionsAdhocConstraints
 import ru.ifmo.fbsat.core.constraints.declareGuardConditionsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveGuardConditionsConstraints
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.EXTENDED_VARS
+import ru.ifmo.fbsat.core.task.VARS
 import ru.ifmo.fbsat.core.task.basicVars
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeSince
@@ -23,7 +23,7 @@ fun Solver.declareExtended(
         basicVars = basicVars,
         P = maxGuardSize
     ).also {
-        context[EXTENDED_VARS] = it
+        context[VARS.EXTENDED] = it
     }
 
     /* Constraints */

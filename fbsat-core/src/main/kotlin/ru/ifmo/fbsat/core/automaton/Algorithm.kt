@@ -31,7 +31,7 @@ class BinaryAlgorithm(val algorithm0: BooleanArray, val algorithm1: BooleanArray
     }
 
     fun toST(outputNames: List<String>): String {
-        require(outputNames.size == algorithm0.size) { "Wrong number of output names" }
+        // require(outputNames.size == algorithm0.size) { "Wrong number of output names" }
 
         return outputNames.indices.joinToString("") { i ->
             val name = outputNames[i]

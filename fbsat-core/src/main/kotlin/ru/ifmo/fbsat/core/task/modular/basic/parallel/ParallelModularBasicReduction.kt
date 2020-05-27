@@ -6,7 +6,7 @@ import ru.ifmo.fbsat.core.constraints.declareParallelModularAutomatonStructureCo
 import ru.ifmo.fbsat.core.constraints.declarePositiveParallelModularMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.PARALLEL_MODULAR_BASIC_VARS
+import ru.ifmo.fbsat.core.task.VARS
 import ru.ifmo.fbsat.core.task.parallelModularBasicVars
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
@@ -31,7 +31,7 @@ fun Solver.declareParallelModularBasic(
         C = numberOfStates,
         K = maxOutgoingTransitions ?: numberOfStates
     ).also {
-        context[PARALLEL_MODULAR_BASIC_VARS] = it
+        context[VARS.PARALLEL_MODULAR_BASIC] = it
     }
 
     /* Constraints */

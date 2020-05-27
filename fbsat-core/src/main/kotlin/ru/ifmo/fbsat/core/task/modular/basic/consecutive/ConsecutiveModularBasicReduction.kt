@@ -8,7 +8,7 @@ import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonStructur
 import ru.ifmo.fbsat.core.constraints.declarePositiveConsecutiveModularMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.CONSECUTIVE_MODULAR_BASIC_VARS
+import ru.ifmo.fbsat.core.task.VARS
 import ru.ifmo.fbsat.core.task.consecutiveModularBasicVars
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
@@ -37,7 +37,7 @@ fun Solver.declareConsecutiveModularBasic(
         C = numberOfStates,
         K = maxOutgoingTransitions ?: numberOfStates
     ).also {
-        context[CONSECUTIVE_MODULAR_BASIC_VARS] = it
+        context[VARS.CONSECUTIVE_MODULAR_BASIC] = it
     }
 
     /* Constraints */

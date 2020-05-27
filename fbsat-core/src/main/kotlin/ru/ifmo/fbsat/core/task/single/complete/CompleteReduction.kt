@@ -12,7 +12,7 @@ import ru.ifmo.fbsat.core.solver.Literal
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.newBoolVarArray
 import ru.ifmo.fbsat.core.solver.newIntVar
-import ru.ifmo.fbsat.core.task.COMPLETE_VARS
+import ru.ifmo.fbsat.core.task.VARS
 import ru.ifmo.fbsat.core.task.completeVars
 import ru.ifmo.fbsat.core.task.extendedVars
 import ru.ifmo.fbsat.core.utils.log
@@ -38,7 +38,7 @@ fun Solver.declareComplete(
         extendedVars = extendedVars,
         negativeScenarioTree = negTree
     ).also {
-        context[COMPLETE_VARS] = it
+        context[VARS.COMPLETE] = it
     }
 
     /* Initial negative constraints */

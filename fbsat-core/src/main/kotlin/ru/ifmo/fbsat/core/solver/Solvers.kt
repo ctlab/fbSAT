@@ -9,6 +9,7 @@ import okio.BufferedSource
 import okio.buffer
 import okio.sink
 import okio.source
+import ru.ifmo.fbsat.core.task.VARS
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.lineSequence
 import ru.ifmo.fbsat.core.utils.log
@@ -33,6 +34,14 @@ class SolverContext internal constructor(
 
     operator fun set(key: String, value: Any) {
         map[key] = value
+    }
+
+    // FIXME: Could be an extension function, but it is too much hustle to import it manually.
+    operator fun <T> get(key: VARS): T = get(key.toString())
+
+    // FIXME: Could be an extension function, but it is too much hustle to import it manually.
+    operator fun set(key: VARS, value: Any) {
+        set(key.toString(), value)
     }
 
     inner class ContextProvider<T : Any>(val value: T) {

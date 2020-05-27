@@ -3,7 +3,7 @@ package ru.ifmo.fbsat.core.task.single.extforest
 import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.constraints.declareExtForestGuardConditionsConstraints
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.EXTFOREST_VARS
+import ru.ifmo.fbsat.core.task.VARS
 import ru.ifmo.fbsat.core.task.basicVars
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeSince
@@ -21,7 +21,7 @@ fun Solver.declareExtForest(
         basicVars = basicVars,
         P = totalNodes
     ).also {
-        context[EXTFOREST_VARS] = it
+        context[VARS.EXTFOREST] = it
     }
 
     /* Constraints */

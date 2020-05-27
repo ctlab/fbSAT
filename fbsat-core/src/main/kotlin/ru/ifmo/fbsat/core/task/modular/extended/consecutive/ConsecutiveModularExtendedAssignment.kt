@@ -1,9 +1,12 @@
 package ru.ifmo.fbsat.core.task.modular.extended.consecutive
 
+import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.RawAssignment
+import ru.ifmo.fbsat.core.solver.convert
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedAssignment
 import ru.ifmo.fbsat.core.task.single.extended.toAutomaton
 
@@ -21,7 +24,9 @@ class ConsecutiveModularExtendedAssignment(
     val Z: Int,
     val U: Int,
     /* Modularized ExtendedAssignment */
-    val modularExtendedAssignment: MultiArray<ExtendedAssignment>
+    val modularExtendedAssignment: MultiArray<ExtendedAssignment>,
+    /* Modular variables */
+    val modularComputedOutputValue: MultiArray<BooleanMultiArray>
 ) {
     /**
      * Number of transitions.
@@ -47,6 +52,9 @@ class ConsecutiveModularExtendedAssignment(
                 V = V, E = E, O = O, X = X, Z = Z, U = U,
                 modularExtendedAssignment = MultiArray.create(M) { (m) ->
                     ExtendedAssignment.fromRaw(raw, modularExtendedVariables[m])
+                },
+                modularComputedOutputValue = MultiArray.create(M) { (m) ->
+                    modularComputedOutputValue[m].convert(raw)
                 }
             )
         }

@@ -28,7 +28,11 @@ import ru.ifmo.fbsat.core.task.modular.basic.consecutive.consecutiveModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.consecutiveModularBasicMin
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasicMin
+import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasicMinC
 import ru.ifmo.fbsat.core.task.modular.extended.consecutive.consecutiveModularExtended
+import ru.ifmo.fbsat.core.task.modular.extended.consecutive.consecutiveModularExtendedMin
+import ru.ifmo.fbsat.core.task.modular.extended.parallel.parallelModularExtended
+import ru.ifmo.fbsat.core.task.modular.extended.parallel.parallelModularExtendedMin
 import ru.ifmo.fbsat.core.task.single.basic.basic
 import ru.ifmo.fbsat.core.task.single.basic.basicMin
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
@@ -63,11 +67,16 @@ enum class Method(val s: String) {
     CompleteMin("complete-min"),
     Cegis("cegis"),
     CegisMin("cegis-min"),
-    ModularBasic("modular-basic"),
-    ModularBasicMin("modular-basic-min"),
+    ParallelModularBasic("modular-parallel-basic"),
+    ParallelModularBasicMin("modular-parallel-basic-min"),
+    ParallelModularExtended("modular-parallel-extended"),
+    ParallelModularExtendedMin("modular-parallel-extended-min"),
+    ParallelModularExtendedMinUB("modular-parallel-extended-min-ub"),
     ConsecutiveModularBasic("modular-consecutive-basic"),
     ConsecutiveModularBasicMin("modular-consecutive-basic-min"),
     ConsecutiveModularExtended("modular-consecutive-extended"),
+    ConsecutiveModularExtendedMin("modular-consecutive-extended-min"),
+    ConsecutiveModularExtendedMinUB("modular-consecutive-extended-min-ub"),
     ArbitraryModularBasic("modular-arbitrary-basic"),
     ArbitraryModularBasicMin("modular-arbitrary-basic-min"),
 }
@@ -359,7 +368,7 @@ class FbSAT : CliktCommand() {
         default = Globals.IS_REUSE_K
     )
 
-    val isDumpVarsInCnf: Boolean  by option(
+    val isDumpVarsInCnf: Boolean by option(
         "--dump-vars-in-cnf",
         help = "Dump variables in CNF"
     ).flag(
@@ -600,7 +609,7 @@ class FbSAT : CliktCommand() {
                     smvDir = smvDir
                 )
             }
-            Method.ModularBasic -> {
+            Method.ParallelModularBasic -> {
                 val modularAutomaton = inferrer.parallelModularBasic(
                     scenarioTree = tree,
                     numberOfModules = requireNotNull(numberOfModules),
@@ -641,11 +650,18 @@ class FbSAT : CliktCommand() {
                 log.br()
                 null
             }
-            Method.ModularBasicMin -> {
-                val modularAutomaton = inferrer.parallelModularBasicMin(
-                    scenarioTree = tree,
-                    numberOfModules = requireNotNull(numberOfModules)
-                )
+            Method.ParallelModularBasicMin -> {
+                val modularAutomaton =
+                    if (isOnlyC)
+                        inferrer.parallelModularBasicMinC(
+                            scenarioTree = tree,
+                            numberOfModules = requireNotNull(numberOfModules)
+                        )
+                    else
+                        inferrer.parallelModularBasicMin(
+                            scenarioTree = tree,
+                            numberOfModules = requireNotNull(numberOfModules)
+                        )
 
                 if (modularAutomaton == null) {
                     log.failure("Modular automaton not found")
@@ -667,6 +683,76 @@ class FbSAT : CliktCommand() {
                         outDir.resolve("CentralController.fbt"),
                         name = "CentralController"
                     )
+                    if (modularAutomaton.verify(tree))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                    }
+                }
+
+                log.br()
+                log.br("The following messages - lies.")
+                log.br()
+                null
+            }
+            Method.ParallelModularExtended -> {
+                val modularAutomaton = inferrer.parallelModularExtended(
+                    scenarioTree = tree,
+                    numberOfModules = requireNotNull(numberOfModules),
+                    numberOfStates = requireNotNull(numberOfStates),
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    maxGuardSize = requireNotNull(maxGuardSize),
+                    maxTransitions = maxTransitions,
+                    maxTotalGuardsSize = maxTotalGuardsSize,
+                    isEncodeReverseImplication = isEncodeReverseImplication
+                )
+
+                if (modularAutomaton == null) {
+                    log.failure("Modular automaton not found")
+                } else {
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.values.size} modules, ${modularAutomaton.numberOfTransitions} transitions, ${modularAutomaton.totalGuardsSize} nodes:")
+                    for ((m, automaton) in modularAutomaton.modules.values.withIndex(start = 1)) {
+                        log.info("Automaton #$m has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes:")
+                        automaton.pprint()
+                        automaton.dump(outDir, "the_module-$m")
+                    }
+                    // modularAutomaton.dumpFbt(
+                    //     outDir.resolve("modularAutomaton.fbt"),
+                    //     name = "ModularController"
+                    // )
+                    if (modularAutomaton.verify(tree))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                    }
+                }
+
+                log.br()
+                log.br("The following messages - lies.")
+                log.br()
+                null
+            }
+            Method.ParallelModularExtendedMin -> {
+                val modularAutomaton = inferrer.parallelModularExtendedMin(
+                    scenarioTree = tree,
+                    numberOfModules = requireNotNull(numberOfModules),
+                    numberOfStates = numberOfStates,
+                    maxGuardSize = requireNotNull(maxGuardSize)
+                )
+
+                if (modularAutomaton == null) {
+                    log.failure("Modular automaton not found")
+                } else {
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.values.size} modules, ${modularAutomaton.numberOfTransitions} transitions, ${modularAutomaton.totalGuardsSize} nodes:")
+                    for ((m, automaton) in modularAutomaton.modules.values.withIndex(start = 1)) {
+                        log.info("Automaton #$m has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes:")
+                        automaton.pprint()
+                        automaton.dump(outDir, "the_module-$m")
+                    }
+                    // modularAutomaton.dumpFbt(
+                    //     outDir.resolve("modularAutomaton.fbt"),
+                    //     name = "ModularController"
+                    // )
                     if (modularAutomaton.verify(tree))
                         log.success("Verify: OK")
                     else {
@@ -754,6 +840,39 @@ class FbSAT : CliktCommand() {
                     maxTransitions = maxTransitions,
                     maxTotalGuardsSize = maxTotalGuardsSize,
                     isEncodeReverseImplication = isEncodeReverseImplication
+                )
+
+                if (modularAutomaton == null) {
+                    log.failure("Modular automaton not found")
+                } else {
+                    log.info("Inferred modular automaton, consisting of ${modularAutomaton.modules.values.size} modules, ${modularAutomaton.numberOfTransitions} transitions, ${modularAutomaton.totalGuardsSize} nodes:")
+                    for ((m, automaton) in modularAutomaton.modules.values.withIndex(start = 1)) {
+                        log.info("Automaton #$m has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes:")
+                        automaton.pprint()
+                        automaton.dump(outDir, "the_module-$m")
+                    }
+                    // modularAutomaton.dumpFbt(
+                    //     outDir.resolve("modularAutomaton.fbt"),
+                    //     name = "ModularController"
+                    // )
+                    if (modularAutomaton.verify(tree))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                    }
+                }
+
+                log.br()
+                log.br("The following messages - lies.")
+                log.br()
+                null
+            }
+            Method.ConsecutiveModularExtendedMin -> {
+                val modularAutomaton = inferrer.consecutiveModularExtendedMin(
+                    scenarioTree = tree,
+                    numberOfModules = requireNotNull(numberOfModules),
+                    numberOfStates = numberOfStates,
+                    maxGuardSize = requireNotNull(maxGuardSize)
                 )
 
                 if (modularAutomaton == null) {

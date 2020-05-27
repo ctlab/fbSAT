@@ -25,7 +25,7 @@ class ConsecutiveModularBasicVariables(
     val U: Int,
     /* Modularized BasicVariables */
     val modularBasicVariables: MultiArray<BasicVariables>,
-    /* Mapping variables */
+    /* Modular variables */
     val modularComputedOutputValue: MultiArray<BoolVarArray>,
     /* Cardinality */
     val cardinality: Cardinality

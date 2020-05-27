@@ -37,6 +37,7 @@ class ParallelModularAutomaton(
     }
 
     val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
+    val totalGuardsSize: Int = modules.values.sumBy { it.totalGuardsSize }
 
     init {
         require(modules.values.all { it.inputEvents == inputEvents })

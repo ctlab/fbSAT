@@ -4,7 +4,7 @@ import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularGuardConditionsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularGuardConditionsConstraints
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.task.CONSECUTIVE_MODULAR_EXTENDED_VARS
+import ru.ifmo.fbsat.core.task.VARS
 import ru.ifmo.fbsat.core.task.consecutiveModularBasicVars
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
@@ -23,7 +23,7 @@ fun Solver.declareConsecutiveModularExtended(
         basicVars = consecutiveModularBasicVars,
         P = maxGuardSize
     ).also {
-        context[CONSECUTIVE_MODULAR_EXTENDED_VARS] = it
+        context[VARS.CONSECUTIVE_MODULAR_EXTENDED] = it
     }
 
     /* Constraints */

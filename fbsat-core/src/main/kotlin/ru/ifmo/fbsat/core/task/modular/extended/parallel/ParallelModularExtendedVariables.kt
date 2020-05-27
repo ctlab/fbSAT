@@ -1,18 +1,18 @@
-package ru.ifmo.fbsat.core.task.modular.extended.consecutive
+package ru.ifmo.fbsat.core.task.modular.extended.parallel
 
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.Cardinality
+import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
-import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
+import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
 import ru.ifmo.fbsat.core.task.single.extended.declareExtendedVariables
 
 @Suppress("PropertyName")
-class ConsecutiveModularExtendedVariables(
+class ParallelModularExtendedVariables(
     val scenarioTree: ScenarioTree,
     /* Constants */
     val M: Int,
@@ -27,16 +27,16 @@ class ConsecutiveModularExtendedVariables(
     val U: Int,
     /* Modularized ExtendedVariables */
     val modularExtendedVariables: MultiArray<ExtendedVariables>,
-    /* Modular variables */
-    val modularComputedOutputValue: MultiArray<BoolVarArray>,
+    /* Interface variables */
+    val moduleControllingOutputVariable: IntVarArray,
     /* Cardinality */
     val cardinality: Cardinality
 )
 
-fun Solver.declareConsecutiveModularExtendedVariables(
-    basicVars: ConsecutiveModularBasicVariables,
+fun Solver.declareParallelModularExtendedVariables(
+    basicVars: ParallelModularBasicVariables,
     P: Int
-): ConsecutiveModularExtendedVariables = with(basicVars) {
+): ParallelModularExtendedVariables = with(basicVars) {
     /* Modularized ExtendedVariables */
     val modularExtendedVariables = MultiArray.create(M) { (m) ->
         declareExtendedVariables(modularBasicVariables[m], P = P)
@@ -51,12 +51,12 @@ fun Solver.declareConsecutiveModularExtendedVariables(
         }
     }
 
-    ConsecutiveModularExtendedVariables(
+    ParallelModularExtendedVariables(
         scenarioTree = scenarioTree,
         M = M, C = C, K = K, P = P,
         V = V, E = E, O = O, X = X, Z = Z, U = U,
         modularExtendedVariables = modularExtendedVariables,
-        modularComputedOutputValue = modularComputedOutputValue,
+        moduleControllingOutputVariable = moduleControllingOutputVariable,
         cardinality = cardinality
     )
 }
