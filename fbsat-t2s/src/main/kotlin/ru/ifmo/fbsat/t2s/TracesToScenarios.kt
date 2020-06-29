@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.cli
+package ru.ifmo.fbsat.t2s
 
 import okio.buffer
 import okio.sink
