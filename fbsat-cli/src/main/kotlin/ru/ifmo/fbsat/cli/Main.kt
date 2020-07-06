@@ -22,6 +22,7 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Inferrer
+import ru.ifmo.fbsat.core.task.distributed.distributedBasic
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.arbitraryModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.arbitraryModularBasicMin
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.consecutiveModularBasic
@@ -79,6 +80,8 @@ enum class Method(val s: String) {
     ConsecutiveModularExtendedMinUB("modular-consecutive-extended-min-ub"),
     ArbitraryModularBasic("modular-arbitrary-basic"),
     ArbitraryModularBasicMin("modular-arbitrary-basic-min"),
+    DistributedBasic("distributed-basic"),
+    DistributedBasicMin("distributed-basic-min"),
 }
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -961,6 +964,42 @@ class FbSAT : CliktCommand() {
                     else {
                         log.failure("Verify: FAILED")
                     }
+                }
+
+                log.br()
+                log.br("The following messages - lies.")
+                log.br()
+                null
+            }
+            Method.DistributedBasic -> {
+                val distributedAutomaton = inferrer.distributedBasic(
+                    scenarioTree = tree,
+                    numberOfModules = requireNotNull(numberOfModules),
+                    numberOfStates = requireNotNull(numberOfStates),
+                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    maxTransitions = maxTransitions
+                )
+
+                if (distributedAutomaton == null) {
+                    log.failure("Distributed automaton not found")
+                } else {
+                    log.info("Inferred distributed automaton, consisting of ${distributedAutomaton.M} modules:")
+                    for ((m, automaton) in distributedAutomaton.modules.values.withIndex(start = 1)) {
+                        log.info("Automaton #$m has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
+                        automaton.pprint()
+                        automaton.dump(outDir, "module-$m")
+                    }
+                    // TODO: dump fbt
+                    // distributedAutomaton.dumpFbt(
+                    //     outDir.resolve("CentralController.fbt"),
+                    //     name = "CentralController"
+                    // )
+                    // TODO: verify
+                    // if (distributedAutomaton.verify(tree))
+                    //     log.success("Verify: OK")
+                    // else {
+                    //     log.failure("Verify: FAILED")
+                    // }
                 }
 
                 log.br()

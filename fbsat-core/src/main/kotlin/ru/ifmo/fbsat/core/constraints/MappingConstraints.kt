@@ -20,6 +20,7 @@ import ru.ifmo.fbsat.core.solver.implyImply
 import ru.ifmo.fbsat.core.solver.implyImplyImply
 import ru.ifmo.fbsat.core.solver.implyOr
 import ru.ifmo.fbsat.core.solver.sign
+import ru.ifmo.fbsat.core.task.distributed.DistributedBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.PinVars
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
@@ -423,6 +424,22 @@ fun Solver.declarePositiveArbitraryModularMappingConstraints(
                         for (extPin in externalInboundVarPins)
                             yield(inboundVarPinParent[extPin] eq pin)
                     }
+        }
+    }
+}
+
+fun Solver.declareDistributedPositiveMappingConstraints(
+    distributedBasicVariables: DistributedBasicVariables,
+    isEncodeReverseImplication: Boolean
+) {
+    comment("Distributed positive mapping constraints")
+    with(distributedBasicVariables) {
+        for (m in 1..M) {
+            comment("Distributed positive mapping constraints: module m = $m")
+            declarePositiveMappingConstraints(
+                basicVariables = modularBasicVariables[m],
+                isEncodeReverseImplication = isEncodeReverseImplication
+            )
         }
     }
 }

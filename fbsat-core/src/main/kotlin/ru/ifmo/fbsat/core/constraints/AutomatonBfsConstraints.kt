@@ -7,6 +7,7 @@ import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.newBoolVarArray
 import ru.ifmo.fbsat.core.solver.newIntVarArray
+import ru.ifmo.fbsat.core.task.distributed.DistributedBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
@@ -56,6 +57,18 @@ fun Solver.declareArbitraryModularAutomatonBfsConstraints(
                 C = C, K = K,
                 transitionDestination = modularTransitionDestination[m]
             )
+        }
+    }
+}
+
+fun Solver.declareDistributedAutomatonBfsConstraints(
+    distributedBasicVariables: DistributedBasicVariables
+) {
+    comment("Distributed automaton BFS constraints")
+    with(distributedBasicVariables) {
+        for (m in 1..M) {
+            comment("Automaton BFS constraints: for module m = $m")
+            declareAutomatonBfsConstraints(modularBasicVariables[m])
         }
     }
 }

@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.core.task
 
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.task.distributed.DistributedBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
@@ -20,6 +21,7 @@ enum class VARS {
     ARBITRARY_MODULAR_BASIC,
     PARALLEL_MODULAR_EXTENDED,
     CONSECUTIVE_MODULAR_EXTENDED,
+    DISTRIBUTED_BASIC,
     EXTFOREST;
 
     override fun toString(): String {
@@ -47,4 +49,5 @@ val Solver.consecutiveModularBasicVars: ConsecutiveModularBasicVariables get() =
 val Solver.arbitraryModularBasicVars: ArbitraryModularBasicVariables get() = context[VARS.ARBITRARY_MODULAR_BASIC]
 val Solver.parallelModularExtendedVars: ParallelModularExtendedVariables get() = context[VARS.PARALLEL_MODULAR_EXTENDED]
 val Solver.consecutiveModularExtendedVars: ConsecutiveModularExtendedVariables get() = context[VARS.CONSECUTIVE_MODULAR_EXTENDED]
+val Solver.distributedBasicVars: DistributedBasicVariables get() = context[VARS.DISTRIBUTED_BASIC]
 val Solver.extForestVars: ExtForestVariables get() = context[VARS.EXTFOREST]

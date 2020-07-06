@@ -11,6 +11,7 @@ import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.implyOr
+import ru.ifmo.fbsat.core.task.distributed.DistributedBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
@@ -143,6 +144,19 @@ fun Solver.declareConsecutiveModularAutomatonStructureConstraints(
 
         // TODO: Additional consecutive parallel constraints
     }
+}
+
+fun Solver.declareDistributedAutomatonStructureConstraints(
+    distributedBasicVariables: DistributedBasicVariables
+) {
+    comment("Distributed automaton structure constraints")
+    with(distributedBasicVariables) {
+        for (m in 1..M) {
+            comment("Distributed automaton structure constraints: for module m = $m")
+            declareAutomatonStructureConstraints(modularBasicVariables[m])
+        }
+    }
+    // TODO: is it all?
 }
 
 private fun Solver.declareAutomatonStructureConstraintsInputless(
