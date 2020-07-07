@@ -106,6 +106,7 @@ class ScenarioTree(
                 }
             }
 
+            // TODO: maybe invalidate cache last?
             this@ScenarioTree._nodes.add(this)
             this@ScenarioTree.lazyCache.invalidate()
             parent?._children?.add(this)

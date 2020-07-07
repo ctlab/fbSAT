@@ -226,7 +226,23 @@ class Automaton(
         }
     }
 
-    data class EvalResult(val destination: State, val outputAction: OutputAction) {
+    // TODO: Rewrite all `eval` methods to use EvalState
+    data class EvalState(
+        val state: Automaton.State,
+        val outputValues: OutputValues
+    ) {
+        constructor(result: EvalResult) :
+            this(result.destination, result.outputAction.values)
+
+        fun eval(inputAction: InputAction): EvalResult {
+            return state.eval(inputAction, outputValues)
+        }
+    }
+
+    data class EvalResult(
+        val destination: State,
+        val outputAction: OutputAction
+    ) {
         override fun toString(): String {
             return "EvalResult(destination = ${destination.id}, outputAction = $outputAction)"
         }
@@ -238,13 +254,6 @@ class Automaton(
         values: OutputValues
     ): EvalResult =
         state.eval(inputAction, values)
-
-    fun eval(
-        inputActions: Iterable<InputAction>,
-        startState: State = initialState,
-        startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES
-    ): List<EvalResult> =
-        eval(inputActions.asSequence(), startState, startValues).toList()
 
     fun eval(
         inputActions: Sequence<InputAction>,
@@ -260,6 +269,13 @@ class Automaton(
             }
         }
     }
+
+    fun eval(
+        inputActions: Iterable<InputAction>,
+        startState: State = initialState,
+        startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES
+    ): List<EvalResult> =
+        eval(inputActions.asSequence(), startState, startValues).toList()
 
     fun getMapping(scenario: Scenario): List<State?> {
         val mapping: MutableList<State?> = mutableListOfNulls(scenario.elements.size)

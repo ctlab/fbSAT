@@ -12,6 +12,7 @@ import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
 import ru.ifmo.fbsat.core.task.single.extforest.ExtForestVariables
 
+// TODO: Rename to 'ContextVar'
 enum class VARS {
     BASIC,
     EXTENDED,

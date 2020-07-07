@@ -34,8 +34,8 @@ fun Inferrer.inferDistributedBasic(): DistributedAutomaton? {
     // with(vars) {
     //     check(
     //         automaton.checkMapping(
-    //             scenarios = scenarioTree.scenarios,
-    //             mapping = assignment.mapping
+    //             multiScenarios = listOf(scenarioTree.scenarios, scenarioTree.scenarios),
+    //             modularMapping = assignment.modularBasicAssignment.map { it.mapping }
     //         )
     //     ) { "Positive mapping mismatch" }
     // }

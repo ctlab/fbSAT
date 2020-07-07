@@ -13,11 +13,14 @@ import com.github.ajalt.clikt.parameters.options.switch
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
+import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.measureTime
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.OutputValues
 import ru.ifmo.fbsat.core.automaton.minimizeTruthTableGuards
+import ru.ifmo.fbsat.core.scenario.MultiScenarioTree
+import ru.ifmo.fbsat.core.scenario.PositiveMultiScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
@@ -994,12 +997,26 @@ class FbSAT : CliktCommand() {
                     //     outDir.resolve("CentralController.fbt"),
                     //     name = "CentralController"
                     // )
-                    // TODO: verify
-                    // if (distributedAutomaton.verify(tree))
-                    //     log.success("Verify: OK")
-                    // else {
-                    //     log.failure("Verify: FAILED")
-                    // }
+                    // FIXME: multiTree should be built before synthesis...
+                    // FIXME: Building MultiScenarioTree here just to test the verification.
+                    val M = numberOfModules!!
+                    val multiTree = MultiScenarioTree(
+                        numberOfModules = M,
+                        modularInputEvents = MultiArray.create(M) { tree.inputEvents },
+                        modularOutputEvents = MultiArray.create(M) { tree.outputEvents },
+                        modularInputNames = MultiArray.create(M) { tree.inputNames },
+                        modularOutputNames = MultiArray.create(M) { tree.outputNames }
+                    )
+                    for (scenario in tree.scenarios) {
+                        val multiElements = scenario.elements.map { elem -> MultiArray.create(M) { elem } }
+                        val multiScenario = PositiveMultiScenario(multiElements)
+                        multiTree.addMultiScenario(multiScenario)
+                    }
+                    if (distributedAutomaton.verify(multiTree))
+                        log.success("Verify: OK")
+                    else {
+                        log.failure("Verify: FAILED")
+                    }
                 }
 
                 log.br()

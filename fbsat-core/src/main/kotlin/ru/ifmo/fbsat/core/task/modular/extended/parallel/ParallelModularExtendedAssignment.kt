@@ -11,7 +11,6 @@ import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.solver.convert
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedAssignment
-import ru.ifmo.fbsat.core.utils.withIndex
 
 @Suppress("PropertyName")
 class ParallelModularExtendedAssignment(
