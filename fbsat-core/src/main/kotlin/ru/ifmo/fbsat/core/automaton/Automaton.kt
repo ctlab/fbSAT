@@ -28,58 +28,42 @@ class Automaton(
     private val lazyCache = LazyCache()
     private val _states: MutableMap<Int, State> = mutableMapOf()
 
-    /**
-     * Automaton states.
-     */
+    /** Automaton states. */
     val states: Collection<State> by lazyCache {
         _states.values
     }
 
-    /**
-     * Automaton transitions.
-     */
+    /** Automaton transitions. */
     val transitions: Collection<Transition> by lazyCache {
         states.flatMap { it.transitions }
     }
 
-    /**
-     * Initial automaton state.
-     */
+    /** Initial automaton state. */
     val initialState: State by lazyCache {
         getState(1)
     }
 
-    /**
-     * Number of automaton states **C**.
-     */
+    /** Number of automaton states **C**. */
     val numberOfStates: Int by lazyCache {
         states.size
     }
 
-    /**
-     * Maximum number of outgoing transitions **K**.
-     */
+    /** Maximum number of outgoing transitions **K**. */
     val maxOutgoingTransitions: Int by lazyCache {
         states.map { it.transitions.size }.max() ?: 0
     }
 
-    /**
-     * Maximal guard size **P**.
-     */
+    /** Maximal guard size **P**. */
     val maxGuardSize: Int by lazyCache {
         transitions.map { it.guard.size }.max()!!
     }
 
-    /**
-     * Number of automaton transitions **T**.
-     */
+    /** Number of automaton transitions **T**. */
     val numberOfTransitions: Int by lazyCache {
         transitions.size
     }
 
-    /**
-     * Total guards size **N**.
-     */
+    /** Total guards size **N**. */
     val totalGuardsSize: Int by lazyCache {
         transitions.sumBy { it.guard.size }
     }
