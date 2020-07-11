@@ -222,8 +222,6 @@ fun Iterable<Boolean>.countFalse(): Int {
 
 fun <T> magic(): T = error("This is magic!")
 
-// MultiArray.create(size) { (i) -> this[i - 1] }
-
 // TODO: rename to 'toMultiArray'
 inline fun <reified T> Collection<T>.toMultiArray_real(): MultiArray<T> =
     GenericMultiArray(toTypedArray(), intArrayOf(size))
