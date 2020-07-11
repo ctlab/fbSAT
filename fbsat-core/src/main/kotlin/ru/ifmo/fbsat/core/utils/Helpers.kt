@@ -222,8 +222,7 @@ fun Iterable<Boolean>.countFalse(): Int {
 
 fun <T> magic(): T = error("This is magic!")
 
-// TODO: rename to 'toMultiArray'
-inline fun <reified T> Collection<T>.toMultiArray_real(): MultiArray<T> =
+inline fun <reified T> Collection<T>.toMultiArray(): MultiArray<T> =
     GenericMultiArray(toTypedArray(), intArrayOf(size))
 
 // TODO: remove after fixing MultiArray library
