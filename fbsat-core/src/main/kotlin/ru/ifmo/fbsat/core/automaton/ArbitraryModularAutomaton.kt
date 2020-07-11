@@ -11,7 +11,7 @@ import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.PinVars
+import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.Pins
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.pow
@@ -32,7 +32,7 @@ class ArbitraryModularAutomaton(
 ) {
     /** Number of modules */
     @Suppress("PropertyName")
-    val M: Int = modules.shape[0]
+    val M: Int = modules.shape.single()
     val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
     val totalGuardsSize: Int = modules.values.sumBy { it.totalGuardsSize }
 
@@ -76,7 +76,7 @@ class ArbitraryModularAutomaton(
         val X = inputNames.size
         val Z = outputNames.size
 
-        with(PinVars(M, X, Z, E, O)) {
+        with(Pins(M, X, Z, E, O)) {
             val currentModularState = modules.map { it.initialState }
             val currentModularInputAction = modules.map { InputAction(null, InputValues.zeros(it.inputNames.size)) }
             val currentModularOutputValues = modules.map { OutputValues.zeros(it.outputNames.size) }
@@ -207,7 +207,7 @@ class ArbitraryModularAutomaton(
         val X = inputNames.size
         val Z = outputNames.size
 
-        with(PinVars(M, X, Z, E, O)) {
+        with(Pins(M, X, Z, E, O)) {
             return xml("FBType") {
                 if (name != null) {
                     attribute("Name", name)

@@ -38,10 +38,18 @@ class ScenarioTree(
     // Note: all public lists are zero-based
 
     override val uniqueInputs: List<InputValues> by lazyCache {
-        nodes.asSequence().drop(1).map { it.inputValues }.toSet().toList().sortedBy { it.values.toBinaryString() }
+        nodes.asSequence()
+            .drop(1)
+            .map { it.inputValues }
+            .toSet()
+            .sortedBy { it.values.toBinaryString() }
     }
     override val uniqueOutputs: List<OutputValues> by lazyCache {
-        nodes.asSequence().drop(1).map { it.outputValues }.toSet().toList().sortedBy { it.values.toBinaryString() }
+        nodes.asSequence()
+            .drop(1)
+            .map { it.outputValues }
+            .toSet()
+            .sortedBy { it.values.toBinaryString() }
     }
 
     /**
@@ -106,10 +114,9 @@ class ScenarioTree(
                 }
             }
 
-            // TODO: maybe invalidate cache last?
+            parent?._children?.add(this)
             this@ScenarioTree._nodes.add(this)
             this@ScenarioTree.lazyCache.invalidate()
-            parent?._children?.add(this)
         }
 
         override fun toString(): String {

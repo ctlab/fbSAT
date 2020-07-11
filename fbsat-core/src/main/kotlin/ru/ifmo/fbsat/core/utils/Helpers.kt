@@ -1,5 +1,7 @@
 package ru.ifmo.fbsat.core.utils
 
+import com.github.lipen.multiarray.GenericMultiArray
+import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.TimeSpan
 import okio.BufferedSink
@@ -217,3 +219,29 @@ fun Iterable<Boolean>.countTrue(): Int {
 fun Iterable<Boolean>.countFalse(): Int {
     return count { !it }
 }
+
+fun <T> magic(): T = error("This is magic!")
+
+// MultiArray.create(size) { (i) -> this[i - 1] }
+
+// TODO: rename to 'toMultiArray'
+inline fun <reified T> Collection<T>.toMultiArray_real(): MultiArray<T> =
+    GenericMultiArray(toTypedArray(), intArrayOf(size))
+
+// TODO: remove after fixing MultiArray library
+inline fun <reified T> MultiArray.Companion.createNullable(
+    shape: IntArray,
+    init: (IntArray) -> T
+): MultiArray<T> = GenericMultiArray.create(shape, init)
+
+@JvmName("MultiArray_createNullableVararg")
+inline fun <reified T> MultiArray.Companion.createNullable(
+    vararg shape: Int,
+    init: (IntArray) -> T
+): MultiArray<T> = createNullable(shape, init)
+
+inline fun <reified T : Any> multiArrayOfNulls(shape: IntArray): MultiArray<T?> =
+    MultiArray.createNullable(shape) { null }
+
+@JvmName("multiArrayOfNullsVararg")
+inline fun <reified T : Any> multiArrayOfNulls(vararg shape: Int): MultiArray<T?> = multiArrayOfNulls(shape)

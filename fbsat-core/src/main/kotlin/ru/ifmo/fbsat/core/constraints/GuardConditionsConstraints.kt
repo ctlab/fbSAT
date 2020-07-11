@@ -14,6 +14,7 @@ import ru.ifmo.fbsat.core.solver.implyImplyIff
 import ru.ifmo.fbsat.core.solver.implyImplyIffAnd
 import ru.ifmo.fbsat.core.solver.implyImplyIffOr
 import ru.ifmo.fbsat.core.solver.sign
+import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedVariables
 import ru.ifmo.fbsat.core.task.modular.extended.consecutive.ConsecutiveModularExtendedVariables
 import ru.ifmo.fbsat.core.task.modular.extended.parallel.ParallelModularExtendedVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
@@ -90,6 +91,26 @@ fun Solver.declareConsecutiveModularGuardConditionsConstraints(
         for (m in 1..M) {
             comment("Consecutive modular guard conditions constraints: for module m = $m")
             declarePositiveGuardConditionsConstraints(
+                extendedVars = modularExtendedVariables[m]
+            )
+        }
+    }
+}
+
+fun Solver.declareDistributedPositiveGuardConditionsConstraints(
+    distributedExtendedVariables: DistributedExtendedVariables
+) {
+    comment("Distributed guard conditions constraints")
+    with(distributedExtendedVariables) {
+        for (m in 1..M) {
+            comment("Distributed guard conditions constraints: for module m = $m")
+            declarePositiveGuardConditionsConstraints(
+                extendedVars = modularExtendedVariables[m]
+            )
+
+            // FIXME: this should be called from 'declareDistributedGuardConditionsAdhocConstraints' method
+            comment("Distributed guard conditions adhoc constraints: for module m = $m")
+            declareGuardConditionsAdhocConstraints(
                 extendedVars = modularExtendedVariables[m]
             )
         }

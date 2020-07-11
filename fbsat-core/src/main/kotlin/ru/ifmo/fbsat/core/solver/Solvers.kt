@@ -9,7 +9,6 @@ import okio.BufferedSource
 import okio.buffer
 import okio.sink
 import okio.source
-import ru.ifmo.fbsat.core.task.VARS
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.lineSequence
 import ru.ifmo.fbsat.core.utils.log
@@ -24,24 +23,21 @@ class SolverContext internal constructor(
     val solver: Solver,
     val map: MutableMap<String, Any> = mutableMapOf()
 ) {
+    @Deprecated("To be removed", level = DeprecationLevel.ERROR)
     operator fun <T : Any> invoke(value: T): ContextProvider<T> = ContextProvider(value)
     // inline operator fun <T : Any> invoke(init: Solver.() -> T): ContextProvider<T> = invoke(solver.init())
 
     operator fun <T> getValue(thisRef: Any?, property: KProperty<*>): T = get(property.name)
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Any) {
+        set(property.name, value)
+    }
 
     @Suppress("UNCHECKED_CAST")
     operator fun <T> get(key: String): T = map.getValue(key) as T
 
     operator fun set(key: String, value: Any) {
         map[key] = value
-    }
-
-    // FIXME: Could be an extension function, but it is too much hustle to import it manually.
-    operator fun <T> get(key: VARS): T = get(key.toString())
-
-    // FIXME: Could be an extension function, but it is too much hustle to import it manually.
-    operator fun set(key: VARS, value: Any) {
-        set(key.toString(), value)
     }
 
     inner class ContextProvider<T : Any>(val value: T) {

@@ -8,6 +8,7 @@ import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.Scenario
+import ru.ifmo.fbsat.core.scenario.inputActionsSeq
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
@@ -215,9 +216,6 @@ class Automaton(
         val state: Automaton.State,
         val outputValues: OutputValues
     ) {
-        constructor(result: EvalResult) :
-            this(result.destination, result.outputAction.values)
-
         fun eval(inputAction: InputAction): EvalResult {
             return state.eval(inputAction, outputValues)
         }
@@ -227,32 +225,46 @@ class Automaton(
         val destination: State,
         val outputAction: OutputAction
     ) {
+        val newEvalState: EvalState = EvalState(destination, outputAction.values)
+
         override fun toString(): String {
             return "EvalResult(destination = ${destination.id}, outputAction = $outputAction)"
         }
     }
 
+    @Deprecated("Use evalState.eval directly", ReplaceWith("evalState.eval(inputAction)"))
+    fun eval(
+        inputAction: InputAction,
+        evalState: EvalState
+    ): EvalResult =
+        evalState.eval(inputAction)
+
+    @Deprecated("Use eval(InputAction, EvalState)")
     fun eval(
         inputAction: InputAction,
         state: State,
         values: OutputValues
     ): EvalResult =
-        state.eval(inputAction, values)
+        eval(inputAction, EvalState(state, values))
+
+    fun eval(
+        inputActions: Sequence<InputAction>,
+        startEvalState: EvalState
+    ): Sequence<EvalResult> {
+        var currentEvalState = startEvalState
+        return inputActions.map { inputAction ->
+            eval(inputAction, currentEvalState).also {
+                currentEvalState = it.newEvalState
+            }
+        }
+    }
 
     fun eval(
         inputActions: Sequence<InputAction>,
         startState: State = initialState,
         startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES
-    ): Sequence<EvalResult> {
-        var currentState = startState
-        var currentValues = startValues
-        return inputActions.map { inputAction ->
-            eval(inputAction, currentState, currentValues).also {
-                currentState = it.destination
-                currentValues = it.outputAction.values
-            }
-        }
-    }
+    ): Sequence<EvalResult> =
+        eval(inputActions, EvalState(startState, startValues))
 
     fun eval(
         inputActions: Iterable<InputAction>,
@@ -261,85 +273,82 @@ class Automaton(
     ): List<EvalResult> =
         eval(inputActions.asSequence(), startState, startValues).toList()
 
-    fun getMapping(scenario: Scenario): List<State?> {
-        val mapping: MutableList<State?> = mutableListOfNulls(scenario.elements.size)
-        val results = eval(scenario.elements.map { it.inputAction })
-        for (i in results.indices) {
-            val result = results[i]
+    /**
+     * Evaluate the given [scenario].
+     */
+    fun eval(scenario: Scenario): Sequence<EvalResult> =
+        eval(scenario.inputActionsSeq)
+
+    private fun map_(scenario: Scenario): List<EvalResult?> {
+        val mapping: MutableList<EvalResult?> = mutableListOfNulls(scenario.elements.size)
+        out@ for ((i, result) in eval(scenario).withIndex()) {
             val element = scenario.elements[i]
-            if (element.outputAction == result.outputAction) {
-                mapping[i] = result.destination
-            } else {
-                break
+            if (result.outputAction != element.outputAction) {
+                log.error("No mapping for ${i + 1}-th element = $element, result = $result")
+                break@out
             }
+            mapping[i] = result
         }
         return mapping
     }
 
     /**
-     * Verify given [positiveScenario].
+     * Map the given [scenario].
+     * Nulls represent the absence of a mapping.
+     */
+    fun map(scenario: Scenario): List<State?> =
+        map_(scenario).map { it?.destination }
+
+    /**
+     * Verify the given [positiveScenario].
      *
      * @return `true` if [positiveScenario] is satisfied.
      */
     fun verify(positiveScenario: PositiveScenario): Boolean {
-        val elements = positiveScenario.elements.asSequence()
-        val results = eval(elements.map { it.inputAction })
-        for ((i, xxx) in elements.zip(results).withIndex()) {
-            val (element, result) = xxx
-            if (result.outputAction != element.outputAction) {
-                // Contradiction found => positive scenario is not satisfied => verify failure
-                println("Contradiction found => positive scenario is not satisfied")
-                println("xxx = $xxx")
-                println("i+1 = ${i + 1}")
-                println("result.outputAction != element.outputAction")
-                println("${result.outputAction} != ${element.outputAction}")
-                return false
-            }
-        }
-        return true
+        val mapping: List<State?> = map(positiveScenario)
+        return mapping.last() != null
     }
 
     /**
-     * Verify given [negativeScenario].
+     * Verify the given [negativeScenario].
      *
      * @return `true` if [negativeScenario] is **not** satisfied.
      */
     fun verify(negativeScenario: NegativeScenario): Boolean {
-        val elements = negativeScenario.elements
-        val results = eval(elements.map { it.inputAction })
-
-        for ((element, result) in elements.zip(results)) {
-            if (result.outputAction != element.outputAction) {
-                // Contradiction found => negative scenario is not satisfied => verify ok
-                return true
-            }
-        }
-
+        val mapping: List<State?> = map(negativeScenario)
         if (negativeScenario.loopPosition != null) {
-            val loop = results.elementAt(negativeScenario.loopPosition - 1)
-            val last = results.last()
-            @Suppress("LiftReturnOrAssignment")
-            if (last.destination == loop.destination) {
-                log.error("Negative scenario is satisfied (last==loop)")
-                // println(">>> satisfyingStates = ${results.map {
-                //     it.destination.id.toString().padStart(2)
-                // }} (size = ${results.size})")
-                // println(">>>        something = ${negativeScenario.elements.map {
-                //     it.nodeId.toString().padStart(2)
-                // }}")
-                // println(">>> loopPosition = ${negativeScenario.loopPosition}")
-                // println(">>> loop = $loop")
-                // println(">>> last = $last")
-                // println(">>> negativeScenario = $negativeScenario")
-                // Last and loop-back elements are satisfied by the same state
-                return false
-            } else {
-                // Last and loop-back elements are satisfied by different states
-                return true
+            val loop = mapping[negativeScenario.loopPosition - 1]
+            val last = mapping.last()
+            return when {
+                loop == null || last == null -> {
+                    // Either `loop` or `last` elements are unmapped,
+                    // which means that the negative scenario is not satisfied.
+                    true
+                }
+                loop == last -> {
+                    // Both `loop` and `last` elements map to the same state,
+                    // which means that the negative scenario is satisfied.
+                    log.error("Negative scenario is satisfied (loop==last)")
+                    false
+                }
+                else -> {
+                    // `loop` and `last` elements map to different states,
+                    // which means that the negative scenario is not satisfied.
+                    true
+                }
             }
         } else {
-            log.error("Terminal is satisfied")
-            return false
+            val last = mapping.last()
+            return if (last != null) {
+                // Satisfaction of the terminal (`last`) element of loop-less negative scenario
+                // implies the satisfaction of the negative scenario itself.
+                log.error("Negative scenario is satisfied (terminal)")
+                false
+            } else {
+                // Terminal (`last`) element of loop-less negative scenario is unmapped,
+                // which means that the negative scenario is not satisfied.
+                true
+            }
         }
     }
 

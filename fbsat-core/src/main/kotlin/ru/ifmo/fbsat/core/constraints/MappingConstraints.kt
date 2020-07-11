@@ -20,15 +20,16 @@ import ru.ifmo.fbsat.core.solver.implyImply
 import ru.ifmo.fbsat.core.solver.implyImplyImply
 import ru.ifmo.fbsat.core.solver.implyOr
 import ru.ifmo.fbsat.core.solver.sign
-import ru.ifmo.fbsat.core.task.distributed.DistributedBasicVariables
+import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicVariables
-import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.PinVars
+import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.Pins
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
 import ru.ifmo.fbsat.core.utils.algorithmChoice
 import ru.ifmo.fbsat.core.utils.exhaustive
+import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.withIndex
 
 fun Solver.declarePositiveMappingConstraints(
@@ -378,7 +379,7 @@ fun Solver.declarePositiveArbitraryModularMappingConstraints(
         }
 
         comment("Additional arbitrary modular mapping constraints")
-        with(PinVars(M, X, Z, E, O)) {
+        with(Pins(M, X, Z, E, O)) {
             comment("Pin value propagation from parent")
             for (pin in allInboundVarPins)
                 for (parent in inboundVarPinParent[pin].domain - 0)
@@ -425,12 +426,16 @@ fun Solver.declarePositiveArbitraryModularMappingConstraints(
                             yield(inboundVarPinParent[extPin] eq pin)
                     }
         }
+
+        if (isEncodeReverseImplication) {
+            log.warn("ArbitraryModular reverse-implication is not implemented yet")
+        }
     }
 }
 
 fun Solver.declareDistributedPositiveMappingConstraints(
     distributedBasicVariables: DistributedBasicVariables,
-    isEncodeReverseImplication: Boolean
+    modularIsEncodeReverseImplication: MultiArray<Boolean>
 ) {
     comment("Distributed positive mapping constraints")
     with(distributedBasicVariables) {
@@ -438,7 +443,7 @@ fun Solver.declareDistributedPositiveMappingConstraints(
             comment("Distributed positive mapping constraints: module m = $m")
             declarePositiveMappingConstraints(
                 basicVariables = modularBasicVariables[m],
-                isEncodeReverseImplication = isEncodeReverseImplication
+                isEncodeReverseImplication = modularIsEncodeReverseImplication[m]
             )
         }
     }

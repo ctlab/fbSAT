@@ -13,8 +13,8 @@ import ru.ifmo.fbsat.core.utils.Globals
 
 @Suppress("PropertyName")
 class BasicVariables(
-    val scenarioTree: ScenarioTree,
     /* Constants */
+    val scenarioTree: ScenarioTree,
     val C: Int,
     val K: Int,
     val V: Int,

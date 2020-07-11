@@ -8,8 +8,8 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.completeVars
-import ru.ifmo.fbsat.core.task.single.basic.declareBasic
-import ru.ifmo.fbsat.core.task.single.extended.declareExtended
+import ru.ifmo.fbsat.core.task.single.basic.BasicTask
+import ru.ifmo.fbsat.core.task.single.extended.ExtendedTask
 import ru.ifmo.fbsat.core.task.single.extended.extendedMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
 import ru.ifmo.fbsat.core.task.single.extended.inferExtended
@@ -17,67 +17,6 @@ import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeSince
 import java.io.File
-
-fun Inferrer.performCegis(
-    smvDir: File
-): Automaton? {
-    log.info("Performing CEGIS...")
-
-    // Copy smv files to output directory
-    smvDir.copyRecursively(outDir, overwrite = true)
-
-    val vars = solver.completeVars
-    val scenarioTree = vars.scenarioTree
-    val negativeScenarioTree = vars.negativeScenarioTree
-    lateinit var lastNegativeScenarios: List<NegativeScenario>
-
-    for (iterationNumber in 1 until 10000) {
-        // log.info("CEGIS iteration #$iterationNumber")
-        val timeStart = PerformanceCounter.reference
-
-        // Update to take into account possible extension of the negative scenario tree
-        solver.updateNegativeReduction()
-        // Infer update
-        val automaton = inferExtended()
-        if (automaton == null) {
-            log.failure("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
-            return null
-        }
-        // ==============
-        // Dump intermediate automaton
-        automaton.dump(outDir, "_automaton_iter%04d".format(iterationNumber))
-        // ==============
-        // Verify automaton with NuSMV
-        val counterexamples = automaton.verifyWithNuSMV(outDir)
-        if (counterexamples.isEmpty()) {
-            log.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
-            log.success("These is no counterexamples, nice!")
-            return automaton
-        }
-        // Convert counterexamples to negative scenarios
-        val negativeScenarios = counterexamples.map {
-            NegativeScenario.fromCounterexample(
-                it,
-                scenarioTree.inputEvents,
-                scenarioTree.outputEvents,
-                scenarioTree.inputNames,
-                scenarioTree.outputNames
-            )
-        }
-        // Populate negTree with new negative scenarios
-        val treeSize = negativeScenarioTree.size
-        negativeScenarios.forEach(negativeScenarioTree::addNegativeScenario)
-        val treeSizeDiff = negativeScenarioTree.size - treeSize
-        // Note: it is suffice to check just `negSc == lastNegSc`, but it may be costly,
-        // so check it only in a specific case - when negative tree does not change its size
-        if (treeSizeDiff == 0 && negativeScenarios == lastNegativeScenarios) {
-            error("Stale")
-        }
-        lastNegativeScenarios = negativeScenarios
-        log.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
-    }
-    return null
-}
 
 fun Inferrer.cegis(
     scenarioTree: ScenarioTree,
@@ -90,15 +29,17 @@ fun Inferrer.cegis(
     smvDir: File
 ): Automaton? {
     reset()
-    solver.declareBasic(
-        scenarioTree = scenarioTree,
-        numberOfStates = numberOfStates,
-        maxOutgoingTransitions = maxOutgoingTransitions,
-        maxTransitions = maxTransitions,
-        isEncodeReverseImplication = false
+    declare(
+        BasicTask(
+            scenarioTree = scenarioTree,
+            numberOfStates = numberOfStates,
+            maxOutgoingTransitions = maxOutgoingTransitions,
+            maxTransitions = maxTransitions,
+            isEncodeReverseImplication = false
+        )
     )
-    solver.declareExtended(maxGuardSize = maxGuardSize, maxTotalGuardsSize = maxTotalGuardsSize)
-    solver.declareComplete(negativeScenarioTree)
+    declare(ExtendedTask(maxGuardSize = maxGuardSize, maxTotalGuardsSize = maxTotalGuardsSize))
+    declare(CompleteTask(negativeScenarioTree))
     return performCegis(smvDir)
 }
 
@@ -158,6 +99,65 @@ fun Inferrer.cegisMin(
                 break
             }
         }
+    }
+    return null
+}
+
+fun Inferrer.performCegis(smvDir: File): Automaton? {
+    log.info("Performing CEGIS...")
+
+    // Copy smv files to output directory
+    smvDir.copyRecursively(outDir, overwrite = true)
+
+    val vars = solver.context.completeVars
+    val scenarioTree = vars.scenarioTree
+    val negativeScenarioTree = vars.negativeScenarioTree
+    lateinit var lastNegativeScenarios: List<NegativeScenario>
+
+    for (iterationNumber in 1 until 10000) {
+        // log.info("CEGIS iteration #$iterationNumber")
+        val timeStart = PerformanceCounter.reference
+
+        // Update to take into account possible extension of the negative scenario tree
+        solver.updateNegativeReduction()
+        // Infer update
+        val automaton = inferExtended()
+        if (automaton == null) {
+            log.failure("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
+            return null
+        }
+        // ==============
+        // Dump intermediate automaton
+        automaton.dump(outDir, "_automaton_iter%04d".format(iterationNumber))
+        // ==============
+        // Verify automaton with NuSMV
+        val counterexamples = automaton.verifyWithNuSMV(outDir)
+        if (counterexamples.isEmpty()) {
+            log.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
+            log.success("These is no counterexamples, nice!")
+            return automaton
+        }
+        // Convert counterexamples to negative scenarios
+        val negativeScenarios = counterexamples.map {
+            NegativeScenario.fromCounterexample(
+                it,
+                scenarioTree.inputEvents,
+                scenarioTree.outputEvents,
+                scenarioTree.inputNames,
+                scenarioTree.outputNames
+            )
+        }
+        // Populate negTree with new negative scenarios
+        val treeSize = negativeScenarioTree.size
+        negativeScenarios.forEach(negativeScenarioTree::addNegativeScenario)
+        val treeSizeDiff = negativeScenarioTree.size - treeSize
+        // Note: it is suffice to check just `negSc == lastNegSc`, but it may be costly,
+        // so check it only in a specific case - when negative tree does not change its size
+        if (treeSizeDiff == 0 && negativeScenarios == lastNegativeScenarios) {
+            error("Stale")
+        }
+        lastNegativeScenarios = negativeScenarios
+        log.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
     }
     return null
 }

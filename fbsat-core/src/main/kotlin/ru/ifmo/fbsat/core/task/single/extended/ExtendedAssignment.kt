@@ -11,6 +11,7 @@ import ru.ifmo.fbsat.core.automaton.endow
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.solver.convert
+import ru.ifmo.fbsat.core.utils.countTrue
 
 class ExtendedAssignment(
     val scenarioTree: ScenarioTree,
@@ -81,7 +82,7 @@ class ExtendedAssignment(
                 nodeChild = nodeChild.convert(raw),
                 nodeValue = nodeValue.convert(raw)
             ).also {
-                check(it.N == cardinality.totalizer.convert(raw).values.count { b -> b })
+                check(cardinality.totalizer.convert(raw).values.countTrue() == it.N)
             }
         }
     }

@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.constraints
 
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.imply
+import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedVariables
 import ru.ifmo.fbsat.core.task.modular.extended.consecutive.ConsecutiveModularExtendedVariables
 import ru.ifmo.fbsat.core.task.modular.extended.parallel.ParallelModularExtendedVariables
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
@@ -44,6 +45,20 @@ fun Solver.declareConsecutiveModularGuardConditionsBfsConstraints(
     with(consecutiveModularExtendedVariables) {
         for (m in 1..M) {
             comment("Consecutive modular guard conditions BFS constraints: for module m = $m")
+            declareGuardConditionsBfsConstraints(
+                extendedVars = modularExtendedVariables[m]
+            )
+        }
+    }
+}
+
+fun Solver.declareDistributedGuardConditionsBfsConstraints(
+    distributedExtendedVariables: DistributedExtendedVariables
+) {
+    comment("Distributed guard conditions BFS constraints")
+    with(distributedExtendedVariables) {
+        for (m in 1..M) {
+            comment("Distributed guard conditions BFS constraints: for module m = $m")
             declareGuardConditionsBfsConstraints(
                 extendedVars = modularExtendedVariables[m]
             )

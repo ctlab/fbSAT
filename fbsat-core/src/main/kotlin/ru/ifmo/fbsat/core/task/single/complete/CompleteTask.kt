@@ -1,6 +1,5 @@
 package ru.ifmo.fbsat.core.task.single.complete
 
-import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.automaton.InputValues
 import ru.ifmo.fbsat.core.constraints.declareNegativeAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declareNegativeGuardConditionsConstraints
@@ -12,49 +11,38 @@ import ru.ifmo.fbsat.core.solver.Literal
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.newBoolVarArray
 import ru.ifmo.fbsat.core.solver.newIntVar
-import ru.ifmo.fbsat.core.task.VARS
+import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.task.completeVars
 import ru.ifmo.fbsat.core.task.extendedVars
-import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.timeSince
 
-fun Solver.declareComplete(
-    negativeScenarioTree: NegativeScenarioTree? = null // empty if null
-) {
-    val timeStart = PerformanceCounter.reference
-    val nvarStart = numberOfVariables
-    val nconStart = numberOfClauses
+data class CompleteTask(
+    val negativeScenarioTree: NegativeScenarioTree? = null // empty if null
+) : Task() {
+    override fun Solver.declare_() {
+        val scenarioTree = context.extendedVars.scenarioTree
+        val negTree = negativeScenarioTree ?: NegativeScenarioTree(
+            inputEvents = scenarioTree.inputEvents,
+            outputEvents = scenarioTree.outputEvents,
+            inputNames = scenarioTree.inputNames,
+            outputNames = scenarioTree.outputNames
+        )
 
-    val scenarioTree = extendedVars.scenarioTree
-    val negTree = negativeScenarioTree ?: NegativeScenarioTree(
-        inputEvents = scenarioTree.inputEvents,
-        outputEvents = scenarioTree.outputEvents,
-        inputNames = scenarioTree.inputNames,
-        outputNames = scenarioTree.outputNames
-    )
+        /* Variables */
+        val vars = declareCompleteVariables(
+            extendedVars = context.extendedVars,
+            negativeScenarioTree = negTree
+        ).also {
+            context.completeVars = it
+        }
 
-    /* Variables */
-    val vars = declareCompleteVariables(
-        extendedVars = extendedVars,
-        negativeScenarioTree = negTree
-    ).also {
-        context[VARS.COMPLETE] = it
+        /* Initial negative constraints */
+        updateNegativeReduction()
     }
-
-    /* Initial negative constraints */
-    updateNegativeReduction()
-
-    val nvarDiff = numberOfVariables - nvarStart
-    val nconDiff = numberOfClauses - nconStart
-    log.info(
-        "Done declaring complete variables ($nvarDiff) and constraints ($nconDiff) in %.3f s."
-            .format(timeSince(timeStart).seconds)
-    )
 }
 
 fun Solver.updateNegativeReduction() {
     // TODO: timeit
-    val vars = completeVars
+    val vars = context.completeVars
     with(vars) {
         /* Constants */
         val oldNegV = negV

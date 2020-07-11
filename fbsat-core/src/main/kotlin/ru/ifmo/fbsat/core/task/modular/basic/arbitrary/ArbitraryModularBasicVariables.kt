@@ -87,7 +87,7 @@ fun Solver.declareArbitraryModularBasicVariables(
         }
     }
     /* Modular variables */
-    with(PinVars(M, X, Z, E, O)) {
+    with(Pins(M, X, Z, E, O)) {
         val inboundVarPinParent = newIntVarArray(allInboundVarPins.size) { (p) ->
             if (p in externalInboundVarPins) {
                 (0..allOutboundVarPins.size)

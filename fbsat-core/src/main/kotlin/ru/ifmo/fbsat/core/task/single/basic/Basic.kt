@@ -1,3 +1,5 @@
+@file:JvmName("BasicTaskKt")
+
 package ru.ifmo.fbsat.core.task.single.basic
 
 import com.soywiz.klock.measureTimeWithResult
@@ -5,45 +7,9 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.basicVars
-import ru.ifmo.fbsat.core.task.optimizeTopDown
+import ru.ifmo.fbsat.core.task.optimizeT
 import ru.ifmo.fbsat.core.utils.checkMapping
 import ru.ifmo.fbsat.core.utils.log
-
-fun Inferrer.inferBasic(): Automaton? {
-    val rawAssignment = solver.solve() ?: return null
-    val vars = solver.basicVars
-    val assignment = BasicAssignment.fromRaw(rawAssignment, vars)
-    val automaton = assignment.toAutomaton()
-
-    with(vars) {
-        check(
-            automaton.checkMapping(
-                scenarios = scenarioTree.scenarios,
-                mapping = assignment.mapping
-            )
-        ) { "Positive mapping mismatch" }
-    }
-
-    return automaton
-}
-
-fun Inferrer.optimizeT(start: Int? = null, end: Int = 0): Automaton? {
-    log.info("Optimizing T...")
-    val vars = solver.basicVars
-    return optimizeTopDown(
-        start = start,
-        end = end,
-        nextInitial = { T ->
-            vars.cardinality.updateUpperBoundLessThanOrEqual(T)
-            inferBasic()
-        },
-        next = { T ->
-            vars.cardinality.updateUpperBoundLessThan(T)
-            inferBasic()
-        },
-        query = { it.numberOfTransitions }
-    )
-}
 
 fun Inferrer.basic(
     scenarioTree: ScenarioTree,
@@ -53,16 +19,19 @@ fun Inferrer.basic(
     isEncodeReverseImplication: Boolean = true
 ): Automaton? {
     reset()
-    solver.declareBasic(
-        scenarioTree = scenarioTree,
-        numberOfStates = numberOfStates,
-        maxOutgoingTransitions = maxOutgoingTransitions,
-        maxTransitions = maxTransitions,
-        isEncodeReverseImplication = isEncodeReverseImplication
+    declare(
+        BasicTask(
+            scenarioTree = scenarioTree,
+            numberOfStates = numberOfStates,
+            maxOutgoingTransitions = maxOutgoingTransitions,
+            maxTransitions = maxTransitions,
+            isEncodeReverseImplication = isEncodeReverseImplication
+        )
     )
     return inferBasic()
 }
 
+// TODO: return nullable Automaton instead of checking here.
 fun Inferrer.basicMinC(
     scenarioTree: ScenarioTree,
     start: Int = 1, // C_start
@@ -71,9 +40,9 @@ fun Inferrer.basicMinC(
 ): Automaton {
     var best: Automaton? = null
     for (C in start..end) {
-        reset()
-        solver.declareBasic(scenarioTree, numberOfStates = C, isEncodeReverseImplication = isEncodeReverseImplication)
-        val (result, runningTime) = measureTimeWithResult { inferBasic() }
+        val (result, runningTime) = measureTimeWithResult {
+            basic(scenarioTree, numberOfStates = C, isEncodeReverseImplication = isEncodeReverseImplication)
+        }
         if (result != null) {
             log.success("BasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
             log.info("BasicMin: minimal C = $C")
@@ -92,4 +61,23 @@ fun Inferrer.basicMin(
 ): Automaton? {
     basicMinC(scenarioTree, isEncodeReverseImplication = isEncodeReverseImplication)
     return optimizeT()
+}
+
+fun Inferrer.inferBasic(): Automaton? {
+    val rawAssignment = solver.solve() ?: return null
+    val vars = solver.context.basicVars
+    val assignment = BasicAssignment.fromRaw(rawAssignment, vars)
+    val automaton = assignment.toAutomaton()
+
+    // TODO: refactor mapping check
+    with(vars) {
+        check(
+            automaton.checkMapping(
+                scenarios = scenarioTree.scenarios,
+                mapping = assignment.mapping
+            )
+        ) { "Positive mapping mismatch" }
+    }
+
+    return automaton
 }

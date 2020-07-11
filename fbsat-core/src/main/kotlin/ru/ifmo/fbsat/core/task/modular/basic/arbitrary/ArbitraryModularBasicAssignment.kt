@@ -55,7 +55,7 @@ class ArbitraryModularBasicAssignment(
         for (m in 1..M) {
             log.debug { "modularInputIndex[m = $m] = ${(1..V).map { v -> modularInputIndex[m][v] }}" }
         }
-        with(PinVars(M, X, Z, E, O)) {
+        with(Pins(M, X, Z, E, O)) {
             for (m in 1..M) {
                 log.debug { "inboundVarPinParent for module m = $m: ${modularInboundVarPins[m].map { pin -> inboundVarPinParent[pin] }}" }
             }

@@ -4,46 +4,9 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.extForestVars
-import ru.ifmo.fbsat.core.task.optimizeTopDown
+import ru.ifmo.fbsat.core.task.optimizeN_Forest
+import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
-import ru.ifmo.fbsat.core.task.single.basic.declareBasic
-import ru.ifmo.fbsat.core.utils.log
-
-fun Inferrer.inferExtForest(): Automaton? {
-    val vars = solver.extForestVars
-    val rawAssignment = solver.solve() ?: return null
-    val assignment = ExtForestAssignment.fromRaw(rawAssignment, vars)
-    val automaton = assignment.toAutomaton()
-
-    // with(vars) {
-    //     check(
-    //         automaton.checkMapping(
-    //             scenarios = scenarioTree.scenarios,
-    //             mapping = assignment.mapping
-    //         )
-    //     ) { "Positive mapping mismatch" }
-    // }
-
-    return automaton
-}
-
-fun Inferrer.optimizeN_Forest(start: Int? = null, end: Int = 0): Automaton? {
-    log.info("Optimizing N...")
-    val vars = solver.extForestVars
-    return optimizeTopDown(
-        start = start,
-        end = end,
-        nextInitial = { N ->
-            vars.cardinality.updateUpperBoundLessThanOrEqual(N)
-            inferExtForest()
-        },
-        next = { N ->
-            vars.cardinality.updateUpperBoundLessThan(N)
-            inferExtForest()
-        },
-        query = { it.totalGuardsSize }
-    )
-}
 
 fun Inferrer.extForest(
     scenarioTree: ScenarioTree,
@@ -55,16 +18,20 @@ fun Inferrer.extForest(
     isEncodeReverseImplication: Boolean = true
 ): Automaton? {
     reset()
-    solver.declareBasic(
-        scenarioTree = scenarioTree,
-        numberOfStates = numberOfStates,
-        maxOutgoingTransitions = maxOutgoingTransitions,
-        maxTransitions = maxTransitions,
-        isEncodeReverseImplication = isEncodeReverseImplication
+    declare(
+        BasicTask(
+            scenarioTree = scenarioTree,
+            numberOfStates = numberOfStates,
+            maxOutgoingTransitions = maxOutgoingTransitions,
+            maxTransitions = maxTransitions,
+            isEncodeReverseImplication = isEncodeReverseImplication
+        )
     )
-    solver.declareExtForest(
-        totalNodes = totalNodes,
-        maxTotalGuardsSize = maxTotalGuardsSize
+    declare(
+        ExtForestTask(
+            totalNodes = totalNodes,
+            maxTotalGuardsSize = maxTotalGuardsSize
+        )
     )
     return inferExtForest()
 }
@@ -74,6 +41,25 @@ fun Inferrer.extForestMin(
     totalNodes: Int // P
 ): Automaton? {
     basicMinC(scenarioTree)
-    solver.declareExtForest(totalNodes = totalNodes)
+    declare(ExtForestTask(totalNodes = totalNodes))
     return optimizeN_Forest()
+}
+
+fun Inferrer.inferExtForest(): Automaton? {
+    val vars = solver.context.extForestVars
+    val rawAssignment = solver.solve() ?: return null
+    val assignment = ExtForestAssignment.fromRaw(rawAssignment, vars)
+    val automaton = assignment.toAutomaton()
+
+    // TODO: check mapping
+    // with(vars) {
+    //     check(
+    //         automaton.checkMapping(
+    //             scenarios = scenarioTree.scenarios,
+    //             mapping = assignment.mapping
+    //         )
+    //     ) { "Positive mapping mismatch" }
+    // }
+
+    return automaton
 }

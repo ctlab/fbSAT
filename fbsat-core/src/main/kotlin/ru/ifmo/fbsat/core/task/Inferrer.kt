@@ -10,4 +10,8 @@ class Inferrer(
     fun reset() {
         solver.reset()
     }
+
+    fun declare(task: Task) {
+        task.declare(solver)
+    }
 }

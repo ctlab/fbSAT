@@ -3,12 +3,12 @@ package ru.ifmo.fbsat.core.task.modular.basic.arbitrary
 import com.github.lipen.multiarray.MultiArray
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
-internal class PinVars(
-    M: Int,
-    X: Int,
-    Z: Int,
-    E: Int,
-    O: Int
+internal class Pins(
+    val M: Int,
+    val X: Int,
+    val Z: Int,
+    val E: Int,
+    val O: Int
 ) {
     val modularInboundVarPins: MultiArray<List<Int>> =
         MultiArray.create(M) { (m) -> (1..X).map { (m - 1) * X + it } }

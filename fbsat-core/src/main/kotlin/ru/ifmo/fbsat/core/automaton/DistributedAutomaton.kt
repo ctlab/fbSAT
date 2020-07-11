@@ -3,107 +3,218 @@ package ru.ifmo.fbsat.core.automaton
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import com.github.lipen.multiarray.mapIndexed
+import ru.ifmo.fbsat.core.utils.Compound
+import ru.ifmo.fbsat.core.scenario.CompoundScenario
+import ru.ifmo.fbsat.core.scenario.CompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.InputAction
-import ru.ifmo.fbsat.core.scenario.MultiScenario
-import ru.ifmo.fbsat.core.scenario.MultiScenarioTree
-import ru.ifmo.fbsat.core.scenario.PositiveMultiScenario
+import ru.ifmo.fbsat.core.utils.M
+import ru.ifmo.fbsat.core.scenario.OutputAction
+import ru.ifmo.fbsat.core.scenario.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.modularInputActionsSeq
+import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
+import ru.ifmo.fbsat.core.utils.toImmutable
+import ru.ifmo.fbsat.core.utils.toMultiArray
 
+private typealias ModularScenarioTree = MultiArray<ScenarioTree>
+private typealias ModularAutomaton = MultiArray<Automaton>
+private typealias ModularState = MultiArray<Automaton.State>
+private typealias ModularEvalState = MultiArray<Automaton.EvalState>
+private typealias ModularEvalResult = MultiArray<Automaton.EvalResult>
+private typealias ModularEvalResult_adhoc = ImmutableMultiArray<Automaton.EvalResult>
+private typealias ModularInputAction = MultiArray<InputAction>
+private typealias ModularOutputAction = MultiArray<OutputAction>
+private typealias ModularOutputValues = MultiArray<OutputValues>
 
+@Suppress("MemberVisibilityCanBePrivate", "FunctionName", "PropertyName")
 class DistributedAutomaton(
-    val modules: MultiArray<Automaton>
-) {
-    val M: Int = modules.shape[0]
+    override val modular: ImmutableMultiArray<Automaton>
+) : Compound<Automaton> {
+    val modules: ModularAutomaton = modular.toMultiArray()
+    val numberOfModules: Int = M
+    val modularInputEvents: MultiArray<List<InputEvent>> = modules.map { it.inputEvents }
+    val modularOutputEvents: MultiArray<List<OutputEvent>> = modules.map { it.outputEvents }
+    val modularInputNames: MultiArray<List<String>> = modules.map { it.inputNames }
+    val modularOutputNames: MultiArray<List<String>> = modules.map { it.outputNames }
 
-    fun eval(
-        modularInputAction: MultiArray<InputAction>,
-        modularEvalState: MultiArray<Automaton.EvalState>
-    ): MultiArray<Automaton.EvalResult> =
-        modularEvalState.mapIndexed { (m), state ->
-            state.eval(modularInputAction[m])
-        }
+    val numberOfStates: Int = modules.values.sumBy { it.numberOfStates }
+    val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
+    val totalGuardsSize: Int = modules.values.sumBy { it.totalGuardsSize }
 
-    fun eval(
-        modularInputActions: Sequence<MultiArray<InputAction>>,
-        startModularEvalState: MultiArray<Automaton.EvalState>
-    ): Sequence<MultiArray<Automaton.EvalResult>> {
-        var currentModularEvalState = startModularEvalState
-        return modularInputActions.map { modularInputAction ->
-            eval(modularInputAction, currentModularEvalState).also { modularResult ->
-                currentModularEvalState = modularResult.map { Automaton.EvalState(it) }
+    // TODO: remove when ImmutableMultiArray is stabilized
+    constructor(modules: ModularAutomaton) : this(modules.toImmutable())
+
+    class CompoundEvalState private constructor(
+        val modularState: ModularState,
+        val modularOutputValues: ModularOutputValues,
+        override val modular: ImmutableMultiArray<Automaton.EvalState>
+    ) : Compound<Automaton.EvalState> {
+        constructor(modularEvalState: ModularEvalState) : this(
+            modularState = modularEvalState.map { it.state },
+            modularOutputValues = modularEvalState.map { it.outputValues },
+            modular = modularEvalState.toImmutable()
+        )
+
+        constructor(
+            M: Int,
+            modularState: ModularState,
+            modularOutputValues: ModularOutputValues
+        ) : this(
+            modularState = modularState,
+            modularOutputValues = modularOutputValues,
+            modular = MultiArray.create(M) { (m) ->
+                Automaton.EvalState(modularState[m], modularOutputValues[m])
+            }.toImmutable()
+        )
+
+        fun eval(modularInputAction: ModularInputAction): CompoundEvalResult =
+            CompoundEvalResult(
+                modular.toMultiArray().mapIndexed { (m), evalState ->
+                    evalState.eval(modularInputAction[m])
+                }
+            )
+
+        fun eval(modularInputActions: Sequence<ModularInputAction>): Sequence<CompoundEvalResult> {
+            var currentEvalState = this
+            return modularInputActions.map { modularInputAction ->
+                currentEvalState.eval(modularInputAction).also {
+                    currentEvalState = it.newEvalState
+                }
             }
         }
     }
 
+    class CompoundEvalResult private constructor(
+        val modularDestination: ModularState,
+        val modularOutputAction: ModularOutputAction,
+        override val modular: ModularEvalResult_adhoc
+    ) : Compound<Automaton.EvalResult> {
+        val modularOutputValues: ModularOutputValues = modularOutputAction.map { it.values }
+        val newEvalState: CompoundEvalState =
+            CompoundEvalState(M, modularDestination, modularOutputValues)
+
+        constructor(modularResult: ModularEvalResult) : this(
+            modularDestination = modularResult.map { it.destination },
+            modularOutputAction = modularResult.map { it.outputAction },
+            modular = modularResult.toImmutable()
+        )
+
+        constructor(
+            M: Int,
+            modularDestination: ModularState,
+            modularOutputAction: ModularOutputAction
+        ) : this(
+            modularDestination = modularDestination,
+            modularOutputAction = modularOutputAction,
+            modular = MultiArray.create(M) { (m) ->
+                Automaton.EvalResult(modularDestination[m], modularOutputAction[m])
+            }.toImmutable()
+        )
+
+        override fun toString(): String {
+            return "CompoundEvalResult(destination = ${modularDestination.values}, outputAction = ${modularOutputAction.values})"
+        }
+    }
+
+    @Deprecated(
+        "Use evalState.eval directly",
+        ReplaceWith("compoundEvalState.eval(modularInputAction)"),
+        level = DeprecationLevel.ERROR
+    )
     fun eval(
-        modularInputActions: Sequence<MultiArray<InputAction>>,
-        modularStartState: MultiArray<Automaton.State> = modules.map { it.initialState },
-        modularStartOutputValues: MultiArray<OutputValues> = modules.map { Globals.INITIAL_OUTPUT_VALUES }
-    ): Sequence<MultiArray<Automaton.EvalResult>> =
-        eval(modularInputActions, MultiArray.create(M) { (m) ->
-            Automaton.EvalState(modularStartState[m], modularStartOutputValues[m])
-        })
+        modularInputAction: ModularInputAction,
+        evalState: CompoundEvalState
+    ): CompoundEvalResult =
+        evalState.eval(modularInputAction)
+
+    @Deprecated(
+        "Use evalState.eval directly",
+        ReplaceWith("startEvalState.eval(modularInputActions)"),
+        level = DeprecationLevel.ERROR
+    )
+    fun eval(
+        modularInputActions: Sequence<ModularInputAction>,
+        startEvalState: CompoundEvalState
+    ): Sequence<CompoundEvalResult> =
+        startEvalState.eval(modularInputActions)
 
     fun eval(
-        modularInputActions: Iterable<MultiArray<InputAction>>,
-        modularStartState: MultiArray<Automaton.State> = modules.map { it.initialState },
-        modularStartOutputValues: MultiArray<OutputValues> = modules.map { Globals.INITIAL_OUTPUT_VALUES }
-    ): List<MultiArray<Automaton.EvalResult>> =
+        modularInputActions: Sequence<ModularInputAction>,
+        modularStartState: ModularState = modules.map { it.initialState },
+        modularStartOutputValues: ModularOutputValues = modules.map { Globals.INITIAL_OUTPUT_VALUES }
+    ): Sequence<CompoundEvalResult> =
+        CompoundEvalState(M, modularStartState, modularStartOutputValues).eval(modularInputActions)
+
+    fun eval(
+        modularInputActions: Iterable<ModularInputAction>,
+        modularStartState: ModularState = modules.map { it.initialState },
+        modularStartOutputValues: ModularOutputValues = modules.map { Globals.INITIAL_OUTPUT_VALUES }
+    ): List<CompoundEvalResult> =
         eval(modularInputActions.asSequence(), modularStartState, modularStartOutputValues).toList()
 
     /**
-     * Evaluate given [scenario].
+     * Evaluate the given [scenario].
      */
-    fun eval(scenario: MultiScenario): Sequence<MultiArray<Automaton.EvalResult>> =
+    fun eval(scenario: CompoundScenario): Sequence<CompoundEvalResult> =
         eval(scenario.modularInputActionsSeq)
 
-    @Suppress("FunctionName")
-    fun map_(scenario: MultiScenario): List<MultiArray<Automaton.EvalResult>?> {
-        val modularMapping: MutableList<MultiArray<Automaton.EvalResult>?> = mutableListOfNulls(scenario.elements.size)
-        out@ for ((i, modularResult) in eval(scenario).withIndex()) {
-            val multiElement = scenario.elements[i]
+    fun map_(scenario: CompoundScenario): List<CompoundEvalResult?> {
+        val mapping: MutableList<CompoundEvalResult?> = mutableListOfNulls(scenario.elements.size)
+        out@ for ((i, result) in eval(scenario).withIndex()) {
+            val element = scenario.elements[i]
             for (m in 1..M) {
-                if (multiElement[m].outputAction != modularResult[m].outputAction) {
-                    log.error("No mapping for m = $m, multiElement = ${multiElement.values}, modularResult = $modularResult")
+                if (element.modular[m].outputAction != result.modular[m].outputAction) {
+                    log.error("No mapping for m = $m, element = $element, result = $result")
                     break@out
                 }
             }
-            modularMapping[i] = modularResult
+            mapping[i] = result
         }
-        return modularMapping
+        return mapping
     }
 
     /**
-     * Map given [scenario].
+     * Map the given [scenario].
      * Nulls represent the absence of a mapping.
      */
-    fun map(scenario: MultiScenario): List<MultiArray<Automaton.State>?> =
-        map_(scenario).map { modularResult ->
-            modularResult?.map { it.destination }
+    fun map(scenario: CompoundScenario): List<ModularState?> =
+        map_(scenario).map { result ->
+            result?.modularDestination
         }
 
     /**
-     * Verify given [positiveMultiScenario].
+     * Verify the given [positiveCompoundScenario].
      *
-     * @return `true` if [positiveMultiScenario] is satisfied.
+     * @return `true` if [positiveCompoundScenario] is satisfied.
      */
-    fun verify(positiveMultiScenario: PositiveMultiScenario): Boolean {
-        // old:
-        // val results: List<MultiArray<Automaton.EvalResult>?> = eval(positiveMultiScenario)
-        // return results.last() != null
-        // new:
-        val mapping: List<MultiArray<Automaton.State>?> = map(positiveMultiScenario)
+    fun verify(positiveCompoundScenario: PositiveCompoundScenario): Boolean {
+        val mapping: List<ModularState?> = map(positiveCompoundScenario)
         return mapping.last() != null
     }
 
     /**
-     * Verify all positive scenarios in given [multiScenarioTree].
+     * Verify all positive scenarios in the given [scenarioTree].
      *
      * @return `true` if **all** scenarios are satisfied.
      */
-    fun verify(multiScenarioTree: MultiScenarioTree): Boolean =
-        multiScenarioTree.scenarios.all(::verify)
+    fun verify(scenarioTree: CompoundScenarioTree): Boolean =
+        scenarioTree.scenarios.all(::verify)
+
+    /**
+     * Verify all positive scenarios in the given [modularScenarioTree].
+     *
+     * @return `true` if **all** scenarios are satisfied.
+     */
+    fun verify(modularScenarioTree: ModularScenarioTree): Boolean {
+        for (m in 1..M) {
+            if (!modules[m].verify(modularScenarioTree[m])) {
+                log.error("Scenario tree verification failed for m = $m")
+                return false
+            }
+        }
+        return true
+    }
 }

@@ -19,13 +19,15 @@ import com.soywiz.klock.measureTime
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.OutputValues
 import ru.ifmo.fbsat.core.automaton.minimizeTruthTableGuards
-import ru.ifmo.fbsat.core.scenario.MultiScenarioTree
-import ru.ifmo.fbsat.core.scenario.PositiveMultiScenario
+import ru.ifmo.fbsat.core.scenario.CompoundScenarioElement
+import ru.ifmo.fbsat.core.scenario.CompoundScenarioTree
+import ru.ifmo.fbsat.core.scenario.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.task.distributed.distributedBasic
+import ru.ifmo.fbsat.core.task.distributed.basic.distributedBasic
+import ru.ifmo.fbsat.core.task.distributed.extended.distributedExtended
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.arbitraryModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.arbitraryModularBasicMin
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.consecutiveModularBasic
@@ -53,6 +55,7 @@ import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.SolverBackend
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
+import ru.ifmo.fbsat.core.utils.createNullable
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.outputNamesPnP
@@ -85,6 +88,8 @@ enum class Method(val s: String) {
     ArbitraryModularBasicMin("modular-arbitrary-basic-min"),
     DistributedBasic("distributed-basic"),
     DistributedBasicMin("distributed-basic-min"),
+    DistributedExtended("distributed-extended"),
+    DistributedExtendedMin("distributed-extended-min"),
 }
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -975,18 +980,22 @@ class FbSAT : CliktCommand() {
                 null
             }
             Method.DistributedBasic -> {
+                val M = requireNotNull(numberOfModules)
+                val C = requireNotNull(numberOfStates)
+                val modularTree = MultiArray.create(M) { tree }
                 val distributedAutomaton = inferrer.distributedBasic(
-                    scenarioTree = tree,
-                    numberOfModules = requireNotNull(numberOfModules),
-                    numberOfStates = requireNotNull(numberOfStates),
-                    maxOutgoingTransitions = maxOutgoingTransitions,
+                    numberOfModules = M,
+                    modularScenarioTree = modularTree,
+                    modularNumberOfStates = MultiArray.create(M) { C },
+                    modularMaxOutgoingTransitions = MultiArray.createNullable(M) { maxOutgoingTransitions },
+                    modularIsEncodeReverseImplication = MultiArray.create(M) { isEncodeReverseImplication },
                     maxTransitions = maxTransitions
                 )
 
                 if (distributedAutomaton == null) {
                     log.failure("Distributed automaton not found")
                 } else {
-                    log.info("Inferred distributed automaton, consisting of ${distributedAutomaton.M} modules:")
+                    log.info("Inferred distributed automaton, consisting of ${distributedAutomaton.numberOfModules} modules:")
                     for ((m, automaton) in distributedAutomaton.modules.values.withIndex(start = 1)) {
                         log.info("Automaton #$m has ${automaton.numberOfStates} states and ${automaton.numberOfTransitions} transitions:")
                         automaton.pprint()
@@ -997,10 +1006,13 @@ class FbSAT : CliktCommand() {
                     //     outDir.resolve("CentralController.fbt"),
                     //     name = "CentralController"
                     // )
-                    // FIXME: multiTree should be built before synthesis...
-                    // FIXME: Building MultiScenarioTree here just to test the verification.
-                    val M = numberOfModules!!
-                    val multiTree = MultiScenarioTree(
+                    if (distributedAutomaton.verify(modularTree))
+                        log.success("Verify modular tree: OK")
+                    else {
+                        log.failure("Verify modular tree: FAILED")
+                    }
+
+                    val compoundTree = CompoundScenarioTree(
                         numberOfModules = M,
                         modularInputEvents = MultiArray.create(M) { tree.inputEvents },
                         modularOutputEvents = MultiArray.create(M) { tree.outputEvents },
@@ -1008,14 +1020,92 @@ class FbSAT : CliktCommand() {
                         modularOutputNames = MultiArray.create(M) { tree.outputNames }
                     )
                     for (scenario in tree.scenarios) {
-                        val multiElements = scenario.elements.map { elem -> MultiArray.create(M) { elem } }
-                        val multiScenario = PositiveMultiScenario(multiElements)
-                        multiTree.addMultiScenario(multiScenario)
+                        val compoundElements = scenario.elements.map { elem ->
+                            // MultiArray.create(M) { elem }
+                            CompoundScenarioElement(MultiArray.create(M) { elem })
+                        }
+                        val multiScenario = PositiveCompoundScenario(M, compoundElements)
+                        compoundTree.addCompoundScenario(multiScenario)
                     }
-                    if (distributedAutomaton.verify(multiTree))
-                        log.success("Verify: OK")
+                    if (distributedAutomaton.verify(compoundTree))
+                        log.success("Verify compound tree: OK")
                     else {
-                        log.failure("Verify: FAILED")
+                        log.failure("Verify compound tree: FAILED")
+                    }
+                }
+
+                log.br()
+                log.br("The following messages - lies.")
+                log.br()
+                null
+            }
+            Method.DistributedExtended -> {
+                val M = requireNotNull(numberOfModules)
+                val C = requireNotNull(numberOfStates)
+                val P = requireNotNull(maxGuardSize)
+                val modularTree = MultiArray.create(M) { tree }
+                val distributedAutomaton = inferrer.distributedExtended(
+                    numberOfModules = M,
+                    modularScenarioTree = modularTree,
+                    modularNumberOfStates = MultiArray.create(M) { C },
+                    modularMaxOutgoingTransitions = MultiArray.createNullable(M) { maxOutgoingTransitions },
+                    modularMaxGuardSize = MultiArray.create(M) { P },
+                    modularIsEncodeReverseImplication = MultiArray.create(M) { isEncodeReverseImplication },
+                    maxTransitions = maxTransitions,
+                    maxTotalGuardsSize = maxTotalGuardsSize
+                )
+
+                if (distributedAutomaton == null) {
+                    log.failure("Distributed automaton not found")
+                } else {
+                    log.info(
+                        "Inferred distributed automaton, consisting of " +
+                            "${distributedAutomaton.numberOfModules} modules" +
+                            ", ${distributedAutomaton.modules.values.joinToString("+") {
+                                it.numberOfStates.toString()
+                            }} = ${distributedAutomaton.numberOfStates} states" +
+                            ", ${distributedAutomaton.modules.values.joinToString("+") {
+                                it.numberOfTransitions.toString()
+                            }} = ${distributedAutomaton.numberOfTransitions} transitions" +
+                            ", ${distributedAutomaton.modules.values.joinToString("+") {
+                                it.totalGuardsSize.toString()
+                            }} = ${distributedAutomaton.totalGuardsSize} nodes:"
+                    )
+                    for ((m, automaton) in distributedAutomaton.modules.values.withIndex(start = 1)) {
+                        log.info("Automaton #$m has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes:")
+                        automaton.pprint()
+                        automaton.dump(outDir, "module-$m")
+                    }
+                    // TODO: dump fbt
+                    // distributedAutomaton.dumpFbt(
+                    //     outDir.resolve("CentralController.fbt"),
+                    //     name = "CentralController"
+                    // )
+                    if (distributedAutomaton.verify(modularTree))
+                        log.success("Verify modular tree: OK")
+                    else {
+                        log.failure("Verify modular tree: FAILED")
+                    }
+
+                    val compoundTree = CompoundScenarioTree(
+                        numberOfModules = M,
+                        modularInputEvents = MultiArray.create(M) { tree.inputEvents },
+                        modularOutputEvents = MultiArray.create(M) { tree.outputEvents },
+                        modularInputNames = MultiArray.create(M) { tree.inputNames },
+                        modularOutputNames = MultiArray.create(M) { tree.outputNames }
+                    )
+                    for (scenario in tree.scenarios) {
+                        val compoundElements = scenario.elements.map { elem ->
+                            // MultiArray.create(M) { elem }
+                            CompoundScenarioElement(MultiArray.create(M) { elem })
+                        }
+                        val multiScenario = PositiveCompoundScenario(M, compoundElements)
+                        compoundTree.addCompoundScenario(multiScenario)
+                    }
+                    if (distributedAutomaton.verify(compoundTree))
+                        log.success("Verify compound tree: OK")
+                    else {
+                        log.failure("Verify compound tree: FAILED")
                     }
                 }
 

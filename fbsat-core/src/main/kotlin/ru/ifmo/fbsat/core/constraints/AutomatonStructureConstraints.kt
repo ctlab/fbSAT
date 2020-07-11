@@ -11,7 +11,7 @@ import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.implyOr
-import ru.ifmo.fbsat.core.task.distributed.DistributedBasicVariables
+import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
@@ -273,6 +273,7 @@ private fun Solver.declareAutomatonStructureConstraintsForInputs(
     notFired: BoolVarArray,
     actualTransitionFunction: IntVarArray
 ) {
+    // TODO: Remove
     comment("Guards on not-null transitions are not False")
     // (transitionDestination[c,k] != 0) => ALO_{u}( transitionTruthTable[c,k,u] )
     @Suppress("ReplaceCollectionCountWithSize")

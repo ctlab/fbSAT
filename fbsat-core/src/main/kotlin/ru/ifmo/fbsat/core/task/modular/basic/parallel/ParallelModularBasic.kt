@@ -4,39 +4,9 @@ import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.task.optimizeTopDown
+import ru.ifmo.fbsat.core.task.optimizeParallelModularT
 import ru.ifmo.fbsat.core.task.parallelModularBasicVars
 import ru.ifmo.fbsat.core.utils.log
-
-fun Inferrer.inferParallelModularBasic(): ParallelModularAutomaton? {
-    val rawAssignment = solver.solve() ?: return null
-    val vars = solver.parallelModularBasicVars
-    val assignment = ParallelModularBasicAssignment.fromRaw(rawAssignment, vars)
-    val automaton = assignment.toAutomaton()
-
-    // TODO: check automaton
-    check(true)
-
-    return automaton
-}
-
-fun Inferrer.optimizeParallelModularT(start: Int? = null, end: Int = 0): ParallelModularAutomaton? {
-    log.info("Optimizing T...")
-    val vars = solver.parallelModularBasicVars
-    return optimizeTopDown(
-        start = start,
-        end = end,
-        nextInitial = { T ->
-            vars.cardinality.updateUpperBoundLessThanOrEqual(T)
-            inferParallelModularBasic()
-        },
-        next = { T ->
-            vars.cardinality.updateUpperBoundLessThan(T)
-            inferParallelModularBasic()
-        },
-        query = { it.numberOfTransitions }
-    )
-}
 
 fun Inferrer.parallelModularBasic(
     scenarioTree: ScenarioTree,
@@ -47,13 +17,15 @@ fun Inferrer.parallelModularBasic(
     isEncodeReverseImplication: Boolean = true
 ): ParallelModularAutomaton? {
     reset()
-    solver.declareParallelModularBasic(
-        scenarioTree = scenarioTree,
-        numberOfModules = numberOfModules,
-        numberOfStates = numberOfStates,
-        maxOutgoingTransitions = maxOutgoingTransitions,
-        maxTransitions = maxTransitions,
-        isEncodeReverseImplication = isEncodeReverseImplication
+    declare(
+        ParallelModularBasicTask(
+            scenarioTree = scenarioTree,
+            numberOfModules = numberOfModules,
+            numberOfStates = numberOfStates,
+            maxOutgoingTransitions = maxOutgoingTransitions,
+            maxTransitions = maxTransitions,
+            isEncodeReverseImplication = isEncodeReverseImplication
+        )
     )
     return inferParallelModularBasic()
 }
@@ -66,13 +38,13 @@ fun Inferrer.parallelModularBasicMinC(
 ): ParallelModularAutomaton {
     var best: ParallelModularAutomaton? = null
     for (C in start..end) {
-        reset()
-        solver.declareParallelModularBasic(
-            scenarioTree = scenarioTree,
-            numberOfModules = numberOfModules,
-            numberOfStates = C
-        )
-        val (result, runningTime) = measureTimeWithResult { inferParallelModularBasic() }
+        val (result, runningTime) = measureTimeWithResult {
+            parallelModularBasic(
+                scenarioTree = scenarioTree,
+                numberOfModules = numberOfModules,
+                numberOfStates = C
+            )
+        }
         if (result != null) {
             log.success("ParallelModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
             log.info("ParallelModularBasicMin: minimal C = $C")
@@ -91,4 +63,16 @@ fun Inferrer.parallelModularBasicMin(
 ): ParallelModularAutomaton? {
     parallelModularBasicMinC(scenarioTree, numberOfModules = numberOfModules)
     return optimizeParallelModularT()
+}
+
+fun Inferrer.inferParallelModularBasic(): ParallelModularAutomaton? {
+    val rawAssignment = solver.solve() ?: return null
+    val vars = solver.context.parallelModularBasicVars
+    val assignment = ParallelModularBasicAssignment.fromRaw(rawAssignment, vars)
+    val automaton = assignment.toAutomaton()
+
+    // TODO: check automaton
+    log.warn("Mapping check is not implemented yet")
+
+    return automaton
 }

@@ -16,13 +16,13 @@ import ru.ifmo.fbsat.core.utils.random
 import ru.ifmo.fbsat.core.utils.writeEventMerger
 import java.io.File
 
-@Suppress("PropertyName")
+@Suppress("MemberVisibilityCanBePrivate", "PropertyName")
 class ParallelModularAutomaton(
     val modules: MultiArray<Automaton>, // [M] : Automaton
     val outputVariableModule: IntMultiArray // [Z] : 1..M
 ) {
-    val M: Int = modules.shape[0]
-    val Z: Int = outputVariableModule.shape[0]
+    val M: Int = modules.shape.single()
+    val Z: Int = outputVariableModule.shape.single()
     val moduleOutputVariables: MultiArray<List<Int>> = // [M] : {1..Z}
         MultiArray.create(M) { (m) ->
             (1..Z).filter { z -> outputVariableModule[z] == m }

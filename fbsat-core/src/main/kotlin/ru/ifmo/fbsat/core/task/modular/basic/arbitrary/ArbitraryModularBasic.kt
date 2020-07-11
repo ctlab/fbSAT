@@ -5,38 +5,8 @@ import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.arbitraryModularBasicVars
-import ru.ifmo.fbsat.core.task.optimizeTopDown
+import ru.ifmo.fbsat.core.task.optimizeArbitraryModularT
 import ru.ifmo.fbsat.core.utils.log
-
-fun Inferrer.inferArbitraryModularBasic(): ArbitraryModularAutomaton? {
-    val rawAssignment = solver.solve() ?: return null
-    val vars = solver.arbitraryModularBasicVars
-    val assignment = ArbitraryModularBasicAssignment.fromRaw(rawAssignment, vars)
-    val automaton = assignment.toAutomaton()
-
-    // TODO: check automaton
-    check(true)
-
-    return automaton
-}
-
-fun Inferrer.optimizeArbitraryModularT(start: Int? = null, end: Int = 0): ArbitraryModularAutomaton? {
-    log.info("Optimizing T...")
-    val vars = solver.arbitraryModularBasicVars
-    return optimizeTopDown(
-        start = start,
-        end = end,
-        nextInitial = { T ->
-            vars.cardinality.updateUpperBoundLessThanOrEqual(T)
-            inferArbitraryModularBasic()
-        },
-        next = { T ->
-            vars.cardinality.updateUpperBoundLessThan(T)
-            inferArbitraryModularBasic()
-        },
-        query = { it.numberOfTransitions }
-    )
-}
 
 fun Inferrer.arbitraryModularBasic(
     scenarioTree: ScenarioTree,
@@ -47,13 +17,15 @@ fun Inferrer.arbitraryModularBasic(
     isEncodeReverseImplication: Boolean = true
 ): ArbitraryModularAutomaton? {
     reset()
-    solver.declareArbitraryModularBasic(
-        scenarioTree = scenarioTree,
-        numberOfModules = numberOfModules,
-        numberOfStates = numberOfStates,
-        maxOutgoingTransitions = maxOutgoingTransitions,
-        maxTransitions = maxTransitions,
-        isEncodeReverseImplication = isEncodeReverseImplication
+    declare(
+        ArbitraryModularBasicTask(
+            scenarioTree = scenarioTree,
+            numberOfModules = numberOfModules,
+            numberOfStates = numberOfStates,
+            maxOutgoingTransitions = maxOutgoingTransitions,
+            maxTransitions = maxTransitions,
+            isEncodeReverseImplication = isEncodeReverseImplication
+        )
     )
     return inferArbitraryModularBasic()
 }
@@ -66,13 +38,13 @@ fun Inferrer.arbitraryModularBasicMinC(
 ): ArbitraryModularAutomaton {
     var best: ArbitraryModularAutomaton? = null
     for (C in start..end) {
-        reset()
-        solver.declareArbitraryModularBasic(
-            scenarioTree = scenarioTree,
-            numberOfModules = numberOfModules,
-            numberOfStates = C
-        )
-        val (result, runningTime) = measureTimeWithResult { inferArbitraryModularBasic() }
+        val (result, runningTime) = measureTimeWithResult {
+            arbitraryModularBasic(
+                scenarioTree = scenarioTree,
+                numberOfModules = numberOfModules,
+                numberOfStates = C
+            )
+        }
         if (result != null) {
             log.success("ArbitraryModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
             log.info("ArbitraryModularBasicMin: minimal C = $C")
@@ -91,4 +63,16 @@ fun Inferrer.arbitraryModularBasicMin(
 ): ArbitraryModularAutomaton? {
     arbitraryModularBasicMinC(scenarioTree, numberOfModules = numberOfModules)
     return optimizeArbitraryModularT()
+}
+
+fun Inferrer.inferArbitraryModularBasic(): ArbitraryModularAutomaton? {
+    val rawAssignment = solver.solve() ?: return null
+    val vars = solver.context.arbitraryModularBasicVars
+    val assignment = ArbitraryModularBasicAssignment.fromRaw(rawAssignment, vars)
+    val automaton = assignment.toAutomaton()
+
+    // TODO: check automaton
+    log.warn("Mapping check is not implemented yet")
+
+    return automaton
 }
