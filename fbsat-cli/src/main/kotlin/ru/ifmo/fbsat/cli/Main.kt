@@ -982,14 +982,17 @@ class FbSAT : CliktCommand() {
             Method.DistributedBasic -> {
                 val M = requireNotNull(numberOfModules)
                 val C = requireNotNull(numberOfStates)
+                val K = maxOutgoingTransitions
+                val T = maxTransitions
                 val modularTree = MultiArray.create(M) { tree }
                 val distributedAutomaton = inferrer.distributedBasic(
                     numberOfModules = M,
                     modularScenarioTree = modularTree,
                     modularNumberOfStates = MultiArray.create(M) { C },
-                    modularMaxOutgoingTransitions = MultiArray.createNullable(M) { maxOutgoingTransitions },
-                    modularIsEncodeReverseImplication = MultiArray.create(M) { isEncodeReverseImplication },
-                    maxTransitions = maxTransitions
+                    modularMaxOutgoingTransitions = MultiArray.createNullable(M) { K },
+                    modularMaxTransitions = MultiArray.create(M) { T }, // for now
+                    modularIsEncodeReverseImplication = MultiArray.create(M) { isEncodeReverseImplication }
+                    // maxTransitions = T
                 )
 
                 if (distributedAutomaton == null) {
@@ -1042,17 +1045,22 @@ class FbSAT : CliktCommand() {
             Method.DistributedExtended -> {
                 val M = requireNotNull(numberOfModules)
                 val C = requireNotNull(numberOfStates)
+                val K = maxOutgoingTransitions
                 val P = requireNotNull(maxGuardSize)
+                val T = maxTransitions
+                val N = maxTotalGuardsSize
                 val modularTree = MultiArray.create(M) { tree }
                 val distributedAutomaton = inferrer.distributedExtended(
                     numberOfModules = M,
                     modularScenarioTree = modularTree,
                     modularNumberOfStates = MultiArray.create(M) { C },
-                    modularMaxOutgoingTransitions = MultiArray.createNullable(M) { maxOutgoingTransitions },
+                    modularMaxOutgoingTransitions = MultiArray.createNullable(M) { K },
                     modularMaxGuardSize = MultiArray.create(M) { P },
-                    modularIsEncodeReverseImplication = MultiArray.create(M) { isEncodeReverseImplication },
-                    maxTransitions = maxTransitions,
-                    maxTotalGuardsSize = maxTotalGuardsSize
+                    modularMaxTransitions = MultiArray.createNullable(M) { T }, // for now
+                    modularMaxTotalGuardsSize = MultiArray.createNullable(M) { N }, // for now
+                    modularIsEncodeReverseImplication = MultiArray.create(M) { isEncodeReverseImplication }
+                    // maxTransitions = T,
+                    // maxTotalGuardsSize = N
                 )
 
                 if (distributedAutomaton == null) {
