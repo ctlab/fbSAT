@@ -42,6 +42,7 @@ fun Inferrer.completeMin(
     val basicAutomaton = basicMinC(scenarioTree)
     // Note: we have to reset because basicMinC uses isEncodeReverseImplication = true,
     //  which is incompatible with negative reduction
+    // TODO: check whether isEncodeReverseImplication is actually true in current basicVars
     reset()
     declare(
         BasicTask(
