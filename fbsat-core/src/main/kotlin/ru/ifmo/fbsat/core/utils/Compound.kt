@@ -4,4 +4,6 @@ interface Compound<out T> {
     val modular: ImmutableMultiArray<T>
 }
 
-val <T> Compound<T>.M: Int get() = modular.shape.single()
+val Compound<*>.M: Int get() = modular.toMultiArray().shape.single()
+
+fun Compound<*>.stringify(): String = modular.values.toString()

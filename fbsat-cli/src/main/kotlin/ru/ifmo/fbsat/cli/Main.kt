@@ -17,13 +17,14 @@ import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.measureTime
 import ru.ifmo.fbsat.core.automaton.Automaton
-import ru.ifmo.fbsat.core.automaton.OutputValues
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.automaton.minimizeTruthTableGuards
 import ru.ifmo.fbsat.core.scenario.CompoundScenarioElement
-import ru.ifmo.fbsat.core.scenario.CompoundScenarioTree
-import ru.ifmo.fbsat.core.scenario.PositiveCompoundScenario
-import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
+import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.distributedBasic
@@ -59,6 +60,7 @@ import ru.ifmo.fbsat.core.utils.createNullable
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.outputNamesPnP
+import ru.ifmo.fbsat.core.utils.toImmutable
 import ru.ifmo.fbsat.core.utils.withIndex
 import java.io.File
 
@@ -441,13 +443,13 @@ class FbSAT : CliktCommand() {
             "Initial values size must be equal to the number of output variables"
         }
 
-        val tree = ScenarioTree.fromFile(fileScenarios, inputNames, outputNames)
+        val tree = OldPositiveScenarioTree.fromFile(fileScenarios, inputNames, outputNames)
         log.info("Scenarios: ${tree.scenarios.size}")
         log.info("Elements: ${tree.scenarios.sumBy { it.elements.size }}")
         log.info("Scenario tree size: ${tree.size}")
 
         val negTree = fileCounterexamples?.let {
-            NegativeScenarioTree.fromFile(
+            OldNegativeScenarioTree.fromFile(
                 it,
                 tree.inputEvents,
                 tree.outputEvents,
@@ -463,7 +465,7 @@ class FbSAT : CliktCommand() {
         fileVis?.let { file ->
             println("======================================")
             log.info("Visualizing <$file>...")
-            val negST = NegativeScenarioTree.fromFile(
+            val negST = OldNegativeScenarioTree.fromFile(
                 file,
                 tree.inputEvents,
                 tree.outputEvents,
@@ -984,10 +986,10 @@ class FbSAT : CliktCommand() {
                 val C = requireNotNull(numberOfStates)
                 val K = maxOutgoingTransitions
                 val T = maxTransitions
-                val modularTree = MultiArray.create(M) { tree }
+                val oldModularTree = MultiArray.create(M) { tree }
                 val distributedAutomaton = inferrer.distributedBasic(
                     numberOfModules = M,
-                    modularScenarioTree = modularTree,
+                    modularScenarioTree = oldModularTree,
                     modularNumberOfStates = MultiArray.create(M) { C },
                     modularMaxOutgoingTransitions = MultiArray.createNullable(M) { K },
                     modularMaxTransitions = MultiArray.create(M) { T }, // for now
@@ -1009,26 +1011,22 @@ class FbSAT : CliktCommand() {
                     //     outDir.resolve("CentralController.fbt"),
                     //     name = "CentralController"
                     // )
-                    if (distributedAutomaton.verify(modularTree))
+                    val newTree = PositiveScenarioTree(tree.inputEvents, tree.outputEvents)
+                    tree.scenarios.forEach { newTree.addScenario(it) }
+                    val newModularTree = MultiArray.create(M) { newTree }
+                    if (distributedAutomaton.verify(newModularTree))
                         log.success("Verify modular tree: OK")
                     else {
                         log.failure("Verify modular tree: FAILED")
                     }
 
-                    val compoundTree = CompoundScenarioTree(
-                        numberOfModules = M,
-                        modularInputEvents = MultiArray.create(M) { tree.inputEvents },
-                        modularOutputEvents = MultiArray.create(M) { tree.outputEvents },
-                        modularInputNames = MultiArray.create(M) { tree.inputNames },
-                        modularOutputNames = MultiArray.create(M) { tree.outputNames }
-                    )
+                    val compoundTree = PositiveCompoundScenarioTree(newModularTree.toImmutable())
                     for (scenario in tree.scenarios) {
                         val compoundElements = scenario.elements.map { elem ->
-                            // MultiArray.create(M) { elem }
                             CompoundScenarioElement(MultiArray.create(M) { elem })
                         }
                         val multiScenario = PositiveCompoundScenario(M, compoundElements)
-                        compoundTree.addCompoundScenario(multiScenario)
+                        compoundTree.addScenario(multiScenario)
                     }
                     if (distributedAutomaton.verify(compoundTree))
                         log.success("Verify compound tree: OK")
@@ -1049,10 +1047,10 @@ class FbSAT : CliktCommand() {
                 val P = requireNotNull(maxGuardSize)
                 val T = maxTransitions
                 val N = maxTotalGuardsSize
-                val modularTree = MultiArray.create(M) { tree }
+                val oldModularTree = MultiArray.create(M) { tree }
                 val distributedAutomaton = inferrer.distributedExtended(
                     numberOfModules = M,
-                    modularScenarioTree = modularTree,
+                    modularScenarioTree = oldModularTree,
                     modularNumberOfStates = MultiArray.create(M) { C },
                     modularMaxOutgoingTransitions = MultiArray.createNullable(M) { K },
                     modularMaxGuardSize = MultiArray.create(M) { P },
@@ -1089,26 +1087,22 @@ class FbSAT : CliktCommand() {
                     //     outDir.resolve("CentralController.fbt"),
                     //     name = "CentralController"
                     // )
-                    if (distributedAutomaton.verify(modularTree))
+                    val newTree = PositiveScenarioTree(tree.inputEvents, tree.outputEvents)
+                    tree.scenarios.forEach { newTree.addScenario(it) }
+                    val newModularTree = MultiArray.create(M) { newTree }
+                    if (distributedAutomaton.verify(newModularTree))
                         log.success("Verify modular tree: OK")
                     else {
                         log.failure("Verify modular tree: FAILED")
                     }
 
-                    val compoundTree = CompoundScenarioTree(
-                        numberOfModules = M,
-                        modularInputEvents = MultiArray.create(M) { tree.inputEvents },
-                        modularOutputEvents = MultiArray.create(M) { tree.outputEvents },
-                        modularInputNames = MultiArray.create(M) { tree.inputNames },
-                        modularOutputNames = MultiArray.create(M) { tree.outputNames }
-                    )
+                    val compoundTree = PositiveCompoundScenarioTree(newModularTree.toImmutable())
                     for (scenario in tree.scenarios) {
                         val compoundElements = scenario.elements.map { elem ->
-                            // MultiArray.create(M) { elem }
                             CompoundScenarioElement(MultiArray.create(M) { elem })
                         }
                         val multiScenario = PositiveCompoundScenario(M, compoundElements)
-                        compoundTree.addCompoundScenario(multiScenario)
+                        compoundTree.addScenario(multiScenario)
                     }
                     if (distributedAutomaton.verify(compoundTree))
                         log.success("Verify compound tree: OK")
@@ -1153,7 +1147,7 @@ class FbSAT : CliktCommand() {
             }
 
             fileVerifyCE?.let {
-                val nst = NegativeScenarioTree.fromFile(
+                val nst = OldNegativeScenarioTree.fromFile(
                     it,
                     tree.inputEvents,
                     tree.outputEvents,

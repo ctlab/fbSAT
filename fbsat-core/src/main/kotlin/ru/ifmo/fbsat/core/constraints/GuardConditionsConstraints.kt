@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.constraints
 
 import ru.ifmo.fbsat.core.automaton.NodeType
-import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
+import ru.ifmo.fbsat.core.scenario.OldScenarioTreeInterface
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.DomainVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
@@ -377,7 +377,7 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
 }
 
 private fun Solver.declareGuardConditionsConstraintsForInputs(
-    tree: ScenarioTreeInterface,
+    tree: OldScenarioTreeInterface,
     C: Int,
     K: Int,
     P: Int,

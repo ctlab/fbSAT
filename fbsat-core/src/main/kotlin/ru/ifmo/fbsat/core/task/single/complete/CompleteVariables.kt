@@ -1,9 +1,9 @@
 package ru.ifmo.fbsat.core.task.single.complete
 
-import ru.ifmo.fbsat.core.automaton.InputValues
+import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.automaton.NodeType
-import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.DomainVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
@@ -17,8 +17,8 @@ import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
 
 @Suppress("PropertyName")
 class CompleteVariables(
-    val scenarioTree: ScenarioTree,
-    val negativeScenarioTree: NegativeScenarioTree,
+    val scenarioTree: OldPositiveScenarioTree,
+    val negativeScenarioTree: OldNegativeScenarioTree,
     /* Constants */
     val C: Int,
     val K: Int,
@@ -83,7 +83,7 @@ class CompleteVariables(
 
 fun Solver.declareCompleteVariables(
     extendedVars: ExtendedVariables,
-    negativeScenarioTree: NegativeScenarioTree
+    negativeScenarioTree: OldNegativeScenarioTree
 ): CompleteVariables = with(extendedVars) {
     CompleteVariables(
         scenarioTree = scenarioTree,

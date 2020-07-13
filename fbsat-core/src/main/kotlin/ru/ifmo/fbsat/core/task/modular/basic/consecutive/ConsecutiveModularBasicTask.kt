@@ -3,14 +3,14 @@ package ru.ifmo.fbsat.core.task.modular.basic.consecutive
 import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveConsecutiveModularMappingConstraints
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.task.consecutiveModularBasicVars
 import ru.ifmo.fbsat.core.utils.Globals
 
 data class ConsecutiveModularBasicTask(
-    val scenarioTree: ScenarioTree,
+    val scenarioTree: OldPositiveScenarioTree,
     val numberOfModules: Int, // M
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int? = null, // K, =C if null

@@ -6,10 +6,13 @@ import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
+import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputAction
+import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.random
@@ -116,7 +119,7 @@ class ParallelModularAutomaton(
      *
      * @return `true` if **all** scenarios are satisfied.
      */
-    fun verify(scenarioTree: ScenarioTree): Boolean =
+    fun verify(scenarioTree: OldPositiveScenarioTree): Boolean =
         scenarioTree.scenarios.all(::verify)
 
     /**

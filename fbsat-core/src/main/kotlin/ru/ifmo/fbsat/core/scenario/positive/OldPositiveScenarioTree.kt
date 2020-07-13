@@ -3,25 +3,26 @@
 package ru.ifmo.fbsat.core.scenario.positive
 
 import com.github.lipen.lazycache.LazyCache
-import ru.ifmo.fbsat.core.automaton.InputEvent
-import ru.ifmo.fbsat.core.automaton.InputValues
-import ru.ifmo.fbsat.core.automaton.OutputEvent
-import ru.ifmo.fbsat.core.automaton.OutputValues
 import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.InputValues
+import ru.ifmo.fbsat.core.scenario.OldScenarioTreeInterface
 import ru.ifmo.fbsat.core.scenario.OutputAction
+import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
-import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import java.io.File
 
-class ScenarioTree(
+@Deprecated("this is old")
+class OldPositiveScenarioTree(
     override val inputEvents: List<InputEvent>,
     override val outputEvents: List<OutputEvent>,
     override val inputNames: List<String>,
     override val outputNames: List<String>,
     private val isTrie: Boolean = true
-) : ScenarioTreeInterface {
+) : OldScenarioTreeInterface {
     private val lazyCache = LazyCache()
     private val _scenarios: MutableList<PositiveScenario> = mutableListOf()
     private val _nodes: MutableList<Node> = mutableListOf()
@@ -88,7 +89,7 @@ class ScenarioTree(
     ) {
         private val _children: MutableList<Node> = mutableListOf()
 
-        val id: Int = this@ScenarioTree.size + 1 // Note: one-based
+        val id: Int = this@OldPositiveScenarioTree.size + 1 // Note: one-based
         val children: List<Node> = _children
         val previousActive: Node? = if (parent?.outputEvent != null) parent else parent?.previousActive
         val inputAction: InputAction = element.inputAction
@@ -100,23 +101,23 @@ class ScenarioTree(
 
         init {
             if (id > 1) {
-                require(element.inputEvent == null || element.inputEvent in this@ScenarioTree.inputEvents) {
+                require(element.inputEvent == null || element.inputEvent in this@OldPositiveScenarioTree.inputEvents) {
                     "Unexpected input event '${element.inputEvent}'"
                 }
-                require(element.outputEvent == null || element.outputEvent in this@ScenarioTree.outputEvents) {
+                require(element.outputEvent == null || element.outputEvent in this@OldPositiveScenarioTree.outputEvents) {
                     "Unexpected output event '${element.outputEvent}'"
                 }
-                require(element.inputValues.values.size == this@ScenarioTree.inputNames.size) {
-                    "Unexpected number of input values (element: ${element.inputValues.values.size}, tree: ${this@ScenarioTree.inputNames.size})"
+                require(element.inputValues.values.size == this@OldPositiveScenarioTree.inputNames.size) {
+                    "Unexpected number of input values (element: ${element.inputValues.values.size}, tree: ${this@OldPositiveScenarioTree.inputNames.size})"
                 }
-                require(element.outputValues.values.size == this@ScenarioTree.outputNames.size) {
-                    "Unexpected number of output values (element: ${element.outputValues.values.size}, tree: ${this@ScenarioTree.outputNames.size})"
+                require(element.outputValues.values.size == this@OldPositiveScenarioTree.outputNames.size) {
+                    "Unexpected number of output values (element: ${element.outputValues.values.size}, tree: ${this@OldPositiveScenarioTree.outputNames.size})"
                 }
             }
 
             parent?._children?.add(this)
-            this@ScenarioTree._nodes.add(this)
-            this@ScenarioTree.lazyCache.invalidate()
+            this@OldPositiveScenarioTree._nodes.add(this)
+            this@OldPositiveScenarioTree.lazyCache.invalidate()
         }
 
         override fun toString(): String {
@@ -152,13 +153,13 @@ class ScenarioTree(
                             println("child = $child")
                             "ScenarioTree is not deterministic!"
                         }
-                        current = child
+                        current = child // .also { element.nodeId = it.id }
                         element.nodeId = current.id
                         continue@meow
                     }
                 }
             }
-            current = Node(element, current)
+            current = Node(element, current) // .also { element.nodeId = it.id }
             element.nodeId = current.id
             isAnyoneCreated = true
         }
@@ -197,8 +198,8 @@ class ScenarioTree(
             inputEvents: List<InputEvent>? = null,
             outputEvents: List<OutputEvent>? = null,
             isTrie: Boolean = true
-        ): ScenarioTree {
-            return ScenarioTree(
+        ): OldPositiveScenarioTree {
+            return OldPositiveScenarioTree(
                 inputEvents = inputEvents ?: scenarios.flatMap { scenario ->
                     scenario.elements.mapNotNull { element -> element.inputAction.event }
                 }.distinct(),
@@ -220,7 +221,7 @@ class ScenarioTree(
             inputEvents: List<InputEvent>? = null,
             outputEvents: List<OutputEvent>? = null,
             isTrie: Boolean = true
-        ): ScenarioTree {
+        ): OldPositiveScenarioTree {
             val scenarios: List<PositiveScenario> = PositiveScenario.fromFile(file)
             return fromScenarios(
                 scenarios = scenarios,

@@ -4,7 +4,7 @@ package ru.ifmo.fbsat.core.task.single.basic
 
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.Automaton
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.basicVars
 import ru.ifmo.fbsat.core.task.optimizeT
@@ -12,7 +12,7 @@ import ru.ifmo.fbsat.core.utils.checkMapping
 import ru.ifmo.fbsat.core.utils.log
 
 fun Inferrer.basic(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
     maxTransitions: Int? = null, // T, unconstrained if null
@@ -33,7 +33,7 @@ fun Inferrer.basic(
 
 // TODO: return nullable Automaton instead of checking here.
 fun Inferrer.basicMinC(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     start: Int = 1, // C_start
     end: Int = 20, // C_end
     isEncodeReverseImplication: Boolean = true
@@ -56,7 +56,7 @@ fun Inferrer.basicMinC(
 }
 
 fun Inferrer.basicMin(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     isEncodeReverseImplication: Boolean = true
 ): Automaton? {
     basicMinC(scenarioTree, isEncodeReverseImplication = isEncodeReverseImplication)

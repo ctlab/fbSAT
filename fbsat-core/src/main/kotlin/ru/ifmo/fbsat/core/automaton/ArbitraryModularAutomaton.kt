@@ -8,9 +8,13 @@ import okio.buffer
 import okio.sink
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.OutputAction
+import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.Pins
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
@@ -39,7 +43,7 @@ class ArbitraryModularAutomaton(
     constructor(
         modules: MultiArray<Automaton>,
         inboundVarPinParent: MultiArray<Int>,
-        scenarioTree: ScenarioTree
+        scenarioTree: OldPositiveScenarioTree
     ) : this(
         modules,
         inboundVarPinParent,
@@ -78,7 +82,12 @@ class ArbitraryModularAutomaton(
 
         with(Pins(M, X, Z, E, O)) {
             val currentModularState = modules.map { it.initialState }
-            val currentModularInputAction = modules.map { InputAction(null, InputValues.zeros(it.inputNames.size)) }
+            val currentModularInputAction = modules.map {
+                InputAction(
+                    null,
+                    InputValues.zeros(it.inputNames.size)
+                )
+            }
             val currentModularOutputValues = modules.map { OutputValues.zeros(it.outputNames.size) }
             val currentModularOutputEvent: MultiArray<OutputEvent?> = modules.map { null }
             val currentInboundVarPinComputedValue = BooleanMultiArray.create(allInboundVarPins.size)
@@ -110,7 +119,8 @@ class ArbitraryModularAutomaton(
                     val moduleInputValues = InputValues(
                         modularInboundVarPins[m].map { currentInboundVarPinComputedValue[it] }
                     )
-                    val moduleInputAction = InputAction(moduleInputEvent, moduleInputValues)
+                    val moduleInputAction =
+                        InputAction(moduleInputEvent, moduleInputValues)
                     val result = modules[m].eval(
                         inputAction = moduleInputAction,
                         state = currentModularState[m],
@@ -153,7 +163,10 @@ class ArbitraryModularAutomaton(
                     currentModularInputAction.map { it },
                     currentModularState.map { it },
                     MultiArray.create(M) { (m) ->
-                        OutputAction(currentModularOutputEvent[m], currentModularOutputValues[m])
+                        OutputAction(
+                            currentModularOutputEvent[m],
+                            currentModularOutputValues[m]
+                        )
                     }
                 )
             }
@@ -183,7 +196,7 @@ class ArbitraryModularAutomaton(
         return true
     }
 
-    fun verify(scenarioTree: ScenarioTree): Boolean =
+    fun verify(scenarioTree: OldPositiveScenarioTree): Boolean =
         scenarioTree.scenarios.all(::verify)
 
     /**
@@ -361,7 +374,7 @@ class ArbitraryModularAutomaton(
     }
 }
 
-fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: ScenarioTree) {
+fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: OldPositiveScenarioTree) {
     println("=======================")
 
     val modularEffectiveInputs = MultiArray.create(M) { mutableListOf<InputValues>() }
@@ -390,7 +403,11 @@ fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: ScenarioTre
         val T = numberOfTransitions
         val X = inputNames.size
         val U = 2.pow(X)
-        val allInputValues: List<InputValues> = (1..U).map { u -> InputValues((u - 1).toBinary(X)) }
+        val allInputValues: List<InputValues> = (1..U).map { u ->
+            InputValues(
+                (u - 1).toBinary(X)
+            )
+        }
         val moduleInputValues: List<InputValues> = modularEffectiveInputs[m]
 
         val inputFile = File("pla-m$m.in")

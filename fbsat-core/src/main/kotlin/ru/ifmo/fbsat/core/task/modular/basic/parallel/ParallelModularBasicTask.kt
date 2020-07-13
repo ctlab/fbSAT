@@ -3,14 +3,14 @@ package ru.ifmo.fbsat.core.task.modular.basic.parallel
 import ru.ifmo.fbsat.core.constraints.declareParallelModularAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareParallelModularAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveParallelModularMappingConstraints
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.task.parallelModularBasicVars
 import ru.ifmo.fbsat.core.utils.Globals
 
 data class ParallelModularBasicTask(
-    val scenarioTree: ScenarioTree,
+    val scenarioTree: OldPositiveScenarioTree,
     val numberOfModules: Int, // M
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int? = null, // K, =C if null

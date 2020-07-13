@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.task.single.extforest
 
 import ru.ifmo.fbsat.core.automaton.Automaton
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.extForestVars
 import ru.ifmo.fbsat.core.task.optimizeN_Forest
@@ -9,7 +9,7 @@ import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
 
 fun Inferrer.extForest(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
     totalNodes: Int, // P
@@ -37,7 +37,7 @@ fun Inferrer.extForest(
 }
 
 fun Inferrer.extForestMin(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     totalNodes: Int // P
 ): Automaton? {
     basicMinC(scenarioTree)

@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.constraints
 
 import com.github.lipen.multiarray.MultiArray
-import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
+import ru.ifmo.fbsat.core.scenario.OldScenarioTreeInterface
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
@@ -458,7 +458,7 @@ private fun Solver.declareMappingConstraintsForRoot(
 
 private fun Solver.declareMappingConstraintsForActiveNode(
     v: Int,
-    tree: ScenarioTreeInterface,
+    tree: OldScenarioTreeInterface,
     C: Int,
     Z: Int,
     stateOutputEvent: IntVarArray,
@@ -522,7 +522,7 @@ private fun Solver.declareMappingConstraintsForActiveNode(
 
 private fun Solver.declareMappingConstraintsForPassiveNode(
     v: Int,
-    tree: ScenarioTreeInterface,
+    tree: OldScenarioTreeInterface,
     C: Int,
     O: Int,
     stateOutputEvent: IntVarArray,
@@ -580,7 +580,7 @@ private fun Solver.declareMappingConstraintsForPassiveNode(
 private fun Solver.declareParallelModularMappingConstraintsForActiveNode(
     m: Int,
     v: Int,
-    tree: ScenarioTreeInterface,
+    tree: OldScenarioTreeInterface,
     C: Int,
     Z: Int,
     stateOutputEvent: IntVarArray,
@@ -627,7 +627,7 @@ private fun Solver.declareParallelModularMappingConstraintsForActiveNode(
 private fun Solver.declareConsecutiveModularMappingConstraintsForActiveNode(
     m: Int,
     v: Int,
-    tree: ScenarioTreeInterface,
+    tree: OldScenarioTreeInterface,
     M: Int,
     C: Int,
     Z: Int,
@@ -698,7 +698,7 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForActiveNode(
 private fun Solver.declareConsecutiveModularMappingConstraintsForPassiveNode(
     m: Int,
     v: Int,
-    tree: ScenarioTreeInterface,
+    tree: OldScenarioTreeInterface,
     M: Int,
     C: Int,
     actualTransitionFunction: IntVarArray,
@@ -740,7 +740,7 @@ private fun Solver.declareConsecutiveModularMappingConstraintsForPassiveNode(
 private fun Solver.declareArbitraryModularMappingConstraintsForActiveNode(
     m: Int,
     v: Int,
-    tree: ScenarioTreeInterface,
+    tree: OldScenarioTreeInterface,
     M: Int,
     C: Int,
     X: Int,
@@ -813,7 +813,7 @@ private fun Solver.declareArbitraryModularMappingConstraintsForActiveNode(
 private fun Solver.declareArbitraryModularMappingConstraintsForPassiveNode(
     m: Int,
     v: Int,
-    tree: ScenarioTreeInterface,
+    tree: OldScenarioTreeInterface,
     C: Int,
     Z: Int,
     U: Int,

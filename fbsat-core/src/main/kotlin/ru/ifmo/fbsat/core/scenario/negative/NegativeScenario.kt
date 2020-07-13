@@ -1,11 +1,11 @@
 package ru.ifmo.fbsat.core.scenario.negative
 
-import ru.ifmo.fbsat.core.automaton.InputEvent
-import ru.ifmo.fbsat.core.automaton.InputValues
-import ru.ifmo.fbsat.core.automaton.OutputEvent
-import ru.ifmo.fbsat.core.automaton.OutputValues
 import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.OutputAction
+import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.utils.log
@@ -75,10 +75,16 @@ data class NegativeScenario(
             return if (loopPosition == 1) {
                 log.warn("loopPosition = 1, duplicating ${elements.size} elements...")
                 // Duplicate elements
-                NegativeScenario(elements + elements, elements.size)
+                NegativeScenario(
+                    elements + elements,
+                    elements.size
+                )
             } else {
                 // Note: subtract 1. Just because.
-                NegativeScenario(elements, loopPosition - 1)
+                NegativeScenario(
+                    elements,
+                    loopPosition - 1
+                )
             }
         }
 
@@ -90,7 +96,13 @@ data class NegativeScenario(
             outputNames: List<String>
         ): List<NegativeScenario> =
             Counterexample.fromFile(file).map {
-                fromCounterexample(it, inputEvents, outputEvents, inputNames, outputNames)
+                fromCounterexample(
+                    it,
+                    inputEvents,
+                    outputEvents,
+                    inputNames,
+                    outputNames
+                )
             }
     }
 }

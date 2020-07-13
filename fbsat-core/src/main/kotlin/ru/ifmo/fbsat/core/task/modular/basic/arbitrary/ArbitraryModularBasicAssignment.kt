@@ -6,18 +6,18 @@ import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
-import ru.ifmo.fbsat.core.automaton.InputEvent
-import ru.ifmo.fbsat.core.automaton.InputValues
-import ru.ifmo.fbsat.core.automaton.OutputEvent
+import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.InputValues
+import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.automaton.TruthTableGuard
 import ru.ifmo.fbsat.core.automaton.endow
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.solver.convert
 import ru.ifmo.fbsat.core.utils.log
 
 class ArbitraryModularBasicAssignment(
-    val scenarioTree: ScenarioTree,
+    val scenarioTree: OldPositiveScenarioTree,
     /* Constants */
     val M: Int,
     val C: Int,
@@ -112,13 +112,14 @@ fun ArbitraryModularBasicAssignment.toAutomaton(): ArbitraryModularAutomaton {
             transitionGuard = { c, k ->
                 TruthTableGuard(
                     truthTable = (1..U).associate { u ->
-                        InputValues((u - 1).toString(2).padStart(X, '0').reversed().map {
-                            when (it) {
-                                '1' -> true
-                                '0' -> false
-                                else -> error("Bad bit '$it'")
-                            }
-                        }) to when {
+                        InputValues(
+                            (u - 1).toString(2).padStart(X, '0').reversed().map {
+                                when (it) {
+                                    '1' -> true
+                                    '0' -> false
+                                    else -> error("Bad bit '$it'")
+                                }
+                            }) to when {
                             modularNotFired[m][c, k, u] -> false
                             modularFirstFired[m][c, u] == k -> true
                             else -> null

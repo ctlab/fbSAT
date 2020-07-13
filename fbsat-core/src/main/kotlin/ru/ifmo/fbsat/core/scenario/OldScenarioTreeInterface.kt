@@ -1,11 +1,7 @@
 package ru.ifmo.fbsat.core.scenario
 
-import ru.ifmo.fbsat.core.automaton.InputEvent
-import ru.ifmo.fbsat.core.automaton.InputValues
-import ru.ifmo.fbsat.core.automaton.OutputEvent
-import ru.ifmo.fbsat.core.automaton.OutputValues
-
-interface ScenarioTreeInterface {
+@Deprecated("this is old")
+interface OldScenarioTreeInterface {
     val size: Int
     val inputEvents: List<InputEvent>
     val outputEvents: List<OutputEvent>

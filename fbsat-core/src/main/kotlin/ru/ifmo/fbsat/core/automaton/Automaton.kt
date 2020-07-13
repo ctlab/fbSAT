@@ -6,13 +6,17 @@ import com.github.lipen.lazycache.LazyCache
 import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputAction
+import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.inputActionsSeq
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
-import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
+import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.graph
 import ru.ifmo.fbsat.core.utils.log
@@ -69,7 +73,7 @@ class Automaton(
         transitions.sumBy { it.guard.size }
     }
 
-    constructor(scenarioTree: ScenarioTree) : this(
+    constructor(scenarioTree: OldPositiveScenarioTree) : this(
         scenarioTree.inputEvents,
         scenarioTree.outputEvents,
         scenarioTree.inputNames,
@@ -106,7 +110,10 @@ class Automaton(
         }
 
         fun eval(currentValues: OutputValues): OutputAction {
-            return OutputAction(outputEvent, algorithm.eval(currentValues))
+            return OutputAction(
+                outputEvent,
+                algorithm.eval(currentValues)
+            )
         }
 
         fun eval(inputAction: InputAction, currentValues: OutputValues): EvalResult {
@@ -357,15 +364,23 @@ class Automaton(
      *
      * @return `true` if **all** scenarios are satisfied.
      */
-    fun verify(scenarioTree: ScenarioTree): Boolean =
+    fun verify(scenarioTree: OldPositiveScenarioTree): Boolean =
         scenarioTree.scenarios.all(::verify)
+
+    /**
+     * Verify all positive scenarios in given [positiveScenarioTree].
+     *
+     * @return `true` if **all** scenarios are satisfied.
+     */
+    fun verify(positiveScenarioTree: PositiveScenarioTree): Boolean =
+        positiveScenarioTree.scenarios.all(::verify)
 
     /**
      * Verify all negative scenarios in given [negativeScenarioTree].
      *
      * @return `true` if **all** scenarios are **not** satisfied.
      */
-    fun verify(negativeScenarioTree: NegativeScenarioTree): Boolean =
+    fun verify(negativeScenarioTree: OldNegativeScenarioTree): Boolean =
         negativeScenarioTree.negativeScenarios.all(::verify)
 
     /**

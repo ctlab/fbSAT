@@ -2,7 +2,7 @@ package ru.ifmo.fbsat.core.task.distributed.basic
 
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
@@ -12,7 +12,7 @@ import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
 class DistributedBasicVariables(
     /* Constants */
     val M: Int,
-    val modularScenarioTree: MultiArray<ScenarioTree>,
+    val modularScenarioTree: MultiArray<OldPositiveScenarioTree>,
     val modularC: MultiArray<Int>,
     val modularK: MultiArray<Int>,
     val modularV: MultiArray<Int>,
@@ -30,7 +30,7 @@ class DistributedBasicVariables(
 @Suppress("LocalVariableName")
 fun Solver.declareDistributedBasicVariables(
     M: Int,
-    modularScenarioTree: MultiArray<ScenarioTree>,
+    modularScenarioTree: MultiArray<OldPositiveScenarioTree>,
     modularC: MultiArray<Int>,
     modularK: MultiArray<Int>,
     modularV: MultiArray<Int> = modularScenarioTree.map { it.size },

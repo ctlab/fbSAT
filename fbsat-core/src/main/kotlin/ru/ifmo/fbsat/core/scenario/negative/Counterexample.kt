@@ -59,18 +59,14 @@ data class Counterexample(
                     when {
                         line.startsWith("Trace Description") -> {
                             // Add last state
-                            if (hasState)
-                                states.add(
-                                    State(
-                                        stateName,
-                                        isLoop,
-                                        variables
-                                    )
-                                )
+                            if (hasState) {
+                                states.add(State(stateName, isLoop, variables))
+                            }
                             hasState = false
                             // Add counter-example
-                            if (states.isNotEmpty())
+                            if (states.isNotEmpty()) {
                                 ces.add(Counterexample(states))
+                            }
                             // Reset states
                             states = mutableListOf()
                         }
@@ -79,27 +75,16 @@ data class Counterexample(
                         }
                         line == "-- Loop starts here" -> {
                             // Add last state
-                            if (hasState)
-                                states.add(
-                                    State(
-                                        stateName,
-                                        isLoop,
-                                        variables
-                                    )
-                                )
+                            if (hasState) {
+                                states.add(State(stateName, isLoop, variables))
+                            }
                             hasState = false
                             isLoop = true
                         }
                         line.startsWith("-> State") -> {
                             // Add last state
                             if (hasState) {
-                                states.add(
-                                    State(
-                                        stateName,
-                                        isLoop,
-                                        variables
-                                    )
-                                )
+                                states.add(State(stateName, isLoop, variables))
                                 // Reset isLoop only after state processing
                                 isLoop = false
                             }
@@ -117,17 +102,13 @@ data class Counterexample(
                 }
 
                 // Post-add state
-                if (hasState)
-                    states.add(
-                        State(
-                            stateName,
-                            isLoop,
-                            variables
-                        )
-                    )
+                if (hasState) {
+                    states.add(State(stateName, isLoop, variables))
+                }
                 // Post-add counter-example
-                if (states.isNotEmpty())
+                if (states.isNotEmpty()) {
                     ces.add(Counterexample(states))
+                }
             }
 
             return ces

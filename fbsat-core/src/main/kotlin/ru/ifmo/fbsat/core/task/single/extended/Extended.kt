@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.task.single.extended
 
 import ru.ifmo.fbsat.core.automaton.Automaton
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.extendedVars
 import ru.ifmo.fbsat.core.task.optimizeN
@@ -13,7 +13,7 @@ import ru.ifmo.fbsat.core.utils.checkMapping
 import ru.ifmo.fbsat.core.utils.log
 
 fun Inferrer.extended(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
     maxGuardSize: Int, // P
@@ -41,7 +41,7 @@ fun Inferrer.extended(
 }
 
 fun Inferrer.extendedMin(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     numberOfStates: Int? = null, // C_start
     maxGuardSize: Int // P
 ): Automaton? {
@@ -52,7 +52,7 @@ fun Inferrer.extendedMin(
 
 @Suppress("LocalVariableName")
 fun Inferrer.extendedMinUB(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     numberOfStates: Int? = null, // C_start
     start: Int = 1, // P_start
     end: Int = 20, // P_end

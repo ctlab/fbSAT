@@ -1,6 +1,6 @@
 package ru.ifmo.fbsat.core.task.single.basic
 
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.IntVarArray
@@ -14,7 +14,7 @@ import ru.ifmo.fbsat.core.utils.Globals
 @Suppress("PropertyName")
 class BasicVariables(
     /* Constants */
-    val scenarioTree: ScenarioTree,
+    val scenarioTree: OldPositiveScenarioTree,
     val C: Int,
     val K: Int,
     val V: Int,
@@ -41,7 +41,7 @@ class BasicVariables(
 )
 
 fun Solver.declareBasicVariables(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     C: Int,
     K: Int,
     V: Int = scenarioTree.size,

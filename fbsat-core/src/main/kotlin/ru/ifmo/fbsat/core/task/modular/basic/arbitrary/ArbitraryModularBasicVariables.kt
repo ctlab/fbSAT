@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.task.modular.basic.arbitrary
 
 import com.github.lipen.multiarray.MultiArray
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.IntVarArray
@@ -15,7 +15,7 @@ import kotlin.math.pow
 
 @Suppress("PropertyName")
 class ArbitraryModularBasicVariables(
-    val scenarioTree: ScenarioTree,
+    val scenarioTree: OldPositiveScenarioTree,
     /* Constants */
     val M: Int,
     val C: Int,
@@ -50,7 +50,7 @@ class ArbitraryModularBasicVariables(
 
 @Suppress("LocalVariableName")
 fun Solver.declareArbitraryModularBasicVariables(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     M: Int,
     C: Int,
     K: Int,

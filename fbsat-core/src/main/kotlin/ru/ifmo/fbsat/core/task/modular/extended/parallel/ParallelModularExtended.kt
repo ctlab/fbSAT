@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.task.modular.extended.parallel
 
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicTask
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasicMinC
@@ -10,7 +10,7 @@ import ru.ifmo.fbsat.core.task.parallelModularExtendedVars
 import ru.ifmo.fbsat.core.utils.log
 
 fun Inferrer.parallelModularExtended(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     numberOfModules: Int, // M
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
@@ -40,7 +40,7 @@ fun Inferrer.parallelModularExtended(
 }
 
 fun Inferrer.parallelModularExtendedMin(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     numberOfModules: Int, // M
     numberOfStates: Int? = null, // C_start, 1 if null
     maxGuardSize: Int // P

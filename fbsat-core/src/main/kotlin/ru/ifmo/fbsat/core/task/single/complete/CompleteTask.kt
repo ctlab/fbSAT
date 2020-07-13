@@ -1,10 +1,10 @@
 package ru.ifmo.fbsat.core.task.single.complete
 
-import ru.ifmo.fbsat.core.automaton.InputValues
+import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.constraints.declareNegativeAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declareNegativeGuardConditionsConstraints
 import ru.ifmo.fbsat.core.constraints.declareNegativeMappingConstraints
-import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
+import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
 import ru.ifmo.fbsat.core.solver.IntVar
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Literal
@@ -16,11 +16,11 @@ import ru.ifmo.fbsat.core.task.completeVars
 import ru.ifmo.fbsat.core.task.extendedVars
 
 data class CompleteTask(
-    val negativeScenarioTree: NegativeScenarioTree? = null // empty if null
+    val negativeScenarioTree: OldNegativeScenarioTree? = null // empty if null
 ) : Task() {
     override fun Solver.declare_() {
         val scenarioTree = context.extendedVars.scenarioTree
-        val negTree = negativeScenarioTree ?: NegativeScenarioTree(
+        val negTree = negativeScenarioTree ?: OldNegativeScenarioTree(
             inputEvents = scenarioTree.inputEvents,
             outputEvents = scenarioTree.outputEvents,
             inputNames = scenarioTree.inputNames,

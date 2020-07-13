@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.utils
 
 import org.redundent.kotlin.xml.PrintOptions
-import ru.ifmo.fbsat.core.automaton.OutputValues
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.solver.VarEncoding
 import kotlin.properties.Delegates
 

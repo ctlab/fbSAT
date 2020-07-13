@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.automaton
 
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.utils.toBinaryString
 
 interface Algorithm {

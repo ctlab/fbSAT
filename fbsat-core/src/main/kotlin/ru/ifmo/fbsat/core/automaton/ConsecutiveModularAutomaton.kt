@@ -2,8 +2,11 @@ package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.withIndex
@@ -20,7 +23,7 @@ class ConsecutiveModularAutomaton(
     val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
     val totalGuardsSize: Int = modules.values.sumBy { it.totalGuardsSize }
 
-    constructor(modules: MultiArray<Automaton>, scenarioTree: ScenarioTree) : this(
+    constructor(modules: MultiArray<Automaton>, scenarioTree: OldPositiveScenarioTree) : this(
         modules,
         scenarioTree.inputEvents,
         scenarioTree.outputEvents,
@@ -78,7 +81,11 @@ class ConsecutiveModularAutomaton(
                     }
 
                     result = modularCurrentState[m].eval(
-                        InputAction(InputEvent("REQ"), element.inputValues),
+                        InputAction(
+                            InputEvent(
+                                "REQ"
+                            ), element.inputValues
+                        ),
                         currentValues
                     )
                     if (result.outputAction.event != null) {
@@ -111,6 +118,6 @@ class ConsecutiveModularAutomaton(
         return true
     }
 
-    fun verify(scenarioTree: ScenarioTree): Boolean =
+    fun verify(scenarioTree: OldPositiveScenarioTree): Boolean =
         scenarioTree.scenarios.all(::verify)
 }

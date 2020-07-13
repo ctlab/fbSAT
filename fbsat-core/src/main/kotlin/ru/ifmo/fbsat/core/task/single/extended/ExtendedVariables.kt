@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.task.single.extended
 
 import ru.ifmo.fbsat.core.automaton.NodeType
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.DomainVarArray
@@ -17,7 +17,7 @@ import ru.ifmo.fbsat.core.utils.Globals
 
 @Suppress("PropertyName")
 class ExtendedVariables(
-    val scenarioTree: ScenarioTree,
+    val scenarioTree: OldPositiveScenarioTree,
     /* Constants */
     val C: Int,
     val K: Int,

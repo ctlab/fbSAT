@@ -2,14 +2,14 @@ package ru.ifmo.fbsat.core.task.modular.basic.arbitrary
 
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.arbitraryModularBasicVars
 import ru.ifmo.fbsat.core.task.optimizeArbitraryModularT
 import ru.ifmo.fbsat.core.utils.log
 
 fun Inferrer.arbitraryModularBasic(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     numberOfModules: Int, // M
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
@@ -31,7 +31,7 @@ fun Inferrer.arbitraryModularBasic(
 }
 
 fun Inferrer.arbitraryModularBasicMinC(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     numberOfModules: Int, // M
     start: Int = 1, // C_start
     end: Int = 20 // C_end
@@ -58,7 +58,7 @@ fun Inferrer.arbitraryModularBasicMinC(
 }
 
 fun Inferrer.arbitraryModularBasicMin(
-    scenarioTree: ScenarioTree,
+    scenarioTree: OldPositiveScenarioTree,
     numberOfModules: Int // M
 ): ArbitraryModularAutomaton? {
     arbitraryModularBasicMinC(scenarioTree, numberOfModules = numberOfModules)

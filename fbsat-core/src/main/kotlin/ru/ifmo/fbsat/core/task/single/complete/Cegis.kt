@@ -4,8 +4,8 @@ import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.Counterexample
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
-import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.completeVars
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
@@ -19,8 +19,8 @@ import ru.ifmo.fbsat.core.utils.timeSince
 import java.io.File
 
 fun Inferrer.cegis(
-    scenarioTree: ScenarioTree,
-    negativeScenarioTree: NegativeScenarioTree? = null, // empty if null
+    scenarioTree: OldPositiveScenarioTree,
+    negativeScenarioTree: OldNegativeScenarioTree? = null, // empty if null
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
     maxGuardSize: Int, // P
@@ -45,8 +45,8 @@ fun Inferrer.cegis(
 
 @Suppress("LocalVariableName")
 fun Inferrer.cegisMin(
-    scenarioTree: ScenarioTree,
-    initialNegativeScenarioTree: NegativeScenarioTree? = null,
+    scenarioTree: OldPositiveScenarioTree,
+    initialNegativeScenarioTree: OldNegativeScenarioTree? = null,
     numberOfStates: Int? = null,
     maxGuardSize: Int? = null, // P, search if null
     maxPlateauWidth: Int? = null, // w, =Inf if null
@@ -69,7 +69,7 @@ fun Inferrer.cegisMin(
     extendedAutomaton.pprint()
     log.info("extendedAutomaton has C = $C, P = $P, N = $N")
 
-    val negativeScenarioTree = initialNegativeScenarioTree ?: NegativeScenarioTree(
+    val negativeScenarioTree = initialNegativeScenarioTree ?: OldNegativeScenarioTree(
         inputEvents = scenarioTree.inputEvents,
         outputEvents = scenarioTree.outputEvents,
         inputNames = scenarioTree.inputNames,

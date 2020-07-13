@@ -1,11 +1,14 @@
-package ru.ifmo.fbsat.core.scenario.negative
+package ru.ifmo.fbsat.core.scenario.single.negative
 
 import org.amshove.kluent.shouldBeTrue
 import org.amshove.kluent.shouldEqual
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import ru.ifmo.fbsat.core.automaton.InputEvent
-import ru.ifmo.fbsat.core.automaton.OutputEvent
+import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.negative.Counterexample
+import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
+import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class NegativeTest {
@@ -64,7 +67,13 @@ class NegativeTest {
 
     @Test
     fun `negative scenario from file`() {
-        val nss = NegativeScenario.fromFile(file, inputEvents, outputEvents, inputNames, outputNames)
+        val nss = NegativeScenario.fromFile(
+            file,
+            inputEvents,
+            outputEvents,
+            inputNames,
+            outputNames
+        )
         nss.size shouldEqual 1
         val ns = nss.single()
 
@@ -74,9 +83,10 @@ class NegativeTest {
 
     @Test
     fun `negative scenario tree from file`() {
-        val nst = NegativeScenarioTree.fromFile(
-            file, inputEvents, outputEvents, inputNames, outputNames
-        )
+        val nst =
+            OldNegativeScenarioTree.fromFile(
+                file, inputEvents, outputEvents, inputNames, outputNames
+            )
         nst.size shouldEqual 4
     }
 }
