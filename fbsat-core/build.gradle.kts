@@ -10,11 +10,16 @@ dependencies {
     implementation(Libs.lazycache)
     implementation(Libs.klock)
     implementation(Libs.jnisat)
+    implementation(Libs.serialization)
 
     testImplementation(Libs.junit_jupiter_api)
     testRuntimeOnly(Libs.junit_jupiter_engine)
     testImplementation(Libs.junit_jupiter_params)
     testImplementation(Libs.kluent)
+}
+
+plugins {
+    kotlin("plugin.serialization")
 }
 
 tasks.withType<KotlinCompile> {

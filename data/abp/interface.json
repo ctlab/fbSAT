@@ -1,0 +1,28 @@
+{
+    "inferredModules": [
+        {
+            "name" : "sndr",
+            "inputEvents" : {
+                "send" : "sclt.send",
+                "timeout" : "tmr.timeout",
+                "acknowledge" : "bwdc.output"
+            },
+            "inputVars" : {
+                "input_bit" : "bwdc.output_bit"
+            },
+            "outputEvents" : ["done", "packet"],
+            "outputVars" : ["output_bit"]
+        },
+        {
+            "name" : "rcvr",
+            "inputEvents" : {
+                "packet" : "fwdc.output"
+            },
+            "inputVars" : {
+                "input_bit" : "fwdc.output_bit"
+            },
+            "outputEvents" : ["deliver", "acknowledge"],
+            "outputVars" : ["output_bit"]
+        }
+    ]
+}

@@ -16,6 +16,7 @@ object Versions {
     const val lazycache = "0.3.0"
     const val klock = "1.8.6"
     const val jnisat = "0.7.0"
+    const val serialization = "0.20.0"
 }
 
 object Libs {
@@ -31,4 +32,5 @@ object Libs {
     const val lazycache = "com.github.Lipen:kotlin-lazycache:${Versions.lazycache}"
     const val klock = "com.soywiz.korlibs.klock:klock-jvm:${Versions.klock}"
     const val jnisat = "com.github.Lipen:kotlin-jnisat:${Versions.jnisat}"
+    const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.serialization}"
 }

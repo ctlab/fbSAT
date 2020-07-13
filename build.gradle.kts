@@ -8,6 +8,7 @@ plugins {
     id("com.github.ben-manes.versions") version Versions.gradle_versions
     id("org.jlleitschuh.gradle.ktlint") version Versions.ktlint apply false
     id("com.github.johnrengelman.shadow") version Versions.shadow apply false
+    kotlin("plugin.serialization") version Versions.kotlin
 }
 
 allprojects {

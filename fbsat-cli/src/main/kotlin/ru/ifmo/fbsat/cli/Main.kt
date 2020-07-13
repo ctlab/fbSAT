@@ -26,6 +26,7 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Inferrer
+import ru.ifmo.fbsat.core.task.distributed.DistributedModel
 import ru.ifmo.fbsat.core.task.distributed.basic.distributedBasic
 import ru.ifmo.fbsat.core.task.distributed.extended.distributedExtended
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.arbitraryModularBasic
@@ -397,6 +398,11 @@ class FbSAT : CliktCommand() {
     ).flag(
         default = Globals.IS_DEBUG
     )
+
+    val fileDistributedModulesInterface: File by option(
+        "--modules-interface",
+        help = "File with modules interface description"
+    ).file().default(File("data/abp/interface.json"))
 
     init {
         context {
@@ -1043,6 +1049,9 @@ class FbSAT : CliktCommand() {
                 null
             }
             Method.DistributedExtended -> {
+                val model = DistributedModel.fromFile(fileDistributedModulesInterface)
+                println(model)
+
                 val M = requireNotNull(numberOfModules)
                 val C = requireNotNull(numberOfStates)
                 val K = maxOutgoingTransitions
