@@ -556,46 +556,47 @@ class Monolithic : CliktCommand() {
 
         if (automaton == null) {
             log.failure("Automaton not found")
-        } else {
-            log.info("Inferred automaton:")
-            automaton.pprint()
-            log.info("Inferred automaton has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes")
-
-            if (automaton.verify(tree))
-                log.success("Verify: OK")
-            else {
-                log.failure("Verify: FAILED")
-                if (failIfSTVerifyFailed) error("ST verification failed")
-            }
-
-            if (negTree != null) {
-                if (automaton.verify(negTree))
-                    log.success("Verify CE: OK")
-                else {
-                    log.failure("Verify CE: FAILED")
-                    if (failIfCEVerifyFailed) error("CE verification failed")
-                }
-
-                // val fileCEMarkedGv = File("ce-marked.gv")
-                // fileCEMarkedGv.writeText(negTree.toGraphvizString())
-                // Runtime.getRuntime().exec("dot -Tpdf -O $fileCEMarkedGv")
-            }
-
-            fileVerifyCE?.let {
-                val nst = NegativeScenarioTree.fromFile(
-                    it,
-                    tree.inputEvents,
-                    tree.outputEvents,
-                    tree.inputNames,
-                    tree.outputNames
-                )
-                if (automaton.verify(nst))
-                    log.success("Verify CE from '$fileVerifyCE': OK")
-                else
-                    log.failure("Verify CE from '$fileVerifyCE': FAILED")
-            }
-
-            automaton.dump(outDir, "automaton")
+            return
         }
+
+        log.info("Inferred automaton:")
+        automaton.pprint()
+        log.info("Inferred automaton has ${automaton.numberOfStates} states, ${automaton.numberOfTransitions} transitions and ${automaton.totalGuardsSize} nodes")
+
+        if (automaton.verify(tree))
+            log.success("Verify: OK")
+        else {
+            log.failure("Verify: FAILED")
+            if (failIfSTVerifyFailed) error("ST verification failed")
+        }
+
+        if (negTree != null) {
+            if (automaton.verify(negTree))
+                log.success("Verify CE: OK")
+            else {
+                log.failure("Verify CE: FAILED")
+                if (failIfCEVerifyFailed) error("CE verification failed")
+            }
+
+            // val fileCEMarkedGv = File("ce-marked.gv")
+            // fileCEMarkedGv.writeText(negTree.toGraphvizString())
+            // Runtime.getRuntime().exec("dot -Tpdf -O $fileCEMarkedGv")
+        }
+
+        fileVerifyCE?.let {
+            val nst = NegativeScenarioTree.fromFile(
+                it,
+                tree.inputEvents,
+                tree.outputEvents,
+                tree.inputNames,
+                tree.outputNames
+            )
+            if (automaton.verify(nst))
+                log.success("Verify CE from '$fileVerifyCE': OK")
+            else
+                log.failure("Verify CE from '$fileVerifyCE': FAILED")
+        }
+
+        automaton.dump(outDir, "automaton")
     }
 }
