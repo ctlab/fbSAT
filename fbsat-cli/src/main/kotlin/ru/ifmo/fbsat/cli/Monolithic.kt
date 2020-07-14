@@ -1,8 +1,6 @@
 package ru.ifmo.fbsat.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.core.context
-import com.github.ajalt.clikt.output.CliktHelpFormatter
 import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
@@ -329,17 +327,6 @@ class Monolithic : CliktCommand() {
     ).flag(
         default = Globals.IS_DEBUG
     )
-
-    init {
-        context {
-            helpFormatter = CliktHelpFormatter(
-                maxWidth = 999,
-                requiredOptionMarker = "*",
-                showDefaultValues = true,
-                showRequiredTag = true
-            )
-        }
-    }
 
     override fun run() {
         Globals.EPSILON_OUTPUT_EVENTS = epsilonOutputEvents
