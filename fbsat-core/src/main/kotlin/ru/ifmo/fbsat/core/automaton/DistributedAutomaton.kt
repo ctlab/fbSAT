@@ -4,35 +4,28 @@ import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import com.github.lipen.multiarray.mapIndexed
 import ru.ifmo.fbsat.core.scenario.CompoundScenario
-import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
-import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.OutputEvent
-import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.modularInputActionsSeq
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
-import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.utils.Compound
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
 import ru.ifmo.fbsat.core.utils.M
+import ru.ifmo.fbsat.core.utils.ModularAutomaton
+import ru.ifmo.fbsat.core.utils.ModularEvalResult
+import ru.ifmo.fbsat.core.utils.ModularEvalResult_adhoc
+import ru.ifmo.fbsat.core.utils.ModularEvalState
+import ru.ifmo.fbsat.core.utils.ModularInputAction
+import ru.ifmo.fbsat.core.utils.ModularOutputAction
+import ru.ifmo.fbsat.core.utils.ModularOutputValues
+import ru.ifmo.fbsat.core.utils.ModularScenarioTree
+import ru.ifmo.fbsat.core.utils.ModularState
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.toImmutable
 import ru.ifmo.fbsat.core.utils.toMultiArray
-
-private typealias OldModularScenarioTree = MultiArray<OldPositiveScenarioTree>
-private typealias ModularScenarioTree = MultiArray<PositiveScenarioTree>
-private typealias ModularAutomaton = MultiArray<Automaton>
-private typealias ModularState = MultiArray<Automaton.State>
-private typealias ModularEvalState = MultiArray<Automaton.EvalState>
-private typealias ModularEvalResult = MultiArray<Automaton.EvalResult>
-private typealias ModularEvalResult_adhoc = ImmutableMultiArray<Automaton.EvalResult>
-private typealias ModularInputAction = MultiArray<InputAction>
-private typealias ModularOutputAction = MultiArray<OutputAction>
-private typealias ModularOutputValues = MultiArray<OutputValues>
 
 @Suppress("MemberVisibilityCanBePrivate", "FunctionName", "PropertyName")
 class DistributedAutomaton(
