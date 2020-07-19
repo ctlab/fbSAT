@@ -2,10 +2,9 @@ package ru.ifmo.fbsat.core.scenario
 
 import ru.ifmo.fbsat.core.utils.log
 
-interface GenericScenarioTree<S, N, out E, In, Out>
-    where S : GenericScenario<E, In, Out>,
-          N : GenericScenarioTree.Node<E, In, Out>,
-          E : GenericScenario.Element<In, Out> {
+interface GenericScenarioTree<S, N>
+    where S : GenericScenario<GenericScenario.Element<*, *>>,
+          N : GenericScenarioTree.Node<GenericScenario.Element<*, *>> {
 
     val isTrie: Boolean
     val scenarios: List<S>
@@ -13,24 +12,25 @@ interface GenericScenarioTree<S, N, out E, In, Out>
     val size: Int get() = nodes.size
     val root: N get() = nodes.first()
 
-    interface Node<out E, In, Out> where E : GenericScenario.Element<In, Out> {
+    interface Node<out E> where E : GenericScenario.Element<*, *> {
         val id: Int
         val element: E
-        val parent: Node<E, In, Out>?
-        val children: List<Node<E, In, Out>>
+        val parent: Node<E>?
+        val children: List<Node<E>>
     }
 }
 
-fun <E> GenericScenarioTree.Node<E, *, *>.isSameInputAction(element: E): Boolean
+fun <E> GenericScenarioTree.Node<E>.isSameInputAction(element: E): Boolean
     where E : GenericScenario.Element<*, *> {
     return this.element.inputAction == element.inputAction
 }
 
-internal inline fun <reified N, E> GenericScenarioTree<*, N, E, *, *>.addGenericScenario(
-    scenario: GenericScenario<E, *, *>,
+internal inline fun <S, reified N, E> GenericScenarioTree<S, N>.addGenericScenario(
+    scenario: S,
     noinline sameNode: (index: Int, element: E, child: N) -> N,
     noinline newNode: (index: Int, element: E, current: N) -> N
-) where N : GenericScenarioTree.Node<E, *, *>,
+) where S : GenericScenario<E>,
+        N : GenericScenarioTree.Node<E>,
         E : GenericScenario.Element<*, *> {
     var current = root as? N
         ?: error("Could not cast 'root' to ${N::class.java.simpleName}, what are you doing?")

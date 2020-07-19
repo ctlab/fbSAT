@@ -2,7 +2,7 @@ package ru.ifmo.fbsat.core.scenario
 
 import ru.ifmo.fbsat.core.utils.Globals
 
-interface Scenario : GenericScenario<ScenarioElement, InputAction, OutputAction>
+interface Scenario : GenericScenario<ScenarioElement>
 
 data class ScenarioElement(
     override val inputAction: InputAction,

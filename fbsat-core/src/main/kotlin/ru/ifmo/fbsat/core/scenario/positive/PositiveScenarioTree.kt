@@ -11,10 +11,8 @@ import ru.ifmo.fbsat.core.utils.log
 class PositiveScenarioTree(
     override val inputEvents: List<InputEvent>,
     override val outputEvents: List<OutputEvent>,
-    /*override*/
-    val inputNames: List<String>,
-    /*override*/
-    val outputNames: List<String>,
+    override val inputNames: List<String>,
+    override val outputNames: List<String>,
     override val isTrie: Boolean = true
 ) : ScenarioTree<PositiveScenario, PositiveScenarioTree.Node> {
     private val _scenarios: MutableList<PositiveScenario> = mutableListOf()

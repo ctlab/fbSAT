@@ -13,13 +13,12 @@ import ru.ifmo.fbsat.core.utils.toImmutable
 
 class PositiveCompoundScenarioTree(
     val numberOfModules: Int,
-    val modularInputEvents: MultiArray<List<InputEvent>>,
-    val modularOutputEvents: MultiArray<List<OutputEvent>>,
-    val modularInputNames: MultiArray<List<String>>,
-    val modularOutputNames: MultiArray<List<String>>,
+    override val modularInputEvents: MultiArray<List<InputEvent>>,
+    override val modularOutputEvents: MultiArray<List<OutputEvent>>,
+    override val modularInputNames: MultiArray<List<String>>,
+    override val modularOutputNames: MultiArray<List<String>>,
     override val isTrie: Boolean = true
-) : CompoundScenarioTree<PositiveCompoundScenario,
-    PositiveCompoundScenarioTree.Node, PositiveScenarioTree> {
+) : CompoundScenarioTree<PositiveCompoundScenario, PositiveCompoundScenarioTree.Node, PositiveScenarioTree> {
 
     init {
         require(modularInputEvents.shape.single() == numberOfModules)

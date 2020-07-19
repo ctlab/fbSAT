@@ -10,6 +10,8 @@ import ru.ifmo.fbsat.core.scenario.auxScenarioElement
 class NegativeScenarioTree(
     override val inputEvents: List<InputEvent>,
     override val outputEvents: List<OutputEvent>,
+    override val inputNames: List<String>,
+    override val outputNames: List<String>,
     override val isTrie: Boolean = true
 ) : ScenarioTree<NegativeScenario, NegativeScenarioTree.Node> {
     private val _scenarios: MutableList<NegativeScenario> = mutableListOf()
