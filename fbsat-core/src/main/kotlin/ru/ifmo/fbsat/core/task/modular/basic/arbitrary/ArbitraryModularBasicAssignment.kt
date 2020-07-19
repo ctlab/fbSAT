@@ -6,11 +6,11 @@ import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
+import ru.ifmo.fbsat.core.automaton.TruthTableGuard
+import ru.ifmo.fbsat.core.automaton.endow
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.OutputEvent
-import ru.ifmo.fbsat.core.automaton.TruthTableGuard
-import ru.ifmo.fbsat.core.automaton.endow
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.solver.convert

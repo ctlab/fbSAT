@@ -61,14 +61,12 @@ data class PositiveScenario(
                     val (type, event, values) = it.destructured
                     when (type) {
                         "in" -> InputAction(
-                            InputEvent(
-                                event
-                            ), InputValues(values.toBooleanList())
+                            event = InputEvent(event),
+                            values = InputValues(values.toBooleanList())
                         )
                         "out" -> OutputAction(
-                            OutputEvent(
-                                event
-                            ), OutputValues(values.toBooleanList())
+                            event = OutputEvent(event),
+                            values = OutputValues(values.toBooleanList())
                         )
                         else -> error("Unsupported action type '$type'")
                     }
@@ -83,9 +81,7 @@ data class PositiveScenario(
                 .map { (first, second) ->
                     when (second) {
                         is InputAction ->
-                            ScenarioElement(first,
-                                OutputAction(null, lastOutputValues)
-                            )
+                            ScenarioElement(first, OutputAction(null, lastOutputValues))
                         is OutputAction -> {
                             lastOutputValues = second.values
                             ScenarioElement(first, second)

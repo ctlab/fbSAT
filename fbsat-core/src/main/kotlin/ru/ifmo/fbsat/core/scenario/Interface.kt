@@ -17,8 +17,7 @@ data class InputEvent(override val name: String) : Event(), GenericInputEvent {
     }
 }
 
-data class OutputEvent(override val name: String) : Event(),
-    GenericOutputEvent {
+data class OutputEvent(override val name: String) : Event(), GenericOutputEvent {
     companion object {
         @JvmStatic
         fun of(name: String?): OutputEvent? = name?.let { OutputEvent(it) }

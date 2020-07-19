@@ -12,8 +12,8 @@ import okio.gzip
 import okio.sink
 import okio.source
 import ru.ifmo.fbsat.core.scenario.InputEvent
-import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OldScenarioTreeInterface
+import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import java.io.File
 import kotlin.math.pow

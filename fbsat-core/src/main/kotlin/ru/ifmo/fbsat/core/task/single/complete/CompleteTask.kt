@@ -1,9 +1,9 @@
 package ru.ifmo.fbsat.core.task.single.complete
 
-import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.constraints.declareNegativeAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declareNegativeGuardConditionsConstraints
 import ru.ifmo.fbsat.core.constraints.declareNegativeMappingConstraints
+import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
 import ru.ifmo.fbsat.core.solver.IntVar
 import ru.ifmo.fbsat.core.solver.IntVarArray
