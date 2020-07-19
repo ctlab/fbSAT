@@ -268,6 +268,25 @@ class OldNegativeScenarioTree(
     }
 
     companion object {
+        fun fromNegativeScenarios(
+            negativeScenarios: List<NegativeScenario>,
+            inputEvents: List<InputEvent>,
+            outputEvents: List<OutputEvent>,
+            inputNames: List<String>,
+            outputNames: List<String>,
+            isTrie: Boolean = true
+        ): OldNegativeScenarioTree {
+            return OldNegativeScenarioTree(
+                inputEvents = inputEvents,
+                outputEvents = outputEvents,
+                inputNames = inputNames,
+                outputNames = outputNames,
+                isTrie = isTrie
+            ).apply {
+                negativeScenarios.forEach(::addNegativeScenario)
+            }
+        }
+
         fun fromFile(
             file: File,
             inputEvents: List<InputEvent>,
@@ -284,15 +303,14 @@ class OldNegativeScenarioTree(
                     inputNames = inputNames,
                     outputNames = outputNames
                 )
-            return OldNegativeScenarioTree(
+            return fromNegativeScenarios(
+                negativeScenarios = negativeScenarios,
                 inputEvents = inputEvents,
                 outputEvents = outputEvents,
                 inputNames = inputNames,
                 outputNames = outputNames,
                 isTrie = isTrie
-            ).apply {
-                negativeScenarios.forEach(::addNegativeScenario)
-            }
+            )
         }
     }
 }

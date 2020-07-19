@@ -3,8 +3,9 @@
 object Versions {
     const val kotlin = "1.3.72"
     const val jgitver = "0.8.0"
-    const val ktlint = "8.2.0"
-    const val clikt = "2.5.0"
+    const val ktlint = "0.37.2"
+    const val ktlint_gradle = "9.3.0"
+    const val clikt = "2.8.0"
     const val junit = "5.5.1"
     const val kluent = "1.56"
     const val multiarray = "0.6.0"
@@ -16,6 +17,9 @@ object Versions {
     const val lazycache = "0.3.0"
     const val klock = "1.8.6"
     const val jnisat = "0.7.0"
+    const val pretty_print = "2.0.2"
+    const val kotlinx_serialization = "0.20.0"
+    const val xmlutil = "$kotlinx_serialization.1"
 }
 
 object Libs {
@@ -31,4 +35,8 @@ object Libs {
     const val lazycache = "com.github.Lipen:kotlin-lazycache:${Versions.lazycache}"
     const val klock = "com.soywiz.korlibs.klock:klock-jvm:${Versions.klock}"
     const val jnisat = "com.github.Lipen:kotlin-jnisat:${Versions.jnisat}"
+    const val pretty_print = "com.tylerthrailkill.helpers:pretty-print:${Versions.pretty_print}"
+    const val kotlinx_serialization = "org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.kotlinx_serialization}"
+    const val xmlutil_jvm = "net.devrieze:xmlutil-jvm:${Versions.xmlutil}"
+    const val xmlutil_serialization_jvm = "net.devrieze:xmlutil-serialization-jvm:${Versions.xmlutil}"
 }

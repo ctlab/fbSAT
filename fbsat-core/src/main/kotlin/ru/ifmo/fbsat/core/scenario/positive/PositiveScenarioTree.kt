@@ -6,10 +6,15 @@ import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.addGenericScenario
 import ru.ifmo.fbsat.core.scenario.auxScenarioElement
+import ru.ifmo.fbsat.core.utils.log
 
 class PositiveScenarioTree(
     override val inputEvents: List<InputEvent>,
     override val outputEvents: List<OutputEvent>,
+    /*override*/
+    val inputNames: List<String>,
+    /*override*/
+    val outputNames: List<String>,
     override val isTrie: Boolean = true
 ) : ScenarioTree<PositiveScenario, PositiveScenarioTree.Node> {
     private val _scenarios: MutableList<PositiveScenario> = mutableListOf()
@@ -52,6 +57,41 @@ class PositiveScenarioTree(
         init {
             parent?._children?.add(this)
             this@PositiveScenarioTree._nodes.add(this)
+        }
+    }
+
+    fun printStats() {
+        log.info("Scenarios: ${scenarios.size}")
+        log.info("Elements: ${scenarios.sumBy { it.elements.size }}")
+        log.info("Tree size: $size")
+    }
+
+    companion object {
+        fun fromOld(oldTree: OldPositiveScenarioTree): PositiveScenarioTree {
+            return PositiveScenarioTree(
+                inputEvents = oldTree.inputEvents,
+                outputEvents = oldTree.outputEvents,
+                inputNames = oldTree.inputNames,
+                outputNames = oldTree.outputNames
+            ).also {
+                for (scenario in oldTree.scenarios) {
+                    it.addScenario(scenario)
+                }
+            }
+        }
+    }
+}
+
+fun PositiveScenarioTree.toOld(): OldPositiveScenarioTree {
+    return OldPositiveScenarioTree(
+        inputEvents = inputEvents,
+        outputEvents = outputEvents,
+        inputNames = inputNames,
+        outputNames = outputNames,
+        isTrie = isTrie
+    ).also {
+        for (scenario in scenarios) {
+            it.addScenario(scenario)
         }
     }
 }

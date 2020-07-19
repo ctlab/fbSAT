@@ -1,6 +1,10 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+plugins {
+    kotlin("plugin.serialization")
+}
+
 dependencies {
     implementation(kotlin("reflect"))
     implementation(Libs.xml_builder)
@@ -10,11 +14,9 @@ dependencies {
     implementation(Libs.lazycache)
     implementation(Libs.klock)
     implementation(Libs.jnisat)
-
-    testImplementation(Libs.junit_jupiter_api)
-    testRuntimeOnly(Libs.junit_jupiter_engine)
-    testImplementation(Libs.junit_jupiter_params)
-    testImplementation(Libs.kluent)
+    implementation(Libs.kotlinx_serialization)
+    implementation(Libs.xmlutil_jvm)
+    implementation(Libs.xmlutil_serialization_jvm)
 }
 
 tasks.withType<KotlinCompile> {

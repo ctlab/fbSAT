@@ -48,12 +48,13 @@ fun Inferrer.cegisMin(
     scenarioTree: OldPositiveScenarioTree,
     initialNegativeScenarioTree: OldNegativeScenarioTree? = null,
     numberOfStates: Int? = null,
+    startNumberOfStates: Int? = null,
     maxGuardSize: Int? = null, // P, search if null
     maxPlateauWidth: Int? = null, // w, =Inf if null
     smvDir: File
 ): Automaton? {
     val extendedAutomaton = if (maxGuardSize == null) {
-        extendedMinUB(scenarioTree, numberOfStates = numberOfStates, maxPlateauWidth = maxPlateauWidth)
+        extendedMinUB(scenarioTree, numberOfStates = startNumberOfStates, maxPlateauWidth = maxPlateauWidth)
     } else {
         extendedMin(scenarioTree, numberOfStates = numberOfStates, maxGuardSize = maxGuardSize)
     }

@@ -29,12 +29,7 @@ data class PositiveScenario(
                     if (index == 0) {
                         numberOfScenarios = line.toInt()
                     } else {
-                        scenarios.add(
-                            fromString(
-                                line,
-                                preprocess
-                            )
-                        )
+                        scenarios.add(fromString(line, preprocess))
                     }
                 }
 

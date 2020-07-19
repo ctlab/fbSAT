@@ -26,7 +26,6 @@ interface GenericScenarioInputAction<E, V> : GenericScenarioAction<E, V>
           V : GenericInputValues
 
 @Deprecated("This is meaningless")
-interface GenericScenarioOutputAction<E, V> :
-    GenericScenarioAction<E, V>
+interface GenericScenarioOutputAction<E, V> : GenericScenarioAction<E, V>
     where E : GenericOutputEvent,
           V : GenericOutputValues

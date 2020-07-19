@@ -20,6 +20,8 @@ class ConsecutiveModularAutomaton(
     val outputNames: List<String>
 ) {
     val M: Int = modules.shape.single()
+    val numberOfModules: Int = M
+    val numberOfStates: Int = modules.values.sumBy { it.numberOfStates }
     val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
     val totalGuardsSize: Int = modules.values.sumBy { it.totalGuardsSize }
 
@@ -120,4 +122,17 @@ class ConsecutiveModularAutomaton(
 
     fun verify(scenarioTree: OldPositiveScenarioTree): Boolean =
         scenarioTree.scenarios.all(::verify)
+
+    fun getStats(): String {
+        return "M = $numberOfModules, " +
+            "C = ${modules.values.joinToString("+") { it.numberOfStates.toString() }} = $numberOfStates, " +
+            "K = ${modules.values.map { it.maxOutgoingTransitions }}, " +
+            "P = ${modules.values.map { it.maxGuardSize }}, " +
+            "T = ${modules.values.joinToString("+") { it.numberOfTransitions.toString() }} = $numberOfTransitions, " +
+            "N = ${modules.values.joinToString("+") { it.totalGuardsSize.toString() }} = $totalGuardsSize"
+    }
+
+    fun printStats() {
+        log.just("    " + getStats())
+    }
 }

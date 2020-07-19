@@ -473,6 +473,11 @@ private fun Solver.declareMappingConstraintsForActiveNode(
     val u = tree.inputNumber(v)
     val o = tree.outputEvent(v)
 
+    if (e == 0) {
+        // log.warn("Empty input event when declaring mapping constraints for the active node v = $v!")
+        return
+    }
+
     comment("Mapping definition for active node v = $v")
     if (isPositive) {
         // (mapping[v]=c) => (actualTransition[mapping[tp(v)],tie(v),tin(v)]=c) & (stateOutputEvent[c]=toe(v)) & AND_{z}(stateAlgorithm{tov(tp(v),z)}(c,z) = tov(v,z))
@@ -533,6 +538,11 @@ private fun Solver.declareMappingConstraintsForPassiveNode(
     val p = tree.parent(v)
     val e = tree.inputEvent(v)
     val u = tree.inputNumber(v)
+
+    if (e == 0) {
+        // log.warn("Empty input event when declaring mapping constraints for the passive node v = $v!")
+        return
+    }
 
     if (isPositive) {
         comment("Mapping propagation for passive node v = $v")

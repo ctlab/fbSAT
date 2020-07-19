@@ -12,13 +12,11 @@ sealed class CompoundEvent : GenericEvent, Compound<Event> {
 
 data class CompoundInputEvent(
     override val modular: ImmutableMultiArray<Event>
-) : CompoundEvent(),
-    GenericInputEvent
+) : CompoundEvent(), GenericInputEvent
 
 data class CompoundOutputEvent(
     override val modular: ImmutableMultiArray<Event>
-) : CompoundEvent(),
-    GenericOutputEvent
+) : CompoundEvent(), GenericOutputEvent
 
 // Compound Values
 
@@ -28,13 +26,11 @@ sealed class CompoundValues : GenericValues, Compound<Values> {
 
 data class CompoundInputValues(
     override val modular: ImmutableMultiArray<Values>
-) : CompoundValues(),
-    GenericInputValues
+) : CompoundValues(), GenericInputValues
 
 data class CompoundOutputValues(
     override val modular: ImmutableMultiArray<Values>
-) : CompoundValues(),
-    GenericOutputValues
+) : CompoundValues(), GenericOutputValues
 
 // Compound Action
 

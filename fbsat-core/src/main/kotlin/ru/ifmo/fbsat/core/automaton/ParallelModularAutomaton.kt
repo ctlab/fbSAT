@@ -14,6 +14,7 @@ import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.random
 import ru.ifmo.fbsat.core.utils.writeEventMerger
@@ -39,6 +40,8 @@ class ParallelModularAutomaton(
         modules[m].outputNames[moduleOutputVariables[m].indexOf(z)]
     }
 
+    val numberOfModules: Int = M
+    val numberOfStates: Int = modules.values.sumBy { it.numberOfStates }
     val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
     val totalGuardsSize: Int = modules.values.sumBy { it.totalGuardsSize }
 
@@ -131,6 +134,19 @@ class ParallelModularAutomaton(
         }
         if (M != 2) writeEventMerger(M, file.resolveSibling("E_MERGE$M.fbt"), "E_MERGE$M")
         file.writeText(toFbtString(name))
+    }
+
+    fun getStats(): String {
+        return "M = $numberOfModules, " +
+            "C = ${modules.values.joinToString("+") { it.numberOfStates.toString() }} = $numberOfStates, " +
+            "K = ${modules.values.map { it.maxOutgoingTransitions }}, " +
+            "P = ${modules.values.map { it.maxGuardSize }}, " +
+            "T = ${modules.values.joinToString("+") { it.numberOfTransitions.toString() }} = $numberOfTransitions, " +
+            "N = ${modules.values.joinToString("+") { it.totalGuardsSize.toString() }} = $totalGuardsSize"
+    }
+
+    fun printStats() {
+        log.just("    " + getStats())
     }
 
     /**

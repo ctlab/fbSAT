@@ -72,10 +72,10 @@ interface Solver : AutoCloseable {
         const val falseLiteral: Literal = -trueLiteral
 
         @JvmStatic
-        fun icms(): Solver = IncrementalCryptominisat()
+        fun filesolver(command: String, file: File): Solver = FileSolver(command, file)
 
         @JvmStatic
-        fun filesolver(command: String, file: File): Solver = FileSolver(command, file)
+        fun icms(): Solver = IncrementalCryptominisat()
 
         @JvmStatic
         fun minisat(): Solver = MiniSat()

@@ -152,17 +152,17 @@ class Automaton(
             }.joinToString("\n")
 
             val tableBody = if (vs.isNotBlank()) """
-                <TR><TD align="center">$id / ${outputEvent?.name ?: 'ε'}</TD></TR>
-                <HR/>
-                %s
-                """.trimIndent().format(vs)
+                |<TR><TD align="center">$id / ${outputEvent?.name ?: 'ε'}</TD></TR>
+                |<HR/>
+                |%s
+                |""".trimMargin().format(vs)
             else """<TR><TD align="center">$id / ${outputEvent?.name ?: 'ε'}</TD></TR>"""
 
             val html = """
-                        <TABLE style="rounded" cellborder="0" cellspacing="0">
-                        %s
-                        </TABLE>
-                    """.trimIndent().format(tableBody.prependIndent())
+                |<TABLE style="rounded" cellborder="0" cellspacing="0">
+                |%s
+                |</TABLE>
+            """.trimMargin().format(tableBody.prependIndent())
 
             return "<\n${html.prependIndent()}>"
         }
@@ -206,10 +206,11 @@ class Automaton(
         }
 
         fun toSmvString(): String {
-            return if (inputEvent != null)
+            return if (inputEvent != null) {
                 "_state=${source.toSmvString()} & ${inputEvent.name} & (${guard.toSmvString()})"
-            else
+            } else {
                 "_state=${source.toSmvString()} & (${guard.toSmvString()})"
+            }
         }
 
         override fun toString(): String {
@@ -387,6 +388,7 @@ class Automaton(
      * Dump automaton in Graphviz, FBT and SMV formats to the [dir] directory using [name] as the file basename.
      */
     fun dump(dir: File, name: String = "automaton") {
+        log.info("Dumping '$name' to <$dir>...")
         dir.mkdirs()
         dumpGv(dir.resolve("$name.gv"))
         dumpFbt(dir.resolve("$name.fbt"), name)
@@ -427,6 +429,19 @@ class Automaton(
      */
     fun pprint() {
         log.just(toSimpleString().prependIndent("  "))
+    }
+
+    fun getStats(): String {
+        return "" +
+            "C = $numberOfStates, " +
+            "K = $maxOutgoingTransitions, " +
+            "P = $maxGuardSize, " +
+            "T = $numberOfTransitions, " +
+            "N = $totalGuardsSize"
+    }
+
+    fun printStats() {
+        log.just("    " + getStats())
     }
 
     /**
@@ -556,8 +571,9 @@ class Automaton(
                         ) {
                             state.algorithm as BinaryAlgorithm
                             "ECAction"("Algorithm" to "s${state.id}_${state.algorithm.toFbtString()}") {
-                                if (state.outputEvent != null)
+                                if (state.outputEvent != null) {
                                     attribute("Output", state.outputEvent.name)
+                                }
                             }
                         }
                     }
@@ -589,8 +605,7 @@ class Automaton(
                     )
                 }
                 for (state in states) {
-                    if (state.outputEvent == null)
-                        continue
+                    if (state.outputEvent == null) continue
 
                     val algorithm = state.algorithm as BinaryAlgorithm
                     "Algorithm"("Name" to "s${state.id}_${algorithm.toFbtString()}") {
@@ -703,12 +718,11 @@ fun Automaton.endow(
     for (c in 1..C)
         for (k in 1..K) {
             val d = transitionDestination(c, k)
-            if (d != 0)
-                addTransition(
-                    sourceId = c,
-                    destinationId = d,
-                    inputEvent = transitionInputEvent(c, k),
-                    guard = transitionGuard(c, k)
-                )
+            if (d != 0) addTransition(
+                sourceId = c,
+                destinationId = d,
+                inputEvent = transitionInputEvent(c, k),
+                guard = transitionGuard(c, k)
+            )
         }
 }

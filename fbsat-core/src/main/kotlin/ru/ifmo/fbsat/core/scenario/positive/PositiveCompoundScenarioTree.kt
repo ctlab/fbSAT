@@ -3,15 +3,30 @@ package ru.ifmo.fbsat.core.scenario.positive
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.CompoundScenarioElement
 import ru.ifmo.fbsat.core.scenario.CompoundScenarioTree
+import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.addGenericScenario
 import ru.ifmo.fbsat.core.scenario.auxScenarioElement
 import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
 import ru.ifmo.fbsat.core.utils.M
+import ru.ifmo.fbsat.core.utils.toImmutable
 
 class PositiveCompoundScenarioTree(
-    override val modular: ImmutableMultiArray<PositiveScenarioTree>,
+    val numberOfModules: Int,
+    val modularInputEvents: MultiArray<List<InputEvent>>,
+    val modularOutputEvents: MultiArray<List<OutputEvent>>,
+    val modularInputNames: MultiArray<List<String>>,
+    val modularOutputNames: MultiArray<List<String>>,
     override val isTrie: Boolean = true
-) : CompoundScenarioTree<PositiveCompoundScenario, PositiveCompoundScenarioTree.Node, PositiveScenarioTree> {
+) : CompoundScenarioTree<PositiveCompoundScenario,
+    PositiveCompoundScenarioTree.Node, PositiveScenarioTree> {
+
+    init {
+        require(modularInputEvents.shape.single() == numberOfModules)
+        require(modularOutputEvents.shape.single() == numberOfModules)
+        require(modularInputNames.shape.single() == numberOfModules)
+        require(modularOutputNames.shape.single() == numberOfModules)
+    }
 
     private val _scenarios: MutableList<PositiveCompoundScenario> = mutableListOf()
     private val _nodes: MutableList<Node> = mutableListOf()
@@ -21,6 +36,21 @@ class PositiveCompoundScenarioTree(
 
     override val size: Int get() = nodes.size
     override val root: Node get() = nodes.first()
+
+    override val modular: ImmutableMultiArray<PositiveScenarioTree>
+        get() = MultiArray.create(numberOfModules) { (m) ->
+            PositiveScenarioTree(
+                inputEvents = modularInputEvents[m],
+                outputEvents = modularOutputEvents[m],
+                inputNames = modularInputNames[m],
+                outputNames = modularOutputNames[m],
+                isTrie = isTrie
+            ).also {
+                for (scenario in scenarios) {
+                    it.addScenario(scenario.modular[m])
+                }
+            }
+        }.toImmutable()
 
     init {
         // Add the root

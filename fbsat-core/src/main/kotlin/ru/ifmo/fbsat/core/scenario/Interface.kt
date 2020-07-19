@@ -6,10 +6,11 @@ import ru.ifmo.fbsat.core.utils.toBinaryString
 
 sealed class Event : GenericEvent {
     abstract val name: String
+
+    final override fun toString(): String = name
 }
 
-data class InputEvent(override val name: String) : Event(),
-    GenericInputEvent {
+data class InputEvent(override val name: String) : Event(), GenericInputEvent {
     companion object {
         @JvmStatic
         fun of(name: String?): InputEvent? = name?.let { InputEvent(it) }
@@ -30,18 +31,18 @@ sealed class Values : GenericValues {
     abstract val values: List<Boolean>
 
     operator fun get(index: Int): Boolean = values[index]
+
+    final override fun toString(): String = values.toString()
 }
 
-data class InputValues(override val values: List<Boolean>) : Values(),
-    GenericInputValues {
+data class InputValues(override val values: List<Boolean>) : Values(), GenericInputValues {
     companion object {
         fun empty(): InputValues = InputValues(emptyList())
         fun zeros(size: Int): InputValues = InputValues(List(size) { false })
     }
 }
 
-data class OutputValues(override val values: List<Boolean>) : Values(),
-    GenericOutputValues {
+data class OutputValues(override val values: List<Boolean>) : Values(), GenericOutputValues {
     companion object {
         fun empty(): OutputValues = OutputValues(emptyList())
         fun zeros(size: Int): OutputValues = OutputValues(List(size) { false })
@@ -55,7 +56,7 @@ sealed class ScenarioAction<E, V> : GenericScenarioAction<E, V>
           V : Values {
     abstract val event: E?
     abstract val values: V
-    override fun toString(): String = "${event?.name ?: 'ε'}[${values.values.toBinaryString()}]"
+    final override fun toString(): String = "${event?.name ?: 'ε'}[${values.values.toBinaryString()}]"
 }
 
 data class InputAction(

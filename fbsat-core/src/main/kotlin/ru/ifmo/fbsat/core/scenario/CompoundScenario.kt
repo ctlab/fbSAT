@@ -7,9 +7,8 @@ import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
 import ru.ifmo.fbsat.core.utils.toImmutable
 import ru.ifmo.fbsat.core.utils.toMultiArray
 
-interface CompoundScenario
-    : GenericScenario<CompoundScenarioElement, CompoundInputAction, CompoundOutputAction>
-    , Compound<Scenario>
+interface CompoundScenario :
+    GenericScenario<CompoundScenarioElement, CompoundInputAction, CompoundOutputAction>, Compound<Scenario>
 
 // val CompoundScenario.modularInputActions: List<MultiArray<InputAction>>
 //     get() = elements.map { it.modularInputAction }
@@ -22,6 +21,7 @@ interface CompoundScenario
 val CompoundScenario.modularInputActionsSeq: Sequence<MultiArray<InputAction>>
     get() = inputActionsSeq.map { it.modular }
 
+// TODO: fix the constructor
 data class CompoundScenarioElement(
     override val modular: ImmutableMultiArray<ScenarioElement>
 ) : GenericScenario.Element<CompoundInputAction, CompoundOutputAction>,

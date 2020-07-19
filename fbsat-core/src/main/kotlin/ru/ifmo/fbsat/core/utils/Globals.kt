@@ -5,10 +5,6 @@ import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.solver.VarEncoding
 import kotlin.properties.Delegates
 
-enum class SolverBackend {
-    INCREMENTAL_CRYPTOMINISAT, FILE, MINISAT, CADICAL;
-}
-
 enum class EpsilonOutputEvents {
     START, ONLYSTART, NONE;
 }
