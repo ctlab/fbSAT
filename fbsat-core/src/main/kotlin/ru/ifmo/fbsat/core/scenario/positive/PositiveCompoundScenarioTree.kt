@@ -18,7 +18,7 @@ class PositiveCompoundScenarioTree(
     override val modularInputNames: MultiArray<List<String>>,
     override val modularOutputNames: MultiArray<List<String>>,
     override val isTrie: Boolean = true
-) : CompoundScenarioTree<PositiveCompoundScenario, PositiveCompoundScenarioTree.Node, PositiveScenarioTree> {
+) : CompoundScenarioTree<PositiveCompoundScenario, PositiveCompoundScenarioTree.Node> {
 
     init {
         require(modularInputEvents.shape.single() == numberOfModules)
