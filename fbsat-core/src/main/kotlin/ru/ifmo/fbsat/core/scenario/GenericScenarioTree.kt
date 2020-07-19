@@ -44,9 +44,9 @@ internal inline fun <S, reified N, E> GenericScenarioTree<S, N>.addGenericScenar
                         log.warn("  - element = $element")
                         log.warn("  - child = $child")
                     }
-                    val childF = child as? N
+                    val childN = child as? N
                         ?: error("Could not cast 'child' to ${N::class.java.simpleName}, what are you doing?")
-                    current = sameNode(index, element, childF)
+                    current = sameNode(index, element, childN)
                     continue@meow
                 }
             }
