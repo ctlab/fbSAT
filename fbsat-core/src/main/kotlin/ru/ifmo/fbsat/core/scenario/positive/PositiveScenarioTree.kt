@@ -27,20 +27,18 @@ class PositiveScenarioTree(
     override val size: Int get() = nodes.size
     override val root: Node get() = nodes.first()
 
-    override val uniqueInputs: List<InputValues> by lazy {
-        nodes.asSequence()
+    override val uniqueInputs: List<InputValues>
+        get() = nodes.asSequence()
             .drop(1)
             .map { it.element.inputValues }
             .toSet()
             .sortedBy { it.values.toBinaryString() }
-    }
-    override val uniqueOutputs: List<OutputValues> by lazy {
-        nodes.asSequence()
+    override val uniqueOutputs: List<OutputValues>
+        get() = nodes.asSequence()
             .drop(1)
             .map { it.element.outputValues }
             .toSet()
             .sortedBy { it.values.toBinaryString() }
-    }
 
     init {
         // Add the root

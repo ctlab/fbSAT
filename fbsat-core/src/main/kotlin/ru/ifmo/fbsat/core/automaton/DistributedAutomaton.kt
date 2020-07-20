@@ -10,6 +10,7 @@ import ru.ifmo.fbsat.core.scenario.modularInputActionsSeq
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.utils.Compound
+import ru.ifmo.fbsat.core.utils.CompoundImpl
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
 import ru.ifmo.fbsat.core.utils.M
@@ -29,21 +30,18 @@ import ru.ifmo.fbsat.core.utils.toMultiArray
 
 @Suppress("MemberVisibilityCanBePrivate", "FunctionName", "PropertyName")
 class DistributedAutomaton(
-    override val modular: ImmutableMultiArray<Automaton>
-) : Compound<Automaton> {
-    val modules: ModularAutomaton = modular.toMultiArray()
-    val numberOfModules: Int = M
+    val modules: ModularAutomaton
+) : CompoundImpl<Automaton>() {
+    override val modular: ImmutableMultiArray<Automaton> = modules.toImmutable()
     val modularInputEvents: MultiArray<List<InputEvent>> = modules.map { it.inputEvents }
     val modularOutputEvents: MultiArray<List<OutputEvent>> = modules.map { it.outputEvents }
     val modularInputNames: MultiArray<List<String>> = modules.map { it.inputNames }
     val modularOutputNames: MultiArray<List<String>> = modules.map { it.outputNames }
 
+    val numberOfModules: Int = M
     val numberOfStates: Int = modules.values.sumBy { it.numberOfStates }
     val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
     val totalGuardsSize: Int = modules.values.sumBy { it.totalGuardsSize }
-
-    // TODO: remove when ImmutableMultiArray is stabilized
-    constructor(modules: ModularAutomaton) : this(modules.toImmutable())
 
     class CompoundEvalState private constructor(
         val modularState: ModularState,

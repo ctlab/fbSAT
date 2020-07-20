@@ -3,6 +3,7 @@ package ru.ifmo.fbsat.core.scenario
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.utils.Compound
+import ru.ifmo.fbsat.core.utils.CompoundImpl
 import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
 import ru.ifmo.fbsat.core.utils.toImmutable
 import ru.ifmo.fbsat.core.utils.toMultiArray
@@ -20,26 +21,39 @@ interface CompoundScenario : GenericScenario<CompoundScenarioElement>, Compound<
 val CompoundScenario.modularInputActionsSeq: Sequence<MultiArray<InputAction>>
     get() = inputActionsSeq.map { it.modular }
 
-// TODO: fix the constructor
-data class CompoundScenarioElement(
+class CompoundScenarioElement private constructor(
+    override val M: Int,
+    override val inputAction: CompoundInputAction,
+    override val outputAction: CompoundOutputAction,
     override val modular: ImmutableMultiArray<ScenarioElement>
 ) : GenericScenario.Element<CompoundInputAction, CompoundOutputAction>,
-    Compound<ScenarioElement> {
+    CompoundImpl<ScenarioElement>() {
 
-    val modularInputAction: MultiArray<InputAction> = modular.toMultiArray().map { it.inputAction }
-    val modularOutputAction: MultiArray<OutputAction> = modular.toMultiArray().map { it.outputAction }
+    val modularInputAction: MultiArray<InputAction> = inputAction.modular
+    val modularOutputAction: MultiArray<OutputAction> = outputAction.modular
     val modularInputEvent: MultiArray<InputEvent?> = modularInputAction.map { it.event }
     val modularInputValues: MultiArray<InputValues> = modularInputAction.map { it.values }
     val modularOutputEvent: MultiArray<OutputEvent?> = modularOutputAction.map { it.event }
     val modularOutputValues: MultiArray<OutputValues> = modularOutputAction.map { it.values }
 
-    override val inputAction: CompoundInputAction =
-        CompoundInputAction(modularInputAction.toImmutable())
-    override val outputAction: CompoundOutputAction =
-        CompoundOutputAction(modularOutputAction.toImmutable())
+    constructor(M: Int, inputAction: CompoundInputAction, outputAction: CompoundOutputAction) : this(
+        M = M,
+        inputAction = inputAction,
+        outputAction = outputAction,
+        modular = MultiArray.create(M) { (m) ->
+            ScenarioElement(
+                inputAction = inputAction.modular[m],
+                outputAction = outputAction.modular[m]
+            )
+        }.toImmutable()
+    )
 
-    @Deprecated("This constructor will be removed after the ImmutableMultiArray is stabilized")
-    constructor(modular: MultiArray<ScenarioElement>) : this(modular.toImmutable())
+    constructor(modular: MultiArray<ScenarioElement>) : this(
+            M = modular.shape.single(),
+            inputAction = CompoundInputAction(modular.map { it.inputAction }),
+            outputAction = CompoundOutputAction(modular.map { it.outputAction }),
+            modular = modular.toImmutable()
+        )
 
     override fun toString(): String {
         return "CompoundElement(${modular.toMultiArray().values})"

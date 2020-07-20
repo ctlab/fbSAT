@@ -7,7 +7,7 @@ import ru.ifmo.fbsat.core.utils.toBinaryString
 sealed class Event : GenericEvent {
     abstract val name: String
 
-    final override fun toString(): String = name
+    override fun toString(): String = name
 }
 
 data class InputEvent(override val name: String) : Event(), GenericInputEvent {
@@ -31,7 +31,7 @@ sealed class Values : GenericValues {
 
     operator fun get(index: Int): Boolean = values[index]
 
-    final override fun toString(): String = values.toString()
+    override fun toString(): String = values.toString()
 }
 
 data class InputValues(override val values: List<Boolean>) : Values(), GenericInputValues {
@@ -53,9 +53,7 @@ data class OutputValues(override val values: List<Boolean>) : Values(), GenericO
 sealed class ScenarioAction<E, V> : GenericScenarioAction<E, V>
     where E : Event,
           V : Values {
-    abstract val event: E?
-    abstract val values: V
-    final override fun toString(): String = "${event?.name ?: 'ε'}[${values.values.toBinaryString()}]"
+    override fun toString(): String = "${event?.name ?: 'ε'}[${values.values.toBinaryString()}]"
 }
 
 data class InputAction(

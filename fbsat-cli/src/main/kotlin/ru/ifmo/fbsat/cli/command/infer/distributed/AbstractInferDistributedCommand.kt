@@ -17,6 +17,7 @@ import java.io.File
 
 abstract class AbstractInferDistributedCommand(name: String) :
     AbstractInferCommand<DistributedAutomaton>(name) {
+
     // Note: use `get()` syntax when overriding those properties!
     protected abstract val numberOfModules: Int
     protected abstract val scenariosFile: File
@@ -37,7 +38,7 @@ abstract class AbstractInferDistributedCommand(name: String) :
         inferrer = Inferrer(solverOptions.solver, outDir)
         val M = numberOfModules
         compoundScenarioTree = PositiveCompoundScenarioTree(
-            numberOfModules = M,
+            M = M,
             modularInputEvents = MultiArray.create(M) { scenarioTree.inputEvents },
             modularOutputEvents = MultiArray.create(M) { scenarioTree.outputEvents },
             modularInputNames = MultiArray.create(M) { scenarioTree.inputNames },

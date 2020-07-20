@@ -4,7 +4,8 @@ import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.mapIndexed
 import ru.ifmo.fbsat.core.constraints.declareDistributedAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareDistributedAutomatonStructureConstraints
-import ru.ifmo.fbsat.core.constraints.declareDistributedPositiveMappingConstraints
+import ru.ifmo.fbsat.core.constraints.declareDistributedPositiveMappingConstraints_compound
+import ru.ifmo.fbsat.core.constraints.declareDistributedPositiveMappingConstraints_modular
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Task

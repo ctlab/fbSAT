@@ -18,7 +18,10 @@ interface GenericOutputValues : GenericValues
 @Deprecated("This is meaningless")
 interface GenericScenarioAction<E, V>
     where E : GenericEvent,
-          V : GenericValues
+          V : GenericValues {
+    val event: E?
+    val values: V
+}
 
 @Deprecated("This is meaningless")
 interface GenericScenarioInputAction<E, V> : GenericScenarioAction<E, V>

@@ -5,7 +5,9 @@ interface GenericScenario<out E>
 
     val elements: List<E>
 
-    interface Element<In, Out> {
+    interface Element<In, Out>
+        where In : GenericScenarioInputAction<*, *>,
+              Out : GenericScenarioOutputAction<*, *> {
         val inputAction: In
         val outputAction: Out
     }

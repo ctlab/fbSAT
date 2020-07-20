@@ -1,11 +1,14 @@
 package ru.ifmo.fbsat.core.scenario.negative
 
 import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.addGenericScenario
 import ru.ifmo.fbsat.core.scenario.auxScenarioElement
+import ru.ifmo.fbsat.core.utils.toBinaryString
 
 class NegativeScenarioTree(
     override val inputEvents: List<InputEvent>,
@@ -21,6 +24,19 @@ class NegativeScenarioTree(
     override val nodes: List<Node> = _nodes
     override val root: Node
         get() = nodes.first()
+
+    override val uniqueInputs: List<InputValues>
+        get() = nodes.asSequence()
+            .drop(1)
+            .map { it.element.inputValues }
+            .toSet()
+            .sortedBy { it.values.toBinaryString() }
+    override val uniqueOutputs: List<OutputValues>
+        get() = nodes.asSequence()
+            .drop(1)
+            .map { it.element.outputValues }
+            .toSet()
+            .sortedBy { it.values.toBinaryString() }
 
     init {
         // Add the root

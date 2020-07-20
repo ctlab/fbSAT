@@ -4,6 +4,16 @@ interface Compound<out T> {
     val modular: ImmutableMultiArray<T>
 }
 
-val Compound<*>.M: Int get() = modular.toMultiArray().shape.single()
+@Deprecated("Inherit the CompoundImpl abstract class for this functionality")
+val Compound<*>.M: Int
+    get() = modular.toMultiArray().shape.single()
 
+@Deprecated("Inherit the CompoundImpl abstract class for this functionality")
 fun Compound<*>.stringify(): String = modular.values.toString()
+
+@Suppress("PropertyName")
+abstract class CompoundImpl<out T> : Compound<T> {
+    open val M: Int by lazy { modular.toMultiArray().shape.single() }
+
+    override fun toString(): String = modular.values.toString()
+}

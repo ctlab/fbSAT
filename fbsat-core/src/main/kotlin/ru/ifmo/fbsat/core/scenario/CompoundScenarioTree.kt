@@ -12,5 +12,5 @@ interface CompoundScenarioTree<S, N> : GenericScenarioTree<S, N>, Compound<Scena
     val modularInputNames: MultiArray<List<String>>
     val modularOutputNames: MultiArray<List<String>>
 
-    interface Node : GenericScenarioTree.Node<CompoundScenarioElement>
+    interface Node : GenericScenarioTree.Node<CompoundScenarioElement>, Compound<ScenarioTree.Node>
 }
