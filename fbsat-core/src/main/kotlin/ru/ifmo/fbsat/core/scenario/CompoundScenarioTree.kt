@@ -5,12 +5,14 @@ import ru.ifmo.fbsat.core.utils.Compound
 
 interface CompoundScenarioTree<S, N> : GenericScenarioTree<S, N>, Compound<ScenarioTree<*, *>>
     where S : CompoundScenario,
-          N : CompoundScenarioTree.Node {
+          N : CompoundScenarioTree.Node<*> {
 
     val modularInputEvents: MultiArray<List<InputEvent>>
     val modularOutputEvents: MultiArray<List<OutputEvent>>
     val modularInputNames: MultiArray<List<String>>
     val modularOutputNames: MultiArray<List<String>>
 
-    interface Node : GenericScenarioTree.Node<CompoundScenarioElement>, Compound<ScenarioTree.Node>
+    interface Node<out Self : Node<Self>> :
+        GenericScenarioTree.Node<Self, CompoundScenarioElement>,
+        Compound<ScenarioTree.Node<*>>
 }

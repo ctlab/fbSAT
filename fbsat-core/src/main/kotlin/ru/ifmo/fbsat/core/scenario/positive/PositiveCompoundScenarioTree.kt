@@ -74,10 +74,11 @@ class PositiveCompoundScenarioTree(
     inner class Node(
         override val element: CompoundScenarioElement,
         override val parent: Node?
-    ) : CompoundScenarioTree.Node {
-        private val _children: MutableList<Node> = mutableListOf()
-
+    ) : CompoundScenarioTree.Node<Node>, CompoundImpl<ScenarioTree.Node<*>>() {
+        override val M: Int = this@PositiveCompoundScenarioTree.M
         override val id: Int = this@PositiveCompoundScenarioTree.size + 1 // one-based
+
+        private val _children: MutableList<Node> = mutableListOf()
         override val children: List<Node> = _children
 
         // TODO: fix this mess

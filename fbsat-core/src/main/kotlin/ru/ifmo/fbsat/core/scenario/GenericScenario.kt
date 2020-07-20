@@ -1,8 +1,6 @@
 package ru.ifmo.fbsat.core.scenario
 
-interface GenericScenario<out E>
-    where E : GenericScenario.Element<*, *> {
-
+interface GenericScenario<out E : GenericScenario.Element<*, *>> {
     val elements: List<E>
 
     interface Element<In, Out>

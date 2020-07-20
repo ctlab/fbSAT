@@ -84,7 +84,7 @@ class PositiveScenarioTree(
     inner class Node(
         override val element: ScenarioElement,
         override val parent: Node?
-    ) : ScenarioTree.Node {
+    ) : ScenarioTree.Node<Node> {
         private val _children: MutableList<Node> = mutableListOf()
 
         override val id: Int = this@PositiveScenarioTree.size + 1 // one-based

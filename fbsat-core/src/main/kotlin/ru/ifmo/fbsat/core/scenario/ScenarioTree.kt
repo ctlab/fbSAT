@@ -2,7 +2,7 @@ package ru.ifmo.fbsat.core.scenario
 
 interface ScenarioTree<S, N> : GenericScenarioTree<S, N>
     where S : Scenario,
-          N : ScenarioTree.Node {
+          N : ScenarioTree.Node<*> {
 
     val inputEvents: List<InputEvent>
     val outputEvents: List<OutputEvent>
@@ -11,7 +11,7 @@ interface ScenarioTree<S, N> : GenericScenarioTree<S, N>
     val uniqueInputs: List<InputValues>
     val uniqueOutputs: List<OutputValues>
 
-    interface Node : GenericScenarioTree.Node<ScenarioElement>
+    interface Node<out Self : Node<Self>> : GenericScenarioTree.Node<Self, ScenarioElement>
 }
 
 fun ScenarioTree<*, *>.parent(v: Int): Int =
@@ -32,5 +32,5 @@ fun ScenarioTree<*, *>.outputNumber(v: Int): Int =
 fun ScenarioTree<*, *>.inputValue(v: Int, x: Int): Boolean =
     nodes[v - 1].element.inputValues[x - 1]
 
-fun <N : ScenarioTree.Node> ScenarioTree<*, N>.outputValue(v: Int, z: Int): Boolean =
+fun ScenarioTree<*, *>.outputValue(v: Int, z: Int): Boolean =
     nodes[v - 1].element.outputValues[z - 1]

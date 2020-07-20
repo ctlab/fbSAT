@@ -89,7 +89,7 @@ class NegativeScenarioTree(
         override val element: ScenarioElement,
         override val parent: Node?,
         val isTerminal: Boolean = false
-    ) : ScenarioTree.Node {
+    ) : ScenarioTree.Node<Node> {
         private val _children: MutableList<Node> = mutableListOf()
 
         override val id: Int = this@NegativeScenarioTree.size + 1 // one-based
