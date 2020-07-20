@@ -9,7 +9,6 @@ import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.task.single.basic.basic
 import ru.ifmo.fbsat.core.task.single.basic.basicMin
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
-import ru.ifmo.fbsat.core.utils.checkMapping
 import ru.ifmo.fbsat.core.utils.log
 
 fun Inferrer.extended(
@@ -108,14 +107,14 @@ fun Inferrer.inferExtended(): Automaton? {
     val assignment = ExtendedAssignment.fromRaw(rawAssignment, vars)
     val automaton = assignment.toAutomaton()
 
-    with(vars) {
-        check(
-            automaton.checkMapping(
-                scenarios = scenarioTree.scenarios,
-                mapping = assignment.mapping
-            )
-        ) { "Positive mapping mismatch" }
-    }
+    // with(vars) {
+    //     check(
+    //         automaton.checkMapping(
+    //             scenarios = scenarioTree.scenarios,
+    //             mapping = assignment.mapping
+    //         )
+    //     ) { "Positive mapping mismatch" }
+    // }
 
     return automaton
 }

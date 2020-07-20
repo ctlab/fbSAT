@@ -5,7 +5,7 @@ import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.NodeType
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedAssignment
 import ru.ifmo.fbsat.core.task.single.extended.toAutomaton
@@ -13,7 +13,7 @@ import ru.ifmo.fbsat.core.task.single.extended.toAutomaton
 class DistributedExtendedAssignment(
     /* Constants */
     val M: Int,
-    val modularScenarioTree: MultiArray<OldPositiveScenarioTree>,
+    val modularScenarioTree: MultiArray<PositiveScenarioTree>,
     val modularC: MultiArray<Int>,
     val modularK: MultiArray<Int>,
     val modularP: MultiArray<Int>,

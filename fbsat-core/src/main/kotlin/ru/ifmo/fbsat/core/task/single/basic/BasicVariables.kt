@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.core.task.single.basic
 
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.IntVarArray

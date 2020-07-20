@@ -20,6 +20,7 @@ interface GenericScenarioTree<S, N>
     }
 }
 
+// TODO: this function can be inlined
 fun <E> GenericScenarioTree.Node<E>.isSameInputAction(element: E): Boolean
     where E : GenericScenario.Element<*, *> {
     return this.element.inputAction == element.inputAction

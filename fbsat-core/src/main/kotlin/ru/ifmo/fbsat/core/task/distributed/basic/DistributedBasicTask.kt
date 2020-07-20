@@ -5,8 +5,8 @@ import com.github.lipen.multiarray.mapIndexed
 import ru.ifmo.fbsat.core.constraints.declareDistributedAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareDistributedAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declareDistributedPositiveMappingConstraints_compound
-import ru.ifmo.fbsat.core.constraints.declareDistributedPositiveMappingConstraints_modular
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.task.distributedBasicVars
@@ -15,7 +15,8 @@ import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 
 data class DistributedBasicTask(
     val numberOfModules: Int, // M
-    val modularScenarioTree: MultiArray<OldPositiveScenarioTree>,
+    val compoundScenarioTree: PositiveCompoundScenarioTree,
+    val modularScenarioTree: MultiArray<PositiveScenarioTree>,
     val modularNumberOfStates: MultiArray<Int>, // [C]
     val modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
     val modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
@@ -34,7 +35,7 @@ data class DistributedBasicTask(
         /* Variables */
         val vars = declareDistributedBasicVariables(
             M = numberOfModules,
-            modularScenarioTree = modularScenarioTree,
+            compoundScenarioTree = compoundScenarioTree,
             modularC = modularNumberOfStates,
             modularK = modularMaxOutgoingTransitions.mapIndexed { (m), k ->
                 k ?: modularNumberOfStates[m]
@@ -46,7 +47,8 @@ data class DistributedBasicTask(
         /* Constraints */
         declareDistributedAutomatonStructureConstraints(vars)
         if (Globals.IS_BFS_AUTOMATON) declareDistributedAutomatonBfsConstraints(vars)
-        declareDistributedPositiveMappingConstraints(vars, modularIsEncodeReverseImplication)
+        // declareDistributedPositiveMappingConstraints_modular(vars, modularIsEncodeReverseImplication)
+        declareDistributedPositiveMappingConstraints_compound(vars, modularIsEncodeReverseImplication)
 
         /* Initial cardinality constraints */
         for (m in 1..numberOfModules) {

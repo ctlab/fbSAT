@@ -2,7 +2,11 @@ package ru.ifmo.fbsat.core.task.distributed.basic
 
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
+import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.toOld
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
@@ -12,7 +16,8 @@ import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
 class DistributedBasicVariables(
     /* Constants */
     val M: Int,
-    val modularScenarioTree: MultiArray<OldPositiveScenarioTree>,
+    val compoundScenarioTree: PositiveCompoundScenarioTree,
+    val modularScenarioTree: MultiArray<PositiveScenarioTree>,
     val modularC: MultiArray<Int>,
     val modularK: MultiArray<Int>,
     val modularV: MultiArray<Int>,
@@ -30,20 +35,21 @@ class DistributedBasicVariables(
 @Suppress("LocalVariableName")
 fun Solver.declareDistributedBasicVariables(
     M: Int,
-    modularScenarioTree: MultiArray<OldPositiveScenarioTree>,
+    compoundScenarioTree: PositiveCompoundScenarioTree,
+    modularScenarioTree: MultiArray<PositiveScenarioTree> = compoundScenarioTree.modular,
     modularC: MultiArray<Int>,
     modularK: MultiArray<Int>,
-    modularV: MultiArray<Int> = modularScenarioTree.map { it.size },
-    modularE: MultiArray<Int> = modularScenarioTree.map { it.inputEvents.size },
-    modularO: MultiArray<Int> = modularScenarioTree.map { it.outputEvents.size },
-    modularX: MultiArray<Int> = modularScenarioTree.map { it.inputNames.size },
-    modularZ: MultiArray<Int> = modularScenarioTree.map { it.outputNames.size },
-    modularU: MultiArray<Int> = modularScenarioTree.map { it.uniqueInputs.size }
+    modularV: MultiArray<Int> = compoundScenarioTree.modular.map { it.size },
+    modularE: MultiArray<Int> = compoundScenarioTree.modular.map { it.inputEvents.size },
+    modularO: MultiArray<Int> = compoundScenarioTree.modular.map { it.outputEvents.size },
+    modularX: MultiArray<Int> = compoundScenarioTree.modular.map { it.inputNames.size },
+    modularZ: MultiArray<Int> = compoundScenarioTree.modular.map { it.outputNames.size },
+    modularU: MultiArray<Int> = compoundScenarioTree.modular.map { it.uniqueInputs.size }
 ): DistributedBasicVariables {
     /* Modularized BasicVariables */
     val modularBasicVariables = MultiArray.create(M) { (m) ->
         declareBasicVariables(
-            scenarioTree = modularScenarioTree[m],
+            scenarioTree = modularScenarioTree[m].toOld(),
             C = modularC[m],
             K = modularK[m]
         )
@@ -59,6 +65,7 @@ fun Solver.declareDistributedBasicVariables(
 
     return DistributedBasicVariables(
         M = M,
+        compoundScenarioTree = compoundScenarioTree,
         modularScenarioTree = modularScenarioTree,
         modularC = modularC,
         modularK = modularK,

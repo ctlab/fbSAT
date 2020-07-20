@@ -40,9 +40,31 @@ class PositiveScenarioTree(
             .toSet()
             .sortedBy { it.values.toBinaryString() }
 
+    /**
+     * List of **active** vertices, i.e. vertices with **non-null** output event.
+     * The root is excluded explicitly.
+     */
+    val activeVertices: List<Int>
+        get() = nodes.asSequence()
+            .drop(1) // without root
+            .filter { it.element.outputEvent != null }
+            .map { it.id }
+            .toList()
+
+    /**
+     * List of **passive** vertices, i.e. vertices with **null** (aka empty/epsilon) output event.
+     * The root is excluded explicitly.
+     */
+    val passiveVertices: List<Int>
+        get() = nodes.asSequence()
+            .drop(1) // without root
+            .filter { it.element.outputEvent == null }
+            .map { it.id }
+            .toList()
+
     init {
-        // Add the root
-        _nodes.add(Node(element = auxScenarioElement, parent = null))
+        // Create the root (auto-added to _nodes)
+        Node(element = auxScenarioElement, parent = null)
     }
 
     fun addScenario(scenario: PositiveScenario) {
@@ -71,6 +93,10 @@ class PositiveScenarioTree(
         init {
             parent?._children?.add(this)
             this@PositiveScenarioTree._nodes.add(this)
+        }
+
+        override fun toString(): String {
+            return "Node(id=$id, parent=${parent?.id}, children=${children.map { it.id }}, element=$element)"
         }
     }
 

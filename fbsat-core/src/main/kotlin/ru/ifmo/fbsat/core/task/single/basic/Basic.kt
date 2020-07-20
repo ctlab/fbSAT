@@ -8,7 +8,6 @@ import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.basicVars
 import ru.ifmo.fbsat.core.task.optimizeT
-import ru.ifmo.fbsat.core.utils.checkMapping
 import ru.ifmo.fbsat.core.utils.log
 
 fun Inferrer.basic(
@@ -70,14 +69,14 @@ fun Inferrer.inferBasic(): Automaton? {
     val automaton = assignment.toAutomaton()
 
     // TODO: refactor mapping check
-    with(vars) {
-        check(
-            automaton.checkMapping(
-                scenarios = scenarioTree.scenarios,
-                mapping = assignment.mapping
-            )
-        ) { "Positive mapping mismatch" }
-    }
+    // with(vars) {
+    //     check(
+    //         automaton.checkMapping(
+    //             scenarios = scenarioTree.scenarios,
+    //             mapping = assignment.mapping
+    //         )
+    //     ) { "Positive mapping mismatch" }
+    // }
 
     return automaton
 }

@@ -14,6 +14,9 @@ import okio.source
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OldScenarioTreeInterface
 import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.outputValue
+import ru.ifmo.fbsat.core.scenario.parent
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import java.io.File
 import kotlin.math.pow
@@ -190,6 +193,26 @@ fun algorithmChoice(
     }
 }
 
+fun algorithmChoice_new(
+    tree: ScenarioTree<*, *>,
+    v: Int,
+    c: Int,
+    z: Int,
+    algorithmTop: BoolVarArray,
+    algorithmBot: BoolVarArray
+): Int {
+    val p = tree.parent(v)
+    val oldValue = tree.outputValue(p, z)
+    val newValue = tree.outputValue(v, z)
+    return when (val values = oldValue to newValue) {
+        true to true -> algorithmTop[c, z]
+        true to false -> -algorithmTop[c, z]
+        false to true -> algorithmBot[c, z]
+        false to false -> -algorithmBot[c, z]
+        else -> error("Weird combination of values: $values")
+    }
+}
+
 fun <T> Iterable<T>.joinPadded(length: Int, separator: String = " "): String =
     joinToString(separator) { it.toString().padStart(length) }
 
@@ -220,6 +243,7 @@ fun Iterable<Boolean>.countFalse(): Int {
     return count { !it }
 }
 
+@Deprecated("No magic outside of Hogwarts!")
 fun <T> magic(): T = error("This is magic!")
 
 inline fun <reified T> Collection<T>.toMultiArray(): MultiArray<T> =

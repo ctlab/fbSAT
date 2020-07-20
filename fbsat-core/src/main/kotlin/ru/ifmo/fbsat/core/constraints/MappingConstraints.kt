@@ -2,6 +2,11 @@ package ru.ifmo.fbsat.core.constraints
 
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.OldScenarioTreeInterface
+import ru.ifmo.fbsat.core.scenario.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.inputEvent
+import ru.ifmo.fbsat.core.scenario.inputNumber
+import ru.ifmo.fbsat.core.scenario.outputEvent
+import ru.ifmo.fbsat.core.scenario.parent
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
@@ -28,6 +33,7 @@ import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariab
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
 import ru.ifmo.fbsat.core.utils.algorithmChoice
+import ru.ifmo.fbsat.core.utils.algorithmChoice_new
 import ru.ifmo.fbsat.core.utils.exhaustive
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.withIndex
@@ -433,7 +439,7 @@ fun Solver.declarePositiveArbitraryModularMappingConstraints(
     }
 }
 
-fun Solver.declareDistributedPositiveMappingConstraints(
+fun Solver.declareDistributedPositiveMappingConstraints_modular(
     distributedBasicVariables: DistributedBasicVariables,
     modularIsEncodeReverseImplication: MultiArray<Boolean>
 ) {
@@ -449,11 +455,148 @@ fun Solver.declareDistributedPositiveMappingConstraints(
     }
 }
 
+fun Solver.declareDistributedPositiveMappingConstraints_compound(
+    distributedBasicVariables: DistributedBasicVariables,
+    modularIsEncodeReverseImplication: MultiArray<Boolean>
+) {
+    comment("Distributed [COMPOUND] positive mapping constraints")
+    with(distributedBasicVariables) {
+        for (m in 1..M) with(modularBasicVariables[m]) {
+            /* Constraints for the root */
+            comment("Positive mapping constraints: for root")
+            declareMappingConstraintsForRoot(mapping = mapping)
+
+            /* Constraints for active vertices */
+            for (v in scenarioTree.activeVertices) {
+                comment("Positive mapping constraints: for active node v = $v")
+                declareMappingConstraintsForActiveNode_new(
+                    v = v,
+                    tree = modularScenarioTree[m],
+                    C = C, Z = Z,
+                    stateOutputEvent = stateOutputEvent,
+                    stateAlgorithmTop = stateAlgorithmTop,
+                    stateAlgorithmBot = stateAlgorithmBot,
+                    actualTransitionFunction = actualTransitionFunction,
+                    mapping = mapping,
+                    isPositive = true
+                )
+            }
+
+            /* Constraints for passive vertices */
+            for (v in scenarioTree.passiveVertices) {
+                comment("Positive mapping constraints: for passive node v = $v")
+                declareMappingConstraintsForPassiveNode_new(
+                    v = v,
+                    tree = modularScenarioTree[m],
+                    C = C, O = O,
+                    stateOutputEvent = stateOutputEvent,
+                    actualTransitionFunction = actualTransitionFunction,
+                    mapping = mapping,
+                    isPositive = true
+                )
+            }
+        }
+    }
+}
+
 private fun Solver.declareMappingConstraintsForRoot(
     mapping: IntVarArray
 ) {
     comment("Root maps to the initial state")
     clause(mapping[1] eq 1)
+}
+
+private fun Solver.declareMappingConstraintsForActiveNode_new(
+    v: Int,
+    tree: ScenarioTree<*, *>,
+    C: Int,
+    Z: Int,
+    stateOutputEvent: IntVarArray,
+    stateAlgorithmTop: BoolVarArray,
+    stateAlgorithmBot: BoolVarArray,
+    actualTransitionFunction: IntVarArray,
+    mapping: IntVarArray,
+    isPositive: Boolean
+) {
+    val p = tree.parent(v)
+    val e = tree.inputEvent(v)
+    val u = tree.inputNumber(v)
+    val o = tree.outputEvent(v)
+
+    if (e == 0) {
+        log.warn("Empty input event when declaring mapping constraints for the active node v = $v!")
+        return
+    }
+
+    comment("Mapping definition for active node v = $v")
+    if (isPositive) {
+        // (mapping[v]=c) => (actualTransition[mapping[tp(v)],tie(v),tin(v)]=c) & (stateOutputEvent[c]=toe(v)) & AND_{z}(stateAlgorithm{tov(tp(v),z)}(c,z) = tov(v,z))
+        for (i in 1..C)
+            for (j in 1..C)
+                implyImply(
+                    mapping[p] eq i,
+                    mapping[v] eq j,
+                    actualTransitionFunction[i, e, u] eq j
+                )
+        for (c in 1..C)
+            implyAnd(mapping[v] eq c, sequence {
+                yield(stateOutputEvent[c] eq o)
+
+                // FIXME: take into account the associations
+
+                for (z in 1..Z)
+                    yield(
+                        algorithmChoice_new(
+                            tree = tree,
+                            v = v, c = c, z = z,
+                            algorithmTop = stateAlgorithmTop,
+                            algorithmBot = stateAlgorithmBot
+                        )
+                    )
+            })
+    } else {
+        TODO()
+    }
+}
+
+private fun Solver.declareMappingConstraintsForPassiveNode_new(
+    v: Int,
+    tree: ScenarioTree<*, *>,
+    C: Int,
+    O: Int,
+    stateOutputEvent: IntVarArray,
+    actualTransitionFunction: IntVarArray,
+    mapping: IntVarArray,
+    isPositive: Boolean
+) {
+    val p = tree.parent(v)
+    val e = tree.inputEvent(v)
+    val u = tree.inputNumber(v)
+
+    if (e == 0) {
+        log.warn("Empty input event when declaring mapping constraints for the passive node v = $v!")
+        return
+    }
+
+    if (isPositive) {
+        comment("Mapping propagation for passive node v = $v")
+        // mapping[v] = mapping[tp(v)]
+        for (c in 1..C)
+            imply(
+                mapping[p] eq c,
+                mapping[v] eq c
+            )
+
+        comment("Constraining actualTransitionFunction for passive node v = $v")
+        // actualTransition[mapping[tp(v)],tie(v),tin(v)] = 0
+        for (c in 1..C)
+            imply(
+                mapping[p] eq c,
+                actualTransitionFunction[c, e, u] eq 0
+            )
+    } else {
+        TODO()
+    }
 }
 
 private fun Solver.declareMappingConstraintsForActiveNode(
@@ -474,7 +617,7 @@ private fun Solver.declareMappingConstraintsForActiveNode(
     val o = tree.outputEvent(v)
 
     if (e == 0) {
-        // log.warn("Empty input event when declaring mapping constraints for the active node v = $v!")
+        log.warn("Empty input event when declaring mapping constraints for the active node v = $v!")
         return
     }
 
@@ -491,6 +634,26 @@ private fun Solver.declareMappingConstraintsForActiveNode(
         for (c in 1..C)
             implyAnd(mapping[v] eq c, sequence {
                 yield(stateOutputEvent[c] eq o)
+
+                // // =====
+                // if (tree.outputEvents[o - 1].name == "done") {
+                //     // Do nothing
+                // } else if (tree.outputEvents[o - 1].name == "packet") {
+                //     check(Z == 1)
+                //     val z = 1
+                //     yield(
+                //         algorithmChoice(
+                //             tree = tree,
+                //             v = v, c = c, z = z,
+                //             algorithmTop = stateAlgorithmTop,
+                //             algorithmBot = stateAlgorithmBot
+                //         )
+                //     )
+                // } else {
+                //     error("?")
+                // }
+                // // =====
+
                 for (z in 1..Z)
                     yield(
                         algorithmChoice(

@@ -1,7 +1,6 @@
 package ru.ifmo.fbsat.core.scenario.positive
 
 import com.github.lipen.multiarray.MultiArray
-import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.scenario.CompoundScenarioElement
 import ru.ifmo.fbsat.core.scenario.CompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.InputEvent
@@ -39,11 +38,6 @@ class PositiveCompoundScenarioTree(
                 outputNames = modularOutputNames[m],
                 isTrie = isTrie
             )
-            //     .also {
-            //     for (scenario in scenarios) {
-            //         it.addScenario(scenario.modular[m])
-            //     }
-            // }
         }.toImmutable()
 
     private val _scenarios: MutableList<PositiveCompoundScenario> = mutableListOf()
@@ -56,12 +50,10 @@ class PositiveCompoundScenarioTree(
     override val root: Node get() = nodes.first()
 
     init {
-        // Add the root
-        _nodes.add(
-            Node(
-                element = CompoundScenarioElement(MultiArray.create(M) { auxScenarioElement }),
-                parent = null
-            )
+        // Create the root (auto-added to _nodes)
+        Node(
+            element = CompoundScenarioElement(MultiArray.create(M) { auxScenarioElement }),
+            parent = null
         )
     }
 
@@ -73,8 +65,10 @@ class PositiveCompoundScenarioTree(
                 Node(element, parent = current)
             }
         )
+        for (m in 1..M) {
+            modular[m].addScenario(scenario.modular[m])
+        }
         _scenarios.add(scenario)
-        // TODO: add scenarios to modular trees
     }
 
     inner class Node(
@@ -87,8 +81,8 @@ class PositiveCompoundScenarioTree(
         override val children: List<Node> = _children
 
         // TODO: fix this mess
-        override val modular: ImmutableMultiArray<PositiveScenarioTree.Node>
-            get() = this@PositiveCompoundScenarioTree.modular.map { it.nodes[id - 1] }.toImmutable()
+        override val modular: ImmutableMultiArray<PositiveScenarioTree.Node> get() = TODO()
+        // get() = this@PositiveCompoundScenarioTree.modular.map { it.nodes[id - 1] }.toImmutable()
 
         init {
             parent?._children?.add(this)

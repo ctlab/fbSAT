@@ -3,6 +3,7 @@ package ru.ifmo.fbsat.core.task.distributed.extended
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
@@ -15,7 +16,7 @@ import ru.ifmo.fbsat.core.utils.log
 class DistributedExtendedVariables(
     /* Constants */
     val M: Int,
-    val modularScenarioTree: MultiArray<OldPositiveScenarioTree>,
+    val modularScenarioTree: MultiArray<PositiveScenarioTree>,
     val modularC: MultiArray<Int>,
     val modularK: MultiArray<Int>,
     val modularP: MultiArray<Int>,

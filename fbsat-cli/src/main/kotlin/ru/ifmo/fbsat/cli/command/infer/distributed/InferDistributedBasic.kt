@@ -21,6 +21,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.scenariosFileOption
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.task.distributed.basic.distributedBasic
 import ru.ifmo.fbsat.core.utils.createNullable
+import ru.ifmo.fbsat.core.utils.magic
 import java.io.File
 
 private class DistributedBasicInputOutputOptions : OptionGroup(INPUT_OUTPUT_OPTIONS) {
@@ -58,7 +59,8 @@ class InferDistributedBasicCommand :
         val T = params.maxTransitions
         return inferrer.distributedBasic(
             numberOfModules = M,
-            modularScenarioTree = MultiArray.create(M) { oldTree },
+            compoundScenarioTree = magic(),
+            modularScenarioTree = magic(),
             modularNumberOfStates = MultiArray.create(M) { C },
             modularMaxOutgoingTransitions = MultiArray.createNullable(M) { K },
             modularMaxTransitions = MultiArray.create(M) { T }, // for now
