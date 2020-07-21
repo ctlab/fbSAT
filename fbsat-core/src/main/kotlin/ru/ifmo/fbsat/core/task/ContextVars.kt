@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.task
 
 import ru.ifmo.fbsat.core.solver.SolverContext
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicVariables
+import ru.ifmo.fbsat.core.task.distributed.complete.DistributedCompleteVariables
 import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedVariables
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
@@ -40,6 +41,5 @@ var SolverContext.parallelModularExtendedVars: ParallelModularExtendedVariables 
 var SolverContext.consecutiveModularExtendedVars: ConsecutiveModularExtendedVariables by register()
 var SolverContext.distributedBasicVars: DistributedBasicVariables by register()
 var SolverContext.distributedExtendedVars: DistributedExtendedVariables by register()
-
-// var SolverContext.distributedCompleteVars: DistributedCompleteVariables by register()
+var SolverContext.distributedCompleteVars: DistributedCompleteVariables by register()
 var SolverContext.extForestVars: ExtForestVariables by register()

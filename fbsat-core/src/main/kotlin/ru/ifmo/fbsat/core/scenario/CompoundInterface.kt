@@ -4,12 +4,13 @@ import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.utils.CompoundImpl
 import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
+import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.toImmutable
 
 // Compound Event
 
-sealed class CompoundEvent<T> : GenericEvent, CompoundImpl<T>()
-    where T : Event?
+sealed class CompoundEvent<E> : GenericEvent, CompoundImpl<E>()
+    where E : Event?
 
 class CompoundInputEvent(
     override val modular: ImmutableMultiArray<InputEvent?>
@@ -21,32 +22,22 @@ class CompoundOutputEvent(
 
 // Compound Values
 
-// sealed class CompoundValues<T> : GenericValues, CompoundImpl<T>()
-//     where T : Values
-//
-// class CompoundInputValues(
-//     override val modular: ImmutableMultiArray<InputValues>
-// ) : CompoundValues<InputValues>(), GenericInputValues
-//
-// class CompoundOutputValues(
-//     override val modular: ImmutableMultiArray<OutputValues>
-// ) : CompoundValues<OutputValues>(), GenericOutputValues
-
-sealed class CompoundValues : GenericValues, CompoundImpl<Values>()
+sealed class CompoundValues<V> : GenericValues, CompoundImpl<V>()
+    where V : Values
 
 class CompoundInputValues(
     override val modular: ImmutableMultiArray<InputValues>
-) : CompoundValues(), GenericInputValues
+) : CompoundValues<InputValues>(), GenericInputValues
 
 class CompoundOutputValues(
     override val modular: ImmutableMultiArray<OutputValues>
-) : CompoundValues(), GenericOutputValues
+) : CompoundValues<OutputValues>(), GenericOutputValues
 
 // Compound Action
 
 sealed class CompoundScenarioAction<E, V, A> : GenericScenarioAction<E, V>, CompoundImpl<A>()
     where E : CompoundEvent<*>,
-          V : CompoundValues,
+          V : CompoundValues<*>,
           A : ScenarioAction<*, *>
 
 class CompoundInputAction private constructor(
@@ -63,7 +54,7 @@ class CompoundInputAction private constructor(
             event = event,
             values = values,
             modular = MultiArray.create(M) { (m) ->
-                InputAction(event.modular[m], values.modular[m])
+                InputAction(event.project(m), values.project(m))
             }.toImmutable()
         )
 
@@ -74,10 +65,6 @@ class CompoundInputAction private constructor(
             values = CompoundInputValues(modular.map { it.values }.toImmutable()),
             modular = modular.toImmutable()
         )
-
-    // override val modular: ImmutableMultiArray<InputAction> = MultiArray.create(M) {(m)->
-    //     InputAction(event.modular[m], values.modular[m])
-    // }.toImmutable()
 }
 
 class CompoundOutputAction private constructor(
@@ -94,7 +81,7 @@ class CompoundOutputAction private constructor(
             event = event,
             values = values,
             modular = MultiArray.create(M) { (m) ->
-                OutputAction(event.modular[m], values.modular[m])
+                OutputAction(event.project(m), values.project(m))
             }.toImmutable()
         )
 
@@ -105,13 +92,4 @@ class CompoundOutputAction private constructor(
             values = CompoundOutputValues(modular.map { it.values }.toImmutable()),
             modular = modular.toImmutable()
         )
-
-    // override val modular: ImmutableMultiArray<OutputAction> = MultiArray.create(M) {(m)->
-    //     OutputAction(event.modular[m], values.modular[m])
-    // }.toImmutable()
 }
-
-// class CompoundOutputAction(
-//     override val modular: ImmutableMultiArray<OutputAction>
-// ) : CompoundScenarioAction<CompoundOutputEvent, CompoundOutputValues, OutputAction>(),
-//     GenericScenarioOutputAction<CompoundOutputEvent, CompoundOutputValues>

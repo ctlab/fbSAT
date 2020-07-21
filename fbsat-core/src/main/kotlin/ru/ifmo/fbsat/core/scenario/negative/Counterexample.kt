@@ -36,7 +36,7 @@ data class Counterexample(
                 when (variables[it]) {
                     "TRUE" -> true
                     "FALSE" -> false
-                    else -> error("Value of variable '$it' must be either 'TRUE' or 'FALSE'")
+                    else -> error("Value of variable '$it' must be either 'TRUE' or 'FALSE', but encountered '${variables[it]}'")
                 }
             }
     }

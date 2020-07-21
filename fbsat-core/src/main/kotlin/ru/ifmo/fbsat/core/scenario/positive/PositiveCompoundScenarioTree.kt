@@ -10,6 +10,7 @@ import ru.ifmo.fbsat.core.scenario.addGenericScenario
 import ru.ifmo.fbsat.core.scenario.auxScenarioElement
 import ru.ifmo.fbsat.core.utils.CompoundImpl
 import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
+import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.toImmutable
 
 class PositiveCompoundScenarioTree(
@@ -66,7 +67,7 @@ class PositiveCompoundScenarioTree(
             }
         )
         for (m in 1..M) {
-            modular[m].addScenario(scenario.modular[m])
+            modular[m].addScenario(scenario.project(m))
         }
         _scenarios.add(scenario)
     }
@@ -88,6 +89,10 @@ class PositiveCompoundScenarioTree(
         init {
             parent?._children?.add(this)
             this@PositiveCompoundScenarioTree._nodes.add(this)
+        }
+
+        override fun toString(): String {
+            return "Node(id=$id, parent=${parent?.id}, children=${children.map { it.id }}, element=$element)"
         }
     }
 }

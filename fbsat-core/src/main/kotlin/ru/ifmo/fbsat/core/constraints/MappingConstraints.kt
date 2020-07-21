@@ -112,7 +112,8 @@ fun Solver.declarePositiveMappingConstraints(
 
 fun Solver.declareNegativeMappingConstraints(
     completeVars: CompleteVariables,
-    Vs: Iterable<Int>
+    Vs: Iterable<Int>,
+    isForbidLoops: Boolean = true
 ) {
     comment("Negative mapping constraints")
     with(completeVars) {
@@ -168,16 +169,18 @@ fun Solver.declareNegativeMappingConstraints(
             )
         }
 
-        comment("Forbid loops")
-        // (negMapping[v]=c) => AND_{l in loopBacks(v)}(negMapping[l] != c)
-        for (v in 1..negV)
-            for (l in negativeScenarioTree.loopBacks(v))
-                if (forbiddenLoops.add(v to l))
-                    for (c in 1..C)
-                        imply(
-                            negMapping[v] eq c,
-                            negMapping[l] neq c
-                        )
+        if (isForbidLoops) {
+            comment("Forbid loops")
+            // (negMapping[v]=c) => AND_{l in loopBacks(v)}(negMapping[l] != c)
+            for (v in 1..negV)
+                for (l in negativeScenarioTree.loopBacks(v))
+                    if (forbiddenLoops.add(v to l))
+                        for (c in 1..C)
+                            imply(
+                                negMapping[v] eq c,
+                                negMapping[l] neq c
+                            )
+        }
     }
 }
 

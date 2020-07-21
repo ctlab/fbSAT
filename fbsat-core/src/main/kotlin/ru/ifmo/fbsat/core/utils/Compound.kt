@@ -17,3 +17,6 @@ abstract class CompoundImpl<out T> : Compound<T> {
 
     override fun toString(): String = modular.values.toString()
 }
+
+fun <T> Compound<T>.project(i: Int): T = modular.toMultiArray()[i]
+fun <T> Iterable<Compound<T>>.project(i: Int): List<T> = map { it.project(i) }

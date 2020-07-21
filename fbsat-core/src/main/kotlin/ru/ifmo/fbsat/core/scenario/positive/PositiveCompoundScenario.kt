@@ -3,7 +3,6 @@ package ru.ifmo.fbsat.core.scenario.positive
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.CompoundScenario
 import ru.ifmo.fbsat.core.scenario.CompoundScenarioElement
-import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.utils.CompoundImpl
 import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
 import ru.ifmo.fbsat.core.utils.toImmutable
@@ -13,7 +12,7 @@ class PositiveCompoundScenario private constructor(
     override val M: Int,
     override val elements: List<CompoundScenarioElement>,
     override val modular: ImmutableMultiArray<PositiveScenario>
-) : CompoundScenario, CompoundImpl<Scenario>() {
+) : CompoundScenario<PositiveScenario>, CompoundImpl<PositiveScenario>() {
     // TODO: constructor(modularPositiveScenario: MultiArray<PositiveScenario>)
 
     constructor(M: Int, elements: List<CompoundScenarioElement>) : this(

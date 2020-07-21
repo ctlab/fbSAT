@@ -39,10 +39,11 @@ class NegativeScenarioTree(
             .sortedBy { it.values.toBinaryString() }
 
     init {
-        // Add the root
-        _nodes.add(Node(element = auxScenarioElement, parent = null))
+        // Create the root (auto-added to _nodes)
+        Node(element = auxScenarioElement, parent = null)
     }
 
+    @Suppress("DuplicatedCode")
     fun addScenario(scenario: NegativeScenario) {
         require(scenario.elements.isNotEmpty())
 
@@ -87,8 +88,7 @@ class NegativeScenarioTree(
 
     inner class Node(
         override val element: ScenarioElement,
-        override val parent: Node?,
-        val isTerminal: Boolean = false
+        override val parent: Node?
     ) : ScenarioTree.Node<Node> {
         private val _children: MutableList<Node> = mutableListOf()
 
@@ -101,6 +101,24 @@ class NegativeScenarioTree(
         init {
             parent?._children?.add(this)
             this@NegativeScenarioTree._nodes.add(this)
+        }
+
+        override fun toString(): String {
+            return "Node(id=$id, parent=${parent?.id}, children=${children.map { it.id }}, element=$element)"
+        }
+    }
+}
+
+fun NegativeScenarioTree.toOld(): OldNegativeScenarioTree {
+    return OldNegativeScenarioTree(
+        inputEvents = inputEvents,
+        outputEvents = outputEvents,
+        inputNames = inputNames,
+        outputNames = outputNames,
+        isTrie = isTrie
+    ).also {
+        for (scenario in scenarios) {
+            it.addNegativeScenario(scenario)
         }
     }
 }

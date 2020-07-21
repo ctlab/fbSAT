@@ -2,7 +2,6 @@ package ru.ifmo.fbsat.core.task.distributed.basic
 
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
@@ -13,7 +12,7 @@ import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 
 fun Inferrer.distributedBasic(
     numberOfModules: Int, // M
-    compoundScenarioTree: PositiveCompoundScenarioTree,
+    compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
     modularScenarioTree: MultiArray<PositiveScenarioTree> = compoundScenarioTree.modular,
     modularNumberOfStates: MultiArray<Int>, // [C]
     modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]

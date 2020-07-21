@@ -120,7 +120,7 @@ fun Inferrer.performCegis(smvDir: File): Automaton? {
         val timeStart = PerformanceCounter.reference
 
         // Update to take into account possible extension of the negative scenario tree
-        solver.updateNegativeReduction()
+        solver.updateNegativeReduction(vars)
         // Infer update
         val automaton = inferExtended()
         if (automaton == null) {

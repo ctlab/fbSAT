@@ -243,8 +243,7 @@ fun Iterable<Boolean>.countFalse(): Int {
     return count { !it }
 }
 
-@Deprecated("No magic outside of Hogwarts!")
-fun <T> magic(): T = error("This is magic!")
+fun <T> magic(): T = error("No magic outside of Hogwarts!")
 
 inline fun <reified T> Collection<T>.toMultiArray(): MultiArray<T> =
     GenericMultiArray(toTypedArray(), intArrayOf(size))

@@ -154,10 +154,10 @@ class DistributedAutomaton(
     /**
      * Evaluate the given [scenario].
      */
-    fun eval(scenario: CompoundScenario): Sequence<CompoundEvalResult> =
+    fun eval(scenario: CompoundScenario<*>): Sequence<CompoundEvalResult> =
         eval(scenario.modularInputActionsSeq)
 
-    fun map_(scenario: CompoundScenario): List<CompoundEvalResult?> {
+    fun map_(scenario: CompoundScenario<*>): List<CompoundEvalResult?> {
         val mapping: MutableList<CompoundEvalResult?> = mutableListOfNulls(scenario.elements.size)
         out@ for ((i, result) in eval(scenario).withIndex()) {
             val element = scenario.elements[i]
@@ -176,7 +176,7 @@ class DistributedAutomaton(
      * Map the given [scenario].
      * Nulls represent the absence of a mapping.
      */
-    fun map(scenario: CompoundScenario): List<ModularState?> =
+    fun map(scenario: CompoundScenario<*>): List<ModularState?> =
         map_(scenario).map { result ->
             result?.modularDestination
         }
