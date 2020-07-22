@@ -1,5 +1,11 @@
 package ru.ifmo.fbsat.core.scenario.negative
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import nl.adaptivity.xmlutil.serialization.XML
+import nl.adaptivity.xmlutil.serialization.XmlElement
+import nl.adaptivity.xmlutil.serialization.XmlSerialName
+import nl.adaptivity.xmlutil.serialization.XmlValue
 import ru.ifmo.fbsat.core.utils.sourceAutoGzip
 import ru.ifmo.fbsat.core.utils.useLines
 import java.io.File
@@ -114,4 +120,62 @@ data class Counterexample(
             return ces
         }
     }
+}
+
+@Serializable
+@XmlSerialName("counter-example", namespace = "", prefix = "")
+data class THE_Counterexample(
+    val type: Int,
+    val id: Int,
+    @XmlSerialName("desc", namespace = "", prefix = "")
+    val description: String,
+    @XmlSerialName("node", namespace = "", prefix = "")
+    val nodes: List<THE_Node>,
+    // @XmlSerialName("loops", namespace = "", prefix = "")
+    // val loops: THE_Loops
+    @XmlElement(true)
+    val loops: String
+) {
+    @Serializable
+    @XmlSerialName("node", namespace = "", prefix = "")
+    data class THE_Node(
+        @XmlSerialName("state", namespace = "", prefix = "")
+        val states: List<THE_State>
+    ) {
+        @Serializable
+        @XmlSerialName("state", namespace = "", prefix = "")
+        data class THE_State(
+            val id: Int,
+            @SerialName("value")
+            val values: List<THE_Value>
+        ) {
+            @Serializable
+            @XmlSerialName("value", namespace = "", prefix = "")
+            data class THE_Value(
+                val variable: String,
+                @XmlValue(true)
+                val content: String
+            )
+        }
+    }
+
+    @Serializable
+    @XmlSerialName("loops", namespace = "", prefix = "")
+    data class THE_Loops(
+        @XmlValue(true)
+        val loops: String
+    )
+}
+
+fun readCounterexampleFromFile(file: File): List<THE_Counterexample> {
+    val xml = XML()
+    val xmlString = File("data/abp-take/ce.xml").readText().replace("<loops> </loops>", "<loops/>")
+    val headerLines = xmlString.lines().mapIndexedNotNull { index, s -> if (s.startsWith("<?xml")) index else null }
+    return (headerLines + xmlString.lines().size)
+        .zipWithNext { a, b ->
+            xmlString.lines().subList(a, b).joinToString("\n")
+        }
+        .map {
+            xml.parse(THE_Counterexample.serializer(), it)
+        }
 }
