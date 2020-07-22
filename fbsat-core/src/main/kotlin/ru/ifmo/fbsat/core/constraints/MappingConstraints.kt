@@ -5,6 +5,7 @@ import ru.ifmo.fbsat.core.scenario.OldScenarioTreeInterface
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.inputEvent
 import ru.ifmo.fbsat.core.scenario.inputNumber
+import ru.ifmo.fbsat.core.scenario.negative.toOld
 import ru.ifmo.fbsat.core.scenario.outputEvent
 import ru.ifmo.fbsat.core.scenario.parent
 import ru.ifmo.fbsat.core.solver.BoolVarArray
@@ -126,11 +127,11 @@ fun Solver.declareNegativeMappingConstraints(
 
         /* Constraints for active vertices */
         // Note: be very careful with positive/negative variables!
-        for (v in Vs.intersect(negativeScenarioTree.activeVertices)) {
+        for (v in Vs.intersect(negativeScenarioTree.toOld().activeVertices)) {
             comment("Negative mapping constraints: for active node v = $v")
             declareMappingConstraintsForActiveNode(
                 v = v,
-                tree = negativeScenarioTree,
+                tree = negativeScenarioTree.toOld(),
                 C = C, Z = Z,
                 stateOutputEvent = stateOutputEvent,
                 stateAlgorithmTop = stateAlgorithmTop,
@@ -143,11 +144,11 @@ fun Solver.declareNegativeMappingConstraints(
 
         /* Constraints for passive vertices */
         // Note: be very careful with positive/negative variables!
-        for (v in Vs.intersect(negativeScenarioTree.passiveVertices)) {
+        for (v in Vs.intersect(negativeScenarioTree.toOld().passiveVertices)) {
             comment("Negative mapping constraints: for passive node v = $v")
             declareMappingConstraintsForPassiveNode(
                 v = v,
-                tree = negativeScenarioTree,
+                tree = negativeScenarioTree.toOld(),
                 C = C, O = O,
                 stateOutputEvent = stateOutputEvent,
                 actualTransitionFunction = negActualTransitionFunction,
@@ -173,7 +174,7 @@ fun Solver.declareNegativeMappingConstraints(
             comment("Forbid loops")
             // (negMapping[v]=c) => AND_{l in loopBacks(v)}(negMapping[l] != c)
             for (v in 1..negV)
-                for (l in negativeScenarioTree.loopBacks(v))
+                for (l in negativeScenarioTree.toOld().loopBacks(v))
                     if (forbiddenLoops.add(v to l))
                         for (c in 1..C)
                             imply(

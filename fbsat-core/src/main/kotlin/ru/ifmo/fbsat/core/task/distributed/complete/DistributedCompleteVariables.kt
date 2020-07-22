@@ -2,7 +2,6 @@ package ru.ifmo.fbsat.core.task.distributed.complete
 
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
-import ru.ifmo.fbsat.core.scenario.negative.toOld
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedVariables
@@ -39,7 +38,7 @@ fun Solver.declareDistributedCompleteVariables(
     val modularCompleteVariables = MultiArray.create(M) { (m) ->
         declareCompleteVariables(
             extendedVars = modularExtendedVariables[m],
-            negativeScenarioTree = negativeCompoundScenarioTree.modular[m].toOld()
+            negativeScenarioTree = negativeCompoundScenarioTree.modular[m]
         )
     }
 

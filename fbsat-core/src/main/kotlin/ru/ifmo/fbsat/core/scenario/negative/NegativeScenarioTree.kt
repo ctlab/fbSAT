@@ -8,6 +8,7 @@ import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.addGenericScenario
 import ru.ifmo.fbsat.core.scenario.auxScenarioElement
+import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.toBinaryString
 
 class NegativeScenarioTree(
@@ -15,7 +16,7 @@ class NegativeScenarioTree(
     override val outputEvents: List<OutputEvent>,
     override val inputNames: List<String>,
     override val outputNames: List<String>,
-    override val isTrie: Boolean = true
+    override val isTrie: Boolean = false
 ) : ScenarioTree<NegativeScenario, NegativeScenarioTree.Node> {
     private val _scenarios: MutableList<NegativeScenario> = mutableListOf()
     private val _nodes: MutableList<Node> = mutableListOf()
@@ -57,7 +58,7 @@ class NegativeScenarioTree(
                     if (index + 1 == scenario.loopPosition) {
                         check(loopBack == null) { "Cannot override loopBack = $loopBack to $newNode" }
                         loopBack = newNode
-                        println("[${index + 1}/${scenario.elements.size}] loopBack now = $loopBack")
+                        log.debug { "[${index + 1}/${scenario.elements.size}] loopBack now = $loopBack"}
                     }
                     last = newNode
                 }
@@ -68,7 +69,7 @@ class NegativeScenarioTree(
                     if (index + 1 == scenario.loopPosition) {
                         check(loopBack == null) { "Cannot override loopBack = $loopBack to $newNode" }
                         loopBack = newNode
-                        println("[${index + 1}/${scenario.elements.size}] loopBack now = $loopBack")
+                        log.debug { "[${index + 1}/${scenario.elements.size}] loopBack now = $loopBack" }
                     }
                     last = newNode
                 }
@@ -109,6 +110,7 @@ class NegativeScenarioTree(
     }
 }
 
+@Deprecated("Migrate to NegativeScenarioTree, pretty please")
 fun NegativeScenarioTree.toOld(): OldNegativeScenarioTree {
     return OldNegativeScenarioTree(
         inputEvents = inputEvents,

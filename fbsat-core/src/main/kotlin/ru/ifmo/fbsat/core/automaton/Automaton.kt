@@ -418,9 +418,9 @@ class Automaton(
     /**
      * Dump automaton in SMV format to [file].
      */
-    fun dumpSmv(file: File) {
+    fun dumpSmv(file: File, name: String = "CONTROL") {
         file.printWriter().use {
-            it.println(toSmvString())
+            it.println(toSmvString(name))
         }
     }
 
@@ -619,8 +619,8 @@ class Automaton(
     /**
      * Stringify automaton to SMV format.
      */
-    fun toSmvString(): String {
-        val module = "CONTROL(${inputEvents.joinToString(",") { it.name }}, ${inputNames.joinToString(",")})"
+    fun toSmvString(name: String = "CONTROL"): String {
+        val module = "$name(${inputEvents.joinToString(",") { it.name }}, ${inputNames.joinToString(",")})"
 
         val definitions: MutableMap<String, String> = mutableMapOf(
             "_state" to "{${states.joinToString(", ") { it.toSmvString() }}}"

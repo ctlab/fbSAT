@@ -4,7 +4,7 @@ import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.Counterexample
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
-import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
+import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.completeVars
@@ -20,7 +20,7 @@ import java.io.File
 
 fun Inferrer.cegis(
     scenarioTree: OldPositiveScenarioTree,
-    negativeScenarioTree: OldNegativeScenarioTree? = null, // empty if null
+    negativeScenarioTree: NegativeScenarioTree? = null, // empty if null
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
     maxGuardSize: Int, // P
@@ -46,7 +46,7 @@ fun Inferrer.cegis(
 @Suppress("LocalVariableName")
 fun Inferrer.cegisMin(
     scenarioTree: OldPositiveScenarioTree,
-    initialNegativeScenarioTree: OldNegativeScenarioTree? = null,
+    initialNegativeScenarioTree: NegativeScenarioTree? = null,
     numberOfStates: Int? = null,
     startNumberOfStates: Int? = null,
     maxGuardSize: Int? = null, // P, search if null
@@ -70,7 +70,7 @@ fun Inferrer.cegisMin(
     extendedAutomaton.pprint()
     log.info("extendedAutomaton has C = $C, P = $P, N = $N")
 
-    val negativeScenarioTree = initialNegativeScenarioTree ?: OldNegativeScenarioTree(
+    val negativeScenarioTree = initialNegativeScenarioTree ?: NegativeScenarioTree(
         inputEvents = scenarioTree.inputEvents,
         outputEvents = scenarioTree.outputEvents,
         inputNames = scenarioTree.inputNames,
@@ -104,6 +104,7 @@ fun Inferrer.cegisMin(
     return null
 }
 
+@Suppress("DuplicatedCode")
 fun Inferrer.performCegis(smvDir: File): Automaton? {
     log.info("Performing CEGIS...")
 
@@ -150,7 +151,9 @@ fun Inferrer.performCegis(smvDir: File): Automaton? {
         }
         // Populate negTree with new negative scenarios
         val treeSize = negativeScenarioTree.size
-        negativeScenarios.forEach(negativeScenarioTree::addNegativeScenario)
+        for (scenario in negativeScenarios) {
+            negativeScenarioTree.addScenario(scenario)
+        }
         val treeSizeDiff = negativeScenarioTree.size - treeSize
         // Note: it is suffice to check just `negSc == lastNegSc`, but it may be costly,
         // so check it only in a specific case - when negative tree does not change its size

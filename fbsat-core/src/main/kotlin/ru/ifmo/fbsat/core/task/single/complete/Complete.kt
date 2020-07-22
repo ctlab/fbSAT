@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.task.single.complete
 
 import ru.ifmo.fbsat.core.automaton.Automaton
-import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
+import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeN
@@ -12,7 +12,7 @@ import ru.ifmo.fbsat.core.task.single.extended.inferExtended
 
 fun Inferrer.complete(
     scenarioTree: OldPositiveScenarioTree,
-    negativeScenarioTree: OldNegativeScenarioTree? = null, // empty if null
+    negativeScenarioTree: NegativeScenarioTree? = null, // empty if null
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
     maxGuardSize: Int, // P
@@ -36,7 +36,7 @@ fun Inferrer.complete(
 
 fun Inferrer.completeMin(
     scenarioTree: OldPositiveScenarioTree,
-    negativeScenarioTree: OldNegativeScenarioTree? = null, // empty if null
+    negativeScenarioTree: NegativeScenarioTree? = null, // empty if null
     maxGuardSize: Int // P
 ): Automaton? {
     val basicAutomaton = basicMinC(scenarioTree)

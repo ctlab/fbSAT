@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.utils
 
+import com.github.lipen.multiarray.MultiArray
 import org.redundent.kotlin.xml.PrintOptions
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.solver.VarEncoding
@@ -33,4 +34,5 @@ object Globals {
     val xmlPrintOptions: PrintOptions =
         PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = true)
     val defaultVarEncoding: VarEncoding = VarEncoding.ONEHOT
+    var modularName: MultiArray<String> by Delegates.notNull()
 }

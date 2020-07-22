@@ -8,9 +8,9 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.addGenericScenario
 import ru.ifmo.fbsat.core.scenario.auxScenarioElement
-import ru.ifmo.fbsat.core.utils.Compound
 import ru.ifmo.fbsat.core.utils.CompoundImpl
 import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
+import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.toImmutable
 
@@ -21,31 +21,16 @@ class NegativeCompoundScenarioTree(
     override val modularOutputEvents: MultiArray<List<OutputEvent>>,
     override val modularInputNames: MultiArray<List<String>>,
     override val modularOutputNames: MultiArray<List<String>>,
-    override val isTrie: Boolean = true
-) : CompoundScenarioTree<NegativeCompoundScenario, NegativeCompoundScenarioTree.Node>,
-    CompoundImpl<ScenarioTree<*, *>>() {
+    override val isTrie: Boolean = false
+) : CompoundScenarioTree<NegativeScenarioTree, NegativeCompoundScenario, NegativeCompoundScenarioTree.Node>,
+    CompoundImpl<NegativeScenarioTree>() {
 
     init {
-        require(modularInputEvents.shape.single() == M)
-        require(modularOutputEvents.shape.single() == M)
-        require(modularInputNames.shape.single() == M)
-        require(modularOutputNames.shape.single() == M)
+        // require(modularInputEvents.shape.single() == M)
+        // require(modularOutputEvents.shape.single() == M)
+        // require(modularInputNames.shape.single() == M)
+        // require(modularOutputNames.shape.single() == M)
     }
-
-    override val modular: ImmutableMultiArray<NegativeScenarioTree>
-        get() = MultiArray.create(M) { (m) ->
-            NegativeScenarioTree(
-                inputEvents = modularInputEvents[m],
-                outputEvents = modularOutputEvents[m],
-                inputNames = modularInputNames[m],
-                outputNames = modularOutputNames[m],
-                isTrie = isTrie
-            ).also {
-                for (scenario in scenarios) {
-                    it.addScenario(scenario.project(m))
-                }
-            }
-        }.toImmutable()
 
     private val _scenarios: MutableList<NegativeCompoundScenario> = mutableListOf()
     private val _nodes: MutableList<Node> = mutableListOf()
@@ -55,6 +40,17 @@ class NegativeCompoundScenarioTree(
 
     override val size: Int get() = nodes.size
     override val root: Node get() = nodes.first()
+
+    override val modular: ImmutableMultiArray<NegativeScenarioTree> =
+        MultiArray.create(M) { (m) ->
+            NegativeScenarioTree(
+                inputEvents = modularInputEvents[m],
+                outputEvents = modularOutputEvents[m],
+                inputNames = modularInputNames[m],
+                outputNames = modularOutputNames[m],
+                isTrie = isTrie
+            )
+        }.toImmutable()
 
     init {
         // Create the root (auto-added to _nodes)
@@ -80,7 +76,7 @@ class NegativeCompoundScenarioTree(
                     if (index + 1 == scenario.loopPosition) {
                         check(loopBack == null) { "Cannot override loopBack = $loopBack to $newNode" }
                         loopBack = newNode
-                        println("[${index + 1}/${scenario.elements.size}] loopBack now = $loopBack")
+                        log.debug { "[${index + 1}/${scenario.elements.size}] loopBack now = $loopBack" }
                     }
                     last = newNode
                 }
@@ -91,7 +87,7 @@ class NegativeCompoundScenarioTree(
                     if (index + 1 == scenario.loopPosition) {
                         check(loopBack == null) { "Cannot override loopBack = $loopBack to $newNode" }
                         loopBack = newNode
-                        println("[${index + 1}/${scenario.elements.size}] loopBack now = $loopBack")
+                        log.debug { "[${index + 1}/${scenario.elements.size}] loopBack now = $loopBack"}
                     }
                     last = newNode
                 }
@@ -105,9 +101,13 @@ class NegativeCompoundScenarioTree(
             check(!(loopBack!!.id in last.loopBacks.map { it.id } && loopBack!! !in last.loopBacks))
             last.loopBacks.add(loopBack!!)
         }
+
+        // println("Added negative compound scenario")
         _scenarios.add(scenario)
         for (m in 1..M) {
+            // println("Also adding the projected compound scenario to module m = $m")
             modular[m].addScenario(scenario.project(m))
+            // println("done")
         }
     }
 

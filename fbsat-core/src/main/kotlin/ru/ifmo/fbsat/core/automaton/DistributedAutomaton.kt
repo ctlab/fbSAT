@@ -27,6 +27,7 @@ import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.toImmutable
 import ru.ifmo.fbsat.core.utils.toMultiArray
+import java.io.File
 
 @Suppress("MemberVisibilityCanBePrivate", "FunctionName", "PropertyName")
 class DistributedAutomaton(
@@ -212,5 +213,14 @@ class DistributedAutomaton(
             }
         }
         return true
+    }
+
+    fun dumpSmv(outDir: File) {
+        for (m in 1..M) {
+            modules[m].dumpSmv(
+                file = outDir.resolve(Globals.modularName[m] + ".smv"),
+                name = Globals.modularName[m]
+            )
+        }
     }
 }

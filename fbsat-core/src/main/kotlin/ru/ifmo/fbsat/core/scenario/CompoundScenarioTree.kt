@@ -3,8 +3,9 @@ package ru.ifmo.fbsat.core.scenario
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.utils.Compound
 
-interface CompoundScenarioTree<S, N> : GenericScenarioTree<S, N>, Compound<ScenarioTree<*, *>>
-    where S : CompoundScenario<*>,
+interface CompoundScenarioTree<T, S, N> : GenericScenarioTree<S, N>, Compound<T>
+    where T : ScenarioTree<*, *>,
+          S : CompoundScenario<*>,
           N : CompoundScenarioTree.Node<*> {
 
     val modularInputEvents: MultiArray<List<InputEvent>>

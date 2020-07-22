@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.task.distributed.complete
 
+import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.clause
@@ -9,16 +10,26 @@ import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.task.distributedCompleteVars
 import ru.ifmo.fbsat.core.task.distributedExtendedVars
 import ru.ifmo.fbsat.core.task.single.complete.updateNegativeReduction
+import ru.ifmo.fbsat.core.utils.log
 
 data class DistributedCompleteTask(
     val numberOfModules: Int, // M
-    val negativeCompoundScenarioTree: NegativeCompoundScenarioTree
+    val negativeCompoundScenarioTree: NegativeCompoundScenarioTree? = null // empty if null
 ) : Task() {
     override fun Solver.declare_() {
+        val modularTree = context.distributedExtendedVars.modularScenarioTree
+        val negTree = negativeCompoundScenarioTree ?: NegativeCompoundScenarioTree(
+            numberOfModules,
+            modularInputEvents = modularTree.map { it.inputEvents },
+            modularOutputEvents = modularTree.map { it.outputEvents },
+            modularInputNames = modularTree.map { it.inputNames },
+            modularOutputNames = modularTree.map { it.outputNames }
+        )
+
         /* Variables */
         val vars = declareDistributedCompleteVariables(
             extendedVars = context.distributedExtendedVars,
-            negativeCompoundScenarioTree = negativeCompoundScenarioTree
+            negativeCompoundScenarioTree = negTree
         ).also {
             context.distributedCompleteVars = it
         }
@@ -39,6 +50,7 @@ fun Solver.updateDistributedNegativeReduction(vars: DistributedCompleteVariables
     for (v in 1..compoundNegV)
         for (l in negativeCompoundScenarioTree.loopBacks(v))
             if (forbiddenLoops.add(v to l)) {
+                log.debug { "Forbidding loop from v = $v to l = $l..." }
                 // OR_{m in 1..M}( aux1_m )
                 clause {
                     for (m in 1..M) with(modularCompleteVariables[m]) {

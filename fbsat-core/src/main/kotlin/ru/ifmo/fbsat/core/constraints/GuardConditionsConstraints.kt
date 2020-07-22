@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.constraints
 
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.OldScenarioTreeInterface
+import ru.ifmo.fbsat.core.scenario.negative.toOld
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.DomainVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
@@ -59,7 +60,7 @@ fun Solver.declareNegativeGuardConditionsConstraints(
         // Note: be very careful with positive/negative variables!
         comment("Negative guard conditions constraints: for inputs")
         declareGuardConditionsConstraintsForInputs(
-            tree = negativeScenarioTree,
+            tree = negativeScenarioTree.toOld(),
             C = C, K = K, P = P, X = X, Us = Us,
             nodeType = nodeType,
             nodeInputVariable = nodeInputVariable,
