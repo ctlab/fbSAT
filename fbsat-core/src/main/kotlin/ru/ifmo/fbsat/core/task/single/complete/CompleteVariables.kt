@@ -3,7 +3,6 @@ package ru.ifmo.fbsat.core.task.single.complete
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
-import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.DomainVarArray

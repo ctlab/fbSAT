@@ -2,8 +2,6 @@ package ru.ifmo.fbsat.core.task.distributed.basic
 
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
-import ru.ifmo.fbsat.core.scenario.ScenarioTree
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.toOld

@@ -2,7 +2,6 @@ package ru.ifmo.fbsat.core.task.distributed.extended
 
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.NodeType
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
