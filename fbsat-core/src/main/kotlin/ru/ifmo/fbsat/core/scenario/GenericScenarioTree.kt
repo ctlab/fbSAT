@@ -40,10 +40,12 @@ internal inline fun <N, E> GenericScenarioTree<*, N>.addGenericScenario(
                         log.warn("  - child = $child")
                     }
                     current = sameNode(index, element, child)
+                    element.nodeId = current.id
                     continue@meow
                 }
             }
         }
         current = newNode(index, element, current)
+        element.nodeId = current.id
     }
 }

@@ -3,14 +3,14 @@ package ru.ifmo.fbsat.core.task.modular.basic.consecutive
 import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.solver.convert
 import ru.ifmo.fbsat.core.task.single.basic.BasicAssignment
 import ru.ifmo.fbsat.core.task.single.basic.toAutomaton
 
 class ConsecutiveModularBasicAssignment(
-    val scenarioTree: OldPositiveScenarioTree,
+    val scenarioTree: PositiveScenarioTree,
     /* Constants */
     val M: Int,
     val C: Int,

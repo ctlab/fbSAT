@@ -48,7 +48,7 @@ class InferExtendedMinUBCommand : AbstractInferMonoCommand("extended-min-ub") {
 
     override fun infer(): Automaton? =
         inferrer.extendedMinUB(
-            scenarioTree = oldTree,
+            scenarioTree = scenarioTree,
             numberOfStates = params.numberOfStates,
             start = params.startMaxGuardSize,
             end = params.endMaxGuardSize,

@@ -49,7 +49,7 @@ class InferConsecutiveModularBasicCommand :
 
     override fun infer(): ConsecutiveModularAutomaton? =
         inferrer.consecutiveModularBasic(
-            scenarioTree = oldTree,
+            scenarioTree = scenarioTree,
             numberOfModules = params.numberOfModules,
             numberOfStates = params.numberOfStates,
             maxOutgoingTransitions = params.maxOutgoingTransitions,

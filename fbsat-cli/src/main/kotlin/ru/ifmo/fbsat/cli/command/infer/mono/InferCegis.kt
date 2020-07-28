@@ -54,7 +54,7 @@ class InferCegisCommand : AbstractInferMonoCommand("cegis") {
 
     override fun infer(): Automaton? =
         inferrer.cegis(
-            scenarioTree = oldTree,
+            scenarioTree = scenarioTree,
             negativeScenarioTree = null,
             numberOfStates = params.numberOfStates,
             maxOutgoingTransitions = params.maxOutgoingTransitions,

@@ -75,16 +75,10 @@ data class NegativeScenario(
             return if (loopPosition == 1) {
                 log.warn("loopPosition = 1, duplicating ${elements.size} elements...")
                 // Duplicate elements
-                NegativeScenario(
-                    elements + elements,
-                    elements.size
-                )
+                NegativeScenario(elements + elements, elements.size)
             } else {
                 // Note: subtract 1. Just because.
-                NegativeScenario(
-                    elements,
-                    loopPosition - 1
-                )
+                NegativeScenario(elements, loopPosition - 1)
             }
         }
 
@@ -96,13 +90,7 @@ data class NegativeScenario(
             outputNames: List<String>
         ): List<NegativeScenario> =
             Counterexample.fromFile(file).map {
-                fromCounterexample(
-                    it,
-                    inputEvents,
-                    outputEvents,
-                    inputNames,
-                    outputNames
-                )
+                fromCounterexample(it, inputEvents, outputEvents, inputNames, outputNames)
             }
     }
 }

@@ -4,7 +4,6 @@ import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.scenario.positive.toOld
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
@@ -47,7 +46,7 @@ fun Solver.declareDistributedBasicVariables(
     /* Modularized BasicVariables */
     val modularBasicVariables = MultiArray.create(M) { (m) ->
         declareBasicVariables(
-            scenarioTree = modularScenarioTree[m].toOld(),
+            scenarioTree = modularScenarioTree[m],
             C = modularC[m],
             K = modularK[m]
         )

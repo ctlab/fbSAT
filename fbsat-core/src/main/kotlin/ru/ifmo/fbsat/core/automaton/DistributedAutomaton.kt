@@ -7,6 +7,8 @@ import ru.ifmo.fbsat.core.scenario.CompoundScenario
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.modularInputActionsSeq
+import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenario
+import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.utils.Compound
@@ -27,6 +29,7 @@ import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.toImmutable
 import ru.ifmo.fbsat.core.utils.toMultiArray
+import ru.ifmo.fbsat.core.utils.withIndex
 import java.io.File
 
 @Suppress("MemberVisibilityCanBePrivate", "FunctionName", "PropertyName")
@@ -164,7 +167,7 @@ class DistributedAutomaton(
             val element = scenario.elements[i]
             for (m in 1..M) {
                 if (element.modular.toMultiArray()[m].outputAction != result.modular.toMultiArray()[m].outputAction) {
-                    log.error("No mapping for m = $m, element = $element, result = $result")
+                    // log.error("No mapping for m = $m, element = $element, result = $result")
                     break@out
                 }
             }
@@ -193,11 +196,71 @@ class DistributedAutomaton(
     }
 
     /**
+     * Verify the given [negativeCompoundScenario].
+     *
+     * @return `true` if [negativeCompoundScenario] is satisfied.
+     */
+    fun verify(negativeCompoundScenario: NegativeCompoundScenario): Boolean {
+        val mapping: List<ModularState?> = map(negativeCompoundScenario)
+        if (negativeCompoundScenario.loopPosition != null) {
+            val loop = mapping[negativeCompoundScenario.loopPosition - 1]
+            val last = mapping.last()
+            // log.debug { "loop = ${loop?.values}" }
+            // log.debug { "last = ${last?.values}" }
+            return when {
+                loop == null || last == null -> {
+                    // Either `loop` or `last` elements are unmapped,
+                    // which means that the negative scenario is not satisfied.
+                    // log.debug { "Either 'loop' or 'last' element is unmapped" }
+                    true
+                }
+                loop.values.map { it.id } == last.values.map { it.id } -> {
+                    // Both `loop` and `last` elements map to the same state,
+                    // which means that the negative scenario is satisfied.
+                    log.error("Negative scenario is satisfied (loop==last)")
+                    // for ((i, state) in mapping.withIndex(start = 1)) {
+                    //     log.debug { "$i -> ${state?.values}" }
+                    // }
+                    false
+                }
+                else -> {
+                    // `loop` and `last` elements map to different states,
+                    // which means that the negative scenario is not satisfied.
+                    // log.debug { "Both 'loop' and 'last' elements map to different states" }
+                    true
+                }
+            }
+        } else {
+            log.warn("Loopless negative scenario?")
+            val last = mapping.last()
+            return if (last != null) {
+                // Satisfaction of the terminal (`last`) element of loop-less negative scenario
+                // implies the satisfaction of the negative scenario itself.
+                log.error("Negative scenario is satisfied (terminal)")
+                false
+            } else {
+                // Terminal (`last`) element of loop-less negative scenario is unmapped,
+                // which means that the negative scenario is not satisfied.
+                // log.debug { "Terminal 'last' element is unmapped" }
+                true
+            }
+        }
+    }
+
+    /**
      * Verify all positive scenarios in the given [scenarioTree].
      *
      * @return `true` if **all** scenarios are satisfied.
      */
     fun verify(scenarioTree: PositiveCompoundScenarioTree): Boolean =
+        scenarioTree.scenarios.all(::verify)
+
+    /**
+     * Verify all negative scenarios in the given [scenarioTree].
+     *
+     * @return `true` if **all** scenarios are **not** satisfied.
+     */
+    fun verify(scenarioTree: NegativeCompoundScenarioTree): Boolean =
         scenarioTree.scenarios.all(::verify)
 
     /**
@@ -215,11 +278,11 @@ class DistributedAutomaton(
         return true
     }
 
-    fun dumpSmv(outDir: File) {
+    fun dumpSmv(outDir: File, modularModuleName: MultiArray<String>) {
         for (m in 1..M) {
             modules[m].dumpSmv(
-                file = outDir.resolve(Globals.modularName[m] + ".smv"),
-                name = Globals.modularName[m]
+                file = outDir.resolve(modularModuleName[m] + ".smv"),
+                name = modularModuleName[m]
             )
         }
     }

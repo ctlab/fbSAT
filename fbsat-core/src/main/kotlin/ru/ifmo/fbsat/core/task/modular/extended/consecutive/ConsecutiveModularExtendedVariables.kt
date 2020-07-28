@@ -2,7 +2,7 @@ package ru.ifmo.fbsat.core.task.modular.extended.consecutive
 
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.NodeType
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
@@ -13,7 +13,7 @@ import ru.ifmo.fbsat.core.task.single.extended.declareExtendedVariables
 
 @Suppress("PropertyName")
 class ConsecutiveModularExtendedVariables(
-    val scenarioTree: OldPositiveScenarioTree,
+    val scenarioTree: PositiveScenarioTree,
     /* Constants */
     val M: Int,
     val C: Int,

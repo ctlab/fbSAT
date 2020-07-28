@@ -49,7 +49,7 @@ class InferCegisMinCommand : AbstractInferMonoCommand("cegis-min") {
 
     override fun infer(): Automaton? =
         inferrer.cegisMin(
-            scenarioTree = oldTree,
+            scenarioTree = scenarioTree,
             initialNegativeScenarioTree = null,
             numberOfStates = params.numberOfStates,
             startNumberOfStates = params.startNumberOfStates,

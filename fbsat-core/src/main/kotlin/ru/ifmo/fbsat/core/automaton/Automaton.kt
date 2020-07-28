@@ -22,6 +22,7 @@ import ru.ifmo.fbsat.core.utils.graph
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.random
+import ru.ifmo.fbsat.core.utils.toBinaryString
 import java.io.File
 
 class Automaton(
@@ -73,7 +74,7 @@ class Automaton(
         transitions.sumBy { it.guard.size }
     }
 
-    constructor(scenarioTree: OldPositiveScenarioTree) : this(
+    constructor(scenarioTree: PositiveScenarioTree) : this(
         scenarioTree.inputEvents,
         scenarioTree.outputEvents,
         scenarioTree.inputNames,
@@ -292,7 +293,7 @@ class Automaton(
         out@ for ((i, result) in eval(scenario).withIndex()) {
             val element = scenario.elements[i]
             if (result.outputAction != element.outputAction) {
-                log.error("No mapping for ${i + 1}-th element = $element, result = $result")
+                // log.error("No mapping for ${i + 1}-th element = $element, result = $result")
                 break@out
             }
             mapping[i] = result
@@ -333,7 +334,7 @@ class Automaton(
                     // which means that the negative scenario is not satisfied.
                     true
                 }
-                loop == last -> {
+                loop.id == last.id -> {
                     // Both `loop` and `last` elements map to the same state,
                     // which means that the negative scenario is satisfied.
                     log.error("Negative scenario is satisfied (loop==last)")
@@ -428,6 +429,30 @@ class Automaton(
      * Pretty-print automaton.
      */
     fun pprint() {
+        val codeOutputEvents =
+            states.map {
+                if (it.outputEvent != null) outputEvents.indexOf(it.outputEvent) + 1 else 0
+            }
+        val codeAlgorithms =
+            states.map {
+                with(it.algorithm as BinaryAlgorithm) {
+                    algorithm0.toBinaryString().toInt(2) + algorithm1.toBinaryString().toInt(2)
+                }
+            }
+        val codeTransitionEvents =
+            transitions.map {
+                if (it.inputEvent != null) inputEvents.indexOf(it.inputEvent) + 1 else 0
+            }
+        val codeTransitionGuards =
+            transitions.map {
+                it.guard.truthTableString.toInt(2)
+            }
+        val code =
+            (codeOutputEvents + codeAlgorithms + codeTransitionEvents + codeTransitionGuards)
+                .fold(0) { acc, i ->
+                    (acc + i).rem(1_000_000_000)
+                }
+        log.just("Automaton Hash-Code: $code")
         log.just(toSimpleString().prependIndent("  "))
     }
 

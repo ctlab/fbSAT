@@ -6,14 +6,14 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.core.automaton.TruthTableGuard
 import ru.ifmo.fbsat.core.automaton.endow
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.solver.convert
 import ru.ifmo.fbsat.core.utils.countTrue
 import ru.ifmo.fbsat.core.utils.withIndex
 
 class BasicAssignment(
-    val scenarioTree: OldPositiveScenarioTree,
+    val scenarioTree: PositiveScenarioTree,
     /* Constants */
     val C: Int,
     val K: Int,

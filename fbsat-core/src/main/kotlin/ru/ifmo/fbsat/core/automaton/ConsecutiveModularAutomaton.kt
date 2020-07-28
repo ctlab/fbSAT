@@ -7,6 +7,7 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.withIndex
@@ -25,7 +26,7 @@ class ConsecutiveModularAutomaton(
     val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
     val totalGuardsSize: Int = modules.values.sumBy { it.totalGuardsSize }
 
-    constructor(modules: MultiArray<Automaton>, scenarioTree: OldPositiveScenarioTree) : this(
+    constructor(modules: MultiArray<Automaton>, scenarioTree: PositiveScenarioTree) : this(
         modules,
         scenarioTree.inputEvents,
         scenarioTree.outputEvents,

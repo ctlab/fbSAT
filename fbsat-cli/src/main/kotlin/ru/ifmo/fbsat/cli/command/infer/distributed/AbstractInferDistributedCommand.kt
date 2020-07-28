@@ -5,7 +5,6 @@ import ru.ifmo.fbsat.cli.command.infer.AbstractInferCommand
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.CompoundScenarioElement
 import ru.ifmo.fbsat.core.scenario.OutputValues
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
@@ -26,14 +25,12 @@ abstract class AbstractInferDistributedCommand(name: String) :
     protected abstract val outDir: File
 
     protected lateinit var scenarioTree: PositiveScenarioTree private set
-    protected lateinit var oldTree: OldPositiveScenarioTree private set
     protected lateinit var compoundScenarioTree: PositiveCompoundScenarioTree private set
     protected lateinit var inferrer: Inferrer private set
 
     final override fun setup() {
         Globals.INITIAL_OUTPUT_VALUES = extraOptions.initialOutputValues ?: OutputValues.zeros(outputNames.size)
-        oldTree = OldPositiveScenarioTree.fromFile(scenariosFile, inputNames, outputNames)
-        scenarioTree = PositiveScenarioTree.fromOld(oldTree)
+        scenarioTree = PositiveScenarioTree.fromFile(scenariosFile, inputNames, outputNames)
         scenarioTree.printStats()
         inferrer = Inferrer(solverOptions.solver, outDir)
         val M = numberOfModules

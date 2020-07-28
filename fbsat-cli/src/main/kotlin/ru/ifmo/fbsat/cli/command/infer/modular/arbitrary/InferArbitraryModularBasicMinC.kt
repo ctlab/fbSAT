@@ -48,7 +48,7 @@ class InferArbitraryModularBasicMinCCommand :
 
     override fun infer(): ArbitraryModularAutomaton? =
         inferrer.arbitraryModularBasicMinC(
-            scenarioTree = oldTree,
+            scenarioTree = scenarioTree,
             numberOfModules = params.numberOfModules,
             start = params.startNumberOfStates,
             end = params.endNumberOfStates

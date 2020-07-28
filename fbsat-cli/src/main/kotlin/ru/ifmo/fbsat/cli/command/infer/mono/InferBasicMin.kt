@@ -40,7 +40,7 @@ class InferBasicMinCommand : AbstractInferMonoCommand("basic-min") {
 
     override fun infer(): Automaton? =
         inferrer.basicMin(
-            scenarioTree = oldTree,
+            scenarioTree = scenarioTree,
             isEncodeReverseImplication = extraOptions.isEncodeReverseImplication
         )
 }

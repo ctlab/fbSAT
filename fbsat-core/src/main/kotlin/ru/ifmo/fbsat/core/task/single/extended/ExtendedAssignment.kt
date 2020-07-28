@@ -8,13 +8,13 @@ import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.automaton.ParseTreeGuard
 import ru.ifmo.fbsat.core.automaton.endow
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
 import ru.ifmo.fbsat.core.solver.convert
 import ru.ifmo.fbsat.core.utils.countTrue
 
 class ExtendedAssignment(
-    val scenarioTree: OldPositiveScenarioTree,
+    val scenarioTree: PositiveScenarioTree,
     val C: Int,
     val K: Int,
     val P: Int,

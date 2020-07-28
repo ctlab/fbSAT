@@ -14,11 +14,7 @@ import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
-import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenario
-import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
-import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
-import ru.ifmo.fbsat.core.scenario.negative.readCounterexampleFromFile
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.toOld
@@ -29,7 +25,6 @@ import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.createNullable
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.toMultiArray
 import java.io.File
@@ -42,50 +37,28 @@ fun main() {
     // 2: receiver
     val modularName = MultiArray.create(M) { (m) ->
         when (m) {
-            1 -> "sndr"
-            2 -> "rcvr"
+            1 -> "sender"
+            2 -> "receiver"
             else -> error("Are you lost?")
         }
     }
-
-    val inputMapping: Map<String, String> = mapOf(
-        "sndr.send" to "sclt.send",
-        "sndr.timeout" to "tmr.timeout",
-        "sndr.acknowledge" to "bwdc.output",
-        "sndr.input_bit" to "bwdc.output_bit",
-        "rcvr.packet" to "fwdc.output",
-        "rcvr.input_bit" to "fwdc.output_bit"
-    )
-
-    val modularInputEvents = MultiArray.create(M) { (m) ->
-        when (m) {
-            1 -> listOf("send", "timeout", "acknowledge")
-            2 -> listOf("packet")
-            else -> error("Are you lost?")
-        }
-            // .map { "${modularName[m]}.$it" }
-            .map { InputEvent(it) }
+    val modularInputEvents = MultiArray.create(M) {
+        listOf("REQ").map { InputEvent(it) }
     }
-    val modularOutputEvents = MultiArray.create(M) { (m) ->
-        when (m) {
-            1 -> listOf("done", "packet")
-            2 -> listOf("deliver", "acknowledge")
-            else -> error("Are you lost?")
-        }
-            // .map { "${modularName[m]}.$it" }
-            .map { OutputEvent(it) }
+    val modularOutputEvents = MultiArray.create(M) {
+        listOf("CNF").map { OutputEvent(it) }
     }
     val modularInputNames = MultiArray.create(M) { (m) ->
         when (m) {
-            1 -> listOf("input_bit")
+            1 -> listOf("send", "timeout", "acknowledge", "input_bit")
             2 -> listOf("input_bit")
             else -> error("Are you lost?")
         } // .map { "${modularName[m]}.$it" }
     }
     val modularOutputNames = MultiArray.create(M) { (m) ->
         when (m) {
-            1 -> listOf("output_bit")
-            2 -> listOf("output_bit")
+            1 -> listOf("done", "packet", "output_bit")
+            2 -> listOf("deliver", "acknowledge", "output_bit")
             else -> error("Are you lost?")
         } // .map { "${modularName[m]}.$it" }
     }
@@ -93,8 +66,8 @@ fun main() {
     val outDir = File("out/abp-take")
     val inferrer = Inferrer(solver, outDir)
 
-    check(modularOutputNames.values.all { it.size == 1 })
-    Globals.INITIAL_OUTPUT_VALUES = OutputValues.zeros(1)
+    check(modularOutputNames.values.all { it.size == 3 })
+    Globals.INITIAL_OUTPUT_VALUES = OutputValues.zeros(3)
     Globals.IS_FORBID_TRANSITIONS_TO_FIRST_STATE = false
     Globals.EPSILON_OUTPUT_EVENTS = EpsilonOutputEvents.NONE
     // Globals.IS_BFS_AUTOMATON = false
@@ -122,7 +95,7 @@ fun main() {
     // }
     // print("states[0] = "); pp(states[0])
 
-    val traceElements = trace.nodes
+    val traceElementsAll = trace.nodes
         .map { node ->
             node.states.single().values.associate { value ->
                 value.variable to value.content.toBoolean()
@@ -133,20 +106,28 @@ fun main() {
                 modular = MultiArray.create(M) { (m) ->
                     ScenarioElement(
                         inputAction = InputAction(
-                            event = modularInputEvents[m].firstOrNull { inputData.getValue(inputMapping.getValue("${modularName[m]}.${it.name}")) },
-                            values = InputValues(modularInputNames[m].map { inputData.getValue(inputMapping.getValue("${modularName[m]}.$it")) })
+                            event = modularInputEvents[m].firstOrNull {
+                                inputData.getValue("${modularName[m]}$${it.name}")
+                            },
+                            values = InputValues(modularInputNames[m].map {
+                                inputData.getValue("${modularName[m]}$$it")
+                            })
                         ),
                         outputAction = OutputAction(
-                            event = modularOutputEvents[m].firstOrNull { outputData.getValue("${modularName[m]}.${it.name}") },
-                            values = OutputValues(modularOutputNames[m].map { outputData.getValue("${modularName[m]}.$it") })
+                            event = modularOutputEvents[m].firstOrNull {
+                                outputData.getValue("${modularName[m]}.${it.name}")
+                            },
+                            values = OutputValues(modularOutputNames[m].map {
+                                outputData.getValue("${modularName[m]}.$it")
+                            })
                         )
                     )
                 }
             )
         }
-        .filter { element ->
-            element.modularInputEvent.values.all { it != null }
-        }
+    val traceElements = traceElementsAll.filter { element ->
+        element.modularInputEvent.values.any { it != null }
+    }
     // for (i in elements.indices) {
     //     if (elements[i].modularInputAction.values.any { it.event == null }) {
     //         log.warn("null input event in element i = $i: ${elements[i]}")
@@ -154,6 +135,10 @@ fun main() {
     // }
     val positiveCompoundScenario = PositiveCompoundScenario(M, traceElements)
     // println("scenario = $scenario")
+    println("traceElementsAll (${traceElementsAll.size}):")
+    for (element in traceElementsAll) {
+        println("  - $element")
+    }
 
     val positiveCompoundScenarioTree = PositiveCompoundScenarioTree(
         M = M,
@@ -176,55 +161,58 @@ fun main() {
 
     // ===== Counterexample
 
-    val counterexamples = readCounterexampleFromFile(File("data/abp-take/ce.xml"))
-    val counterexample = counterexamples.first()
-    // val counterexample = xml.parse(THE_Counterexample.serializer(), xmlString)
-    val loopPosition = counterexample.loops.trim().split(" ").firstOrNull()?.toInt()
-    println("loopPosition = $loopPosition")
-    val ceElements = counterexample.nodes
-        .map { node ->
-            node.states.single().values.associate { value ->
-                value.variable to value.content.toBoolean()
-            }
-        }
-        .zipWithNext { inputData, outputData ->
-            CompoundScenarioElement(
-                modular = MultiArray.create(M) { (m) ->
-                    ScenarioElement(
-                        inputAction = InputAction(
-                            event = modularInputEvents[m].firstOrNull { inputData.getValue(inputMapping.getValue("${modularName[m]}.${it.name}")) },
-                            values = InputValues(modularInputNames[m].map { inputData.getValue(inputMapping.getValue("${modularName[m]}.$it")) })
-                        ),
-                        outputAction = OutputAction(
-                            event = modularOutputEvents[m].firstOrNull { outputData.getValue("${modularName[m]}.${it.name}") },
-                            values = OutputValues(modularOutputNames[m].map { outputData.getValue("${modularName[m]}.$it") })
-                        )
-                    )
-                }
-            )
-        }
-    // .filter { element ->
-    //     element.modularInputEvent.values.all { it != null }
+    // val counterexamples = readCounterexampleFromFile(File("data/abp-take/ce.xml"))
+    // val counterexample = counterexamples.first()
+    // val negativeScenario = NegativeCompoundScenario.fromCounterexample(
+    //     counterexample = counterexample,
+    //     M = M,
+    //     modularName = modularName,
+    //     inputMapping = inputMapping,
+    //     modularInputEvents = modularInputEvents,
+    //     modularOutputEvents = modularOutputEvents,
+    //     modularInputNames = modularInputNames,
+    //     modularOutputNames = modularOutputNames
+    // )
+    // val negativeCompoundScenarioTree = NegativeCompoundScenarioTree(
+    //     M = 1,
+    //     modularInputEvents = modularInputEvents,
+    //     modularOutputEvents = modularOutputEvents,
+    //     modularInputNames = modularInputNames,
+    //     modularOutputNames = modularOutputNames
+    // )
+    // negativeCompoundScenarioTree.addScenario(negativeScenario)
+    //
+    // println("negativeCompoundScenarioTree.modular[1].uniqueInputs: ${negativeCompoundScenarioTree.modular[1].uniqueInputs}")
+    //
+    // val negativeScenario1 = NegativeScenario.fromFile(
+    //     file = File("data/abp-take/ce1.txt"),
+    //     inputEvents = modularInputEvents[1].map { InputEvent("sender_in_${it.name}") },
+    //     outputEvents = modularOutputEvents[1].map { OutputEvent("sender_out_${it.name}") },
+    //     inputNames = modularInputNames[1].map { "sender_$it" },
+    //     outputNames = modularOutputNames[1].map { "sender_$it" }
+    // ).single()
+
+    // val negativeCompoundScenarioTree = NegativeCompoundScenarioTree(
+    //     M = 1,
+    //     modularInputEvents = modularInputEvents,
+    //     modularOutputEvents = modularOutputEvents,
+    //     modularInputNames = modularInputNames,
+    //     modularOutputNames = modularOutputNames
+    // )
+    // val counterexamples = readCounterexamplesFromFile(File("allce.xml"))
+    // for (ce in counterexamples) {
+    //     negativeCompoundScenarioTree.addScenario(
+    //         NegativeCompoundScenario.fromCounterexample(
+    //             counterexample = ce,
+    //             M = 1,
+    //             modularName = modularName,
+    //             modularInputEvents = modularInputEvents,
+    //             modularOutputEvents = modularOutputEvents,
+    //             modularInputNames = modularInputNames,
+    //             modularOutputNames = modularOutputNames
+    //         )
+    //     )
     // }
-    val negativeScenario = NegativeCompoundScenario(M, ceElements, loopPosition?.let { it - 1 })
-    val negativeCompoundScenarioTree = NegativeCompoundScenarioTree(
-        M = 1,
-        modularInputEvents = modularInputEvents,
-        modularOutputEvents = modularOutputEvents,
-        modularInputNames = modularInputNames,
-        modularOutputNames = modularOutputNames
-    )
-    negativeCompoundScenarioTree.addScenario(negativeScenario)
-
-    println("negativeCompoundScenarioTree.modular[1].uniqueInputs: ${negativeCompoundScenarioTree.modular[1].uniqueInputs}")
-
-    val negativeScenario1 = NegativeScenario.fromFile(
-        file = File("data/abp-take/ce1.txt"),
-        inputEvents = modularInputEvents[1].map { InputEvent("sender_in_${it.name}") },
-        outputEvents = modularOutputEvents[1].map { OutputEvent("sender_out_${it.name}") },
-        inputNames = modularInputNames[1].map { "sender_$it" },
-        outputNames = modularOutputNames[1].map { "sender_$it" }
-    ).single()
 
     // val C: Int = 6
     // val K: Int? = null
@@ -235,8 +223,8 @@ fun main() {
     val C: Int = 4
     val K: Int? = null
     val P: Int = 5
-    val T: Int? = 20
-    val N: Int? = 23
+    val T: Int? = 8
+    val N: Int? = 15
 
     log.info("Inferring the sender...")
     // val automatonSender = inferrer.basic(
@@ -255,6 +243,14 @@ fun main() {
     //     maxTransitions = T,
     //     maxTotalGuardsSize = N
     // )
+    // val automatonSender: Automaton? = inferrer.distributedBasic(
+    //     numberOfModules = M,
+    //     compoundScenarioTree = positiveCompoundScenarioTree,
+    //     modularScenarioTree = positiveCompoundScenarioTree.modular,
+    //     modularNumberOfStates = MultiArray.create(M) { C },
+    //     modularMaxOutgoingTransitions = MultiArray.createNullable(M) { K },
+    //     modularMaxTransitions = MultiArray.createNullable(M) { T }
+    // )?.let { it.modules[1] }
     // val automatonSender: Automaton? = inferrer.distributedBasic(
     //     numberOfModules = 1,
     //     compoundScenarioTree = positiveCompoundScenarioTree,
@@ -309,16 +305,16 @@ fun main() {
         else {
             log.failure("Verify2: FAILED")
         }
-        if (automatonSender.verify(negativeScenario1))
-            log.success("Verify negative1: OK")
-        else {
-            log.failure("Verify negative1: FAILED")
-        }
-        if (automatonSender.verify(negativeScenario.project(1)))
-            log.success("Verify negative[1]: OK")
-        else {
-            log.failure("Verify negative[1]: FAILED")
-        }
+        // if (automatonSender.verify(negativeScenario1))
+        //     log.success("Verify negative1: OK")
+        // else {
+        //     log.failure("Verify negative1: FAILED")
+        // }
+        // if (automatonSender.verify(negativeScenario.project(1)))
+        //     log.success("Verify negative[1]: OK")
+        // else {
+        //     log.failure("Verify negative[1]: FAILED")
+        // }
 
         println("Mapping:")
         val automatonMapping = automatonSender.map(oldScenario)
@@ -327,6 +323,27 @@ fun main() {
             if (state == null) break
         }
     }
+
+    // val distributedAutomaton: DistributedAutomaton? = inferrer.distributedCegis(
+    //     numberOfModules = 1,
+    //     compoundScenarioTree = positiveCompoundScenarioTree,
+    //     modularScenarioTree = MultiArray.create(1) { positiveCompoundScenarioTree.modular[1] },
+    //     // negativeCompoundScenarioTree = negativeCompoundScenarioTree,
+    //     modularNumberOfStates = MultiArray.create(1) { C },
+    //     modularMaxOutgoingTransitions = MultiArray.createNullable(1) { K },
+    //     modularMaxGuardSize = MultiArray.create(1) { P },
+    //     modularMaxTransitions = MultiArray.createNullable(1) { T },
+    //     smvDir = File("data/abp-take/smv")
+    // )
+
+    // if (distributedAutomaton == null ) {
+    //     log.failure("Distributed automaton not found")
+    // } else {
+    //     log.success("Inferred distributed automaton has: " +
+    //         "C = ${distributedAutomaton.modular.map { it.numberOfStates }.values.joinToString("+") { it.toString() }} = ${distributedAutomaton.numberOfStates}, " +
+    //         "T = ${distributedAutomaton.modular.map { it.numberOfTransitions }.values.joinToString("+") { it.toString() }} = ${distributedAutomaton.numberOfTransitions}, " +
+    //         "N = ${distributedAutomaton.modular.map { it.totalGuardsSize }.values.joinToString("+") { it.toString() }} = ${distributedAutomaton.totalGuardsSize}")
+    // }
 
     log.success("All done in %.3f seconds".format(timeSince(timeStart).seconds))
 }

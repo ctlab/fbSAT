@@ -50,7 +50,7 @@ class InferExtendedCommand : AbstractInferMonoCommand("extended") {
 
     override fun infer(): Automaton? =
         inferrer.extended(
-            scenarioTree = oldTree,
+            scenarioTree = scenarioTree,
             numberOfStates = params.numberOfStates,
             maxOutgoingTransitions = params.maxOutgoingTransitions,
             maxGuardSize = params.maxGuardSize,

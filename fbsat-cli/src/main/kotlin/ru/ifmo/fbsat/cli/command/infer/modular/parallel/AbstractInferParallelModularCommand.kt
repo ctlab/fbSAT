@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.cli.command.infer.modular.parallel
 
 import ru.ifmo.fbsat.cli.command.infer.AbstractInferCommandWithSetup
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
+import ru.ifmo.fbsat.core.scenario.positive.toOld
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.withIndex
 
@@ -23,7 +24,7 @@ abstract class AbstractInferParallelModularCommand(name: String) :
 
             // TODO: automaton.dump(outDir)
 
-            if (automaton.verify(oldTree))
+            if (automaton.verify(scenarioTree.toOld()))
                 log.success("Verify: OK")
             else {
                 log.failure("Verify: FAILED")

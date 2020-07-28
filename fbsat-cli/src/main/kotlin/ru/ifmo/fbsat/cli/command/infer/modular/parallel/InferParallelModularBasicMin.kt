@@ -43,7 +43,7 @@ class InferParallelModularBasicMinCommand :
 
     override fun infer(): ParallelModularAutomaton? =
         inferrer.parallelModularBasicMin(
-            scenarioTree = oldTree,
+            scenarioTree = scenarioTree,
             numberOfModules = params.numberOfModules
         )
 }

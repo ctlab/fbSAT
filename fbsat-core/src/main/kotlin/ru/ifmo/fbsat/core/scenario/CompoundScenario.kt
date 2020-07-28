@@ -31,7 +31,7 @@ class CompoundScenarioElement private constructor(
 ) : GenericScenario.Element<CompoundInputAction, CompoundOutputAction>,
     CompoundImpl<ScenarioElement>() {
 
-    var nodeId: Int? = null
+    override var nodeId: Int? = null
 
     val modularInputAction: MultiArray<InputAction> = inputAction.modular
     val modularOutputAction: MultiArray<OutputAction> = outputAction.modular

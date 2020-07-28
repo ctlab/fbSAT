@@ -102,7 +102,7 @@ data class Counterexample(
                         else -> {
                             val (name, value) = line.split(" = ", limit = 2)
                             // Cut dot-prefix in name (e.g. "C." - controller var, or "P." - plant var)
-                            variables[name.substringAfter('.')] = value
+                            variables[name.substringAfter('.').substringAfter("$")] = value
                         }
                     }
                 }
@@ -167,15 +167,23 @@ data class THE_Counterexample(
     )
 }
 
-fun readCounterexampleFromFile(file: File): List<THE_Counterexample> {
+fun readCounterexamplesFromFile(file: File): List<THE_Counterexample> {
+    println("readCounterexamplesFromFile(file = $file)")
     val xml = XML()
-    val xmlString = File("data/abp-take/ce.xml").readText().replace("<loops> </loops>", "<loops/>")
-    val headerLines = xmlString.lines().mapIndexedNotNull { index, s -> if (s.startsWith("<?xml")) index else null }
-    return (headerLines + xmlString.lines().size)
+    val xmlString = file.readText()
+        .replace("<loops> </loops>", "<loops/>")
+    val lines = xmlString.lines()
+    val headerLines = lines.mapIndexedNotNull { index, s ->
+        if (s.startsWith("<?xml")) index else null
+    }.toList()
+    return (headerLines + lines.size)
         .zipWithNext { a, b ->
-            xmlString.lines().subList(a, b).joinToString("\n")
+            lines.subList(a, b).joinToString("\n")
         }
         .map {
             xml.parse(THE_Counterexample.serializer(), it)
+        }
+        .also {
+            check(it.size == xmlString.lineSequence().count { line -> line.contains("?xml") })
         }
 }

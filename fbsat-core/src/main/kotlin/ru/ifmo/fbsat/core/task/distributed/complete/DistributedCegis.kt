@@ -8,17 +8,17 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
-import ru.ifmo.fbsat.core.scenario.negative.readCounterexampleFromFile
+import ru.ifmo.fbsat.core.scenario.negative.readCounterexamplesFromFile
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask
 import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedTask
-import ru.ifmo.fbsat.core.task.distributed.extended.inferDistributedExtended
 import ru.ifmo.fbsat.core.task.distributedCompleteVars
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 import ru.ifmo.fbsat.core.utils.timeSince
+import ru.ifmo.fbsat.core.utils.toMultiArray
 import java.io.File
 
 fun Inferrer.distributedCegis(
@@ -82,48 +82,28 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
     val M = vars.M
     val modularName = MultiArray.create(M) { (m) ->
         when (m) {
-            1 -> "sndr"
-            2 -> "rcvr"
+            1 -> "sender"
+            2 -> "receiver"
             else -> error("Are you lost?")
         }
     }
-    val inputMapping: Map<String, String> = mapOf(
-        "sndr.send" to "sclt.send",
-        "sndr.timeout" to "tmr.timeout",
-        "sndr.acknowledge" to "bwdc.output",
-        "sndr.input_bit" to "bwdc.output_bit",
-        "rcvr.packet" to "fwdc.output",
-        "rcvr.input_bit" to "fwdc.output_bit"
-    )
-    val modularInputEvents = MultiArray.create(M) { (m) ->
-        when (m) {
-            1 -> listOf("send", "timeout", "acknowledge")
-            2 -> listOf("packet")
-            else -> error("Are you lost?")
-        }
-            // .map { "${modularName[m]}.$it" }
-            .map { InputEvent(it) }
+    val modularInputEvents = MultiArray.create(M) {
+        listOf("REQ").map { InputEvent(it) }
     }
-    val modularOutputEvents = MultiArray.create(M) { (m) ->
-        when (m) {
-            1 -> listOf("done", "packet")
-            2 -> listOf("deliver", "acknowledge")
-            else -> error("Are you lost?")
-        }
-            // .map { "${modularName[m]}.$it" }
-            .map { OutputEvent(it) }
+    val modularOutputEvents = MultiArray.create(M) {
+        listOf("CNF").map { OutputEvent(it) }
     }
     val modularInputNames = MultiArray.create(M) { (m) ->
         when (m) {
-            1 -> listOf("input_bit")
+            1 -> listOf("send", "timeout", "acknowledge", "input_bit")
             2 -> listOf("input_bit")
             else -> error("Are you lost?")
         } // .map { "${modularName[m]}.$it" }
     }
     val modularOutputNames = MultiArray.create(M) { (m) ->
         when (m) {
-            1 -> listOf("output_bit")
-            2 -> listOf("output_bit")
+            1 -> listOf("done", "packet", "output_bit")
+            2 -> listOf("deliver", "acknowledge", "output_bit")
             else -> error("Are you lost?")
         } // .map { "${modularName[m]}.$it" }
     }
@@ -136,7 +116,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
         // Update to take into account possible extension of the negative scenario tree
         solver.updateDistributedNegativeReduction(vars)
         // Infer update
-        val automaton = inferDistributedExtended()
+        val automaton = inferDistributedComplete()
         if (automaton == null) {
             log.failure("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
             return null
@@ -144,12 +124,69 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
         // ==============
         // Dump intermediate automaton
         // automaton.dump(outDir, "_automaton_iter%04d".format(iterationNumber))
+        automaton.modules[1].dump(outDir, "_${modularName[1]}_iter%04d".format(iterationNumber))
+        // Print intermediate automaton
+        log.info("Intermediate inferred automaton (module 1):")
+        automaton.modules[1].pprint()
+        // Check that inferred automaton does not satisfy negative scenario tree
+        // log.info("Post-infer negative tree verify...")
+        // var ok = true
+        // for ((i, negScenario) in negativeTree.scenarios.withIndex(start = 1)) {
+        //     if (automaton.verify(negScenario)) {
+        //         log.success("[$i / ${negativeTree.scenarios.size}] Verify: OK")
+        //     } else {
+        //         log.failure("[$i / ${negativeTree.scenarios.size}] Verify: FAILED")
+        //         ok = false
+        //         val raw: RawAssignment = solver.context["lastRawAssignment"]
+        //         val C = vars.modularC[1]
+        //         val E = vars.modularE[1]
+        //         val U = vars.modularCompleteVariables[1].negU
+        //         // val assignment =
+        //         //     DistributedExtendedAssignment.fromRaw(rawAssignment, solver.context.distributedExtendedVars)
+        //         val completeVars = vars.modularCompleteVariables[1]
+        //         val negActualTransitionFunction = completeVars.negActualTransitionFunction.convert(raw)
+        //         for (u in 1..U)
+        //             for (c in 1..C)
+        //                 for (e in 1..E) {
+        //                     println("negActualTransitionFunction[c = $c, e = $e, u = $u = ${negativeTree.modular[1].uniqueInputs[u - 1].values.toBinaryString()}] = ${negActualTransitionFunction[c, e, u]}")
+        //                 }
+        //         val stateOutputEvent = completeVars.stateOutputEvent.convert(raw)
+        //         val negMapping = completeVars.negMapping.convert(raw)
+        //         val negFirstFired = completeVars.negFirstFired.convert(raw)
+        //         val negTransitionFiring = completeVars.negTransitionFiring.convert(raw)
+        //         val negTransitionTruthTable = completeVars.negTransitionTruthTable.convert(raw)
+        //         val actualTransitionFunction = completeVars.actualTransitionFunction.convert(raw)
+        //         val u = negativeTree.modular[1].uniqueInputs
+        //             .indexOf(InputValues("0111".toBooleanList())) + 1
+        //         println("===")
+        //         println(
+        //             "negMapping[tp(v) = ${negativeTree.modular[1].parent(867)}] = " +
+        //                 "${negMapping[negativeTree.modular[1].parent(867)]}"
+        //         )
+        //         println("negMapping[v = 867] = ${negMapping[867]}")
+        //         println("negActualTransitionFunction[c=4, e=1, u=$u=0111] = ${negActualTransitionFunction[4, 1, u]}")
+        //         println("stateOutputEvent[c=4] = ${stateOutputEvent[4]}")
+        //         println("negFirstFired[c=4, e=1, u=$u=0111] = ${negFirstFired[4, 1, u]}")
+        //         println("negTransitionFiring[c=4, k=1, e=1, u=$u=0111] = ${negTransitionFiring[4, 1, 1, u]}")
+        //         println("negTransitionTruthTable[c=4, k=1, u=$u=0111] = ${negTransitionTruthTable[4, 1, u]}")
+        //         println("actualTransitionFunction[c=4, e=1, u=$u=0111] = ${actualTransitionFunction[4, 1, u]}")
+        //         // for (p in 1..completeVars.P) {
+        //         //     println("nodeType[]")
+        //         // }
+        //         println("===")
+        //     }
+        // }
+        // check(ok) { "Post-infer negative scenario tree verification failed" }
+        // log.success("Post-infer negative tree verify: OK")
         // ==============
         // Verify automaton with NuSMV
-        val counterexamples = automaton.verifyWithNuSMV(outDir)
+        val counterexamples = automaton.verifyWithNuSMV(
+            dir = outDir,
+            modularModuleName = listOf("Sender", "Receiver").toMultiArray()
+        )
         if (counterexamples.isEmpty()) {
             log.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
-            log.success("These is no counterexamples, nice!")
+            log.success("No counterexamples!")
             return automaton
         }
         // Convert counterexamples to negative scenarios
@@ -158,7 +195,6 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
                 counterexample = it,
                 M = M,
                 modularName = modularName,
-                inputMapping = inputMapping,
                 modularInputEvents = modularInputEvents,
                 modularOutputEvents = modularOutputEvents,
                 modularInputNames = modularInputNames,
@@ -172,6 +208,22 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
             negativeTree.addScenario(scenario)
         }
         val treeSizeDiff = negativeTree.size - treeSize
+        // // Verify negative scenarios
+        // for ((i, negScenario) in negativeScenarios.withIndex(start = 1)) {
+        //     if (automaton.verify(negScenario)) {
+        //         log.failure("Verify negative scenario #$i: disproved")
+        //
+        //         println("Mapping of negScenario (loopBack = ${negScenario.loopPosition}):")
+        //         for ((j, state) in automaton.map(negScenario).withIndex(start = 1)) {
+        //             val element = negScenario.elements[j - 1].modular[1]
+        //             println("[$j / ${negScenario.elements.size}] Compound state: ${state?.values?.map { it.id }} for element = $element (nodeId = ${element.nodeId})" + if (j == negScenario.loopPosition) " [LOOP-BACK]" else "")
+        //         }
+        //
+        //         error("sad")
+        //     } else {
+        //         log.success("Verify negative scenario #$i: confirmed")
+        //     }
+        // }
         // Note: it is suffice to check just `negSc == lastNegSc`, but it may be costly,
         // so check it only in a specific case - when negative tree does not change its size
         if (treeSizeDiff == 0 && negativeScenarios == lastNegativeScenarios) {
@@ -183,9 +235,9 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
     return null
 }
 
-fun DistributedAutomaton.verifyWithNuSMV(dir: File): List<THE_Counterexample> {
+fun DistributedAutomaton.verifyWithNuSMV(dir: File, modularModuleName: MultiArray<String>): List<THE_Counterexample> {
     // Save automaton to smv directory
-    dumpSmv(dir)
+    dumpSmv(dir, modularModuleName)
 
     // Perform formal verification using NuSMV, generate counterexamples to given ltl-spec
     val cmd = "make clean model counterexamples"
@@ -208,10 +260,10 @@ fun DistributedAutomaton.verifyWithNuSMV(dir: File): List<THE_Counterexample> {
     check(exitcode == 0) { "NuSMV exitcode: $exitcode" }
 
     // Handle counterexamples after verification
-    val fileCounterexamples = dir.resolve("counterexamples")
+    val fileCounterexamples = dir.resolve("counterexamples.xml")
     return if (fileCounterexamples.exists()) {
         // Read new counterexamples
-        val counterexamples: List<THE_Counterexample> = readCounterexampleFromFile(fileCounterexamples)
+        val counterexamples: List<THE_Counterexample> = readCounterexamplesFromFile(fileCounterexamples)
 
         // [DEBUG] Append new counterexamples to 'ce'
         log.debug { "Dumping ${counterexamples.size} counterexample(s)..." }

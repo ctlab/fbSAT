@@ -76,7 +76,7 @@ class NegativeCompoundScenarioTree(
                     if (index + 1 == scenario.loopPosition) {
                         check(loopBack == null) { "Cannot override loopBack = $loopBack to $newNode" }
                         loopBack = newNode
-                        log.debug { "[${index + 1}/${scenario.elements.size}] loopBack now = $loopBack" }
+                        // log.debug { "[${index + 1}/${scenario.elements.size}] (compound) [same] loopBack now = $loopBack" }
                     }
                     last = newNode
                 }
@@ -87,7 +87,7 @@ class NegativeCompoundScenarioTree(
                     if (index + 1 == scenario.loopPosition) {
                         check(loopBack == null) { "Cannot override loopBack = $loopBack to $newNode" }
                         loopBack = newNode
-                        log.debug { "[${index + 1}/${scenario.elements.size}] loopBack now = $loopBack" }
+                        // log.debug { "[${index + 1}/${scenario.elements.size}] (compound) [new] loopBack now = $loopBack" }
                     }
                     last = newNode
                 }

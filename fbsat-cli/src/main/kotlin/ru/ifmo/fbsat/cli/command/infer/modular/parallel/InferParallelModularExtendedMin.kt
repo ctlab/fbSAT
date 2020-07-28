@@ -47,7 +47,7 @@ class InferParallelModularExtendedMinCommand :
 
     override fun infer(): ParallelModularAutomaton? =
         inferrer.parallelModularExtendedMin(
-            scenarioTree = oldTree,
+            scenarioTree = scenarioTree,
             numberOfModules = params.numberOfModules,
             numberOfStates = params.numberOfStates,
             maxGuardSize = params.maxGuardSize

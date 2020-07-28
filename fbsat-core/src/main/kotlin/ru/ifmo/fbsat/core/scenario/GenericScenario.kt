@@ -6,6 +6,7 @@ interface GenericScenario<out E : GenericScenario.Element<*, *>> {
     interface Element<In, Out>
         where In : GenericScenarioInputAction<*, *>,
               Out : GenericScenarioOutputAction<*, *> {
+        var nodeId: Int?
         val inputAction: In
         val outputAction: Out
     }

@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.task.modular.basic.parallel
 
 import com.github.lipen.multiarray.MultiArray
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
@@ -12,7 +12,7 @@ import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
 
 @Suppress("PropertyName")
 class ParallelModularBasicVariables(
-    val scenarioTree: OldPositiveScenarioTree,
+    val scenarioTree: PositiveScenarioTree,
     /* Constants */
     val M: Int,
     val C: Int,
@@ -32,7 +32,7 @@ class ParallelModularBasicVariables(
 )
 
 fun Solver.declareParallelModularBasicVariables(
-    scenarioTree: OldPositiveScenarioTree,
+    scenarioTree: PositiveScenarioTree,
     M: Int,
     C: Int,
     K: Int,

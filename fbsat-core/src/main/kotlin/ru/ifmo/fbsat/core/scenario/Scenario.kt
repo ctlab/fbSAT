@@ -8,7 +8,7 @@ data class ScenarioElement(
     override val inputAction: InputAction,
     override val outputAction: OutputAction
 ) : GenericScenario.Element<InputAction, OutputAction> {
-    var nodeId: Int? = null
+    override var nodeId: Int? = null
     var ceState: String? = null // FIXME: remove
 
     val inputEvent: InputEvent? = inputAction.event

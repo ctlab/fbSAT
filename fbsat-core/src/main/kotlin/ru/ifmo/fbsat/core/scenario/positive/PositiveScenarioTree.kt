@@ -10,6 +10,7 @@ import ru.ifmo.fbsat.core.scenario.addGenericScenario
 import ru.ifmo.fbsat.core.scenario.auxScenarioElement
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.toBinaryString
+import java.io.File
 
 class PositiveScenarioTree(
     override val inputEvents: List<InputEvent>,
@@ -107,8 +108,49 @@ class PositiveScenarioTree(
     }
 
     companion object {
-        fun fromOld(oldTree: OldPositiveScenarioTree): PositiveScenarioTree {
-            return PositiveScenarioTree(
+        fun fromScenarios(
+            scenarios: List<PositiveScenario>,
+            inputNames: List<String>,
+            outputNames: List<String>,
+            inputEvents: List<InputEvent>? = null,
+            outputEvents: List<OutputEvent>? = null,
+            isTrie: Boolean = true
+        ): PositiveScenarioTree =
+            PositiveScenarioTree(
+                inputEvents = inputEvents ?: scenarios.flatMap { scenario ->
+                    scenario.elements.mapNotNull { element -> element.inputAction.event }
+                }.distinct(),
+                outputEvents = outputEvents ?: scenarios.flatMap { scenario ->
+                    scenario.elements.mapNotNull { element -> element.outputAction.event }
+                }.distinct(),
+                inputNames = inputNames,
+                outputNames = outputNames,
+                isTrie = isTrie
+            ).also {
+                for (scenario in scenarios) {
+                    it.addScenario(scenario)
+                }
+            }
+
+        fun fromFile(
+            file: File,
+            inputNames: List<String>,
+            outputNames: List<String>,
+            inputEvents: List<InputEvent>? = null,
+            outputEvents: List<OutputEvent>? = null,
+            isTrie: Boolean = true
+        ): PositiveScenarioTree =
+            fromScenarios(
+                scenarios = PositiveScenario.fromFile(file),
+                inputNames = inputNames,
+                outputNames = outputNames,
+                inputEvents = inputEvents,
+                outputEvents = outputEvents,
+                isTrie = isTrie
+            )
+
+        fun fromOld(oldTree: OldPositiveScenarioTree): PositiveScenarioTree =
+            PositiveScenarioTree(
                 inputEvents = oldTree.inputEvents,
                 outputEvents = oldTree.outputEvents,
                 inputNames = oldTree.inputNames,
@@ -118,7 +160,6 @@ class PositiveScenarioTree(
                     it.addScenario(scenario)
                 }
             }
-        }
     }
 }
 

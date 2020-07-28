@@ -15,6 +15,7 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.Pins
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
@@ -45,7 +46,7 @@ class ArbitraryModularAutomaton(
     constructor(
         modules: MultiArray<Automaton>,
         inboundVarPinParent: MultiArray<Int>,
-        scenarioTree: OldPositiveScenarioTree
+        scenarioTree: PositiveScenarioTree
     ) : this(
         modules,
         inboundVarPinParent,

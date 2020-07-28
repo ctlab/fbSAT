@@ -1,7 +1,6 @@
 package ru.ifmo.fbsat.cli.command.infer
 
 import ru.ifmo.fbsat.core.scenario.OutputValues
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.utils.Globals
@@ -16,7 +15,6 @@ abstract class AbstractInferCommandWithSetup<AutomatonType : Any>(name: String) 
     protected abstract val outDir: File
 
     protected lateinit var scenarioTree: PositiveScenarioTree private set
-    protected lateinit var oldTree: OldPositiveScenarioTree private set
     protected lateinit var inferrer: Inferrer private set
 
     final override fun setup() {
@@ -24,8 +22,7 @@ abstract class AbstractInferCommandWithSetup<AutomatonType : Any>(name: String) 
         check(outDir.exists()) { "Output directory does not exist" }
 
         Globals.INITIAL_OUTPUT_VALUES = extraOptions.initialOutputValues ?: OutputValues.zeros(outputNames.size)
-        oldTree = OldPositiveScenarioTree.fromFile(scenariosFile, inputNames, outputNames)
-        scenarioTree = PositiveScenarioTree.fromOld(oldTree)
+        scenarioTree = PositiveScenarioTree.fromFile(scenariosFile, inputNames, outputNames)
         scenarioTree.printStats()
 
         inferrer = Inferrer(solverOptions.solver, outDir)

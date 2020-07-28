@@ -26,6 +26,18 @@ class NegativeScenarioTree(
     override val root: Node
         get() = nodes.first()
 
+    val activeVertices: List<Int>
+        get() = nodes.asSequence()
+            .drop(1) // without root
+            .filter { it.element.outputEvent != null }
+            .map { it.id }
+            .toList()
+    val passiveVertices: List<Int>
+        get() = nodes.asSequence()
+            .drop(1) // without root
+            .filter { it.element.outputEvent == null }
+            .map { it.id }
+            .toList()
     override val uniqueInputs: List<InputValues>
         get() = nodes.asSequence()
             .drop(1)
@@ -44,6 +56,8 @@ class NegativeScenarioTree(
         Node(element = auxScenarioElement, parent = null)
     }
 
+    fun loopBacks(v: Int): List<Int> = nodes[v - 1].loopBacks.map { it.id }
+
     @Suppress("DuplicatedCode")
     fun addScenario(scenario: NegativeScenario) {
         require(scenario.elements.isNotEmpty())
@@ -58,7 +72,7 @@ class NegativeScenarioTree(
                     if (index + 1 == scenario.loopPosition) {
                         check(loopBack == null) { "Cannot override loopBack = $loopBack to $newNode" }
                         loopBack = newNode
-                        log.debug { "[${index + 1}/${scenario.elements.size}] loopBack now = $loopBack" }
+                        // log.debug { "[${index + 1}/${scenario.elements.size}] [same] loopBack now = $loopBack" }
                     }
                     last = newNode
                 }
@@ -69,7 +83,7 @@ class NegativeScenarioTree(
                     if (index + 1 == scenario.loopPosition) {
                         check(loopBack == null) { "Cannot override loopBack = $loopBack to $newNode" }
                         loopBack = newNode
-                        log.debug { "[${index + 1}/${scenario.elements.size}] loopBack now = $loopBack" }
+                        // log.debug { "[${index + 1}/${scenario.elements.size}] [new] loopBack now = $loopBack" }
                     }
                     last = newNode
                 }

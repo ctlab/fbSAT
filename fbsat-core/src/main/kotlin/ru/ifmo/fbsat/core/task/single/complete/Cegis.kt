@@ -5,7 +5,7 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.negative.Counterexample
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.completeVars
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
@@ -19,7 +19,7 @@ import ru.ifmo.fbsat.core.utils.timeSince
 import java.io.File
 
 fun Inferrer.cegis(
-    scenarioTree: OldPositiveScenarioTree,
+    scenarioTree: PositiveScenarioTree,
     negativeScenarioTree: NegativeScenarioTree? = null, // empty if null
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
@@ -45,7 +45,7 @@ fun Inferrer.cegis(
 
 @Suppress("LocalVariableName")
 fun Inferrer.cegisMin(
-    scenarioTree: OldPositiveScenarioTree,
+    scenarioTree: PositiveScenarioTree,
     initialNegativeScenarioTree: NegativeScenarioTree? = null,
     numberOfStates: Int? = null,
     startNumberOfStates: Int? = null,
@@ -136,7 +136,7 @@ fun Inferrer.performCegis(smvDir: File): Automaton? {
         val counterexamples = automaton.verifyWithNuSMV(outDir)
         if (counterexamples.isEmpty()) {
             log.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
-            log.success("These is no counterexamples, nice!")
+            log.success("No counterexamples!")
             return automaton
         }
         // Convert counterexamples to negative scenarios

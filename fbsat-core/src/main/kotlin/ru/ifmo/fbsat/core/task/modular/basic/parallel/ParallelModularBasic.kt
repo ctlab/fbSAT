@@ -2,14 +2,14 @@ package ru.ifmo.fbsat.core.task.modular.basic.parallel
 
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
-import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeParallelModularT
 import ru.ifmo.fbsat.core.task.parallelModularBasicVars
 import ru.ifmo.fbsat.core.utils.log
 
 fun Inferrer.parallelModularBasic(
-    scenarioTree: OldPositiveScenarioTree,
+    scenarioTree: PositiveScenarioTree,
     numberOfModules: Int, // M
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
@@ -31,7 +31,7 @@ fun Inferrer.parallelModularBasic(
 }
 
 fun Inferrer.parallelModularBasicMinC(
-    scenarioTree: OldPositiveScenarioTree,
+    scenarioTree: PositiveScenarioTree,
     numberOfModules: Int, // M
     start: Int = 1, // C_start
     end: Int = 20 // C_end
@@ -58,7 +58,7 @@ fun Inferrer.parallelModularBasicMinC(
 }
 
 fun Inferrer.parallelModularBasicMin(
-    scenarioTree: OldPositiveScenarioTree,
+    scenarioTree: PositiveScenarioTree,
     numberOfModules: Int // M
 ): ParallelModularAutomaton? {
     parallelModularBasicMinC(scenarioTree, numberOfModules = numberOfModules)

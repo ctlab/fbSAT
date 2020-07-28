@@ -44,7 +44,7 @@ class InferExtendedMinCommand : AbstractInferMonoCommand("extended-min") {
 
     override fun infer(): Automaton? =
         inferrer.extendedMin(
-            scenarioTree = oldTree,
+            scenarioTree = scenarioTree,
             numberOfStates = params.numberOfStates,
             maxGuardSize = params.maxGuardSize
         )

@@ -49,7 +49,7 @@ class InferParallelModularBasicCommand :
 
     override fun infer(): ParallelModularAutomaton? =
         inferrer.parallelModularBasic(
-            scenarioTree = oldTree,
+            scenarioTree = scenarioTree,
             numberOfModules = params.numberOfModules,
             numberOfStates = params.numberOfStates,
             maxOutgoingTransitions = params.maxOutgoingTransitions,

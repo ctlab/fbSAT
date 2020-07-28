@@ -1,3 +1,5 @@
+@file:Suppress("PublicApiImplicitType")
+
 package ru.ifmo.fbsat.cli.command.infer.modular.arbitrary
 
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
@@ -41,7 +43,7 @@ class InferArbitraryModularBasicMinCommand :
 
     override fun infer(): ArbitraryModularAutomaton? =
         inferrer.arbitraryModularBasicMin(
-            scenarioTree = oldTree,
+            scenarioTree = scenarioTree,
             numberOfModules = params.numberOfModules
         )
 }

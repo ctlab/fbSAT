@@ -42,7 +42,7 @@ class InferCompleteMinCommand : AbstractInferMonoCommand("complete-min") {
 
     override fun infer(): Automaton? =
         inferrer.completeMin(
-            scenarioTree = oldTree,
+            scenarioTree = scenarioTree,
             negativeScenarioTree = null,
             maxGuardSize = params.maxGuardSize
         )

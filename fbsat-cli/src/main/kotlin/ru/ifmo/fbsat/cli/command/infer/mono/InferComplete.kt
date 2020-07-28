@@ -52,7 +52,7 @@ class InferCompleteCommand : AbstractInferMonoCommand("complete") {
 
     override fun infer(): Automaton? =
         inferrer.complete(
-            scenarioTree = oldTree,
+            scenarioTree = scenarioTree,
             negativeScenarioTree = null,
             numberOfStates = params.numberOfStates,
             maxOutgoingTransitions = params.maxOutgoingTransitions,
