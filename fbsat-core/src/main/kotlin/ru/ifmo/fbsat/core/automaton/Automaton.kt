@@ -425,10 +425,7 @@ class Automaton(
         }
     }
 
-    /**
-     * Pretty-print automaton.
-     */
-    fun pprint() {
+    fun calculateHashCode(): Int {
         val codeOutputEvents =
             states.map {
                 if (it.outputEvent != null) outputEvents.indexOf(it.outputEvent) + 1 else 0
@@ -439,6 +436,10 @@ class Automaton(
                     algorithm0.toBinaryString().toInt(2) + algorithm1.toBinaryString().toInt(2)
                 }
             }
+        val codeTransitionDestination =
+            transitions.map {
+                it.destination.id
+            }
         val codeTransitionEvents =
             transitions.map {
                 if (it.inputEvent != null) inputEvents.indexOf(it.inputEvent) + 1 else 0
@@ -447,12 +448,23 @@ class Automaton(
             transitions.map {
                 it.guard.truthTableString.toInt(2)
             }
-        val code =
-            (codeOutputEvents + codeAlgorithms + codeTransitionEvents + codeTransitionGuards)
-                .fold(0) { acc, i ->
-                    (acc + i).rem(1_000_000_000)
-                }
-        log.just("Automaton Hash-Code: $code")
+        return (
+            codeOutputEvents +
+                codeAlgorithms +
+                codeTransitionDestination +
+                codeTransitionEvents +
+                codeTransitionGuards
+            )
+            .fold(0) { acc, i ->
+                (31 * acc + i).rem(1_000_000)
+            }
+    }
+
+    /**
+     * Pretty-print automaton.
+     */
+    fun pprint() {
+        log.just("Automaton Hash-Code: ${calculateHashCode()}")
         log.just(toSimpleString().prependIndent("  "))
     }
 

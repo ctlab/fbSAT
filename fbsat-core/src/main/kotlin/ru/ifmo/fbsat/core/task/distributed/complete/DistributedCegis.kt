@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.core.task.distributed.complete
 
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.multiarray.map
 import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.InputEvent
@@ -19,6 +20,7 @@ import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.toMultiArray
+import ru.ifmo.fbsat.core.utils.withIndex
 import java.io.File
 
 fun Inferrer.distributedCegis(
@@ -77,9 +79,11 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
     val modularPositiveTree = vars.modularScenarioTree
     val negativeTree = vars.negativeCompoundScenarioTree
     lateinit var lastNegativeScenarios: List<NegativeCompoundScenario>
+    var lastHashCode: Int = -1
 
     // =====
     val M = vars.M
+    check(M == 1)
     val modularName = MultiArray.create(M) { (m) ->
         when (m) {
             1 -> "sender"
@@ -121,6 +125,8 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
             log.failure("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
             return null
         }
+        check(automaton.modules.shape.single() == M) {"modules.size must be M = $M"}
+        check(automaton.modules.shape.single() == 1) {"modules.size must be 1"}
         // ==============
         // Dump intermediate automaton
         // automaton.dump(outDir, "_automaton_iter%04d".format(iterationNumber))
@@ -178,7 +184,13 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
         // }
         // check(ok) { "Post-infer negative scenario tree verification failed" }
         // log.success("Post-infer negative tree verify: OK")
-        // ==============
+        // Check stale via hash code
+        val hash = automaton.modules[1].calculateHashCode()
+        if (hash == lastHashCode) {
+            error("Stale (by hash)")
+        }
+        lastHashCode = hash
+        // =============
         // Verify automaton with NuSMV
         val counterexamples = automaton.verifyWithNuSMV(
             dir = outDir,
@@ -208,22 +220,22 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
             negativeTree.addScenario(scenario)
         }
         val treeSizeDiff = negativeTree.size - treeSize
-        // // Verify negative scenarios
-        // for ((i, negScenario) in negativeScenarios.withIndex(start = 1)) {
-        //     if (automaton.verify(negScenario)) {
-        //         log.failure("Verify negative scenario #$i: disproved")
-        //
-        //         println("Mapping of negScenario (loopBack = ${negScenario.loopPosition}):")
-        //         for ((j, state) in automaton.map(negScenario).withIndex(start = 1)) {
-        //             val element = negScenario.elements[j - 1].modular[1]
-        //             println("[$j / ${negScenario.elements.size}] Compound state: ${state?.values?.map { it.id }} for element = $element (nodeId = ${element.nodeId})" + if (j == negScenario.loopPosition) " [LOOP-BACK]" else "")
-        //         }
-        //
-        //         error("sad")
-        //     } else {
-        //         log.success("Verify negative scenario #$i: confirmed")
-        //     }
-        // }
+        // Verify negative scenarios
+        for ((i, negScenario) in negativeScenarios.withIndex(start = 1)) {
+            if (automaton.verify(negScenario)) {
+                log.failure("Verify negative scenario #$i: disproved")
+
+                println("Mapping of negScenario (loopBack = ${negScenario.loopPosition}):")
+                for ((j, state) in automaton.map(negScenario).withIndex(start = 1)) {
+                    val element = negScenario.elements[j - 1].modular[1]
+                    println("[$j / ${negScenario.elements.size}] Compound state: ${state?.values?.map { it.id }} for element = $element (nodeId = ${element.nodeId})" + if (j == negScenario.loopPosition) " [LOOP-BACK]" else "")
+                }
+
+                error("sad")
+            } else {
+                log.success("Verify negative scenario #$i: confirmed")
+            }
+        }
         // Note: it is suffice to check just `negSc == lastNegSc`, but it may be costly,
         // so check it only in a specific case - when negative tree does not change its size
         if (treeSizeDiff == 0 && negativeScenarios == lastNegativeScenarios) {
@@ -266,8 +278,8 @@ fun DistributedAutomaton.verifyWithNuSMV(dir: File, modularModuleName: MultiArra
         val counterexamples: List<THE_Counterexample> = readCounterexamplesFromFile(fileCounterexamples)
 
         // [DEBUG] Append new counterexamples to 'ce'
-        log.debug { "Dumping ${counterexamples.size} counterexample(s)..." }
-        dir.resolve("ce").appendText(fileCounterexamples.readText())
+        // log.debug { "Dumping ${counterexamples.size} counterexample(s)..." }
+        // dir.resolve("ce").appendText(fileCounterexamples.readText())
 
         counterexamples
     } else {
