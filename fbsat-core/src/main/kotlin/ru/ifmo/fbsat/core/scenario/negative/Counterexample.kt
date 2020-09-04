@@ -167,9 +167,13 @@ data class THE_Counterexample(
     )
 }
 
+fun counterexampleFromString(s: String): THE_Counterexample {
+    val xml = XML()
+    return xml.parse(THE_Counterexample.serializer(), s)
+}
+
 fun readCounterexamplesFromFile(file: File): List<THE_Counterexample> {
     println("readCounterexamplesFromFile(file = $file)")
-    val xml = XML()
     val xmlString = file.readText()
         .replace("<loops> </loops>", "<loops/>")
     val lines = xmlString.lines()
@@ -180,9 +184,7 @@ fun readCounterexamplesFromFile(file: File): List<THE_Counterexample> {
         .zipWithNext { a, b ->
             lines.subList(a, b).joinToString("\n")
         }
-        .map {
-            xml.parse(THE_Counterexample.serializer(), it)
-        }
+        .map(::counterexampleFromString)
         .also {
             check(it.size == xmlString.lineSequence().count { line -> line.contains("?xml") })
         }

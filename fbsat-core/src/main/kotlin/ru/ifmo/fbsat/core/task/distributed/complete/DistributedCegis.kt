@@ -1,7 +1,6 @@
 package ru.ifmo.fbsat.core.task.distributed.complete
 
 import com.github.lipen.multiarray.MultiArray
-import com.github.lipen.multiarray.map
 import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.InputEvent
@@ -125,8 +124,8 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
             log.failure("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
             return null
         }
-        check(automaton.modules.shape.single() == M) {"modules.size must be M = $M"}
-        check(automaton.modules.shape.single() == 1) {"modules.size must be 1"}
+        check(automaton.modules.shape.single() == M) { "modules.size must be M = $M" }
+        check(automaton.modules.shape.single() == 1) { "modules.size must be 1" }
         // ==============
         // Dump intermediate automaton
         // automaton.dump(outDir, "_automaton_iter%04d".format(iterationNumber))
@@ -187,7 +186,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
         // Check stale via hash code
         val hash = automaton.modules[1].calculateHashCode()
         if (hash == lastHashCode) {
-            error("Stale (by hash)")
+            log.warn("Stale (by hash)")
         }
         lastHashCode = hash
         // =============

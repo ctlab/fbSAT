@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.task.single.complete
 
+import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.constraints.declareNegativeAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declareNegativeGuardConditionsConstraints
 import ru.ifmo.fbsat.core.constraints.declareNegativeMappingConstraints
@@ -14,6 +15,8 @@ import ru.ifmo.fbsat.core.solver.newIntVar
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.task.completeVars
 import ru.ifmo.fbsat.core.task.extendedVars
+import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.timeSince
 
 data class CompleteTask(
     val negativeScenarioTree: NegativeScenarioTree? = null // empty if null
@@ -44,6 +47,10 @@ fun Solver.updateNegativeReduction(
     vars: CompleteVariables,
     isForbidLoops: Boolean = true
 ): Unit = with(vars) {
+    val timeStart = PerformanceCounter.reference
+    val nVarsStart = numberOfVariables
+    val nClausesStart = numberOfClauses
+
     /* Constants */
     val oldNegV = negV
     negV = negativeScenarioTree.size
@@ -129,4 +136,11 @@ fun Solver.updateNegativeReduction(
     declareNegativeAutomatonStructureConstraints(vars, Us = newOnlyNegUs)
     declareNegativeGuardConditionsConstraints(vars, Us = newOnlyNegUs)
     declareNegativeMappingConstraints(vars, Vs = newNegVs, isForbidLoops = isForbidLoops)
+
+    val nVarsDiff = numberOfVariables - nVarsStart
+    val nClausesDiff = numberOfClauses - nClausesStart
+    log.info(
+        "updateNegativeReduction: declared $nVarsDiff variables and $nClausesDiff clauses in %.3f s."
+            .format(timeSince(timeStart).seconds)
+    )
 }

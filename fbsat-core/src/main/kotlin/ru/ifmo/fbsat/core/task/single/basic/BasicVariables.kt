@@ -24,20 +24,20 @@ class BasicVariables(
     val Z: Int,
     val U: Int,
     /* Core variables */
-    val actualTransitionFunction: IntVarArray,
-    val transitionDestination: IntVarArray,
-    val transitionInputEvent: IntVarArray,
-    val transitionTruthTable: BoolVarArray,
-    val transitionFiring: BoolVarArray,
-    val firstFired: IntVarArray,
-    val notFired: BoolVarArray,
-    val stateOutputEvent: IntVarArray,
-    val stateAlgorithmTop: BoolVarArray,
-    val stateAlgorithmBot: BoolVarArray,
+    val actualTransitionFunction: IntVarArray, // [C,E,U]: {0..C}
+    val transitionDestination: IntVarArray, // [C,K]: {0..C}
+    val transitionInputEvent: IntVarArray, // [C,K]: {0..E}
+    val transitionTruthTable: BoolVarArray, // [C,K,U]: Bool
+    val transitionFiring: BoolVarArray, // [C,K,E,U]: Bool
+    val firstFired: IntVarArray, // [C,E,U]: {0..K}
+    val notFired: BoolVarArray, // [C,K,E,U]: Bool
+    val stateOutputEvent: IntVarArray, // [C]: {0..O}
+    val stateAlgorithmBot: BoolVarArray, // [C,Z]: Bool
+    val stateAlgorithmTop: BoolVarArray, // [C,Z]: Bool
     /* Mapping variables */
-    val mapping: IntVarArray,
+    val mapping: IntVarArray, // [V]: {1..C}
     /* Cardinality */
-    val cardinality: Cardinality
+    val cardinality: Cardinality // [0..C*K]
 )
 
 fun Solver.declareBasicVariables(
@@ -98,8 +98,8 @@ fun Solver.declareBasicVariables(
         firstFired = firstFired,
         notFired = notFired,
         stateOutputEvent = stateOutputEvent,
-        stateAlgorithmTop = stateAlgorithmTop,
         stateAlgorithmBot = stateAlgorithmBot,
+        stateAlgorithmTop = stateAlgorithmTop,
         mapping = mapping,
         cardinality = cardinality
     )

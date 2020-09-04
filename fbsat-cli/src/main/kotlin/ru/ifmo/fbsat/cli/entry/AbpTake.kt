@@ -14,17 +14,22 @@ import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
+import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenario
+import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
+import ru.ifmo.fbsat.core.scenario.negative.readCounterexamplesFromFile
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.toOld
 import ru.ifmo.fbsat.core.solver.MiniSat
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.task.distributed.complete.distributedCegis
+import ru.ifmo.fbsat.core.task.distributed.complete.distributedComplete
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.createNullable
 import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.toMultiArray
 import java.io.File
@@ -63,10 +68,11 @@ fun main() {
         } // .map { "${modularName[m]}.$it" }
     }
     val solver = MiniSat()
-    val outDir = File("out/abp-take")
+    val outDir = File("out/abp-take2")
     val inferrer = Inferrer(solver, outDir)
 
     check(modularOutputNames.values.all { it.size == 3 })
+    Globals.START_STATE_ALGORITHMS = StartStateAlgorithms.ANY
     Globals.INITIAL_OUTPUT_VALUES = OutputValues.zeros(3)
     Globals.IS_FORBID_TRANSITIONS_TO_FIRST_STATE = false
     Globals.EPSILON_OUTPUT_EVENTS = EpsilonOutputEvents.NONE
@@ -135,10 +141,14 @@ fun main() {
     // }
     val positiveCompoundScenario = PositiveCompoundScenario(M, traceElements)
     // println("scenario = $scenario")
-    println("traceElementsAll (${traceElementsAll.size}):")
-    for (element in traceElementsAll) {
-        println("  - $element")
-    }
+    // println("traceElementsAll (${traceElementsAll.size}):")
+    // for ((i, element) in traceElementsAll.withIndex(start = 1)) {
+    //     println("  - [$i / ${traceElementsAll.size}] $element")
+    // }
+    // println("traceElements (${traceElements.size}):")
+    // for ((i, element) in traceElements.withIndex(start = 1)) {
+    //     println("  - [$i / ${traceElements.size}] $element")
+    // }
 
     val positiveCompoundScenarioTree = PositiveCompoundScenarioTree(
         M = M,
@@ -149,40 +159,30 @@ fun main() {
     )
     positiveCompoundScenarioTree.addScenario(positiveCompoundScenario)
 
-    val oldTree = positiveCompoundScenarioTree.modular[1].toOld()
-    val oldScenario = oldTree.scenarios[0]
-    println("oldScenario.elements:")
-    for (element in oldScenario.elements) {
-        println("  - $element")
-    }
-
-    println("positiveCompoundScenarioTree.modular[1].uniqueInputs: ${positiveCompoundScenarioTree.modular[1].uniqueInputs}")
-    println("oldTree.uniqueInputs: ${oldTree.uniqueInputs}")
-
     // ===== Counterexample
 
-    // val counterexamples = readCounterexampleFromFile(File("data/abp-take/ce.xml"))
-    // val counterexample = counterexamples.first()
-    // val negativeScenario = NegativeCompoundScenario.fromCounterexample(
-    //     counterexample = counterexample,
-    //     M = M,
-    //     modularName = modularName,
-    //     inputMapping = inputMapping,
-    //     modularInputEvents = modularInputEvents,
-    //     modularOutputEvents = modularOutputEvents,
-    //     modularInputNames = modularInputNames,
-    //     modularOutputNames = modularOutputNames
-    // )
-    // val negativeCompoundScenarioTree = NegativeCompoundScenarioTree(
-    //     M = 1,
-    //     modularInputEvents = modularInputEvents,
-    //     modularOutputEvents = modularOutputEvents,
-    //     modularInputNames = modularInputNames,
-    //     modularOutputNames = modularOutputNames
-    // )
-    // negativeCompoundScenarioTree.addScenario(negativeScenario)
-    //
-    // println("negativeCompoundScenarioTree.modular[1].uniqueInputs: ${negativeCompoundScenarioTree.modular[1].uniqueInputs}")
+    val counterexamples = readCounterexamplesFromFile(File("data/abp-take/ce.xml"))
+    val negativeCompoundScenarioTree = NegativeCompoundScenarioTree(
+        M = 1,
+        modularInputEvents = modularInputEvents,
+        modularOutputEvents = modularOutputEvents,
+        modularInputNames = modularInputNames,
+        modularOutputNames = modularOutputNames
+    )
+    for (ce in counterexamples) {
+        val negativeScenario = NegativeCompoundScenario.fromCounterexample(
+            counterexample = ce,
+            M = M,
+            modularName = modularName,
+            modularInputEvents = modularInputEvents,
+            modularOutputEvents = modularOutputEvents,
+            modularInputNames = modularInputNames,
+            modularOutputNames = modularOutputNames
+        )
+        negativeCompoundScenarioTree.addScenario(negativeScenario)
+    }
+
+    // println("negativeCompoundScenarioTree.project(1).uniqueInputs: ${negativeCompoundScenarioTree.project(1).uniqueInputs}")
     //
     // val negativeScenario1 = NegativeScenario.fromFile(
     //     file = File("data/abp-take/ce1.txt"),
@@ -223,17 +223,17 @@ fun main() {
     val C: Int = 4
     val K: Int? = null
     val P: Int = 5
-    val T: Int? = 8
-    val N: Int? = 15
+    val T: Int? = 6
+    val N: Int? = 11 // 20 ok, but not minimal
 
     log.info("Inferring the sender...")
     // val automatonSender = inferrer.basic(
-    //     scenarioTree = oldTree,
+    //     scenarioTree = positiveCompoundScenarioTree.project(1),
     //     numberOfStates = C,
     //     maxOutgoingTransitions = K,
     //     maxTransitions = T
     // )
-    // val automatonSender = inferrer.basicMin(scenarioTree = oldTree)
+    // val automatonSender = inferrer.basicMin(scenarioTree = positiveCompoundScenarioTree.project(1))
     // val automatonSender = inferrer.extendedMin(scenarioTree = oldTree, maxGuardSize = P)
     // val automatonSender = inferrer.extended(
     //     scenarioTree = oldTree,
@@ -244,42 +244,46 @@ fun main() {
     //     maxTotalGuardsSize = N
     // )
     // val automatonSender: Automaton? = inferrer.distributedBasic(
-    //     numberOfModules = M,
-    //     compoundScenarioTree = positiveCompoundScenarioTree,
-    //     modularScenarioTree = positiveCompoundScenarioTree.modular,
-    //     modularNumberOfStates = MultiArray.create(M) { C },
-    //     modularMaxOutgoingTransitions = MultiArray.createNullable(M) { K },
-    //     modularMaxTransitions = MultiArray.createNullable(M) { T }
-    // )?.let { it.modules[1] }
-    // val automatonSender: Automaton? = inferrer.distributedBasic(
     //     numberOfModules = 1,
     //     compoundScenarioTree = positiveCompoundScenarioTree,
-    //     modularScenarioTree = MultiArray.create(1) { positiveCompoundScenarioTree.modular[1] },
+    //     modularScenarioTree = MultiArray.create(1) { positiveCompoundScenarioTree.project(1) },
     //     modularNumberOfStates = MultiArray.create(1) { C },
     //     modularMaxOutgoingTransitions = MultiArray.createNullable(1) { K },
     //     modularMaxTransitions = MultiArray.createNullable(1) { T }
     // )?.let { it.modules[1] }
-    // val automatonSender: Automaton? = inferrer.distributedComplete(
+    // val automatonSender: Automaton? = inferrer.distributedExtended(
     //     numberOfModules = 1,
     //     compoundScenarioTree = positiveCompoundScenarioTree,
-    //     modularScenarioTree = MultiArray.create(1) { positiveCompoundScenarioTree.modular[1] },
-    //     negativeCompoundScenarioTree = negativeCompoundScenarioTree,
+    //     modularScenarioTree = MultiArray.create(1) { positiveCompoundScenarioTree.project(1) },
     //     modularNumberOfStates = MultiArray.create(1) { C },
     //     modularMaxOutgoingTransitions = MultiArray.createNullable(1) { K },
     //     modularMaxGuardSize = MultiArray.create(1) { P },
-    //     modularMaxTransitions = MultiArray.createNullable(1) { T }
+    //     modularMaxTransitions = MultiArray.createNullable(1) { T },
+    //     modularMaxTotalGuardsSize = MultiArray.createNullable(1) { N }
     // )?.let { it.modules[1] }
-    val automatonSender: Automaton? = inferrer.distributedCegis(
+    val automatonSender: Automaton? = inferrer.distributedComplete(
         numberOfModules = 1,
         compoundScenarioTree = positiveCompoundScenarioTree,
-        modularScenarioTree = MultiArray.create(1) { positiveCompoundScenarioTree.modular[1] },
-        // negativeCompoundScenarioTree = negativeCompoundScenarioTree,
+        modularScenarioTree = MultiArray.create(1) { positiveCompoundScenarioTree.project(1) },
+        negativeCompoundScenarioTree = negativeCompoundScenarioTree,
         modularNumberOfStates = MultiArray.create(1) { C },
         modularMaxOutgoingTransitions = MultiArray.createNullable(1) { K },
         modularMaxGuardSize = MultiArray.create(1) { P },
         modularMaxTransitions = MultiArray.createNullable(1) { T },
-        smvDir = File("data/abp-take/smv")
+        modularMaxTotalGuardsSize = MultiArray.createNullable(1) { N }
     )?.let { it.modules[1] }
+    // val automatonSender: Automaton? = inferrer.distributedCegis(
+    //     numberOfModules = 1,
+    //     compoundScenarioTree = positiveCompoundScenarioTree,
+    //     modularScenarioTree = MultiArray.create(1) { positiveCompoundScenarioTree.project(1) },
+    //     negativeCompoundScenarioTree = negativeCompoundScenarioTree,
+    //     modularNumberOfStates = MultiArray.create(1) { C },
+    //     modularMaxOutgoingTransitions = MultiArray.createNullable(1) { K },
+    //     modularMaxGuardSize = MultiArray.create(1) { P },
+    //     modularMaxTransitions = MultiArray.createNullable(1) { T },
+    //     modularMaxTotalGuardsSize = MultiArray.createNullable(1) { N },
+    //     smvDir = File("data/abp-take/smv")
+    // )?.let { it.modules[1] }
 
     if (automatonSender == null) {
         log.failure("Automaton not found")
@@ -295,39 +299,24 @@ fun main() {
 
         automatonSender.dump(outDir)
 
-        if (automatonSender.verify(oldTree))
+        if (automatonSender.verify(positiveCompoundScenarioTree.project(1)))
             log.success("Verify: OK")
         else {
             log.failure("Verify: FAILED")
         }
-        if (automatonSender.verify(oldTree))
-            log.success("Verify2: OK")
-        else {
-            log.failure("Verify2: FAILED")
-        }
-        // if (automatonSender.verify(negativeScenario1))
-        //     log.success("Verify negative1: OK")
-        // else {
-        //     log.failure("Verify negative1: FAILED")
-        // }
-        // if (automatonSender.verify(negativeScenario.project(1)))
-        //     log.success("Verify negative[1]: OK")
-        // else {
-        //     log.failure("Verify negative[1]: FAILED")
-        // }
 
-        println("Mapping:")
-        val automatonMapping = automatonSender.map(oldScenario)
-        for ((element, state) in oldScenario.elements.zip(automatonMapping)) {
-            println("  - $element -> ${state?.id}")
-            if (state == null) break
-        }
+        // println("Mapping:")
+        // val automatonMapping = automatonSender.map(oldScenario)
+        // for ((element, state) in oldScenario.elements.zip(automatonMapping)) {
+        //     println("  - $element -> ${state?.id}")
+        //     if (state == null) break
+        // }
     }
 
     // val distributedAutomaton: DistributedAutomaton? = inferrer.distributedCegis(
     //     numberOfModules = 1,
     //     compoundScenarioTree = positiveCompoundScenarioTree,
-    //     modularScenarioTree = MultiArray.create(1) { positiveCompoundScenarioTree.modular[1] },
+    //     modularScenarioTree = MultiArray.create(1) { positiveCompoundScenarioTree.project(1) },
     //     // negativeCompoundScenarioTree = negativeCompoundScenarioTree,
     //     modularNumberOfStates = MultiArray.create(1) { C },
     //     modularMaxOutgoingTransitions = MultiArray.createNullable(1) { K },

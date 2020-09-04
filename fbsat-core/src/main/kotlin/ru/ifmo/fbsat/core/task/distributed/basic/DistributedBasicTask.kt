@@ -49,11 +49,32 @@ data class DistributedBasicTask(
         if (Globals.IS_BFS_AUTOMATON) declareDistributedAutomatonBfsConstraints(vars)
         // declareDistributedPositiveMappingConstraints_modular(vars, modularIsEncodeReverseImplication)
         declareDistributedPositiveMappingConstraints_compound(vars, modularIsEncodeReverseImplication)
+        // declareDistributedBasicAdhocConstraints(vars)
 
         /* Initial cardinality constraints */
         for (m in 1..numberOfModules) {
             vars.modularBasicVariables[m].cardinality.updateUpperBoundLessThanOrEqual(modularMaxTransitions[m])
         }
         vars.cardinality.updateUpperBoundLessThanOrEqual(maxTransitions)
+    }
+}
+
+private fun Solver.declareDistributedBasicAdhocConstraints(vars: DistributedBasicVariables){
+    with(vars.modularBasicVariables[1]) {
+        check(C == 4)
+        check(K > 2)
+        clause(transitionDestination[1, 1] eq 2)
+        clause(transitionDestination[1, 2] eq 0)
+
+        clause(transitionDestination[2, 1] eq 3)
+        clause(transitionDestination[2, 2] eq 2)
+        clause(transitionDestination[2, 3] eq 0)
+
+        clause(transitionDestination[3, 1] eq 4)
+        clause(transitionDestination[3, 2] eq 0)
+
+        clause(transitionDestination[4, 1] eq 1)
+        clause(transitionDestination[4, 2] eq 4)
+        clause(transitionDestination[4, 3] eq 0)
     }
 }
