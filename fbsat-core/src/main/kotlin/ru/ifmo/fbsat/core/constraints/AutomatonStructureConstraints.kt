@@ -274,16 +274,16 @@ private fun Solver.declareAutomatonStructureConstraintsForInputs(
     actualTransitionFunction: IntVarArray
 ) {
     // TODO: Remove
-    comment("Guards on not-null transitions are not False")
-    // (transitionDestination[c,k] != 0) => ALO_{u}( transitionTruthTable[c,k,u] )
-    @Suppress("ReplaceCollectionCountWithSize")
-    if (Us.count() > 0)
-        for (c in 1..C)
-            for (k in 1..K)
-                implyOr(transitionDestination[c, k] neq 0, sequence {
-                    for (u in Us)
-                        yield(transitionTruthTable[c, k, u])
-                })
+    // comment("Guards on not-null transitions are not False")
+    // // (transitionDestination[c,k] != 0) => ALO_{u}( transitionTruthTable[c,k,u] )
+    // @Suppress("ReplaceCollectionCountWithSize")
+    // if (Us.count() > 0)
+    //     for (c in 1..C)
+    //         for (k in 1..K)
+    //             implyOr(transitionDestination[c, k] neq 0, sequence {
+    //                 for (u in Us)
+    //                     yield(transitionTruthTable[c, k, u])
+    //             })
 
     comment("Transition firing definition")
     // transitionFiring[c,k,e,u] <=> (transitionInputEvent[c,k] = e) & transitionTruthTable[c,k,u]
