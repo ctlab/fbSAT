@@ -139,8 +139,8 @@ fun Solver.updateNegativeReduction(
 
     val nVarsDiff = numberOfVariables - nVarsStart
     val nClausesDiff = numberOfClauses - nClausesStart
-    log.info(
+    log.debug {
         "updateNegativeReduction: declared $nVarsDiff variables and $nClausesDiff clauses in %.3f s."
             .format(timeSince(timeStart).seconds)
-    )
+    }
 }

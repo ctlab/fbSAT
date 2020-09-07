@@ -222,8 +222,17 @@ fun Iterable<Boolean>.countFalse(): Int {
 
 fun <T> magic(): T = error("No magic outside of Hogwarts!")
 
+inline fun <reified T> Iterable<T>.toMultiArray(): MultiArray<T> =
+    toList_().toMultiArray()
+
 inline fun <reified T> Collection<T>.toMultiArray(): MultiArray<T> =
-    GenericMultiArray(toTypedArray(), intArrayOf(size))
+    toTypedArray().toMultiArray()
+
+inline fun <reified T> Array<T>.toMultiArray(): MultiArray<T> =
+    GenericMultiArray(this, intArrayOf(size))
+
+inline fun <reified T> multiArrayOf(vararg x: T): MultiArray<T> =
+    arrayOf(*x).toMultiArray()
 
 // TODO: remove after fixing MultiArray library
 inline fun <reified T> MultiArray.Companion.createNullable(

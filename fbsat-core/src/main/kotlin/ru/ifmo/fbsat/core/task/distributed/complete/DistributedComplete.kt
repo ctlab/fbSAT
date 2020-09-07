@@ -21,7 +21,7 @@ fun Inferrer.distributedComplete(
     numberOfModules: Int, // M
     compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
     modularScenarioTree: MultiArray<PositiveScenarioTree>,
-    negativeCompoundScenarioTree: NegativeCompoundScenarioTree,
+    negativeCompoundScenarioTree: NegativeCompoundScenarioTree? = null,
     modularNumberOfStates: MultiArray<Int>, // [C]
     modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
     modularMaxGuardSize: MultiArray<Int>, // [P]

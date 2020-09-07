@@ -26,31 +26,6 @@ class NegativeScenarioTree(
     override val root: Node
         get() = nodes.first()
 
-    val activeVertices: List<Int>
-        get() = nodes.asSequence()
-            .drop(1) // without root
-            .filter { it.element.outputEvent != null }
-            .map { it.id }
-            .toList()
-    val passiveVertices: List<Int>
-        get() = nodes.asSequence()
-            .drop(1) // without root
-            .filter { it.element.outputEvent == null }
-            .map { it.id }
-            .toList()
-    override val uniqueInputs: List<InputValues>
-        get() = nodes.asSequence()
-            .drop(1)
-            .map { it.element.inputValues }
-            .toSet()
-            .sortedBy { it.values.toBinaryString() }
-    override val uniqueOutputs: List<OutputValues>
-        get() = nodes.asSequence()
-            .drop(1)
-            .map { it.element.outputValues }
-            .toSet()
-            .sortedBy { it.values.toBinaryString() }
-
     init {
         // Create the root (auto-added to _nodes)
         Node(element = auxScenarioElement, parent = null)

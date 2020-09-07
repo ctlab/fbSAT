@@ -173,7 +173,6 @@ fun counterexampleFromString(s: String): THE_Counterexample {
 }
 
 fun readCounterexamplesFromFile(file: File): List<THE_Counterexample> {
-    println("readCounterexamplesFromFile(file = $file)")
     val xmlString = file.readText()
         .replace("<loops> </loops>", "<loops/>")
     val lines = xmlString.lines()

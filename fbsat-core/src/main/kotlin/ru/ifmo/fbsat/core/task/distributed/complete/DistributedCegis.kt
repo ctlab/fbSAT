@@ -16,7 +16,9 @@ import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask
 import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedTask
 import ru.ifmo.fbsat.core.task.distributedCompleteVars
 import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.multiArrayOf
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
+import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.toMultiArray
 import ru.ifmo.fbsat.core.utils.withIndex
@@ -82,34 +84,24 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
 
     // =====
     val M = vars.M
-    check(M == 1)
-    val modularName = MultiArray.create(M) { (m) ->
-        when (m) {
-            1 -> "sender"
-            2 -> "receiver"
-            else -> error("Are you lost?")
-        }
-    }
+    val modularName = multiArrayOf(
+        "sender",
+        "receiver"
+    )
     val modularInputEvents = MultiArray.create(M) {
         listOf("REQ").map { InputEvent(it) }
     }
     val modularOutputEvents = MultiArray.create(M) {
         listOf("CNF").map { OutputEvent(it) }
     }
-    val modularInputNames = MultiArray.create(M) { (m) ->
-        when (m) {
-            1 -> listOf("send", "timeout", "acknowledge", "input_bit")
-            2 -> listOf("input_bit")
-            else -> error("Are you lost?")
-        } // .map { "${modularName[m]}.$it" }
-    }
-    val modularOutputNames = MultiArray.create(M) { (m) ->
-        when (m) {
-            1 -> listOf("done", "packet", "output_bit")
-            2 -> listOf("deliver", "acknowledge", "output_bit")
-            else -> error("Are you lost?")
-        } // .map { "${modularName[m]}.$it" }
-    }
+    val modularInputNames = multiArrayOf(
+        listOf("send", "timeout", "acknowledge", "input_bit"),
+        listOf("packet", "input_bit")
+    )
+    val modularOutputNames = multiArrayOf(
+        listOf("done", "packet", "output_bit"),
+        listOf("deliver", "acknowledge", "output_bit")
+    )
     // =====
 
     for (iterationNumber in 1 until 10000) {
@@ -125,14 +117,15 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
             return null
         }
         check(automaton.modules.shape.single() == M) { "modules.size must be M = $M" }
-        check(automaton.modules.shape.single() == 1) { "modules.size must be 1" }
+        // check(automaton.modules.shape.single() == 1) { "modules.size must be 1" }
         // ==============
-        // Dump intermediate automaton
-        // automaton.dump(outDir, "_automaton_iter%04d".format(iterationNumber))
-        automaton.modules[1].dump(outDir, "_${modularName[1]}_iter%04d".format(iterationNumber))
-        // Print intermediate automaton
-        log.info("Intermediate inferred automaton (module 1):")
-        automaton.modules[1].pprint()
+        for (m in 1..M) {
+            // Dump intermediate automaton
+            automaton.project(m).dump(outDir, "_${modularName[m]}_iter%04d".format(iterationNumber))
+            // Print intermediate automaton
+            log.info("Intermediate inferred automaton (module $m):")
+            automaton.project(m).pprint()
+        }
         // Check that inferred automaton does not satisfy negative scenario tree
         // log.info("Post-infer negative tree verify...")
         // var ok = true
@@ -193,7 +186,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
         // Verify automaton with NuSMV
         val counterexamples = automaton.verifyWithNuSMV(
             dir = outDir,
-            modularModuleName = listOf("Sender", "Receiver").toMultiArray()
+            modularModuleName = multiArrayOf("Sender", "Receiver_synth")
         )
         if (counterexamples.isEmpty()) {
             log.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))

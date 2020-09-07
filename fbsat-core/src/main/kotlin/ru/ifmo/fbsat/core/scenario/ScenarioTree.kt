@@ -1,5 +1,7 @@
 package ru.ifmo.fbsat.core.scenario
 
+import ru.ifmo.fbsat.core.utils.toBinaryString
+
 interface ScenarioTree<S, N> : GenericScenarioTree<S, N>
     where S : Scenario,
           N : ScenarioTree.Node<*> {
@@ -10,8 +12,41 @@ interface ScenarioTree<S, N> : GenericScenarioTree<S, N>
     val outputEvents: List<OutputEvent>
     val inputNames: List<String>
     val outputNames: List<String>
+
     val uniqueInputs: List<InputValues>
+        get() = nodes.asSequence()
+            .drop(1)
+            .map { it.element.inputValues }
+            .toSet()
+            .sortedBy { it.values.toBinaryString() }
     val uniqueOutputs: List<OutputValues>
+        get() = nodes.asSequence()
+            .drop(1)
+            .map { it.element.outputValues }
+            .toSet()
+            .sortedBy { it.values.toBinaryString() }
+
+    /**
+     * List of **active** vertices, i.e. vertices with **non-null** output event.
+     * The root is excluded explicitly.
+     */
+    val activeVertices: List<Int>
+        get() = nodes.asSequence()
+            .drop(1) // without root
+            .filter { it.element.outputEvent != null }
+            .map { it.id }
+            .toList()
+
+    /**
+     * List of **passive** vertices, i.e. vertices with **null** (aka empty/epsilon) output event.
+     * The root is excluded explicitly.
+     */
+    val passiveVertices: List<Int>
+        get() = nodes.asSequence()
+            .drop(1) // without root
+            .filter { it.element.outputEvent == null }
+            .map { it.id }
+            .toList()
 
     fun parent(v: Int): Int =
         nodes[v - 1].parent?.id ?: 0
