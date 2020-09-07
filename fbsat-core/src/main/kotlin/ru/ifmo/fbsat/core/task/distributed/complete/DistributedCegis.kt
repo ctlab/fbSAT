@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.task.distributed.complete
 
 import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.PerformanceCounter
+import okio.source
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
@@ -20,7 +21,7 @@ import ru.ifmo.fbsat.core.utils.multiArrayOf
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.timeSince
-import ru.ifmo.fbsat.core.utils.toMultiArray
+import ru.ifmo.fbsat.core.utils.useLines
 import ru.ifmo.fbsat.core.utils.withIndex
 import java.io.File
 
@@ -186,7 +187,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
         // Verify automaton with NuSMV
         val counterexamples = automaton.verifyWithNuSMV(
             dir = outDir,
-            modularModuleName = multiArrayOf("Sender", "Receiver_synth")
+            modularModuleName = multiArrayOf("Sender", "Receiver")
         )
         if (counterexamples.isEmpty()) {
             log.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
@@ -248,20 +249,22 @@ fun DistributedAutomaton.verifyWithNuSMV(dir: File, modularModuleName: MultiArra
     log.debug { "Running '$cmd'..." }
     val timeStart = PerformanceCounter.reference
     val process = Runtime.getRuntime().exec(cmd, null, dir)
-    // process.inputStream.source().useLines { lines ->
-    //     for (line in lines) {
-    //         println("[stdout] NuSMV: $line")
-    //     }
-    // }
-    // process.errorStream.source().useLines { lines ->
-    //     for (line in lines) {
-    //         println("[stderr] NuSMV: $line")
-    //     }
-    // }
     val exitcode = process.waitFor()
     val runningTime = timeSince(timeStart)
     log.debug { "'$cmd' returned with $exitcode in %.3f s.".format(runningTime.seconds) }
-    check(exitcode == 0) { "NuSMV exitcode: $exitcode" }
+    check(exitcode == 0) {
+        process.inputStream.source().useLines { lines ->
+            for (line in lines) {
+                println("[stdout] NuSMV: $line")
+            }
+        }
+        process.errorStream.source().useLines { lines ->
+            for (line in lines) {
+                println("[stderr] NuSMV: $line")
+            }
+        }
+        "NuSMV exitcode: $exitcode"
+    }
 
     // Handle counterexamples after verification
     val fileCounterexamples = dir.resolve("counterexamples.xml")

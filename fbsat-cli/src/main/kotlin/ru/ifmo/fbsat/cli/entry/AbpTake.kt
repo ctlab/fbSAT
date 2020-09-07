@@ -255,16 +255,28 @@ fun main() {
     //     modularMaxTransitions = multiArrayOf(T1, T2),
     //     modularMaxTotalGuardsSize = multiArrayOf(N1, N2)
     // )
+    // val distributedAutomaton = inferrer.distributedCegis(
+    //     numberOfModules = M,
+    //     compoundScenarioTree = positiveCompoundScenarioTree,
+    //     modularScenarioTree = positiveCompoundScenarioTree.modular,
+    //     // negativeCompoundScenarioTree = negativeCompoundScenarioTree,
+    //     modularNumberOfStates = multiArrayOf(C1, C2),
+    //     modularMaxOutgoingTransitions = multiArrayOf(K1, K2),
+    //     modularMaxGuardSize = multiArrayOf(P1, P2),
+    //     modularMaxTransitions = multiArrayOf(T1, T2),
+    //     modularMaxTotalGuardsSize = multiArrayOf(N1, N2),
+    //     smvDir = File("data/abp-take/smv")
+    // )
     val distributedAutomaton = inferrer.distributedCegis(
         numberOfModules = M,
         compoundScenarioTree = positiveCompoundScenarioTree,
         modularScenarioTree = positiveCompoundScenarioTree.modular,
-        negativeCompoundScenarioTree = negativeCompoundScenarioTree,
+        // negativeCompoundScenarioTree = negativeCompoundScenarioTree,
         modularNumberOfStates = multiArrayOf(C1, C2),
-        modularMaxOutgoingTransitions = multiArrayOf(K1, K2),
+        // modularMaxOutgoingTransitions = multiArrayOf(K1, K2),
         modularMaxGuardSize = multiArrayOf(P1, P2),
-        modularMaxTransitions = multiArrayOf(T1, T2),
-        modularMaxTotalGuardsSize = multiArrayOf(N1, N2),
+        // modularMaxTransitions = multiArrayOf(T1, T2),
+        // modularMaxTotalGuardsSize = multiArrayOf(N1, N2),
         smvDir = File("data/abp-take/smv")
     )
 
