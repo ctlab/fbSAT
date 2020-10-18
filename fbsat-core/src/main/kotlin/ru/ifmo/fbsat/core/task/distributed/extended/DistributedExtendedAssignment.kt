@@ -1,12 +1,16 @@
 package ru.ifmo.fbsat.core.task.distributed.extended
 
+import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
+import com.github.lipen.multiarray.mapIndexed
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.RawAssignment
+import ru.ifmo.fbsat.core.solver.convert
+import ru.ifmo.fbsat.core.task.single.basic.toAutomaton
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedAssignment
 import ru.ifmo.fbsat.core.task.single.extended.toAutomaton
 
@@ -24,7 +28,9 @@ class DistributedExtendedAssignment(
     val modularZ: MultiArray<Int>,
     val modularU: MultiArray<Int>,
     /* Modularized ExtendedAssignment */
-    val modularExtendedAssignment: MultiArray<ExtendedAssignment>
+    val modularExtendedAssignment: MultiArray<ExtendedAssignment>,
+    /* Extra */
+    val stateUsed: BooleanMultiArray
 ) {
     val modularT: MultiArray<Int> = modularExtendedAssignment.map { it.T }
     val modularN: MultiArray<Int> = modularExtendedAssignment.map { it.N }
@@ -53,13 +59,16 @@ class DistributedExtendedAssignment(
                 modularX = modularX,
                 modularZ = modularZ,
                 modularU = modularU,
-                modularExtendedAssignment = modularExtendedVariables.map { ExtendedAssignment.fromRaw(raw, it) }
+                modularExtendedAssignment = modularExtendedVariables.map { ExtendedAssignment.fromRaw(raw, it) },
+                stateUsed = stateUsed.convert(raw)
             )
         }
     }
 }
 
 fun DistributedExtendedAssignment.toAutomaton(): DistributedAutomaton {
-    val modules: MultiArray<Automaton> = modularExtendedAssignment.map { it.toAutomaton() }
+    val modules: MultiArray<Automaton> = modularExtendedAssignment.mapIndexed { (m), a ->
+        a.toAutomaton(stateUsed = { c -> stateUsed[m, c] })
+    }
     return DistributedAutomaton(modules)
 }

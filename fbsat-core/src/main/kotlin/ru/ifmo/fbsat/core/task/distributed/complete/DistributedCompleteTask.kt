@@ -50,7 +50,7 @@ fun Solver.updateDistributedNegativeReduction(vars: DistributedCompleteVariables
     for (v in 1..compoundNegV)
         for (l in negativeCompoundScenarioTree.loopBacks(v))
             if (forbiddenLoops.add(v to l)) {
-                log.debug { "Forbidding loop from v = $v to l = $l..." }
+                // log.debug { "Forbidding loop from v = $v to l = $l..." }
                 // OR_{m in 1..M}( aux1_m )
                 clause {
                     for (m in 1..M) with(modularCompleteVariables[m]) {

@@ -98,13 +98,15 @@ class Graph(val name: String) {
         fun toGraphvizString(): String {
             var s = "$id"
             if (attributes.isNotEmpty())
-                s += " [${attributes.asSequence().joinToString(" ") { (name, value) ->
-                    // do not enquote html-like labels
-                    if (name == "label" && value.startsWith("<") && value.endsWith(">"))
-                        "$name=$value"
-                    else
-                        "$name=\"$value\""
-                }}]"
+                s += " [${
+                    attributes.asSequence().joinToString(" ") { (name, value) ->
+                        // do not enquote html-like labels
+                        if (name == "label" && value.startsWith("<") && value.endsWith(">"))
+                            "$name=$value"
+                        else
+                            "$name=\"$value\""
+                    }
+                }]"
             return s
         }
     }

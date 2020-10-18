@@ -192,6 +192,8 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
         if (counterexamples.isEmpty()) {
             log.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
             log.success("No counterexamples!")
+            log.info("Final compound negative scenario tree size: ${negativeTree.size}")
+            log.info("Final number of negative scenarios: ${negativeTree.scenarios.size}")
             return automaton
         }
         // Convert counterexamples to negative scenarios
@@ -245,7 +247,7 @@ fun DistributedAutomaton.verifyWithNuSMV(dir: File, modularModuleName: MultiArra
     dumpSmv(dir, modularModuleName)
 
     // Perform formal verification using NuSMV, generate counterexamples to given ltl-spec
-    val cmd = "make clean model counterexamples"
+    val cmd = "make model counterexamples"
     log.debug { "Running '$cmd'..." }
     val timeStart = PerformanceCounter.reference
     val process = Runtime.getRuntime().exec(cmd, null, dir)

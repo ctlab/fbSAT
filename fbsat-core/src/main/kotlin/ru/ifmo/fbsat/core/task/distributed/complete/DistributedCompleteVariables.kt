@@ -3,6 +3,8 @@ package ru.ifmo.fbsat.core.task.distributed.complete
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.BoolVarArray
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedVariables
 import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
@@ -25,7 +27,10 @@ class DistributedCompleteVariables(
     val modularZ: MultiArray<Int>,
     val modularU: MultiArray<Int>,
     /* Modularized CompleteVariables */
-    val modularCompleteVariables: MultiArray<CompleteVariables>
+    val modularCompleteVariables: MultiArray<CompleteVariables>,
+    /* Cardinality */
+    val stateUsed: BoolVarArray, // [M,C]: Boolean
+    val cardinalityC: Cardinality
 ) {
     val forbiddenLoops: MutableSet<Pair<Int, Int>> = mutableSetOf()
 }
@@ -59,6 +64,8 @@ fun Solver.declareDistributedCompleteVariables(
         modularX = modularX,
         modularZ = modularZ,
         modularU = modularU,
-        modularCompleteVariables = modularCompleteVariables
+        modularCompleteVariables = modularCompleteVariables,
+        stateUsed = stateUsed,
+        cardinalityC = cardinalityC
     )
 }

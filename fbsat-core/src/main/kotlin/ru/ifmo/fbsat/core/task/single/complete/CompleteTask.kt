@@ -17,7 +17,6 @@ import ru.ifmo.fbsat.core.task.completeVars
 import ru.ifmo.fbsat.core.task.extendedVars
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.timeSince
-import ru.ifmo.fbsat.core.utils.toBinaryString
 
 data class CompleteTask(
     val negativeScenarioTree: NegativeScenarioTree? = null // empty if null

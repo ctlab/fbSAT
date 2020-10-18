@@ -3,6 +3,7 @@ package ru.ifmo.fbsat.core.task.distributed.extended
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
@@ -28,6 +29,8 @@ class DistributedExtendedVariables(
     /* Modularized ExtendedVariables */
     val modularExtendedVariables: MultiArray<ExtendedVariables>,
     /* Cardinality */
+    val stateUsed: BoolVarArray, // [M,C]: Boolean
+    val cardinalityC: Cardinality,
     val cardinality: Cardinality
 )
 
@@ -66,6 +69,8 @@ fun Solver.declareDistributedExtendedVariables(
         modularZ = modularZ,
         modularU = modularU,
         modularExtendedVariables = modularExtendedVariables,
+        stateUsed = stateUsed,
+        cardinalityC = cardinalityC,
         cardinality = cardinality
     )
 }

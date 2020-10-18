@@ -492,6 +492,16 @@ fun Solver.declareDistributedPositiveMappingConstraints_compound(
                     isPositive = true
                 )
             }
+
+            /* Constraints for all vertices */
+            for (v in 1..scenarioTree.size) {
+                for (c in 1..C) {
+                    imply(
+                        -stateUsed[m, c],
+                        mapping[v] neq c
+                    )
+                }
+            }
         }
     }
 }

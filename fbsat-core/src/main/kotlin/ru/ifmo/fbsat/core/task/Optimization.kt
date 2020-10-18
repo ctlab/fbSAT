@@ -4,7 +4,11 @@ import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
+import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
+import ru.ifmo.fbsat.core.task.distributed.basic.inferDistributedBasic
+import ru.ifmo.fbsat.core.task.distributed.complete.inferDistributedComplete
+import ru.ifmo.fbsat.core.task.distributed.extended.inferDistributedExtended
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.inferArbitraryModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.inferConsecutiveModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.inferParallelModularBasic
@@ -190,6 +194,78 @@ fun Inferrer.optimizeParallelModularN(start: Int? = null, end: Int = 0): Paralle
         next = { N ->
             vars.cardinality.updateUpperBoundLessThan(N)
             inferParallelModularExtended()
+        },
+        query = { it.totalGuardsSize }
+    )
+}
+
+fun Inferrer.optimizeDistributedSumC(start: Int? = null, end: Int = 0): DistributedAutomaton? {
+    log.info("Optimizing Csum...")
+    val vars = solver.context.distributedBasicVars
+    return optimizeTopDown(
+        start = start,
+        end = end,
+        nextInitial = { C ->
+            vars.cardinalityC.updateUpperBoundLessThanOrEqual(C)
+            inferDistributedBasic()
+        },
+        next = { C ->
+            vars.cardinalityC.updateUpperBoundLessThan(C)
+            inferDistributedBasic()
+        },
+        query = { it.numberOfReachableStates }
+    )
+}
+
+fun Inferrer.optimizeDistributedSumC_Extended(start: Int? = null, end: Int = 0): DistributedAutomaton? {
+    log.info("Optimizing Csum...")
+    val vars = solver.context.distributedExtendedVars
+    return optimizeTopDown(
+        start = start,
+        end = end,
+        nextInitial = { C ->
+            vars.cardinalityC.updateUpperBoundLessThanOrEqual(C)
+            inferDistributedExtended()
+        },
+        next = { C ->
+            vars.cardinalityC.updateUpperBoundLessThan(C)
+            inferDistributedExtended()
+        },
+        query = { it.numberOfReachableStates }
+    )
+}
+
+fun Inferrer.optimizeDistributedSumC_Complete(start: Int? = null, end: Int = 0): DistributedAutomaton? {
+    log.info("Optimizing Csum...")
+    val vars = solver.context.distributedCompleteVars
+    return optimizeTopDown(
+        start = start,
+        end = end,
+        nextInitial = { C ->
+            vars.cardinalityC.updateUpperBoundLessThanOrEqual(C)
+            inferDistributedComplete()
+        },
+        next = { C ->
+            vars.cardinalityC.updateUpperBoundLessThan(C)
+            inferDistributedComplete()
+        },
+        query = { it.numberOfReachableStates }
+    )
+}
+
+fun Inferrer.optimizeDistributedSumN(start: Int? = null, end: Int = 0): DistributedAutomaton? {
+    log.info("Optimizing Nsum...")
+    val vars = solver.context.distributedExtendedVars
+    return optimizeTopDown(
+        start = start,
+        end = end,
+        nextInitial = { N ->
+            vars.cardinality.updateUpperBoundLessThanOrEqual(N)
+            inferDistributedExtended()
+        },
+        next = { N ->
+            vars.cardinality.updateUpperBoundLessThan(N)
+            inferDistributedExtended()
         },
         query = { it.totalGuardsSize }
     )

@@ -54,6 +54,13 @@ class Automaton(
         states.size
     }
 
+    /**
+     * Number of reachable automaton states.
+     */
+    val numberOfReachableStates: Int by lazyCache {
+        (transitions.map { it.destination } + initialState).toSet().size
+    }
+
     /** Maximum number of outgoing transitions **K**. */
     val maxOutgoingTransitions: Int by lazyCache {
         states.map { it.transitions.size }.max() ?: 0
@@ -177,8 +184,10 @@ class Automaton(
         }
 
         override fun toString(): String {
-            return "State(id=$id, outputEvent=${outputEvent?.name
-                ?: 'ε'}, algorithm=$algorithm, transitions=${transitions.map { it.destination.id }})"
+            return "State(id=$id, outputEvent=${
+                outputEvent?.name
+                    ?: 'ε'
+            }, algorithm=$algorithm, transitions=${transitions.map { it.destination.id }})"
         }
     }
 
@@ -215,8 +224,10 @@ class Automaton(
         }
 
         override fun toString(): String {
-            return "Transition(k=$k, source=${source.id}, destination=${destination.id}, $inputEvent=${inputEvent?.name
-                ?: 'ε'}, guard=$guard)"
+            return "Transition(k=$k, source=${source.id}, destination=${destination.id}, $inputEvent=${
+                inputEvent?.name
+                    ?: 'ε'
+            }, guard=$guard)"
         }
     }
 
@@ -659,9 +670,13 @@ class Automaton(
     fun toSmvString(name: String = "CONTROL"): String {
         val module = "$name(${inputEvents.joinToString(",") { it.name }}, ${inputNames.joinToString(",")})"
 
-        val definitions: MutableMap<String, String> = mutableMapOf(
-            "_state" to "{${states.joinToString(", ") { it.toSmvString() }}}"
-        )
+        val definitions: MutableMap<String, String> = mutableMapOf()
+        if (states.size > 1) {
+            definitions["_state"] = "{${states.joinToString(", ") { it.toSmvString() }}}"
+        } else {
+            // Adhoc: add one more aux state
+            definitions["_state"] = "{${states.joinToString(", ") { it.toSmvString() }}, you_should_not_be_here}"
+        }
         for (outputEvent in outputEvents)
             definitions[outputEvent.name] = "boolean"
         for (outputName in outputNames)
@@ -739,6 +754,7 @@ class Automaton(
 fun Automaton.endow(
     C: Int,
     K: Int,
+    stateUsed: (c: Int) -> Boolean = { _ -> true },
     stateOutputEvent: (c: Int) -> OutputEvent?,
     stateAlgorithm: (c: Int) -> Algorithm,
     transitionDestination: (c: Int, k: Int) -> Int,
@@ -746,11 +762,12 @@ fun Automaton.endow(
     transitionGuard: (c: Int, k: Int) -> Guard
 ): Automaton = apply {
     for (c in 1..C)
-        addState(
-            id = c,
-            outputEvent = stateOutputEvent(c),
-            algorithm = stateAlgorithm(c)
-        )
+        if (stateUsed(c))
+            addState(
+                id = c,
+                outputEvent = stateOutputEvent(c),
+                algorithm = stateAlgorithm(c)
+            )
 
     for (c in 1..C)
         for (k in 1..K) {

@@ -4,9 +4,11 @@ import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
+import ru.ifmo.fbsat.core.solver.newBoolVarArray
 import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
 
@@ -26,6 +28,8 @@ class DistributedBasicVariables(
     /* Modularized BasicVariables */
     val modularBasicVariables: MultiArray<BasicVariables>,
     /* Cardinality */
+    val stateUsed: BoolVarArray, // [M,C]: Boolean
+    val cardinalityC: Cardinality,
     val cardinality: Cardinality
 )
 
@@ -52,6 +56,22 @@ fun Solver.declareDistributedBasicVariables(
         )
     }
     /* Cardinality */
+    // require(modularC.values.all { it == modularC[1] }) { "All C must be equal" }
+    val falseVar = newLiteral()
+    clause(-falseVar)
+    val stateUsed = newBoolVarArray(M, modularC.values.max()!!) { (m,c) ->
+        if (c <= modularC[m])
+            newLiteral()
+        else
+            falseVar
+    }
+    val cardinalityC: Cardinality = declareCardinality {
+        for (m in 1..M) with(modularBasicVariables[m]) {
+            // check(C == modularC[1])
+            for (c in 1..C)
+                yield(stateUsed[m, c])
+        }
+    }
     val cardinality = declareCardinality {
         for (m in 1..M) with(modularBasicVariables[m]) {
             for (c in 1..C)
@@ -73,6 +93,8 @@ fun Solver.declareDistributedBasicVariables(
         modularZ = modularZ,
         modularU = modularU,
         modularBasicVariables = modularBasicVariables,
+        stateUsed = stateUsed,
+        cardinalityC = cardinalityC,
         cardinality = cardinality
     )
 }

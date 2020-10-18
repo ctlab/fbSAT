@@ -59,7 +59,7 @@ data class DistributedBasicTask(
     }
 }
 
-private fun Solver.declareDistributedBasicAdhocConstraints(vars: DistributedBasicVariables){
+private fun Solver.declareDistributedBasicAdhocConstraints(vars: DistributedBasicVariables) {
     with(vars.modularBasicVariables[1]) {
         check(C == 4)
         check(K > 2)

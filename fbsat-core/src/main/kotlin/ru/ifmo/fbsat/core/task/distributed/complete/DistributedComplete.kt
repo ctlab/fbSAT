@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.core.task.distributed.complete
 
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
@@ -14,8 +15,11 @@ import ru.ifmo.fbsat.core.task.distributed.extended.inferDistributedExtended
 import ru.ifmo.fbsat.core.task.distributed.extended.toAutomaton
 import ru.ifmo.fbsat.core.task.distributedCompleteVars
 import ru.ifmo.fbsat.core.task.distributedExtendedVars
+import ru.ifmo.fbsat.core.task.optimizeDistributedSumC_Complete
+import ru.ifmo.fbsat.core.task.optimizeDistributedSumN
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
+import kotlin.math.min
 
 fun Inferrer.distributedComplete(
     numberOfModules: Int, // M
@@ -61,6 +65,113 @@ fun Inferrer.distributedComplete(
     return inferDistributedExtended()
 }
 
+fun Inferrer.completeMin_(
+    numberOfModules: Int, // M
+    compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
+    modularScenarioTree: MultiArray<PositiveScenarioTree>,
+    negativeCompoundScenarioTree: NegativeCompoundScenarioTree? = null,
+    modularNumberOfStates: MultiArray<Int>, // [C]
+    modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
+    modularMaxGuardSize: MultiArray<Int>, // [P]
+    modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
+    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
+    maxTransitions: Int? = null // T_sum, unconstrained if null
+): DistributedAutomaton? {
+    reset()
+    declare(
+        DistributedBasicTask(
+            numberOfModules = numberOfModules,
+            compoundScenarioTree = compoundScenarioTree,
+            modularScenarioTree = modularScenarioTree,
+            modularNumberOfStates = modularNumberOfStates,
+            modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
+            modularMaxTransitions = modularMaxTransitions,
+            modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
+            maxTransitions = maxTransitions
+        )
+    )
+    declare(
+        DistributedExtendedTask(
+            numberOfModules = numberOfModules,
+            modularMaxGuardSize = modularMaxGuardSize
+        )
+    )
+    declare(
+        DistributedCompleteTask(
+            numberOfModules = numberOfModules,
+            negativeCompoundScenarioTree = negativeCompoundScenarioTree
+        )
+    )
+    return optimizeDistributedSumN()
+}
+
+fun Inferrer.completeMin__(
+    numberOfModules: Int, // M
+    compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
+    modularScenarioTree: MultiArray<PositiveScenarioTree>,
+    negativeCompoundScenarioTree: NegativeCompoundScenarioTree? = null,
+    // modularNumberOfStates: MultiArray<Int>, // [C]
+    // modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
+    modularMaxGuardSize: MultiArray<Int>, // [P]
+    modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
+    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
+    maxTransitions: Int? = null, // T_sum, unconstrained if null
+    startD: Int = 1
+): DistributedAutomaton? {
+    for (D in startD..100) {
+        // val automaton = completeMin_(
+        //     numberOfModules = numberOfModules,
+        //     compoundScenarioTree = compoundScenarioTree,
+        //     modularScenarioTree = modularScenarioTree,
+        //     negativeCompoundScenarioTree = negativeCompoundScenarioTree,
+        //     modularNumberOfStates = MultiArray.create(numberOfModules) { D },
+        //     modularMaxGuardSize = modularMaxGuardSize,
+        //     modularMaxTransitions = modularMaxTransitions,
+        //     modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
+        //     maxTransitions = maxTransitions
+        // )
+        val automaton = distributedComplete(
+            numberOfModules = numberOfModules,
+            compoundScenarioTree = compoundScenarioTree,
+            modularScenarioTree = modularScenarioTree,
+            negativeCompoundScenarioTree = negativeCompoundScenarioTree,
+            modularNumberOfStates = MultiArray.create(numberOfModules) { D },
+            modularMaxGuardSize = modularMaxGuardSize,
+            modularMaxTransitions = modularMaxTransitions,
+            modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
+            maxTransitions = maxTransitions
+        )
+        if (automaton != null) {
+            val automatonMinSumC = optimizeDistributedSumC_Complete()!!
+            // for (m in 1..numberOfModules) {
+            //     log.info("automatonMinSumC (module $m):")
+            //     automatonMinSumC.project(m).pprint()
+            // }
+            // log.info("modularNumberOfReachableStates = ${automatonMinSumC.modules.map { it.numberOfReachableStates }.values}")
+            // log.info("modularNumberOfStates = ${automatonMinSumC.modules.map { it.numberOfStates }.values}")
+            val reinferred = distributedComplete(
+                numberOfModules = numberOfModules,
+                compoundScenarioTree = compoundScenarioTree,
+                modularScenarioTree = modularScenarioTree,
+                negativeCompoundScenarioTree = negativeCompoundScenarioTree,
+                modularNumberOfStates = automatonMinSumC.modules.map { it.numberOfReachableStates },
+                modularMaxOutgoingTransitions = MultiArray.create(numberOfModules) { D },
+                modularMaxGuardSize = modularMaxGuardSize,
+                modularMaxTransitions = modularMaxTransitions,
+                modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
+                maxTransitions = maxTransitions
+            )!!
+            return optimizeDistributedSumN(
+                start = min(
+                    automatonMinSumC.totalGuardsSize,
+                    reinferred.totalGuardsSize
+                )
+            )!!
+        }
+    }
+    return null
+}
+
 fun Inferrer.inferDistributedComplete(): DistributedAutomaton? {
     val rawAssignment = solver.solve() ?: return null
     val vars = solver.context.distributedExtendedVars
@@ -68,7 +179,7 @@ fun Inferrer.inferDistributedComplete(): DistributedAutomaton? {
     val automaton = assignment.toAutomaton()
 
     // TODO: check mapping
-    log.warn("Mapping check is not implemented yet")
+    // log.warn("Mapping check is not implemented yet")
 
     // val completeVars = solver.context.distributedCompleteVars
     // val modularNegMapping = completeVars.modularCompleteVariables.map {

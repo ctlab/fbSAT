@@ -57,7 +57,7 @@ fun Inferrer.inferConsecutiveModularExtended(): ConsecutiveModularAutomaton? {
     val automaton = assignment.toAutomaton()
 
     // TODO: check automaton
-    log.warn("Mapping check is not implemented yet")
+    // log.warn("Mapping check is not implemented yet")
 
     return automaton
 }

@@ -10,7 +10,7 @@ import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
-import ru.ifmo.fbsat.core.solver.implyOr
+import ru.ifmo.fbsat.core.solver.implyAnd
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
@@ -154,6 +154,37 @@ fun Solver.declareDistributedAutomatonStructureConstraints(
         for (m in 1..M) {
             comment("Distributed automaton structure constraints: for module m = $m")
             declareAutomatonStructureConstraints(modularBasicVariables[m])
+
+            comment("Distributed automaton state usage constraints: for module m = $m")
+            with(modularBasicVariables[m]) {
+                comment("Start state is always used")
+                clause(stateUsed[m, 1])
+
+                comment("State non-usage propagation")
+                for (c in 2 until C)
+                    imply(
+                        -stateUsed[m, c],
+                        -stateUsed[m, c + 1]
+                    )
+
+                comment("Unused states don't have outgoing transitions")
+                for (c in 2..C)
+                    implyAnd(-stateUsed[m, c], sequence {
+                        for (k in 1..K)
+                            yield(transitionDestination[c, k] eq 0)
+                    })
+
+                comment("(only) Unused states don't have incoming transitions")
+                for (c in 2..C)
+                    iffAnd(-stateUsed[m, c], sequence {
+                        for (c2 in 1..C)
+                            for (k in 1..K)
+                                yield(transitionDestination[c2, k] neq c)
+                    })
+
+                // TODO: constraints about stateOutputEvent
+                // TODO: constraints about stateAlgorithm
+            }
         }
     }
     // TODO: is it all?

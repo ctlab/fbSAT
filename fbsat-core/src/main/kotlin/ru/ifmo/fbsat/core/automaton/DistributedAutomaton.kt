@@ -29,7 +29,6 @@ import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.toImmutable
 import ru.ifmo.fbsat.core.utils.toMultiArray
-import ru.ifmo.fbsat.core.utils.withIndex
 import java.io.File
 
 @Suppress("MemberVisibilityCanBePrivate", "FunctionName", "PropertyName")
@@ -44,6 +43,7 @@ class DistributedAutomaton(
 
     val numberOfModules: Int = M
     val numberOfStates: Int = modules.values.sumBy { it.numberOfStates }
+    val numberOfReachableStates: Int = modules.values.sumBy { it.numberOfReachableStates }
     val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
     val totalGuardsSize: Int = modules.values.sumBy { it.totalGuardsSize }
 

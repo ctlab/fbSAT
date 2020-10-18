@@ -1,15 +1,11 @@
 package ru.ifmo.fbsat.core.scenario.negative
 
 import ru.ifmo.fbsat.core.scenario.InputEvent
-import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.OutputEvent
-import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.addGenericScenario
 import ru.ifmo.fbsat.core.scenario.auxScenarioElement
-import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.toBinaryString
 
 class NegativeScenarioTree(
     override val inputEvents: List<InputEvent>,

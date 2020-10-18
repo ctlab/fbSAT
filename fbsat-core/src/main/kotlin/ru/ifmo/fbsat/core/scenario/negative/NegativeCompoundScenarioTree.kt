@@ -10,7 +10,6 @@ import ru.ifmo.fbsat.core.scenario.addGenericScenario
 import ru.ifmo.fbsat.core.scenario.auxScenarioElement
 import ru.ifmo.fbsat.core.utils.CompoundImpl
 import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
-import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.toImmutable
 

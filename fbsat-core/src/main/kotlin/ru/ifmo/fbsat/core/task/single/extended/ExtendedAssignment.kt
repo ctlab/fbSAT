@@ -88,9 +88,12 @@ class ExtendedAssignment(
     }
 }
 
-fun ExtendedAssignment.toAutomaton(): Automaton =
+fun ExtendedAssignment.toAutomaton(
+    stateUsed: (c: Int) -> Boolean = { _ -> true }
+): Automaton =
     Automaton(scenarioTree).endow(
         C = C, K = K,
+        stateUsed = stateUsed,
         stateOutputEvent = { c ->
             stateOutputEvent[c].let { o ->
                 if (o == 0) null else scenarioTree.outputEvents[o - 1]

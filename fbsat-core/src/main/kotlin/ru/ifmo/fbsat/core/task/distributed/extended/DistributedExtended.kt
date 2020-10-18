@@ -8,7 +8,6 @@ import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask
 import ru.ifmo.fbsat.core.task.distributedExtendedVars
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.magic
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 
 fun Inferrer.distributedExtended(
@@ -55,7 +54,7 @@ fun Inferrer.inferDistributedExtended(): DistributedAutomaton? {
     val automaton = assignment.toAutomaton()
 
     // TODO: check mapping
-    log.warn("Mapping check is not implemented yet")
+    // log.warn("Mapping check is not implemented yet")
 
     return automaton
 }
