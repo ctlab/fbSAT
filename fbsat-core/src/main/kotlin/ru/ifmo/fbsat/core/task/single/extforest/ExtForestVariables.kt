@@ -1,11 +1,6 @@
 package ru.ifmo.fbsat.core.task.single.extforest
 
-import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.declareCardinality
-import ru.ifmo.fbsat.core.solver.newBoolVarArray
-import ru.ifmo.fbsat.core.solver.newDomainVarArray
-import ru.ifmo.fbsat.core.solver.newIntVarArray
 
 fun Solver.declareExtForestVariables(
     P: Int

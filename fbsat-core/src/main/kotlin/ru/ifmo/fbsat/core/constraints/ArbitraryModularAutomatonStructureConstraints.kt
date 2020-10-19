@@ -7,7 +7,6 @@ import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
-import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.exhaustive

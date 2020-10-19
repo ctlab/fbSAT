@@ -140,7 +140,8 @@ fun Solver.newIntVarArrayCtx(
 @Suppress("FunctionName")
 abstract class AbstractSolver : Solver {
     final override var context: SolverContext = newContext()
-        // private set
+
+    // private set
     override var numberOfVariables: Int = 0
         protected set
     final override var numberOfClauses: Int = 0

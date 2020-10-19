@@ -117,11 +117,11 @@ fun Inferrer.optimizeParallelModularT(start: Int? = null, end: Int = 0): Paralle
         start = start,
         end = end,
         nextInitial = { T ->
-           cardinalityT.updateUpperBoundLessThanOrEqual(T)
+            cardinalityT.updateUpperBoundLessThanOrEqual(T)
             inferParallelModularBasic()
         },
         next = { T ->
-           cardinalityT.updateUpperBoundLessThan(T)
+            cardinalityT.updateUpperBoundLessThan(T)
             inferParallelModularBasic()
         },
         query = { it.numberOfTransitions }
@@ -171,11 +171,11 @@ fun Inferrer.optimizeConsecutiveModularN(start: Int? = null, end: Int = 0): Cons
         start = start,
         end = end,
         nextInitial = { N ->
-           cardinalityN.updateUpperBoundLessThanOrEqual(N)
+            cardinalityN.updateUpperBoundLessThanOrEqual(N)
             inferConsecutiveModularExtended()
         },
         next = { N ->
-           cardinalityN.updateUpperBoundLessThan(N)
+            cardinalityN.updateUpperBoundLessThan(N)
             inferConsecutiveModularExtended()
         },
         query = { it.totalGuardsSize }

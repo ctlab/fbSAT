@@ -1,7 +1,6 @@
 package ru.ifmo.fbsat.core.task
 
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.SolverContext
 import ru.ifmo.fbsat.core.utils.log
 import java.io.File
 

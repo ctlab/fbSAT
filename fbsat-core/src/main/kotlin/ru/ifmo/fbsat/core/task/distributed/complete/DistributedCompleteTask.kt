@@ -27,7 +27,7 @@ data class DistributedCompleteTask(
 
         /* Variables */
         comment("$name: Variables")
-         declareDistributedCompleteVariables(
+        declareDistributedCompleteVariables(
             negativeCompoundScenarioTree = negTree
         )
 
@@ -43,7 +43,7 @@ fun Solver.updateDistributedNegativeReduction() {
 
     for (m in 1..M) switchContext(modularContext[m]) {
         comment("Update negative reduction: for module m = $m")
-        updateNegativeReduction( isForbidLoops = false)
+        updateNegativeReduction(isForbidLoops = false)
     }
 
     comment("Forbid loops (compound)")

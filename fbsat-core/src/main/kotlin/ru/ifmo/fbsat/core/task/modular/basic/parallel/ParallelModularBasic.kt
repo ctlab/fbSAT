@@ -2,7 +2,6 @@ package ru.ifmo.fbsat.core.task.modular.basic.parallel
 
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
-import ru.ifmo.fbsat.core.automaton.buildBasicConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.automaton.buildBasicParallelModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer

@@ -32,7 +32,7 @@ data class DistributedExtendedTask(
         /* Initial cardinality constraints */
         val modularContext: MultiArray<SolverContext> by context
         val M: Int by context
-        for (m in 1..M)  switchContext(modularContext[m]){
+        for (m in 1..M) switchContext(modularContext[m]) {
             comment("$name: Initial cardinality (T) constraints: for module m = $m")
             val cardinalityN: Cardinality by context
             cardinalityN.updateUpperBoundLessThanOrEqual(modularMaxTotalGuardsSize[m])
