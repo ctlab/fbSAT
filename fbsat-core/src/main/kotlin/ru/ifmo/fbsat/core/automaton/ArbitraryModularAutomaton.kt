@@ -16,9 +16,12 @@ import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.RawAssignment
+import ru.ifmo.fbsat.core.solver.SolverContext
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.Pins
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.magic
 import ru.ifmo.fbsat.core.utils.pow
 import ru.ifmo.fbsat.core.utils.random
 import ru.ifmo.fbsat.core.utils.toBinary
@@ -491,4 +494,20 @@ fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: OldPositive
             log.debug { "Minimized guard: ${transition.guard.toSimpleString()}" }
         }
     }
+}
+
+fun buildBasicArbitraryModularAutomaton(
+    context: SolverContext,
+    raw: RawAssignment,
+    useStateUsed: Boolean = false
+): ArbitraryModularAutomaton {
+    return magic()
+}
+
+fun buildExtendedArbitraryModularAutomaton(
+    context: SolverContext,
+    raw: RawAssignment,
+    useStateUsed: Boolean = false
+): ArbitraryModularAutomaton {
+    return magic()
 }

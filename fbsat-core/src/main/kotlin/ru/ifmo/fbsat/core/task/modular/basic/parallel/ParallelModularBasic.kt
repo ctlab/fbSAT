@@ -2,10 +2,11 @@ package ru.ifmo.fbsat.core.task.modular.basic.parallel
 
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
+import ru.ifmo.fbsat.core.automaton.buildBasicConsecutiveModularAutomaton
+import ru.ifmo.fbsat.core.automaton.buildBasicParallelModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeParallelModularT
-import ru.ifmo.fbsat.core.task.parallelModularBasicVars
 import ru.ifmo.fbsat.core.utils.log
 
 fun Inferrer.parallelModularBasic(
@@ -67,9 +68,10 @@ fun Inferrer.parallelModularBasicMin(
 
 fun Inferrer.inferParallelModularBasic(): ParallelModularAutomaton? {
     val rawAssignment = solver.solve() ?: return null
-    val vars = solver.context.parallelModularBasicVars
-    val assignment = ParallelModularBasicAssignment.fromRaw(rawAssignment, vars)
-    val automaton = assignment.toAutomaton()
+    val automaton = buildBasicParallelModularAutomaton(
+        context = solver.context,
+        raw = rawAssignment
+    )
 
     // TODO: check automaton
     // log.warn("Mapping check is not implemented yet")

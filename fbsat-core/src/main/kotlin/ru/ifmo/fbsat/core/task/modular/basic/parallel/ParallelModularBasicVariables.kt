@@ -2,35 +2,15 @@ package ru.ifmo.fbsat.core.task.modular.basic.parallel
 
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
+import ru.ifmo.fbsat.core.solver.newContext
 import ru.ifmo.fbsat.core.solver.newIntVarArray
-import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
+import ru.ifmo.fbsat.core.solver.switchContext
 import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
 
-@Suppress("PropertyName")
-class ParallelModularBasicVariables(
-    val scenarioTree: PositiveScenarioTree,
-    /* Constants */
-    val M: Int,
-    val C: Int,
-    val K: Int,
-    val V: Int,
-    val E: Int,
-    val O: Int,
-    val X: Int,
-    val Z: Int,
-    val U: Int,
-    /* Modularized BasicVariables */
-    val modularBasicVariables: MultiArray<BasicVariables>,
-    /* Interface variables */
-    val moduleControllingOutputVariable: IntVarArray,
-    /* Cardinality */
-    val cardinality: Cardinality
-)
-
+@Suppress("LocalVariableName", "NAME_SHADOWING")
 fun Solver.declareParallelModularBasicVariables(
     scenarioTree: PositiveScenarioTree,
     M: Int,
@@ -42,32 +22,39 @@ fun Solver.declareParallelModularBasicVariables(
     X: Int = scenarioTree.inputNames.size,
     Z: Int = scenarioTree.outputNames.size,
     U: Int = scenarioTree.uniqueInputs.size
-): ParallelModularBasicVariables {
-    /* Modularized BasicVariables */
-    val modularBasicVariables = MultiArray.create(M) { (m) ->
+) {
+    val M by context(M)
+    val C by context(C)
+    val K by context(K)
+    val V by context(V)
+    val E by context(E)
+    val O by context(O)
+    val X by context(X)
+    val Z by context(Z)
+    val U by context(U)
+
+    /* Modular */
+    val modularContext by context(MultiArray.create(M) { newContext() })
+    for (m in 1..M) switchContext(modularContext[m]) {
         declareBasicVariables(
             scenarioTree = scenarioTree,
             C = C, K = K,
             V = V, E = E, O = O, X = X, Z = Z, U = U
         )
     }
+
     /* Interface variables */
-    val moduleControllingOutputVariable = newIntVarArray(Z) { 1..M }
+    val moduleControllingOutputVariable by context(newIntVarArray(Z) { 1..M })
+
     /* Cardinality */
-    val cardinality = declareCardinality {
-        for (m in 1..M) with(modularBasicVariables[m]) {
+    val cardinalityT by context(declareCardinality {
+        for (m in 1..M) switchContext(modularContext[m]) {
+            val C: Int by context
+            val K: Int by context
+            val transitionDestination: IntVarArray by context
             for (c in 1..C)
                 for (k in 1..K)
                     yield(transitionDestination[c, k] neq 0)
         }
-    }
-
-    return ParallelModularBasicVariables(
-        scenarioTree = scenarioTree,
-        M = M, C = C, K = K,
-        V = V, E = E, O = O, X = X, Z = Z, U = U,
-        modularBasicVariables = modularBasicVariables,
-        moduleControllingOutputVariable = moduleControllingOutputVariable,
-        cardinality = cardinality
-    )
+    })
 }

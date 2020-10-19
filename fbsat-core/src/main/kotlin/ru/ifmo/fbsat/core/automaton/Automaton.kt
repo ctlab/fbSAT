@@ -3,6 +3,8 @@
 package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.lazycache.LazyCache
+import com.github.lipen.multiarray.IntMultiArray
+import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
@@ -17,12 +19,18 @@ import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.RawAssignment
+import ru.ifmo.fbsat.core.solver.SolverContext
+import ru.ifmo.fbsat.core.solver.convertBoolVarArray
+import ru.ifmo.fbsat.core.solver.convertDomainVarArray
+import ru.ifmo.fbsat.core.solver.convertIntVarArray
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.graph
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.random
 import ru.ifmo.fbsat.core.utils.toBinaryString
+import ru.ifmo.fbsat.core.utils.withIndex
 import java.io.File
 
 class Automaton(
@@ -456,8 +464,10 @@ class Automaton(
                 if (it.inputEvent != null) inputEvents.indexOf(it.inputEvent) + 1 else 0
             }
         val codeTransitionGuards =
-            transitions.map {
-                it.guard.truthTableString.toInt(2)
+            transitions.flatMap {
+                it.guard.truthTableString
+                    .windowed(8, step = 8, partialWindows = true)
+                    .map { s -> s.toInt(2) }
             }
         return (
             codeOutputEvents +
@@ -779,4 +789,130 @@ fun Automaton.endow(
                 guard = transitionGuard(c, k)
             )
         }
+}
+
+fun buildBasicAutomaton(
+    context: SolverContext,
+    raw: RawAssignment,
+    useStateUsed: Boolean = false
+): Automaton {
+    val scenarioTree: PositiveScenarioTree by context
+    val C: Int by context
+    val K: Int by context
+    val Z: Int by context
+    val transitionDestination by context.convertIntVarArray(raw)
+    val transitionInputEvent by context.convertIntVarArray(raw)
+    val transitionTruthTable by context.convertBoolVarArray(raw)
+    val stateOutputEvent by context.convertIntVarArray(raw)
+    val stateAlgorithmTop by context.convertBoolVarArray(raw)
+    val stateAlgorithmBot by context.convertBoolVarArray(raw)
+
+    val stateUsedFunction: (c: Int) -> Boolean =
+        if (useStateUsed) {
+            val stateUsed by context.convertBoolVarArray(raw);
+            { c -> stateUsed[c] }
+        } else {
+            { true }
+        }
+
+    return Automaton(scenarioTree).endow(
+        C = C, K = K,
+        stateUsed = stateUsedFunction,
+        stateOutputEvent = { c ->
+            stateOutputEvent[c].let { o ->
+                if (o == 0) null else scenarioTree.outputEvents[o - 1]
+            }
+        },
+        stateAlgorithm = { c ->
+            BinaryAlgorithm(
+                algorithm0 = BooleanArray(Z) { z0 -> stateAlgorithmBot[c, z0 + 1] },
+                algorithm1 = BooleanArray(Z) { z0 -> stateAlgorithmTop[c, z0 + 1] }
+            )
+        },
+        transitionDestination = { c, k ->
+            transitionDestination[c, k]
+        },
+        transitionInputEvent = { c, k ->
+            scenarioTree.inputEvents[transitionInputEvent[c, k] - 1]
+        },
+        transitionGuard = { c, k ->
+            TruthTableGuard(
+                truthTable = scenarioTree.uniqueInputs
+                    .withIndex(start = 1)
+                    .associate { (u, input) ->
+                        input to transitionTruthTable[c, k, u]
+                    },
+                inputNames = scenarioTree.inputNames,
+                uniqueInputs = scenarioTree.uniqueInputs
+            )
+        }
+    )
+}
+
+fun buildExtendedAutomaton(
+    context: SolverContext,
+    raw: RawAssignment,
+    useStateUsed: Boolean = false
+): Automaton {
+    val scenarioTree: PositiveScenarioTree by context
+    val C: Int by context
+    val K: Int by context
+    val P: Int by context
+    val Z: Int by context
+    val transitionDestination by context.convertIntVarArray(raw)
+    val transitionInputEvent by context.convertIntVarArray(raw)
+    // val transitionTruthTable by context.convertBoolVarArray(raw)
+    val stateOutputEvent by context.convertIntVarArray(raw)
+    val stateAlgorithmTop by context.convertBoolVarArray(raw)
+    val stateAlgorithmBot by context.convertBoolVarArray(raw)
+    val nodeType by context.convertDomainVarArray<NodeType>(raw)
+    val nodeInputVariable by context.convertIntVarArray(raw)
+    val nodeParent by context.convertIntVarArray(raw)
+    val nodeChild by context.convertIntVarArray(raw)
+    // val nodeValue by context.convertBoolVarArray(raw)
+
+    val stateUsedFunction: (c: Int) -> Boolean =
+        if (useStateUsed) {
+            val stateUsed by context.convertBoolVarArray(raw);
+            { c -> stateUsed[c] }
+        } else {
+            { true }
+        }
+
+    return Automaton(scenarioTree).endow(
+        C = C, K = K,
+        stateUsed = stateUsedFunction,
+        stateOutputEvent = { c ->
+            stateOutputEvent[c].let { o ->
+                if (o == 0) null else scenarioTree.outputEvents[o - 1]
+            }
+        },
+        stateAlgorithm = { c ->
+            BinaryAlgorithm(
+                algorithm0 = BooleanArray(Z) { z0 -> stateAlgorithmBot[c, z0 + 1] },
+                algorithm1 = BooleanArray(Z) { z0 -> stateAlgorithmTop[c, z0 + 1] }
+            )
+        },
+        transitionDestination = { c, k ->
+            transitionDestination[c, k]
+        },
+        transitionInputEvent = { c, k ->
+            scenarioTree.inputEvents[transitionInputEvent[c, k] - 1]
+        },
+        transitionGuard = { c, k ->
+            ParseTreeGuard(
+                nodeType = MultiArray.create(P) { (p) -> nodeType[c, k, p] },
+                terminal = IntMultiArray.create(P) { (p) -> nodeInputVariable[c, k, p] },
+                parent = IntMultiArray.create(P) { (p) -> nodeParent[c, k, p] },
+                childLeft = IntMultiArray.create(P) { (p) -> nodeChild[c, k, p] },
+                childRight = IntMultiArray.create(P) { (p) ->
+                    if (nodeType[c, k, p] in setOf(NodeType.AND, NodeType.OR))
+                        nodeChild[c, k, p] + 1
+                    else
+                        0
+                },
+                inputNames = scenarioTree.inputNames
+            )
+        }
+    )
 }

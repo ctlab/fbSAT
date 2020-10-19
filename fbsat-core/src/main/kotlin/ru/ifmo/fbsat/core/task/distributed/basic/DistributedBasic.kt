@@ -4,10 +4,10 @@ import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
+import ru.ifmo.fbsat.core.automaton.buildBasicDistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.task.distributedBasicVars
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumC
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
@@ -88,9 +88,10 @@ fun Inferrer.distributedBasicMinC(
 
 fun Inferrer.inferDistributedBasic(): DistributedAutomaton? {
     val rawAssignment = solver.solve() ?: return null
-    val vars = solver.context.distributedBasicVars
-    val assignment = DistributedBasicAssignment.fromRaw(rawAssignment, vars)
-    val automaton = assignment.toAutomaton()
+    val automaton = buildBasicDistributedAutomaton(
+        context = solver.context,
+        raw = rawAssignment
+    )
 
     // TODO: check mapping
     // log.warn("Mapping check is not implemented yet")

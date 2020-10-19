@@ -11,6 +11,8 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
+import ru.ifmo.fbsat.core.solver.RawAssignment
+import ru.ifmo.fbsat.core.solver.SolverContext
 import ru.ifmo.fbsat.core.utils.Compound
 import ru.ifmo.fbsat.core.utils.CompoundImpl
 import ru.ifmo.fbsat.core.utils.Globals
@@ -286,4 +288,34 @@ class DistributedAutomaton(
             )
         }
     }
+}
+
+fun buildBasicDistributedAutomaton(
+    context: SolverContext,
+    raw: RawAssignment
+): DistributedAutomaton {
+    val modularContext: MultiArray<SolverContext> by context
+    val modules: MultiArray<Automaton> = modularContext.map { ctx ->
+        buildBasicAutomaton(
+            context = ctx,
+            raw = raw,
+            useStateUsed = true
+        )
+    }
+    return DistributedAutomaton(modules)
+}
+
+fun buildExtendedDistributedAutomaton(
+    context: SolverContext,
+    raw: RawAssignment
+): DistributedAutomaton {
+    val modularContext: MultiArray<SolverContext> by context
+    val modules: MultiArray<Automaton> = modularContext.map { ctx ->
+        buildExtendedAutomaton(
+            context = ctx,
+            raw = raw,
+            useStateUsed = true
+        )
+    }
+    return DistributedAutomaton(modules)
 }

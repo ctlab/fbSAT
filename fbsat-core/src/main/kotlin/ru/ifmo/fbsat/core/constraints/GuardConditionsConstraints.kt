@@ -2,10 +2,13 @@ package ru.ifmo.fbsat.core.constraints
 
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.DomainVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.SolverContext
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.implyAnd
@@ -14,183 +17,158 @@ import ru.ifmo.fbsat.core.solver.implyImplyIff
 import ru.ifmo.fbsat.core.solver.implyImplyIffAnd
 import ru.ifmo.fbsat.core.solver.implyImplyIffOr
 import ru.ifmo.fbsat.core.solver.sign
-import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedVariables
-import ru.ifmo.fbsat.core.task.modular.extended.consecutive.ConsecutiveModularExtendedVariables
-import ru.ifmo.fbsat.core.task.modular.extended.parallel.ParallelModularExtendedVariables
-import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
-import ru.ifmo.fbsat.core.task.single.extended.ExtendedVariables
-import ru.ifmo.fbsat.core.task.single.extforest.ExtForestVariables
+import ru.ifmo.fbsat.core.solver.switchContext
 import ru.ifmo.fbsat.core.task.single.extforest.ck2p
 import ru.ifmo.fbsat.core.utils.Globals
 
-fun Solver.declarePositiveGuardConditionsConstraints(extendedVars: ExtendedVariables) {
+fun Solver.declarePositiveGuardConditionsConstraints() {
     comment("Positive guard conditions constraints")
-    with(extendedVars) {
-        comment("Positive guard conditions constraints: inputless")
-        declareGuardConditionsConstraintsInputless(
-            C = C, K = K, P = P, X = X,
-            transitionDestination = transitionDestination,
-            nodeType = nodeType,
-            nodeInputVariable = nodeInputVariable,
-            nodeParent = nodeParent,
-            nodeChild = nodeChild
-        )
+    val U: Int by context
 
-        comment("Positive guard conditions constraints: for inputs")
-        declareGuardConditionsConstraintsForInputs(
-            tree = scenarioTree,
-            C = C, K = K, P = P, X = X, Us = 1..U,
-            nodeType = nodeType,
-            nodeInputVariable = nodeInputVariable,
-            nodeChild = nodeChild,
-            nodeValue = nodeValue
-        )
-    }
+    comment("Positive guard conditions constraints: inputless")
+    declareGuardConditionsConstraintsInputless()
+
+    comment("Positive guard conditions constraints: for inputs (${1..U})")
+    val positiveScenarioTree: PositiveScenarioTree by context
+    context["tree"] = positiveScenarioTree
+    declareGuardConditionsConstraintsForInputs(Us = 1..U)
 }
 
-fun Solver.declareNegativeGuardConditionsConstraints(
-    completeVars: CompleteVariables,
-    Us: Iterable<Int>
-) {
+fun Solver.declareNegativeGuardConditionsConstraints(Us: Iterable<Int>) {
     comment("Negative guard conditions constraints")
-    with(completeVars) {
-        // Note: no inputless constraints
+    val negativeContext: SolverContext by context
 
-        // Note: be very careful with positive/negative variables!
-        comment("Negative guard conditions constraints: for inputs")
-        declareGuardConditionsConstraintsForInputs(
-            tree = negativeScenarioTree,
-            C = C, K = K, P = P, X = X, Us = Us,
-            nodeType = nodeType,
-            nodeInputVariable = nodeInputVariable,
-            nodeChild = nodeChild,
-            nodeValue = negNodeValue
-        )
+    // Note: no inputless constraints
+
+    comment("Negative guard conditions constraints: for inputs ($Us)")
+    val negativeScenarioTree: NegativeScenarioTree by context
+    switchContext(negativeContext) {
+        context["tree"] = negativeScenarioTree
+        declareGuardConditionsConstraintsForInputs(Us = Us)
     }
 }
 
-fun Solver.declareParallelModularGuardConditionsConstraints(
-    parallelModularExtendedVariables: ParallelModularExtendedVariables
-) {
-    comment("Parallel modular guard conditions constraints")
-    with(parallelModularExtendedVariables) {
-        for (m in 1..M) {
-            comment("Parallel modular guard conditions constraints: for module m = $m")
-            declarePositiveGuardConditionsConstraints(
-                extendedVars = modularExtendedVariables[m]
-            )
-        }
-    }
+fun Solver.declareParallelModularGuardConditionsConstraints() {
+    // comment("Parallel modular guard conditions constraints")
+    // with(parallelModularExtendedVariables) {
+    //     for (m in 1..M) {
+    //         comment("Parallel modular guard conditions constraints: for module m = $m")
+    //         declarePositiveGuardConditionsConstraints(
+    //             extendedVars = modularExtendedVariables[m]
+    //         )
+    //     }
+    // }
 }
 
-fun Solver.declareConsecutiveModularGuardConditionsConstraints(
-    consecutiveModularExtendedVariables: ConsecutiveModularExtendedVariables
-) {
-    comment("Consecutive modular guard conditions constraints")
-    with(consecutiveModularExtendedVariables) {
-        for (m in 1..M) {
-            comment("Consecutive modular guard conditions constraints: for module m = $m")
-            declarePositiveGuardConditionsConstraints(
-                extendedVars = modularExtendedVariables[m]
-            )
-        }
-    }
+fun Solver.declareConsecutiveModularGuardConditionsConstraints() {
+    // comment("Consecutive modular guard conditions constraints")
+    // with(consecutiveModularExtendedVariables) {
+    //     for (m in 1..M) {
+    //         comment("Consecutive modular guard conditions constraints: for module m = $m")
+    //         declarePositiveGuardConditionsConstraints(
+    //             extendedVars = modularExtendedVariables[m]
+    //         )
+    //     }
+    // }
 }
 
-fun Solver.declareDistributedPositiveGuardConditionsConstraints(
-    distributedExtendedVariables: DistributedExtendedVariables
-) {
-    comment("Distributed guard conditions constraints")
-    with(distributedExtendedVariables) {
-        for (m in 1..M) {
-            comment("Distributed guard conditions constraints: for module m = $m")
-            declarePositiveGuardConditionsConstraints(
-                extendedVars = modularExtendedVariables[m]
-            )
-
-            // FIXME: this should be called from 'declareDistributedGuardConditionsAdhocConstraints' method
-            comment("Distributed guard conditions adhoc constraints: for module m = $m")
-            declareGuardConditionsAdhocConstraints(
-                extendedVars = modularExtendedVariables[m]
-            )
-        }
-    }
+fun Solver.declareDistributedPositiveGuardConditionsConstraints() {
+    // comment("Distributed guard conditions constraints")
+    // with(distributedExtendedVariables) {
+    //     for (m in 1..M) {
+    //         comment("Distributed guard conditions constraints: for module m = $m")
+    //         declarePositiveGuardConditionsConstraints(
+    //             extendedVars = modularExtendedVariables[m]
+    //         )
+    //
+    //         // FIXME: this should be called from 'declareDistributedGuardConditionsAdhocConstraints' method
+    //         comment("Distributed guard conditions adhoc constraints: for module m = $m")
+    //         declareGuardConditionsAdhocConstraints(
+    //             extendedVars = modularExtendedVariables[m]
+    //         )
+    //     }
+    // }
 }
 
-fun Solver.declareGuardConditionsAdhocConstraints(extendedVars: ExtendedVariables) {
+fun Solver.declareGuardConditionsAdhocConstraints() {
     comment("Adhoc guard conditions constraints")
-    with(extendedVars) {
-        comment("Forbid double negation")
-        // (nodeType[p] = NOT) & (nodeChild[p] = ch) => (nodeType[ch] != NOT)
+    val C: Int by context
+    val K: Int by context
+    val P: Int by context
+    val X: Int by context
+    val nodeType: DomainVarArray<NodeType> by context
+    val nodeInputVariable: IntVarArray by context
+    val nodeChild: IntVarArray by context
+
+    comment("Forbid double negation")
+    // (nodeType[p] = NOT) & (nodeChild[p] = ch) => (nodeType[ch] != NOT)
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1 until P)
+                for (ch in (p + 1)..P)
+                    implyImply(
+                        nodeType[c, k, p] eq NodeType.NOT,
+                        nodeChild[c, k, p] eq ch,
+                        nodeType[c, k, ch] neq NodeType.NOT
+                    )
+
+    comment("Distinct transitions")
+    // TODO: Distinct transitions
+
+    if (Globals.IS_FORBID_OR) {
+        comment("Forbid ORs")
         for (c in 1..C)
             for (k in 1..K)
-                for (p in 1 until P)
-                    for (ch in (p + 1)..P)
-                        implyImply(
-                            nodeType[c, k, p] eq NodeType.NOT,
-                            nodeChild[c, k, p] eq ch,
-                            nodeType[c, k, ch] neq NodeType.NOT
-                        )
+                for (p in 1..P)
+                    clause(nodeType[c, k, p] neq NodeType.OR)
+    }
 
-        comment("Distinct transitions")
-        // TODO: Distinct transitions
+    if (Globals.IS_ENCODE_TERMINALS_ORDER) {
+        comment("Terminals order")
+        // terminal[p, x] => AND_{p'<p, x'>=x}( ~terminal[r_, x_] )
+        for (c in 1..C)
+            for (k in 1..K)
+                for (p in 1..P)
+                    for (x in 1..X)
+                        implyAnd(nodeInputVariable[c, k, p] eq x, sequence {
+                            for (p_ in 1 until p)
+                                for (x_ in x..X)
+                                    yield(nodeInputVariable[c, k, p_] neq x_)
+                        })
+    }
 
-        if (Globals.IS_FORBID_OR) {
-            comment("Forbid ORs")
-            for (c in 1..C)
-                for (k in 1..K)
-                    for (p in 1..P)
-                        clause(nodeType[c, k, p] neq NodeType.OR)
-        }
-
-        if (Globals.IS_ENCODE_TERMINALS_ORDER) {
-            comment("Terminals order")
-            // terminal[p, x] => AND_{p'<p, x'>=x}( ~terminal[r_, x_] )
-            for (c in 1..C)
-                for (k in 1..K)
-                    for (p in 1..P)
-                        for (x in 1..X)
-                            implyAnd(nodeInputVariable[c, k, p] eq x, sequence {
-                                for (p_ in 1 until p)
-                                    for (x_ in x..X)
-                                        yield(nodeInputVariable[c, k, p_] neq x_)
-                            })
-        }
-
-        if (Globals.IS_ENCODE_TERMINALS_MINI_ORDER) {
-            // Note: this constraint seems to be very expensive, but does not provide visible speed-up
-            comment("Terminals mini-order: AND/OR children-terminals order")
-            // (nodeType[p] = AND/OR) & (nodeChild[p] = ch) & (nodeType[ch] = TERMINAL) & (nodeType[ch+1] = TERMINAL) => (nodeInputVariable[ch] < nodeInputVariable[ch+1])
-            for (c in 1..C)
-                for (k in 1..K)
-                    for (p in 1..P)
-                        for (t in listOf(NodeType.AND, NodeType.OR))
-                            for (ch in (p + 1) until P)
-                                for (x in 1..X)
-                                    for (x_ in 1..x)
-                                        clause(
-                                            nodeType[c, k, p] neq t,
-                                            nodeChild[c, k, p] neq ch,
-                                            nodeType[c, k, ch] neq NodeType.NOT,
-                                            nodeType[c, k, ch + 1] neq NodeType.NOT,
-                                            nodeInputVariable[c, k, ch] neq x,
-                                            nodeInputVariable[c, k, ch + 1] neq x_
-                                        )
-        }
+    if (Globals.IS_ENCODE_TERMINALS_MINI_ORDER) {
+        // Note: this constraint seems to be very expensive, but does not provide visible speed-up
+        comment("Terminals mini-order: AND/OR children-terminals order")
+        // (nodeType[p] = AND/OR) & (nodeChild[p] = ch) & (nodeType[ch] = TERMINAL) & (nodeType[ch+1] = TERMINAL) => (nodeInputVariable[ch] < nodeInputVariable[ch+1])
+        for (c in 1..C)
+            for (k in 1..K)
+                for (p in 1..P)
+                    for (t in listOf(NodeType.AND, NodeType.OR))
+                        for (ch in (p + 1) until P)
+                            for (x in 1..X)
+                                for (x_ in 1..x)
+                                    clause(
+                                        nodeType[c, k, p] neq t,
+                                        nodeChild[c, k, p] neq ch,
+                                        nodeType[c, k, ch] neq NodeType.NOT,
+                                        nodeType[c, k, ch + 1] neq NodeType.NOT,
+                                        nodeInputVariable[c, k, ch] neq x,
+                                        nodeInputVariable[c, k, ch + 1] neq x_
+                                    )
     }
 }
 
-private fun Solver.declareGuardConditionsConstraintsInputless(
-    C: Int,
-    K: Int,
-    P: Int,
-    X: Int,
-    transitionDestination: IntVarArray,
-    nodeType: DomainVarArray<NodeType>,
-    nodeInputVariable: IntVarArray,
-    nodeParent: IntVarArray,
-    nodeChild: IntVarArray
-) {
+private fun Solver.declareGuardConditionsConstraintsInputless() {
+    val C: Int by context
+    val K: Int by context
+    val P: Int by context
+    val transitionDestination: IntVarArray by context
+    val nodeType: DomainVarArray<NodeType> by context
+    val nodeInputVariable: IntVarArray by context
+    val nodeParent: IntVarArray by context
+    val nodeChild: IntVarArray by context
+
     comment("None-typed nodes have largest indices")
     // (nodeType[p] = NONE) => (nodeType[p+1] = NONE)
     for (c in 1..C)
@@ -376,18 +354,17 @@ private fun Solver.declareGuardConditionsConstraintsInputless(
                 )
 }
 
-private fun Solver.declareGuardConditionsConstraintsForInputs(
-    tree: ScenarioTree<*, *>,
-    C: Int,
-    K: Int,
-    P: Int,
-    X: Int,
-    Us: Iterable<Int>,
-    nodeType: DomainVarArray<NodeType>,
-    nodeInputVariable: IntVarArray,
-    nodeChild: IntVarArray,
-    nodeValue: BoolVarArray
-) {
+private fun Solver.declareGuardConditionsConstraintsForInputs(Us: Iterable<Int>) {
+    val tree: ScenarioTree<*, *> by context
+    val C: Int by context
+    val K: Int by context
+    val P: Int by context
+    val X: Int by context
+    val nodeType: DomainVarArray<NodeType> by context
+    val nodeInputVariable: IntVarArray by context
+    val nodeChild: IntVarArray by context
+    val nodeValue: BoolVarArray by context
+
     comment("Terminal nodes have value from associated input variables")
     // (nodeInputVariable[p] = x) => AND_{u}( nodeValue[p,u] <=> u[x] )
     for (c in 1..C)
@@ -459,168 +436,179 @@ private fun Solver.declareGuardConditionsConstraintsForInputs(
                     )
 }
 
-fun Solver.declareExtForestGuardConditionsConstraints(extForestVars: ExtForestVariables) {
+fun Solver.declareExtForestGuardConditionsConstraints() {
     comment("ExtForest guard conditions constraints")
-    with(extForestVars) {
-        comment("Parent-child relation")
-        // (nodeChild[p] = ch) => (nodeParent[ch] = p)
-        for (p in 1..P)
-            for (ch in nodeChild[p].domain - 0)
-                imply(
-                    nodeChild[p] eq ch,
-                    nodeParent[ch] eq p
-                )
+    val scenarioTree: PositiveScenarioTree by context
+    val C: Int by context
+    val K: Int by context
+    val P: Int by context
+    val X: Int by context
+    val U: Int by context
+    val transitionDestination: IntVarArray by context
+    val nodeType: DomainVarArray<NodeType> by context
+    val nodeInputVariable: IntVarArray by context
+    val nodeParent: IntVarArray by context
+    val nodeChild: IntVarArray by context
+    val nodeValue: BoolVarArray by context
 
-        comment("Only null-transitions have no guard (root is none-typed)")
-        // (transitionDestination[c,k] = 0) <=> (nodeType[p] = NONE)
-        for (c in 1..C)
-            for (k in 1..K) {
-                val p = ck2p(c, k, K)
-                iff(
-                    transitionDestination[c, k] eq 0,
-                    nodeType[p] eq NodeType.NONE
-                )
-            }
-
-        // Note: these constrains are redundant, but do not make anything bad (minor speedup sometimes)
-        comment("Types constraints for last nodes")
-        clause(nodeType[P] neq NodeType.AND)
-        clause(nodeType[P] neq NodeType.OR)
-        clause(nodeType[P] neq NodeType.NOT)
-        clause(nodeType[P - 1] neq NodeType.AND)
-        clause(nodeType[P - 1] neq NodeType.OR)
-
-        comment("TERMINAL: no children")
-        for (p in 1..P)
+    comment("Parent-child relation")
+    // (nodeChild[p] = ch) => (nodeParent[ch] = p)
+    for (p in 1..P)
+        for (ch in nodeChild[p].domain - 0)
             imply(
-                nodeType[p] eq NodeType.TERMINAL,
-                nodeChild[p] eq 0
+                nodeChild[p] eq ch,
+                nodeParent[ch] eq p
             )
 
-        comment("TERMINAL: input variable")
-        for (p in 1..P)
+    comment("Only null-transitions have no guard (root is none-typed)")
+    // (transitionDestination[c,k] = 0) <=> (nodeType[p] = NONE)
+    for (c in 1..C)
+        for (k in 1..K) {
+            val p = ck2p(c, k, K)
             iff(
-                nodeType[p] eq NodeType.TERMINAL,
-                nodeInputVariable[p] neq 0
+                transitionDestination[c, k] eq 0,
+                nodeType[p] eq NodeType.NONE
             )
+        }
 
-        comment("TERMINAL: value")
-        for (p in 1..P)
-            for (x in 1..X)
-                for (u in 1..U)
-                    imply(
-                        nodeInputVariable[p] eq x,
-                        nodeValue[p, u] sign scenarioTree.uniqueInputs[u - 1][x - 1]
-                    )
+    // Note: these constrains are redundant, but do not make anything bad (minor speedup sometimes)
+    comment("Types constraints for last nodes")
+    clause(nodeType[P] neq NodeType.AND)
+    clause(nodeType[P] neq NodeType.OR)
+    clause(nodeType[P] neq NodeType.NOT)
+    clause(nodeType[P - 1] neq NodeType.AND)
+    clause(nodeType[P - 1] neq NodeType.OR)
 
-        comment("AND/OR/NOT: left child")
-        for (p in 1..P)
-            for (t in listOf(NodeType.AND, NodeType.OR, NodeType.NOT))
-                imply(
-                    nodeType[p] eq t,
-                    nodeChild[p] neq 0
-                )
-        for (p in 1 until P)
-            for (t in listOf(NodeType.AND, NodeType.OR))
-                imply(
-                    nodeType[p] eq t,
-                    nodeChild[p] neq P
-                )
+    comment("TERMINAL: no children")
+    for (p in 1..P)
+        imply(
+            nodeType[p] eq NodeType.TERMINAL,
+            nodeChild[p] eq 0
+        )
 
-        comment("AND/OR: right child")
-        for (p in 1..P)
-            for (ch in nodeChild[p].domain - 0)
-                if (ch <= P - 1)
-                    for (t in listOf(NodeType.AND, NodeType.OR))
-                        implyImply(
-                            nodeType[p] eq t,
-                            nodeChild[p] eq ch,
-                            nodeParent[ch + 1] eq p
-                        )
+    comment("TERMINAL: input variable")
+    for (p in 1..P)
+        iff(
+            nodeType[p] eq NodeType.TERMINAL,
+            nodeInputVariable[p] neq 0
+        )
 
-        comment("AND: value")
-        for (p in 1..P)
-            for (ch in nodeChild[p].domain - 0)
-                if (ch <= P - 1)
-                    for (u in 1..U)
-                        implyImplyIffAnd(
-                            nodeType[p] eq NodeType.AND,
-                            nodeChild[p] eq ch,
-                            nodeValue[p, u],
-                            nodeValue[ch, u],
-                            nodeValue[ch + 1, u]
-                        )
-
-        comment("OR: value")
-        for (p in 1..P)
-            for (ch in nodeChild[p].domain - 0)
-                if (ch <= P - 1)
-                    for (u in 1..U)
-                        implyImplyIffOr(
-                            nodeType[p] eq NodeType.OR,
-                            nodeChild[p] eq ch,
-                            nodeValue[p, u],
-                            nodeValue[ch, u],
-                            nodeValue[ch + 1, u]
-                        )
-
-        comment("NOT: value")
-        for (p in 1..P)
-            for (ch in nodeChild[p].domain - 0)
-                for (u in 1..U)
-                    implyImplyIff(
-                        nodeType[p] eq NodeType.NOT,
-                        nodeChild[p] eq ch,
-                        nodeValue[p, u],
-                        -nodeValue[ch, u]
-                    )
-
-        // Note: this constraint does a major slowdown
-        // comment("NOT: forbid double-negation")
-        // for (p in 1..P)
-        //     for (ch in nodeChild[p].domain - 0 - P)
-        //         implyImply(
-        //             nodeType[p] eq NodeType.NOT,
-        //             nodeChild[p] eq ch,
-        //             nodeType[ch] neq NodeType.NOT
-        //         )
-
-        comment("NONE: propagation")
-        for (p in (C * K + 1) until P)
-            imply(
-                nodeType[p] eq NodeType.NONE,
-                nodeType[p + 1] eq NodeType.NONE
-            )
-
-        comment("NONE: no parent -- only for (C*K+1)..P")
-        for (p in (C * K + 1)..P)
-            iff(
-                nodeType[p] eq NodeType.NONE,
-                nodeParent[p] eq 0
-            )
-
-        comment("NONE: no children")
-        for (p in 1..P)
-            imply(
-                nodeType[p] eq NodeType.NONE,
-                nodeChild[p] eq 0
-            )
-
-        comment("NONE: value is false")
-        for (p in 1..P)
+    comment("TERMINAL: value")
+    for (p in 1..P)
+        for (x in 1..X)
             for (u in 1..U)
                 imply(
-                    nodeType[p] eq NodeType.NONE,
-                    -nodeValue[p, u]
+                    nodeInputVariable[p] eq x,
+                    nodeValue[p, u] sign scenarioTree.uniqueInputs[u - 1][x - 1]
                 )
 
-        comment("BFS")
-        for (p in 1..P)
-            for (ch in nodeChild[p].domain - 0)
-                if (ch < P)
-                    implyAnd(nodeParent[ch] eq p, sequence {
-                        for (s in 1 until p)
-                            yield(nodeParent[ch + 1] neq s)
-                    })
-    }
+    comment("AND/OR/NOT: left child")
+    for (p in 1..P)
+        for (t in listOf(NodeType.AND, NodeType.OR, NodeType.NOT))
+            imply(
+                nodeType[p] eq t,
+                nodeChild[p] neq 0
+            )
+    for (p in 1 until P)
+        for (t in listOf(NodeType.AND, NodeType.OR))
+            imply(
+                nodeType[p] eq t,
+                nodeChild[p] neq P
+            )
+
+    comment("AND/OR: right child")
+    for (p in 1..P)
+        for (ch in nodeChild[p].domain - 0)
+            if (ch <= P - 1)
+                for (t in listOf(NodeType.AND, NodeType.OR))
+                    implyImply(
+                        nodeType[p] eq t,
+                        nodeChild[p] eq ch,
+                        nodeParent[ch + 1] eq p
+                    )
+
+    comment("AND: value")
+    for (p in 1..P)
+        for (ch in nodeChild[p].domain - 0)
+            if (ch <= P - 1)
+                for (u in 1..U)
+                    implyImplyIffAnd(
+                        nodeType[p] eq NodeType.AND,
+                        nodeChild[p] eq ch,
+                        nodeValue[p, u],
+                        nodeValue[ch, u],
+                        nodeValue[ch + 1, u]
+                    )
+
+    comment("OR: value")
+    for (p in 1..P)
+        for (ch in nodeChild[p].domain - 0)
+            if (ch <= P - 1)
+                for (u in 1..U)
+                    implyImplyIffOr(
+                        nodeType[p] eq NodeType.OR,
+                        nodeChild[p] eq ch,
+                        nodeValue[p, u],
+                        nodeValue[ch, u],
+                        nodeValue[ch + 1, u]
+                    )
+
+    comment("NOT: value")
+    for (p in 1..P)
+        for (ch in nodeChild[p].domain - 0)
+            for (u in 1..U)
+                implyImplyIff(
+                    nodeType[p] eq NodeType.NOT,
+                    nodeChild[p] eq ch,
+                    nodeValue[p, u],
+                    -nodeValue[ch, u]
+                )
+
+    // Note: this constraint does a major slowdown
+    // comment("NOT: forbid double-negation")
+    // for (p in 1..P)
+    //     for (ch in nodeChild[p].domain - 0 - P)
+    //         implyImply(
+    //             nodeType[p] eq NodeType.NOT,
+    //             nodeChild[p] eq ch,
+    //             nodeType[ch] neq NodeType.NOT
+    //         )
+
+    comment("NONE: propagation")
+    for (p in (C * K + 1) until P)
+        imply(
+            nodeType[p] eq NodeType.NONE,
+            nodeType[p + 1] eq NodeType.NONE
+        )
+
+    comment("NONE: no parent -- only for (C*K+1)..P")
+    for (p in (C * K + 1)..P)
+        iff(
+            nodeType[p] eq NodeType.NONE,
+            nodeParent[p] eq 0
+        )
+
+    comment("NONE: no children")
+    for (p in 1..P)
+        imply(
+            nodeType[p] eq NodeType.NONE,
+            nodeChild[p] eq 0
+        )
+
+    comment("NONE: value is false")
+    for (p in 1..P)
+        for (u in 1..U)
+            imply(
+                nodeType[p] eq NodeType.NONE,
+                -nodeValue[p, u]
+            )
+
+    comment("BFS")
+    for (p in 1..P)
+        for (ch in nodeChild[p].domain - 0)
+            if (ch < P)
+                implyAnd(nodeParent[ch] eq p, sequence {
+                    for (s in 1 until p)
+                        yield(nodeParent[ch + 1] neq s)
+                })
 }

@@ -13,8 +13,11 @@ import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
+import ru.ifmo.fbsat.core.solver.RawAssignment
+import ru.ifmo.fbsat.core.solver.SolverContext
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.magic
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.random
 import ru.ifmo.fbsat.core.utils.writeEventMerger
@@ -284,4 +287,20 @@ class ParallelModularAutomaton(
             }
         }.toString(Globals.xmlPrintOptions)
     }
+}
+
+fun buildBasicParallelModularAutomaton(
+    context: SolverContext,
+    raw: RawAssignment,
+    useStateUsed: Boolean = false
+): ParallelModularAutomaton {
+    return magic()
+}
+
+fun buildExtendedParallelModularAutomaton(
+    context: SolverContext,
+    raw: RawAssignment,
+    useStateUsed: Boolean = false
+): ParallelModularAutomaton {
+    return magic()
 }

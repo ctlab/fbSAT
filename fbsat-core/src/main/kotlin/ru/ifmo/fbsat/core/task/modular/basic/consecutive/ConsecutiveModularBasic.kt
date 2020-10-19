@@ -2,9 +2,10 @@ package ru.ifmo.fbsat.core.task.modular.basic.consecutive
 
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
+import ru.ifmo.fbsat.core.automaton.buildBasicArbitraryModularAutomaton
+import ru.ifmo.fbsat.core.automaton.buildBasicConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.task.consecutiveModularBasicVars
 import ru.ifmo.fbsat.core.task.optimizeConsecutiveModularT
 import ru.ifmo.fbsat.core.utils.log
 
@@ -67,9 +68,10 @@ fun Inferrer.consecutiveModularBasicMin(
 
 fun Inferrer.inferConsecutiveModularBasic(): ConsecutiveModularAutomaton? {
     val rawAssignment = solver.solve() ?: return null
-    val vars = solver.context.consecutiveModularBasicVars
-    val assignment = ConsecutiveModularBasicAssignment.fromRaw(rawAssignment, vars)
-    val automaton = assignment.toAutomaton()
+    val automaton = buildBasicConsecutiveModularAutomaton(
+        context = solver.context,
+        raw = rawAssignment
+    )
 
     // TODO: check automaton
     // log.warn("Mapping check is not implemented yet")

@@ -7,9 +7,11 @@ import ru.ifmo.fbsat.core.constraints.declareDistributedAutomatonStructureConstr
 import ru.ifmo.fbsat.core.constraints.declareDistributedPositiveMappingConstraints_compound
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.SolverContext
+import ru.ifmo.fbsat.core.solver.switchContext
 import ru.ifmo.fbsat.core.task.Task
-import ru.ifmo.fbsat.core.task.distributedBasicVars
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 
@@ -33,48 +35,38 @@ data class DistributedBasicTask(
 
     override fun Solver.declare_() {
         /* Variables */
-        val vars = declareDistributedBasicVariables(
+        comment("$name: Variables")
+        declareDistributedBasicVariables(
             M = numberOfModules,
             compoundScenarioTree = compoundScenarioTree,
             modularC = modularNumberOfStates,
             modularK = modularMaxOutgoingTransitions.mapIndexed { (m), k ->
                 k ?: modularNumberOfStates[m]
             }
-        ).also {
-            context.distributedBasicVars = it
-        }
+        )
 
         /* Constraints */
-        declareDistributedAutomatonStructureConstraints(vars)
-        if (Globals.IS_BFS_AUTOMATON) declareDistributedAutomatonBfsConstraints(vars)
+        comment("$name: Constraints")
+        declareDistributedAutomatonStructureConstraints()
+        if (Globals.IS_BFS_AUTOMATON) declareDistributedAutomatonBfsConstraints()
         // declareDistributedPositiveMappingConstraints_modular(vars, modularIsEncodeReverseImplication)
-        declareDistributedPositiveMappingConstraints_compound(vars, modularIsEncodeReverseImplication)
-        // declareDistributedBasicAdhocConstraints(vars)
+        declareDistributedPositiveMappingConstraints_compound(modularIsEncodeReverseImplication)
+        // declareDistributedBasicAdhocConstraints()
 
         /* Initial cardinality constraints */
-        for (m in 1..numberOfModules) {
-            vars.modularBasicVariables[m].cardinality.updateUpperBoundLessThanOrEqual(modularMaxTransitions[m])
+        val modularContext: MultiArray<SolverContext> by context
+        val M: Int by context
+        for (m in 1..M) switchContext(modularContext[m]) {
+            comment("$name: Initial cardinality (T) constraints: for module m = $m")
+            val cardinalityT: Cardinality by context
+            cardinalityT.updateUpperBoundLessThanOrEqual(modularMaxTransitions[m])
         }
-        vars.cardinality.updateUpperBoundLessThanOrEqual(maxTransitions)
+        comment("$name: Initial cardinality (T) constraints")
+        val cardinalityT: Cardinality by context
+        cardinalityT.updateUpperBoundLessThanOrEqual(maxTransitions)
     }
 }
 
-private fun Solver.declareDistributedBasicAdhocConstraints(vars: DistributedBasicVariables) {
-    with(vars.modularBasicVariables[1]) {
-        check(C == 4)
-        check(K > 2)
-        clause(transitionDestination[1, 1] eq 2)
-        clause(transitionDestination[1, 2] eq 0)
-
-        clause(transitionDestination[2, 1] eq 3)
-        clause(transitionDestination[2, 2] eq 2)
-        clause(transitionDestination[2, 3] eq 0)
-
-        clause(transitionDestination[3, 1] eq 4)
-        clause(transitionDestination[3, 2] eq 0)
-
-        clause(transitionDestination[4, 1] eq 1)
-        clause(transitionDestination[4, 2] eq 4)
-        clause(transitionDestination[4, 3] eq 0)
-    }
+private fun Solver.declareDistributedBasicAdhocConstraints() {
+    //
 }

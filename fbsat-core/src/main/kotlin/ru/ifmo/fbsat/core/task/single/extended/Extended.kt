@@ -1,9 +1,9 @@
 package ru.ifmo.fbsat.core.task.single.extended
 
 import ru.ifmo.fbsat.core.automaton.Automaton
+import ru.ifmo.fbsat.core.automaton.buildExtendedAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.task.extendedVars
 import ru.ifmo.fbsat.core.task.optimizeN
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.task.single.basic.basic
@@ -102,10 +102,11 @@ fun Inferrer.extendedMinUB(
 }
 
 fun Inferrer.inferExtended(): Automaton? {
-    val vars = solver.context.extendedVars
     val rawAssignment = solver.solve() ?: return null
-    val assignment = ExtendedAssignment.fromRaw(rawAssignment, vars)
-    val automaton = assignment.toAutomaton()
+    // val vars = solver.context.extendedVars
+    // val assignment = ExtendedAssignment.fromRaw(rawAssignment, vars)
+    // val automaton = assignment.toAutomaton()
+    val automaton = buildExtendedAutomaton(solver.context, rawAssignment)
 
     // with(vars) {
     //     check(

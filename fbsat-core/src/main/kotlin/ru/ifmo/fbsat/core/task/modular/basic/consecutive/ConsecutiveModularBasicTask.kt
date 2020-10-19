@@ -4,9 +4,9 @@ import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonBfsConst
 import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveConsecutiveModularMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
-import ru.ifmo.fbsat.core.task.consecutiveModularBasicVars
 import ru.ifmo.fbsat.core.utils.Globals
 
 data class ConsecutiveModularBasicTask(
@@ -19,21 +19,23 @@ data class ConsecutiveModularBasicTask(
 ) : Task() {
     override fun Solver.declare_() {
         /* Variables */
-        val vars = declareConsecutiveModularBasicVariables(
+        comment("$name: Variables")
+        declareConsecutiveModularBasicVariables(
             scenarioTree = scenarioTree,
             M = numberOfModules,
             C = numberOfStates,
             K = maxOutgoingTransitions ?: numberOfStates
-        ).also {
-            context.consecutiveModularBasicVars = it
-        }
+        )
 
         /* Constraints */
-        declareConsecutiveModularAutomatonStructureConstraints(vars)
-        if (Globals.IS_BFS_AUTOMATON) declareConsecutiveModularAutomatonBfsConstraints(vars)
-        declarePositiveConsecutiveModularMappingConstraints(vars, isEncodeReverseImplication)
+        comment("$name: Constraints")
+        declareConsecutiveModularAutomatonStructureConstraints()
+        if (Globals.IS_BFS_AUTOMATON) declareConsecutiveModularAutomatonBfsConstraints()
+        declarePositiveConsecutiveModularMappingConstraints(isEncodeReverseImplication)
 
         /* Initial cardinality constraints */
-        vars.cardinality.updateUpperBoundLessThanOrEqual(maxTransitions)
+        comment("$name: Initial cardinality (T) constraints")
+        val cardinalityT: Cardinality by context
+        cardinalityT.updateUpperBoundLessThanOrEqual(maxTransitions)
     }
 }

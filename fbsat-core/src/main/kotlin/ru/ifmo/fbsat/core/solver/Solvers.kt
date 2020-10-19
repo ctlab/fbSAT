@@ -16,43 +16,10 @@ import ru.ifmo.fbsat.core.utils.toList_
 import ru.ifmo.fbsat.core.utils.write
 import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
-import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
-
-class SolverContext internal constructor(
-    val solver: Solver,
-    val map: MutableMap<String, Any> = mutableMapOf()
-) {
-    @Deprecated("To be removed", level = DeprecationLevel.ERROR)
-    operator fun <T : Any> invoke(value: T): ContextProvider<T> = ContextProvider(value)
-    // inline operator fun <T : Any> invoke(init: Solver.() -> T): ContextProvider<T> = invoke(solver.init())
-
-    operator fun <T> getValue(thisRef: Any?, property: KProperty<*>): T = get(property.name)
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Any) {
-        set(property.name, value)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    operator fun <T> get(key: String): T = map.getValue(key) as T
-
-    operator fun set(key: String, value: Any) {
-        map[key] = value
-    }
-
-    inner class ContextProvider<T : Any>(val value: T) {
-        operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): ReadOnlyProperty<Any?, T> {
-            this@SolverContext[property.name] = value
-            return object : ReadOnlyProperty<Any?, T> {
-                override fun getValue(thisRef: Any?, property: KProperty<*>): T = value
-            }
-        }
-    }
-}
 
 @Suppress("FunctionName")
 interface Solver : AutoCloseable {
-    val context: SolverContext
+    var context: SolverContext
     val numberOfVariables: Int
     val numberOfClauses: Int
 
@@ -66,6 +33,14 @@ interface Solver : AutoCloseable {
 
     fun solve(): RawAssignment?
     fun reset()
+
+    // fun switchContext(newContext: SolverContext, block: () -> Unit) {
+    //     // Note: override this method to allow the Solver to temporarily switch context
+    //     error("This Solver cannot switch context.")
+    // }
+    // fun SolverContext.switch(block: () -> Unit) {
+    //     switchContext(this, block)
+    // }
 
     companion object {
         const val trueLiteral: Literal = Int.MAX_VALUE
@@ -97,6 +72,15 @@ interface Solver : AutoCloseable {
             override fun _close(): Unit = close()
         }
     }
+}
+
+fun Solver.newContext(): SolverContext = SolverContext(this)
+
+inline fun Solver.switchContext(newContext: SolverContext, block: () -> Unit) {
+    val oldContext = this.context
+    this.context = newContext
+    block()
+    this.context = oldContext
 }
 
 fun Solver.clause(literals: Sequence<Literal>) {
@@ -140,10 +124,23 @@ fun Solver.newIntVarArray(
     domain: (IntArray) -> Iterable<Int>
 ): IntVarArray = IntVarArray.create(shape) { index -> newIntVar(domain(index), encoding) }
 
+fun Solver.newBoolVarArrayCtx(
+    vararg shape: Int,
+    init: (IntArray) -> Literal = { newLiteral() }
+): SolverContext.ContextProvider<BoolVarArray> =
+    context(BoolVarArray.create(shape, init))
+
+fun Solver.newIntVarArrayCtx(
+    vararg shape: Int,
+    encoding: VarEncoding = Globals.defaultVarEncoding,
+    domain: (IntArray) -> Iterable<Int>
+): SolverContext.ContextProvider<IntVarArray> =
+    context(IntVarArray.create(shape) { index -> newIntVar(domain(index), encoding) })
+
 @Suppress("FunctionName")
 abstract class AbstractSolver : Solver {
-    @Suppress("LeakingThis")
-    final override val context: SolverContext = SolverContext(this)
+    final override var context: SolverContext = newContext()
+        // private set
     override var numberOfVariables: Int = 0
         protected set
     final override var numberOfClauses: Int = 0

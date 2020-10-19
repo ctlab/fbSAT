@@ -3,21 +3,16 @@ package ru.ifmo.fbsat.core.task.distributed.complete
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
+import ru.ifmo.fbsat.core.automaton.buildExtendedDistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.convert
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask
-import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedAssignment
 import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedTask
 import ru.ifmo.fbsat.core.task.distributed.extended.inferDistributedExtended
-import ru.ifmo.fbsat.core.task.distributed.extended.toAutomaton
-import ru.ifmo.fbsat.core.task.distributedCompleteVars
-import ru.ifmo.fbsat.core.task.distributedExtendedVars
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumC_Complete
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumN
-import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 import kotlin.math.min
 
@@ -174,9 +169,13 @@ fun Inferrer.completeMin__(
 
 fun Inferrer.inferDistributedComplete(): DistributedAutomaton? {
     val rawAssignment = solver.solve() ?: return null
-    val vars = solver.context.distributedExtendedVars
-    val assignment = DistributedExtendedAssignment.fromRaw(rawAssignment, vars)
-    val automaton = assignment.toAutomaton()
+    // val vars = solver.context.distributedExtendedVars
+    // val assignment = DistributedExtendedAssignment.fromRaw(rawAssignment, vars)
+    // val automaton = assignment.toAutomaton()
+    val automaton = buildExtendedDistributedAutomaton(
+        context = solver.context,
+        raw = rawAssignment
+    )
 
     // TODO: check mapping
     // log.warn("Mapping check is not implemented yet")
@@ -196,9 +195,9 @@ fun Inferrer.inferDistributedComplete(): DistributedAutomaton? {
     //     )
     // }
 
-    val completeVars = solver.context.distributedCompleteVars.modularCompleteVariables[1]
-    val negTree = completeVars.negativeScenarioTree
-    val negMapping = completeVars.negMapping.convert(rawAssignment)
+    // val completeVars = solver.context.distributedCompleteVars.modularCompleteVariables[1]
+    // val negTree = completeVars.negativeScenarioTree
+    // val negMapping = completeVars.negMapping.convert(rawAssignment)
 
     // for (scenario in negTree.scenarios) {
     //     val automatonNegMapping = automaton.modular[1].map(scenario)
@@ -211,12 +210,12 @@ fun Inferrer.inferDistributedComplete(): DistributedAutomaton? {
     //     }
     // }
 
-    if (automaton.verify(solver.context.distributedCompleteVars.negativeCompoundScenarioTree)) {
-        log.success("Post-infer negative compound scenario tree verify: OK")
-    } else {
-        log.failure("Post-infer negative compound scenario tree verify: FAILURE")
-        error("Sad")
-    }
+    // if (automaton.verify(solver.context.distributedCompleteVars.negativeCompoundScenarioTree)) {
+    //     log.success("Post-infer negative compound scenario tree verify: OK")
+    // } else {
+    //     log.failure("Post-infer negative compound scenario tree verify: FAILURE")
+    //     error("Sad")
+    // }
 
     return automaton
 }

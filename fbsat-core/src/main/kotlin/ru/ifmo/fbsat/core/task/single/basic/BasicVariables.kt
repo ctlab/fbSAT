@@ -1,9 +1,6 @@
 package ru.ifmo.fbsat.core.task.single.basic
 
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.BoolVarArray
-import ru.ifmo.fbsat.core.solver.Cardinality
-import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.literals
@@ -11,35 +8,7 @@ import ru.ifmo.fbsat.core.solver.newBoolVarArray
 import ru.ifmo.fbsat.core.solver.newIntVarArray
 import ru.ifmo.fbsat.core.utils.Globals
 
-@Suppress("PropertyName")
-class BasicVariables(
-    /* Constants */
-    val scenarioTree: PositiveScenarioTree,
-    val C: Int,
-    val K: Int,
-    val V: Int,
-    val E: Int,
-    val O: Int,
-    val X: Int,
-    val Z: Int,
-    val U: Int,
-    /* Core variables */
-    val actualTransitionFunction: IntVarArray, // [C,E,U]: {0..C}
-    val transitionDestination: IntVarArray, // [C,K]: {0..C}
-    val transitionInputEvent: IntVarArray, // [C,K]: {0..E}
-    val transitionTruthTable: BoolVarArray, // [C,K,U]: Bool
-    val transitionFiring: BoolVarArray, // [C,K,E,U]: Bool
-    val firstFired: IntVarArray, // [C,E,U]: {0..K}
-    val notFired: BoolVarArray, // [C,K,E,U]: Bool
-    val stateOutputEvent: IntVarArray, // [C]: {0..O}
-    val stateAlgorithmBot: BoolVarArray, // [C,Z]: Bool
-    val stateAlgorithmTop: BoolVarArray, // [C,Z]: Bool
-    /* Mapping variables */
-    val mapping: IntVarArray, // [V]: {1..C}
-    /* Cardinality */
-    val cardinality: Cardinality // [0..C*K]
-)
-
+@Suppress("LocalVariableName", "NAME_SHADOWING")
 fun Solver.declareBasicVariables(
     scenarioTree: PositiveScenarioTree,
     C: Int,
@@ -50,26 +19,42 @@ fun Solver.declareBasicVariables(
     X: Int = scenarioTree.inputNames.size,
     Z: Int = scenarioTree.outputNames.size,
     U: Int = scenarioTree.uniqueInputs.size
-): BasicVariables {
+) {
+    val scenarioTree by context(scenarioTree)
+    context["positiveScenarioTree"] = scenarioTree
+    val C by context(C)
+    val K by context(K)
+    val V by context(V)
+    val E by context(E)
+    val O by context(O)
+    val X by context(X)
+    val Z by context(Z)
+    val U by context(U)
+
     /* Core variables */
-    val actualTransitionFunction = newIntVarArray(C, E, U) { 0..C }
-    val transitionDestination = newIntVarArray(C, K) { 0..C }
-    val transitionInputEvent = newIntVarArray(C, K) { 0..E }
-    val transitionTruthTable = newBoolVarArray(C, K, U)
-    val transitionFiring = newBoolVarArray(C, K, E, U)
-    val firstFired = newIntVarArray(C, E, U) { 0..K }
-    val notFired = newBoolVarArray(C, K, E, U)
-    val stateOutputEvent = newIntVarArray(C) { 0..O }
-    val stateAlgorithmBot = newBoolVarArray(C, Z)
-    val stateAlgorithmTop = newBoolVarArray(C, Z)
+    comment("Core variables")
+    val actualTransitionFunction by context(newIntVarArray(C, E, U) { 0..C })
+    val transitionDestination by context(newIntVarArray(C, K) { 0..C })
+    val transitionInputEvent by context(newIntVarArray(C, K) { 0..E })
+    val transitionTruthTable by context(newBoolVarArray(C, K, U))
+    val transitionFiring by context(newBoolVarArray(C, K, E, U))
+    val firstFired by context(newIntVarArray(C, E, U) { 0..K })
+    val notFired by context(newBoolVarArray(C, K, E, U))
+    val stateOutputEvent by context(newIntVarArray(C) { 0..O })
+    val stateAlgorithmBot by context(newBoolVarArray(C, Z))
+    val stateAlgorithmTop by context(newBoolVarArray(C, Z))
+
     /* Mapping variables */
-    val mapping = newIntVarArray(V) { 1..C }
+    comment("Mapping variables")
+    val mapping by context(newIntVarArray(V) { 1..C })
+
     /* Cardinality */
-    val cardinality = declareCardinality {
+    comment("Cardinality (T)")
+    val cardinalityT by context(declareCardinality {
         for (c in 1..C)
             for (k in 1..K)
                 yield(transitionDestination[c, k] neq 0)
-    }
+    })
 
     if (Globals.IS_DUMP_VARS_IN_CNF) {
         comment("actualTransitionFunction = ${actualTransitionFunction.literals}")
@@ -83,24 +68,6 @@ fun Solver.declareBasicVariables(
         comment("stateAlgorithmBot = ${stateAlgorithmBot.literals}")
         comment("stateAlgorithmTop = ${stateAlgorithmTop.literals}")
         comment("mapping = ${mapping.literals}")
-        comment("totalizerT = ${cardinality.totalizer.literals}")
+        comment("totalizerT = ${cardinalityT.totalizer.literals}")
     }
-
-    return BasicVariables(
-        scenarioTree = scenarioTree,
-        C = C, K = K,
-        V = V, E = E, O = O, X = X, Z = Z, U = U,
-        actualTransitionFunction = actualTransitionFunction,
-        transitionDestination = transitionDestination,
-        transitionInputEvent = transitionInputEvent,
-        transitionTruthTable = transitionTruthTable,
-        transitionFiring = transitionFiring,
-        firstFired = firstFired,
-        notFired = notFired,
-        stateOutputEvent = stateOutputEvent,
-        stateAlgorithmBot = stateAlgorithmBot,
-        stateAlgorithmTop = stateAlgorithmTop,
-        mapping = mapping,
-        cardinality = cardinality
-    )
 }

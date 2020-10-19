@@ -1,207 +1,170 @@
+@file:Suppress("LocalVariableName")
+
 package ru.ifmo.fbsat.core.constraints
 
+import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.atLeastOne
+import ru.ifmo.fbsat.core.solver.SolverContext
 import ru.ifmo.fbsat.core.solver.atMostOne
-import ru.ifmo.fbsat.core.solver.exactlyOne
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.implyAnd
-import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicVariables
-import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
-import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
-import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
-import ru.ifmo.fbsat.core.task.single.complete.CompleteVariables
+import ru.ifmo.fbsat.core.solver.switchContext
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.exhaustive
 
-fun Solver.declareAutomatonStructureConstraints(basicVariables: BasicVariables) {
+fun Solver.declareAutomatonStructureConstraints() {
     comment("Automaton structure constraints")
-    with(basicVariables) {
-        comment("Automaton structure constraints: inputless")
-        declareAutomatonStructureConstraintsInputless(
-            C = C, K = K, E = E, O = O, Z = Z,
-            stateOutputEvent = stateOutputEvent,
-            stateAlgorithmTop = stateAlgorithmTop,
-            stateAlgorithmBot = stateAlgorithmBot,
-            transitionDestination = transitionDestination,
-            transitionInputEvent = transitionInputEvent
-        )
 
-        comment("Automaton structure constraints: for inputs")
-        declareAutomatonStructureConstraintsForInputs(
-            C = C, K = K, E = E, Us = 1..U,
-            transitionDestination = transitionDestination,
-            transitionInputEvent = transitionInputEvent,
-            transitionTruthTable = transitionTruthTable,
-            transitionFiring = transitionFiring,
-            firstFired = firstFired,
-            notFired = notFired,
-            actualTransitionFunction = actualTransitionFunction
-        )
-    }
+    comment("Automaton structure constraints: inputless")
+    declareAutomatonStructureConstraintsInputless()
+
+    val U: Int by context
+    comment("Automaton structure constraints: for inputs (${1..U})")
+    declareAutomatonStructureConstraintsForInputs(Us = 1..U)
 }
 
-fun Solver.declareNegativeAutomatonStructureConstraints(
-    completeVars: CompleteVariables,
-    Us: Iterable<Int>
-) {
+fun Solver.declareNegativeAutomatonStructureConstraints(Us: Iterable<Int>) {
     comment("Negative automaton structure constraints")
-    with(completeVars) {
+    val negativeContext: SolverContext by context
+
+    switchContext(negativeContext) {
         // Note: no inputless constraints
 
-        // Note: be very careful with positive/negative variables!
-        comment("Negative automaton structure constraints: for inputs")
-        declareAutomatonStructureConstraintsForInputs(
-            C = C, K = K, E = E, Us = Us,
-            transitionDestination = transitionDestination,
-            transitionInputEvent = transitionInputEvent,
-            transitionTruthTable = negTransitionTruthTable,
-            transitionFiring = negTransitionFiring,
-            firstFired = negFirstFired,
-            notFired = negNotFired,
-            actualTransitionFunction = negActualTransitionFunction
-        )
+        comment("Negative automaton structure constraints: for inputs ($Us)")
+        declareAutomatonStructureConstraintsForInputs(Us = Us)
     }
 }
 
-fun Solver.declareParallelModularAutomatonStructureConstraints(
-    parallelModularBasicVariables: ParallelModularBasicVariables
-) {
-    comment("Parallel modular automaton structure constraints")
-    with(parallelModularBasicVariables) {
-        for (m in 1..M) {
-            comment("Parallel modular automaton structure constraints: for module m = $m")
-            declareAutomatonStructureConstraints(modularBasicVariables[m])
-        }
-
-        comment("Additional parallel modular structure constraints")
-
-        // EO
-        for (z in 1..Z)
-            exactlyOne {
-                for (m in 1..M)
-                    yield(moduleControllingOutputVariable[z] eq m)
-            }
-        // ALO
-        for (m in 1..M)
-            atLeastOne {
-                for (z in 1..Z)
-                    yield(moduleControllingOutputVariable[z] eq m)
-            }
-
-        comment("Constraint free variables")
-        for (m in 1..M) with(modularBasicVariables[m]) {
-            for (z in 1..Z)
-                for (c in 2..C) {
-                    imply(moduleControllingOutputVariable[z] neq m, stateAlgorithmTop[c, z])
-                    imply(moduleControllingOutputVariable[z] neq m, -stateAlgorithmBot[c, z])
-                }
-        }
-    }
+fun Solver.declareParallelModularAutomatonStructureConstraints() {
+    // comment("Parallel modular automaton structure constraints")
+    // val M: Int by context
+    // val Z: Int by context
+    // val modularContext: MultiArray<SolverContext> by context
+    //
+    //     for (m in 1..M) {
+    //         comment("Parallel modular automaton structure constraints: for module m = $m")
+    //         declareAutomatonStructureConstraints(context = modularContext[m])
+    //     }
+    //
+    //     comment("Additional parallel modular structure constraints")
+    //
+    //     comment("EO")
+    //     for (z in 1..Z)
+    //         exactlyOne {
+    //             for (m in 1..M)
+    //                 yield(moduleControllingOutputVariable[z] eq m)
+    //         }
+    //     comment("ALO")
+    //     for (m in 1..M)
+    //         atLeastOne {
+    //             for (z in 1..Z)
+    //                 yield(moduleControllingOutputVariable[z] eq m)
+    //         }
+    //
+    //     comment("Constraint free variables")
+    //     for (m in 1..M) with(modularBasicVariables[m]) {
+    //         for (z in 1..Z)
+    //             for (c in 2..C) {
+    //                 imply(moduleControllingOutputVariable[z] neq m, stateAlgorithmTop[c, z])
+    //                 imply(moduleControllingOutputVariable[z] neq m, -stateAlgorithmBot[c, z])
+    //             }
+    //     }
 }
 
-fun Solver.declareConsecutiveModularAutomatonStructureConstraints(
-    consecutiveModularBasicVariables: ConsecutiveModularBasicVariables
-) {
+fun Solver.declareConsecutiveModularAutomatonStructureConstraints() {
     check(Globals.EPSILON_OUTPUT_EVENTS == EpsilonOutputEvents.NONE)
     check(Globals.START_STATE_ALGORITHMS == StartStateAlgorithms.ZERONOTHING || Globals.START_STATE_ALGORITHMS == StartStateAlgorithms.ZERO)
 
     comment("Consecutive modular automaton structure constraints")
-    with(consecutiveModularBasicVariables) {
-        for (m in 1..M) with(modularBasicVariables[m]) {
-            comment("Consecutive modular automaton structure constraints for module m = $m: inputless")
-            declareAutomatonStructureConstraintsInputless(
-                // Note: O = E, it is not a typo!
-                C = C, K = K, E = E, O = E, Z = Z,
-                stateOutputEvent = stateOutputEvent,
-                stateAlgorithmTop = stateAlgorithmTop,
-                stateAlgorithmBot = stateAlgorithmBot,
-                transitionDestination = transitionDestination,
-                transitionInputEvent = transitionInputEvent
-            )
+    val M: Int by context
+    val modularContext: MultiArray<SolverContext> by context
 
-            comment("Consecutive modular automaton structure constraints for module m = $m: for inputs")
-            declareAutomatonStructureConstraintsForInputs(
-                C = C, K = K, E = E, Us = 1..U,
-                transitionDestination = transitionDestination,
-                transitionInputEvent = transitionInputEvent,
-                transitionTruthTable = transitionTruthTable,
-                transitionFiring = transitionFiring,
-                firstFired = firstFired,
-                notFired = notFired,
-                actualTransitionFunction = actualTransitionFunction
-            )
-        }
+    for (m in 1..M) switchContext(modularContext[m]) {
+        comment("Consecutive modular automaton structure constraints for module m = $m: inputless")
+        declareAutomatonStructureConstraintsInputless()
+        // declareAutomatonStructureConstraintsInputless(
+        //     context = modularContext[m]
+        //     // Note: O = E, it is not a typo!
+        //     // C = C, K = K, E = E, O = E, Z = Z,
+        //     // stateOutputEvent = stateOutputEvent,
+        //     // stateAlgorithmTop = stateAlgorithmTop,
+        //     // stateAlgorithmBot = stateAlgorithmBot,
+        //     // transitionDestination = transitionDestination,
+        //     // transitionInputEvent = transitionInputEvent
+        // )
+
+        val U: Int by context
+        comment("Consecutive modular automaton structure constraints for module m = $m: for inputs (${1..U})")
+        declareAutomatonStructureConstraintsForInputs(Us = 1..U)
 
         /* Additional constraints */
-
         // TODO: Additional consecutive parallel constraints
     }
 }
 
-fun Solver.declareDistributedAutomatonStructureConstraints(
-    distributedBasicVariables: DistributedBasicVariables
-) {
+fun Solver.declareDistributedAutomatonStructureConstraints() {
     comment("Distributed automaton structure constraints")
-    with(distributedBasicVariables) {
-        for (m in 1..M) {
-            comment("Distributed automaton structure constraints: for module m = $m")
-            declareAutomatonStructureConstraints(modularBasicVariables[m])
+    val M: Int by context
+    val stateUsed: BoolVarArray by context
+    val modularContext: MultiArray<SolverContext> by context
 
-            comment("Distributed automaton state usage constraints: for module m = $m")
-            with(modularBasicVariables[m]) {
-                comment("Start state is always used")
-                clause(stateUsed[m, 1])
+    for (m in 1..M) switchContext(modularContext[m]) {
+        comment("Distributed automaton structure constraints: for module m = $m")
+        declareAutomatonStructureConstraints()
 
-                comment("State non-usage propagation")
-                for (c in 2 until C)
-                    imply(
-                        -stateUsed[m, c],
-                        -stateUsed[m, c + 1]
-                    )
+        comment("Distributed automaton state usage constraints: for module m = $m")
+        val C: Int by context
+        val K: Int by context
+        val transitionDestination: IntVarArray by context
+        // val stateUsed: IntVarArray by context
 
-                comment("Unused states don't have outgoing transitions")
-                for (c in 2..C)
-                    implyAnd(-stateUsed[m, c], sequence {
-                        for (k in 1..K)
-                            yield(transitionDestination[c, k] eq 0)
-                    })
+        comment("Start state is always used")
+        clause(stateUsed[1])
 
-                comment("(only) Unused states don't have incoming transitions")
-                for (c in 2..C)
-                    iffAnd(-stateUsed[m, c], sequence {
-                        for (c2 in 1..C)
-                            for (k in 1..K)
-                                yield(transitionDestination[c2, k] neq c)
-                    })
+        comment("State non-usage propagation")
+        for (c in 2 until C)
+            imply(
+                -stateUsed[c],
+                -stateUsed[c + 1]
+            )
 
-                // TODO: constraints about stateOutputEvent
-                // TODO: constraints about stateAlgorithm
-            }
-        }
+        comment("Unused states don't have outgoing transitions")
+        for (c in 2..C)
+            implyAnd(-stateUsed[c], sequence {
+                for (k in 1..K)
+                    yield(transitionDestination[c, k] eq 0)
+            })
+
+        comment("(only) Unused states don't have incoming transitions")
+        for (c in 2..C)
+            iffAnd(-stateUsed[c], sequence {
+                for (c2 in 1..C)
+                    for (k in 1..K)
+                        yield(transitionDestination[c2, k] neq c)
+            })
+
+        // TODO: constraints about stateOutputEvent
+        // TODO: constraints about stateAlgorithm
     }
-    // TODO: is it all?
 }
 
-private fun Solver.declareAutomatonStructureConstraintsInputless(
-    C: Int,
-    K: Int,
-    E: Int,
-    O: Int,
-    Z: Int,
-    stateOutputEvent: IntVarArray,
-    stateAlgorithmTop: BoolVarArray,
-    stateAlgorithmBot: BoolVarArray,
-    transitionDestination: IntVarArray,
-    transitionInputEvent: IntVarArray
-) {
+private fun Solver.declareAutomatonStructureConstraintsInputless() {
+    val C: Int by context
+    val K: Int by context
+    val Z: Int by context
+    val stateOutputEvent: IntVarArray by context
+    val stateAlgorithmTop: BoolVarArray by context
+    val stateAlgorithmBot: BoolVarArray by context
+    val transitionDestination: IntVarArray by context
+    val transitionInputEvent: IntVarArray by context
+
     when (Globals.EPSILON_OUTPUT_EVENTS) {
         EpsilonOutputEvents.START -> {
             comment("Start state produces epsilon event")
@@ -291,19 +254,18 @@ private fun Solver.declareAutomatonStructureConstraintsInputless(
     }
 }
 
-private fun Solver.declareAutomatonStructureConstraintsForInputs(
-    C: Int,
-    K: Int,
-    E: Int,
-    Us: Iterable<Int>,
-    transitionDestination: IntVarArray,
-    transitionInputEvent: IntVarArray,
-    transitionTruthTable: BoolVarArray,
-    transitionFiring: BoolVarArray,
-    firstFired: IntVarArray,
-    notFired: BoolVarArray,
-    actualTransitionFunction: IntVarArray
-) {
+private fun Solver.declareAutomatonStructureConstraintsForInputs(Us: Iterable<Int>) {
+    val C: Int by context
+    val K: Int by context
+    val E: Int by context
+    val transitionDestination: IntVarArray by context
+    val transitionInputEvent: IntVarArray by context
+    val transitionTruthTable: BoolVarArray by context
+    val transitionFiring: BoolVarArray by context
+    val firstFired: IntVarArray by context
+    val notFired: BoolVarArray by context
+    val actualTransitionFunction: IntVarArray by context
+
     // TODO: Remove
     // comment("Guards on not-null transitions are not False")
     // // (transitionDestination[c,k] != 0) => ALO_{u}( transitionTruthTable[c,k,u] )

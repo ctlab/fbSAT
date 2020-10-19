@@ -7,7 +7,7 @@ import ru.ifmo.fbsat.core.utils.timeSince
 
 // FIXME: 'private constructor' is temporarily
 abstract class Task private constructor(name: String? = null) {
-    private val name: String = name ?: this::class.java.simpleName
+    protected val name: String = name ?: this::class.java.simpleName
 
     // TODO: remove
     constructor() : this(null)

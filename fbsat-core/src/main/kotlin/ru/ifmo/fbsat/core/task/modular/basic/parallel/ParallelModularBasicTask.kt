@@ -4,9 +4,9 @@ import ru.ifmo.fbsat.core.constraints.declareParallelModularAutomatonBfsConstrai
 import ru.ifmo.fbsat.core.constraints.declareParallelModularAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveParallelModularMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
-import ru.ifmo.fbsat.core.task.parallelModularBasicVars
 import ru.ifmo.fbsat.core.utils.Globals
 
 data class ParallelModularBasicTask(
@@ -19,21 +19,23 @@ data class ParallelModularBasicTask(
 ) : Task() {
     override fun Solver.declare_() {
         /* Variables */
-        val vars = declareParallelModularBasicVariables(
+        comment("$name: Variables")
+        declareParallelModularBasicVariables(
             scenarioTree = scenarioTree,
             M = numberOfModules,
             C = numberOfStates,
             K = maxOutgoingTransitions ?: numberOfStates
-        ).also {
-            context.parallelModularBasicVars = it
-        }
+        )
 
         /* Constraints */
-        declareParallelModularAutomatonStructureConstraints(vars)
-        if (Globals.IS_BFS_AUTOMATON) declareParallelModularAutomatonBfsConstraints(vars)
-        declarePositiveParallelModularMappingConstraints(vars, isEncodeReverseImplication)
+        comment("$name: Constraints")
+        declareParallelModularAutomatonStructureConstraints()
+        if (Globals.IS_BFS_AUTOMATON) declareParallelModularAutomatonBfsConstraints()
+        declarePositiveParallelModularMappingConstraints(isEncodeReverseImplication)
 
         /* Initial cardinality constraints */
-        vars.cardinality.updateUpperBoundLessThanOrEqual(maxTransitions)
+        comment("$name: Initial cardinality (T) constraints")
+        val cardinalityT: Cardinality by context
+        cardinalityT.updateUpperBoundLessThanOrEqual(maxTransitions)
     }
 }

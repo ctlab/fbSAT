@@ -3,10 +3,9 @@ package ru.ifmo.fbsat.core.task.single.extended
 import ru.ifmo.fbsat.core.constraints.declareGuardConditionsAdhocConstraints
 import ru.ifmo.fbsat.core.constraints.declareGuardConditionsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveGuardConditionsConstraints
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
-import ru.ifmo.fbsat.core.task.basicVars
-import ru.ifmo.fbsat.core.task.extendedVars
 import ru.ifmo.fbsat.core.utils.Globals
 
 data class ExtendedTask(
@@ -15,19 +14,20 @@ data class ExtendedTask(
 ) : Task() {
     override fun Solver.declare_() {
         /* Variables */
-        val vars = declareExtendedVariables(
-            basicVars = context.basicVars,
+        comment("$name: Variables")
+        declareExtendedVariables(
             P = maxGuardSize
-        ).also {
-            context.extendedVars = it
-        }
+        )
 
         /* Constraints */
-        declarePositiveGuardConditionsConstraints(vars)
-        if (Globals.IS_BFS_GUARD) declareGuardConditionsBfsConstraints(vars)
-        declareGuardConditionsAdhocConstraints(vars)
+        comment("$name: Constraints")
+        declarePositiveGuardConditionsConstraints()
+        if (Globals.IS_BFS_GUARD) declareGuardConditionsBfsConstraints()
+        declareGuardConditionsAdhocConstraints()
 
         /* Initial cardinality constraints */
-        vars.cardinality.updateUpperBoundLessThanOrEqual(maxTotalGuardsSize)
+        comment("$name: Initial cardinality (N) constraints")
+        val cardinalityN: Cardinality by context
+        cardinalityN.updateUpperBoundLessThanOrEqual(maxTotalGuardsSize)
     }
 }

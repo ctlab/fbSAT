@@ -11,7 +11,7 @@ import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.newBoolVarArray
 import ru.ifmo.fbsat.core.solver.newIntVarArray
 import ru.ifmo.fbsat.core.utils.log
-import kotlin.math.pow
+import ru.ifmo.fbsat.core.utils.pow
 
 @Suppress("PropertyName")
 class ArbitraryModularBasicVariables(
@@ -59,44 +59,52 @@ fun Solver.declareArbitraryModularBasicVariables(
     O: Int = scenarioTree.outputEvents.size,
     X: Int = scenarioTree.inputNames.size,
     Z: Int = scenarioTree.outputNames.size
-): ArbitraryModularBasicVariables {
+) {
     check(E == 1 && O == 1) { "Only one input/output event is supported" }
 
-    val U = 2.toDouble().pow(X).toInt()
+    val U = 2.pow(X)
     log.debug { "U = $U" }
     log.debug { "V = $V" }
 
     comment("ArbitraryModularBasicVariables")
+
     /* Core variables */
-    val modularActualTransitionFunction = MultiArray.create(M) { newIntVarArray(C, U) { 0..C } }
-    val modularTransitionDestination = MultiArray.create(M) { newIntVarArray(C, K) { 0..C } }
-    val modularTransitionFiring = MultiArray.create(M) { newBoolVarArray(C, K, U) }
-    val modularFirstFired = MultiArray.create(M) { newIntVarArray(C, U) { 0..K } }
-    val modularNotFired = MultiArray.create(M) { newBoolVarArray(C, K, U) }
-    // val modularStateOutputEvent = MultiArray.create(M) { newIntVar(C) { 0..1 } }
-    val modularStateAlgorithmTop = MultiArray.create(M) { newBoolVarArray(C, Z) }
-    val modularStateAlgorithmBot = MultiArray.create(M) { newBoolVarArray(C, Z) }
+    comment("Core variables")
+    val modularActualTransitionFunction by context(MultiArray.create(M) { newIntVarArray(C, U) { 0..C } })
+    val modularTransitionDestination by context(MultiArray.create(M) { newIntVarArray(C, K) { 0..C } })
+    val modularTransitionFiring by context(MultiArray.create(M) { newBoolVarArray(C, K, U) })
+    val modularFirstFired by context(MultiArray.create(M) { newIntVarArray(C, U) { 0..K } })
+    val modularNotFired by context(MultiArray.create(M) { newBoolVarArray(C, K, U) })
+    // val modularStateOutputEvent by context(MultiArray.create(M) { newIntVar(C) { 0..1 } })
+    val modularStateAlgorithmTop by context(MultiArray.create(M) { newBoolVarArray(C, Z) })
+    val modularStateAlgorithmBot by context(MultiArray.create(M) { newBoolVarArray(C, Z) })
+
     /* Mapping variables */
-    val modularMapping = MultiArray.create(M) { newIntVarArray(V) { 1..C } }
+    comment("Mapping variables")
+    val modularMapping by context(MultiArray.create(M) { newIntVarArray(V) { 1..C } })
+
     /* Cardinality */
-    val cardinality = declareCardinality {
+    comment("Cardinality (T)")
+    val cardinalityT by context(declareCardinality {
         for (m in 1..M) {
             for (c in 1..C)
                 for (k in 1..K)
                     yield(modularTransitionDestination[m][c, k] neq 0)
         }
-    }
+    })
+
     /* Modular variables */
+    comment("Modular variables")
     with(Pins(M, X, Z, E, O)) {
-        val inboundVarPinParent = newIntVarArray(allInboundVarPins.size) { (p) ->
+        val inboundVarPinParent by context(newIntVarArray(allInboundVarPins.size) { (p) ->
             if (p in externalInboundVarPins) {
                 (0..allOutboundVarPins.size)
             } else {
                 val m = (p - 1) / X + 1
                 (1 until m).flatMap { m_ -> modularOutboundVarPins[m_] } + externalOutboundVarPins + 0
             }
-        }
-        val inboundEventPinParent = newIntVarArray(allInboundEventPins.size) { (p) ->
+        })
+        val inboundEventPinParent by context(newIntVarArray(allInboundEventPins.size) { (p) ->
             if (p in externalInboundVarPins) {
                 listOf(modularOutboundEventPins[M][0])
             } else {
@@ -106,11 +114,11 @@ fun Solver.declareArbitraryModularBasicVariables(
                 else
                     listOf(externalInboundEventPins[0])
             }
-        }
-        val modularInputIndex = MultiArray.create(M) {
+        })
+        val modularInputIndex by context(MultiArray.create(M) {
             newIntVarArray(V, encoding = VarEncoding.ONEHOT_BINARY) { 1..U }
-        }
-        val inboundVarPinComputedValue = newBoolVarArray(V, allInboundVarPins.size) { (v, p) ->
+        })
+        val inboundVarPinComputedValue by context(newBoolVarArray(V, allInboundVarPins.size) { (v, p) ->
             if (p in externalInboundVarPins) {
                 newLiteral()
             } else {
@@ -118,31 +126,9 @@ fun Solver.declareArbitraryModularBasicVariables(
                 val x = p - (m - 1) * X
                 modularInputIndex[m][v].bit(x - 1)
             }
-        }
-        val outboundVarPinComputedValue = newBoolVarArray(V, allOutboundVarPins.size)
-        val inboundEventPinConsumedEvent = newIntVarArray(V, allInboundEventPins.size) { listOf(0, 1) }
-        val outboundEventPinEmittedEvent = newIntVarArray(V, allOutboundEventPins.size) { listOf(0, 1) }
-
-        return ArbitraryModularBasicVariables(
-            scenarioTree = scenarioTree,
-            M = M, C = C, K = K,
-            V = V, E = E, O = O, X = X, Z = Z, U = U,
-            modularActualTransitionFunction = modularActualTransitionFunction,
-            modularTransitionDestination = modularTransitionDestination,
-            modularTransitionFiring = modularTransitionFiring,
-            modularFirstFired = modularFirstFired,
-            modularNotFired = modularNotFired,
-            modularStateAlgorithmTop = modularStateAlgorithmTop,
-            modularStateAlgorithmBot = modularStateAlgorithmBot,
-            modularMapping = modularMapping,
-            cardinality = cardinality,
-            inboundVarPinParent = inboundVarPinParent,
-            inboundEventPinParent = inboundEventPinParent,
-            modularInputIndex = modularInputIndex,
-            inboundVarPinComputedValue = inboundVarPinComputedValue,
-            outboundVarPinComputedValue = outboundVarPinComputedValue,
-            inboundEventPinConsumedEvent = inboundEventPinConsumedEvent,
-            outboundEventPinEmittedEvent = outboundEventPinEmittedEvent
-        )
+        })
+        val outboundVarPinComputedValue by context(newBoolVarArray(V, allOutboundVarPins.size))
+        val inboundEventPinConsumedEvent by context(newIntVarArray(V, allInboundEventPins.size) { listOf(0, 1) })
+        val outboundEventPinEmittedEvent by context(newIntVarArray(V, allOutboundEventPins.size) { listOf(0, 1) })
     }
 }

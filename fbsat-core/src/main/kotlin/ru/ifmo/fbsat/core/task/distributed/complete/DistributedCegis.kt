@@ -15,7 +15,6 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask
 import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedTask
-import ru.ifmo.fbsat.core.task.distributedCompleteVars
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.multiArrayOf
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
@@ -77,14 +76,14 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
     // Copy smv files to output directory
     smvDir.copyRecursively(outDir, overwrite = true)
 
-    val vars = solver.context.distributedCompleteVars
-    val modularPositiveTree = vars.modularScenarioTree
-    val negativeTree = vars.negativeCompoundScenarioTree
+    val modularScenarioTree: MultiArray<PositiveScenarioTree> by solver.context
+    val negativeCompoundScenarioTree: NegativeCompoundScenarioTree by solver.context
+    val negativeTree = negativeCompoundScenarioTree
     lateinit var lastNegativeScenarios: List<NegativeCompoundScenario>
     var lastHashCode: Int = -1
 
     // =====
-    val M = vars.M
+    val M: Int by solver.context
     val modularName = multiArrayOf(
         "sender",
         "receiver"
@@ -110,7 +109,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
         val timeStart = PerformanceCounter.reference
 
         // Update to take into account possible extension of the negative scenario tree
-        solver.updateDistributedNegativeReduction(vars)
+        solver.updateDistributedNegativeReduction()
         // Infer update
         val automaton = inferDistributedComplete()
         if (automaton == null) {

@@ -7,39 +7,34 @@ import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
-import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicVariables
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.exhaustive
 
-fun Solver.declareArbitraryModularAutomatonStructureConstraints(
-    arbitraryModularBasicVariables: ArbitraryModularBasicVariables
-) {
-    check(Globals.EPSILON_OUTPUT_EVENTS == EpsilonOutputEvents.NONE)
-    check(Globals.START_STATE_ALGORITHMS == StartStateAlgorithms.ZERONOTHING || Globals.START_STATE_ALGORITHMS == StartStateAlgorithms.ZERO)
-
-    comment("Arbitrary modular automaton structure constraints")
-    with(arbitraryModularBasicVariables) {
-        for (m in 1..M) {
-            comment("Arbitrary modular automaton structure constraints: for module m = $m")
-            declareModuleAutomatonStructureConstraints(
-                C = C, K = K,
-                Z = Z, U = U,
-                actualTransitionFunction = modularActualTransitionFunction[m],
-                transitionDestination = modularTransitionDestination[m],
-                transitionFiring = modularTransitionFiring[m],
-                firstFired = modularFirstFired[m],
-                notFired = modularNotFired[m],
-                stateAlgorithmTop = modularStateAlgorithmTop[m],
-                stateAlgorithmBot = modularStateAlgorithmBot[m]
-            )
-        }
-
-        /* Additional constraints */
-
-        // TODO: Additional arbitrary modular constraints
-    }
+fun Solver.declareArbitraryModularAutomatonStructureConstraints() {
+    // check(Globals.EPSILON_OUTPUT_EVENTS == EpsilonOutputEvents.NONE)
+    // check(Globals.START_STATE_ALGORITHMS == StartStateAlgorithms.ZERONOTHING || Globals.START_STATE_ALGORITHMS == StartStateAlgorithms.ZERO)
+    //
+    // comment("Arbitrary modular automaton structure constraints")
+    //  for (m in 1..M) {
+    //         comment("Arbitrary modular automaton structure constraints: for module m = $m")
+    //         declareModuleAutomatonStructureConstraints(
+    //             C = C, K = K,
+    //             Z = Z, U = U,
+    //             actualTransitionFunction = modularActualTransitionFunction[m],
+    //             transitionDestination = modularTransitionDestination[m],
+    //             transitionFiring = modularTransitionFiring[m],
+    //             firstFired = modularFirstFired[m],
+    //             notFired = modularNotFired[m],
+    //             stateAlgorithmTop = modularStateAlgorithmTop[m],
+    //             stateAlgorithmBot = modularStateAlgorithmBot[m]
+    //         )
+    //     }
+    //
+    //     /* Additional constraints */
+    //
+    //     // TODO: Additional arbitrary modular constraints
 }
 
 private fun Solver.declareModuleAutomatonStructureConstraints(

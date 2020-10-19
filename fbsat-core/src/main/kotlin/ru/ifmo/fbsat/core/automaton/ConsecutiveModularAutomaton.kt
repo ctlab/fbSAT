@@ -8,7 +8,10 @@ import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.RawAssignment
+import ru.ifmo.fbsat.core.solver.SolverContext
 import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.magic
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.withIndex
 
@@ -136,4 +139,20 @@ class ConsecutiveModularAutomaton(
     fun printStats() {
         log.just("    " + getStats())
     }
+}
+
+fun buildBasicConsecutiveModularAutomaton(
+    context: SolverContext,
+    raw: RawAssignment,
+    useStateUsed: Boolean = false
+): ConsecutiveModularAutomaton {
+    return magic()
+}
+
+fun buildExtendedConsecutiveModularAutomaton(
+    context: SolverContext,
+    raw: RawAssignment,
+    useStateUsed: Boolean = false
+): ConsecutiveModularAutomaton {
+    return magic()
 }

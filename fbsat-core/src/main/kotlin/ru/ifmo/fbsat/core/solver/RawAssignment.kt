@@ -6,6 +6,8 @@ import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import com.github.lipen.multiarray.mapToInt
 import kotlin.math.absoluteValue
+import kotlin.properties.ReadOnlyProperty
+import kotlin.reflect.KProperty
 
 interface RawAssignment {
     operator fun get(v: Literal): Boolean
@@ -55,3 +57,45 @@ fun MultiArray<IntVarArray>.convert(raw: RawAssignment): MultiArray<IntMultiArra
 @JvmName("multiArrayDomainVarArrayConvert")
 inline fun <reified T> MultiArray<DomainVarArray<T>>.convert(raw: RawAssignment): MultiArray<MultiArray<T>> =
     map { it.convert(raw) }
+
+@Suppress("PublicApiImplicitType")
+fun <T : Any> SolverContext.convertDomainVar(raw: RawAssignment) =
+    object : ReadOnlyProperty<Any?, T?> {
+        override operator fun getValue(thisRef: Any?, property: KProperty<*>): T? =
+            this@convertDomainVar.getValue<DomainVar<T>>(thisRef, property).convert(raw)
+    }
+
+@Suppress("PublicApiImplicitType")
+fun SolverContext.convertIntVar(raw: RawAssignment) =
+    object : ReadOnlyProperty<Any?, Int?> {
+        override operator fun getValue(thisRef: Any?, property: KProperty<*>): Int? =
+            this@convertIntVar.getValue<IntVar>(thisRef, property).convert(raw)
+    }
+
+@Suppress("PublicApiImplicitType")
+fun SolverContext.convertLiteral(raw: RawAssignment) =
+    object : ReadOnlyProperty<Any?, Boolean> {
+        override operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean =
+            raw[this@convertLiteral.getValue(thisRef, property)]
+    }
+
+@Suppress("PublicApiImplicitType")
+inline fun <reified T> SolverContext.convertDomainVarArray(raw: RawAssignment) =
+    object : ReadOnlyProperty<Any?, MultiArray<T>> {
+        override operator fun getValue(thisRef: Any?, property: KProperty<*>): MultiArray<T> =
+            this@convertDomainVarArray.getValue<DomainVarArray<T>>(thisRef, property).convert(raw)
+    }
+
+@Suppress("PublicApiImplicitType")
+fun SolverContext.convertIntVarArray(raw: RawAssignment) =
+    object : ReadOnlyProperty<Any?, IntMultiArray> {
+        override operator fun getValue(thisRef: Any?, property: KProperty<*>): IntMultiArray =
+            this@convertIntVarArray.getValue<IntVarArray>(thisRef, property).convert(raw)
+    }
+
+@Suppress("PublicApiImplicitType")
+fun SolverContext.convertBoolVarArray(raw: RawAssignment) =
+    object : ReadOnlyProperty<Any?, BooleanMultiArray> {
+        override operator fun getValue(thisRef: Any?, property: KProperty<*>): BooleanMultiArray =
+            this@convertBoolVarArray.getValue<BoolVarArray>(thisRef, property).convert(raw)
+    }

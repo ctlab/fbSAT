@@ -3,10 +3,11 @@ package ru.ifmo.fbsat.core.task.distributed.extended
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.constraints.declareDistributedGuardConditionsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareDistributedPositiveGuardConditionsConstraints
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.SolverContext
+import ru.ifmo.fbsat.core.solver.switchContext
 import ru.ifmo.fbsat.core.task.Task
-import ru.ifmo.fbsat.core.task.distributedBasicVars
-import ru.ifmo.fbsat.core.task.distributedExtendedVars
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 
@@ -18,21 +19,26 @@ data class DistributedExtendedTask(
 ) : Task() {
     override fun Solver.declare_() {
         /* Variables */
-        val vars = declareDistributedExtendedVariables(
-            basicVars = context.distributedBasicVars,
+        comment("$name: Variables")
+        declareDistributedExtendedVariables(
             modularP = modularMaxGuardSize
-        ).also {
-            context.distributedExtendedVars = it
-        }
+        )
 
         /* Constraints */
-        declareDistributedPositiveGuardConditionsConstraints(vars)
-        if (Globals.IS_BFS_GUARD) declareDistributedGuardConditionsBfsConstraints(vars)
+        comment("$name: Constraints")
+        declareDistributedPositiveGuardConditionsConstraints()
+        if (Globals.IS_BFS_GUARD) declareDistributedGuardConditionsBfsConstraints()
 
         /* Initial cardinality constraints */
-        for (m in 1..numberOfModules) {
-            vars.modularExtendedVariables[m].cardinality.updateUpperBoundLessThanOrEqual(modularMaxTotalGuardsSize[m])
+        val modularContext: MultiArray<SolverContext> by context
+        val M: Int by context
+        for (m in 1..M)  switchContext(modularContext[m]){
+            comment("$name: Initial cardinality (T) constraints: for module m = $m")
+            val cardinalityN: Cardinality by context
+            cardinalityN.updateUpperBoundLessThanOrEqual(modularMaxTotalGuardsSize[m])
         }
-        vars.cardinality.updateUpperBoundLessThanOrEqual(maxTotalGuardsSize)
+        comment("$name: Initial cardinality (T) constraints")
+        val cardinalityN: Cardinality by context
+        cardinalityN.updateUpperBoundLessThanOrEqual(maxTotalGuardsSize)
     }
 }

@@ -7,7 +7,6 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.task.completeVars
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.task.single.extended.ExtendedTask
 import ru.ifmo.fbsat.core.task.single.extended.extendedMin
@@ -111,9 +110,8 @@ fun Inferrer.performCegis(smvDir: File): Automaton? {
     // Copy smv files to output directory
     smvDir.copyRecursively(outDir, overwrite = true)
 
-    val vars = solver.context.completeVars
-    val scenarioTree = vars.scenarioTree
-    val negativeScenarioTree = vars.negativeScenarioTree
+    val scenarioTree: PositiveScenarioTree by solver.context
+    val negativeScenarioTree: NegativeScenarioTree by solver.context
     lateinit var lastNegativeScenarios: List<NegativeScenario>
 
     for (iterationNumber in 1 until 10000) {
@@ -121,7 +119,7 @@ fun Inferrer.performCegis(smvDir: File): Automaton? {
         val timeStart = PerformanceCounter.reference
 
         // Update to take into account possible extension of the negative scenario tree
-        solver.updateNegativeReduction(vars)
+        solver.updateNegativeReduction()
         // Infer update
         val automaton = inferExtended()
         if (automaton == null) {

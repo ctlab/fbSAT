@@ -1,90 +1,79 @@
+@file:Suppress("LocalVariableName")
+
 package ru.ifmo.fbsat.core.constraints
 
+import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.SolverContext
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.iffAnd
 import ru.ifmo.fbsat.core.solver.iffOr
 import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.newBoolVarArray
 import ru.ifmo.fbsat.core.solver.newIntVarArray
-import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicVariables
-import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicVariables
-import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicVariables
-import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicVariables
-import ru.ifmo.fbsat.core.task.single.basic.BasicVariables
 
-fun Solver.declareAutomatonBfsConstraints(basicVars: BasicVariables) {
-    with(basicVars) {
-        declareAutomatonBfsConstraintsImpl(
-            C = C, K = K,
-            transitionDestination = transitionDestination
-        )
-    }
+fun Solver.declareAutomatonBfsConstraints(
+    context: SolverContext = this.context
+) {
+    declareAutomatonBfsConstraintsImpl(context = context)
 }
 
-fun Solver.declareParallelModularAutomatonBfsConstraints(
-    parallelModularBasicVariables: ParallelModularBasicVariables
-) {
-    comment("Parallel modular automaton BFS constraints")
-    with(parallelModularBasicVariables) {
-        for (m in 1..M) {
-            comment("Automaton BFS constraints: for module m = $m")
-            declareAutomatonBfsConstraints(modularBasicVariables[m])
-        }
-    }
+fun Solver.declareParallelModularAutomatonBfsConstraints() {
+    // comment("Parallel modular automaton BFS constraints")
+    // val modularContext: MultiArray<SolverContext> by context
+    //
+    //     for (m in 1..M) {
+    //         comment("Automaton BFS constraints: for module m = $m")
+    //         declareAutomatonBfsConstraints(context=modularContext[m])
+    //     }
 }
 
-fun Solver.declareConsecutiveModularAutomatonBfsConstraints(
-    consecutiveModularBasicVariables: ConsecutiveModularBasicVariables
-) {
-    comment("Consecutive modular automaton BFS constraints")
-    with(consecutiveModularBasicVariables) {
-        for (m in 1..M) {
-            comment("Automaton BFS constraints: for module m = $m")
-            declareAutomatonBfsConstraints(modularBasicVariables[m])
-        }
-    }
+fun Solver.declareConsecutiveModularAutomatonBfsConstraints() {
+    // comment("Consecutive modular automaton BFS constraints")
+    // with(consecutiveModularBasicVariables) {
+    //     for (m in 1..M) {
+    //         comment("Automaton BFS constraints: for module m = $m")
+    //         declareAutomatonBfsConstraints(modularBasicVariables[m])
+    //     }
+    // }
 }
 
-fun Solver.declareArbitraryModularAutomatonBfsConstraints(
-    arbitraryModularBasicVariables: ArbitraryModularBasicVariables
-) {
-    comment("Arbitrary modular automaton BFS constraints")
-    with(arbitraryModularBasicVariables) {
-        for (m in 1..M) {
-            comment("Automaton BFS constraints: for module m = $m")
-            declareAutomatonBfsConstraintsImpl(
-                C = C, K = K,
-                transitionDestination = modularTransitionDestination[m]
-            )
-        }
-    }
+fun Solver.declareArbitraryModularAutomatonBfsConstraints() {
+    // comment("Arbitrary modular automaton BFS constraints")
+    // with(arbitraryModularBasicVariables) {
+    //     for (m in 1..M) {
+    //         comment("Automaton BFS constraints: for module m = $m")
+    //         declareAutomatonBfsConstraintsImpl(
+    //             C = C, K = K,
+    //             transitionDestination = modularTransitionDestination[m]
+    //         )
+    //     }
+    // }
 }
 
-fun Solver.declareDistributedAutomatonBfsConstraints(
-    distributedBasicVariables: DistributedBasicVariables
-) {
+fun Solver.declareDistributedAutomatonBfsConstraints() {
     comment("Distributed automaton BFS constraints")
-    with(distributedBasicVariables) {
-        for (m in 1..M) with(modularBasicVariables[m]) {
-            comment("Automaton BFS constraints: for module m = $m")
-            declareAutomatonBfsConstraintsImpl_stateUsed(
-                C = C, K = K,
-                transitionDestination = transitionDestination,
-                stateUsed = BoolVarArray.create(C) { (c) -> stateUsed[m, c] }
-            )
-        }
+    val modularContext: MultiArray<SolverContext> by context
+    val M: Int by context
+    // val stateUsed: BoolVarArray by context
+
+    for (m in 1..M) {
+        comment("Automaton BFS constraints: for module m = $m")
+        // val C: Int by modularContext[m]
+        // modularContext[m]["stateUsed"] = BoolVarArray.create(C) { (c) -> stateUsed[m, c] }
+        declareAutomatonBfsConstraintsImpl_stateUsed(context = modularContext[m])
     }
 }
 
 private fun Solver.declareAutomatonBfsConstraintsImpl(
-    C: Int,
-    K: Int,
-    transitionDestination: IntVarArray
+    context: SolverContext
 ) {
     comment("Automaton BFS constraints")
+    val C: Int by context
+    val K: Int by context
+    val transitionDestination: IntVarArray by context
     val bfsTransitionAutomaton = newBoolVarArray(C, C)
     val bfsParentAutomaton = newIntVarArray(C) { (c) -> 1 until c }
 
@@ -119,12 +108,14 @@ private fun Solver.declareAutomatonBfsConstraintsImpl(
 }
 
 private fun Solver.declareAutomatonBfsConstraintsImpl_stateUsed(
-    C: Int,
-    K: Int,
-    transitionDestination: IntVarArray,
-    stateUsed: BoolVarArray // Note: this must be [C], but originally it is [M,C]. Be sure to convert!
+    context: SolverContext
 ) {
     comment("Automaton BFS constraints")
+    val C: Int by context
+    val K: Int by context
+    val transitionDestination: IntVarArray by context
+    // Note: stateUsed must be [C], but originally it is [M,C]. Be sure to convert!
+    val stateUsed: BoolVarArray by context
     val bfsTransitionAutomaton = newBoolVarArray(C, C)
     val bfsParentAutomaton = newIntVarArray(C) { (c) -> 0 until c }
 

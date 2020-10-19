@@ -1,10 +1,9 @@
 package ru.ifmo.fbsat.core.task.single.extforest
 
 import ru.ifmo.fbsat.core.constraints.declareExtForestGuardConditionsConstraints
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
-import ru.ifmo.fbsat.core.task.basicVars
-import ru.ifmo.fbsat.core.task.extForestVars
 
 data class ExtForestTask(
     val totalNodes: Int, // P
@@ -12,17 +11,18 @@ data class ExtForestTask(
 ) : Task() {
     override fun Solver.declare_() {
         /* Variables */
-        val vars = declareExtForestVariables(
-            basicVars = context.basicVars,
+        comment("$name: Variables")
+        declareExtForestVariables(
             P = totalNodes
-        ).also {
-            context.extForestVars = it
-        }
+        )
 
         /* Constraints */
-        declareExtForestGuardConditionsConstraints(vars)
+        comment("$name: Constraints")
+        declareExtForestGuardConditionsConstraints()
 
         /* Initial cardinality constraints */
-        vars.cardinality.updateUpperBoundLessThanOrEqual(maxTotalGuardsSize)
+        comment("$name: Initial cardinality (N) constraints")
+        val cardinalityN: Cardinality by context
+        cardinalityN.updateUpperBoundLessThanOrEqual(maxTotalGuardsSize)
     }
 }

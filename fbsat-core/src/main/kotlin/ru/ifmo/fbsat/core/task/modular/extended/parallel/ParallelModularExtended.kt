@@ -6,8 +6,6 @@ import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicTask
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasicMinC
 import ru.ifmo.fbsat.core.task.optimizeParallelModularN
-import ru.ifmo.fbsat.core.task.parallelModularExtendedVars
-import ru.ifmo.fbsat.core.utils.log
 
 fun Inferrer.parallelModularExtended(
     scenarioTree: PositiveScenarioTree,
@@ -52,9 +50,7 @@ fun Inferrer.parallelModularExtendedMin(
 
 fun Inferrer.inferParallelModularExtended(): ParallelModularAutomaton? {
     val rawAssignment = solver.solve() ?: return null
-    val vars = solver.context.parallelModularExtendedVars
-    val assignment = ParallelModularExtendedAssignment.fromRaw(rawAssignment, vars)
-    val automaton = assignment.toAutomaton()
+    val automaton = TODO()
 
     // TODO: check automaton
     // log.warn("Mapping check is not implemented yet")

@@ -4,9 +4,9 @@ import ru.ifmo.fbsat.core.constraints.declareAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
-import ru.ifmo.fbsat.core.task.basicVars
 import ru.ifmo.fbsat.core.utils.Globals
 
 data class BasicTask(
@@ -18,20 +18,22 @@ data class BasicTask(
 ) : Task() {
     override fun Solver.declare_() {
         /* Variables */
-        val vars = declareBasicVariables(
+        comment("$name: Variables")
+        declareBasicVariables(
             scenarioTree = scenarioTree,
             C = numberOfStates,
             K = maxOutgoingTransitions ?: numberOfStates
-        ).also {
-            context.basicVars = it
-        }
+        )
 
         /* Constraints */
-        declareAutomatonStructureConstraints(vars)
-        if (Globals.IS_BFS_AUTOMATON) declareAutomatonBfsConstraints(vars)
-        declarePositiveMappingConstraints(vars, isEncodeReverseImplication = isEncodeReverseImplication)
+        comment("$name: Constraints")
+        declareAutomatonStructureConstraints()
+        if (Globals.IS_BFS_AUTOMATON) declareAutomatonBfsConstraints()
+        declarePositiveMappingConstraints(isEncodeReverseImplication = isEncodeReverseImplication)
 
         /* Initial cardinality constraints */
-        vars.cardinality.updateUpperBoundLessThanOrEqual(maxTransitions)
+        comment("$name: Initial cardinality (T) constraints")
+        val cardinalityT: Cardinality by context
+        cardinalityT.updateUpperBoundLessThanOrEqual(maxTransitions)
     }
 }

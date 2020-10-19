@@ -2,9 +2,9 @@ package ru.ifmo.fbsat.core.task.modular.basic.arbitrary
 
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
+import ru.ifmo.fbsat.core.automaton.buildBasicArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.task.arbitraryModularBasicVars
 import ru.ifmo.fbsat.core.task.optimizeArbitraryModularT
 import ru.ifmo.fbsat.core.utils.log
 
@@ -67,9 +67,10 @@ fun Inferrer.arbitraryModularBasicMin(
 
 fun Inferrer.inferArbitraryModularBasic(): ArbitraryModularAutomaton? {
     val rawAssignment = solver.solve() ?: return null
-    val vars = solver.context.arbitraryModularBasicVars
-    val assignment = ArbitraryModularBasicAssignment.fromRaw(rawAssignment, vars)
-    val automaton = assignment.toAutomaton()
+    val automaton = buildBasicArbitraryModularAutomaton(
+        context = solver.context,
+        raw = rawAssignment
+    )
 
     // TODO: check automaton
     // log.warn("Mapping check is not implemented yet")

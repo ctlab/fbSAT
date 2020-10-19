@@ -10,7 +10,6 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.task.distributedCompleteVars
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.multiArrayOf
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
@@ -85,8 +84,8 @@ fun Inferrer.distributedCegis2(
             return null
         }
 
-        val vars = solver.context.distributedCompleteVars
-        negativeTree = vars.negativeCompoundScenarioTree
+        val negativeCompoundScenarioTree: NegativeCompoundScenarioTree by solver.context
+        negativeTree = negativeCompoundScenarioTree
         D = automaton.modular.values.map { it.numberOfStates }.max()!!
 
         // ==============
