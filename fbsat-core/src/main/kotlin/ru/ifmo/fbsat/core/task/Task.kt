@@ -23,7 +23,7 @@ abstract class Task private constructor(name: String? = null) {
 @Deprecated("Use task.declare", ReplaceWith("task.declare(this)"))
 fun Solver.declare(task: Task): Unit = task.declare(this)
 
-private fun Solver.runWithLogging(name: String, block: Solver.() -> Unit) {
+private inline fun Solver.runWithLogging(name: String, block: Solver.() -> Unit) {
     val timeStart = PerformanceCounter.reference
     val nVarsStart = numberOfVariables
     val nClausesStart = numberOfClauses
