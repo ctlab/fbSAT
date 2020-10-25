@@ -26,19 +26,19 @@ class Cardinality(
     }
 }
 
-fun Solver.declareCardinality(variables: Iterable<Int>): Cardinality =
+fun Solver.declareCardinality(variables: Iterable<Literal>): Cardinality =
     Cardinality(
         totalizer = declareTotalizer(variables),
         solver = this
     )
 
-fun Solver.declareCardinality(variables: Sequence<Int>): Cardinality =
+fun Solver.declareCardinality(variables: Sequence<Literal>): Cardinality =
     declareCardinality(variables.asIterable())
 
-fun Solver.declareCardinality(block: suspend SequenceScope<Int>.() -> Unit): Cardinality =
+fun Solver.declareCardinality(block: suspend SequenceScope<Literal>.() -> Unit): Cardinality =
     declareCardinality(sequence(block).constrainOnce())
 
-fun Solver.declareTotalizer(variables: Iterable<Int>): BoolVarArray {
+fun Solver.declareTotalizer(variables: Iterable<Literal>): BoolVarArray {
     val queue: Deque<List<Int>> = ArrayDeque()
 
     for (e in variables) {
@@ -73,8 +73,8 @@ fun Solver.declareTotalizer(variables: Iterable<Int>): BoolVarArray {
                     beta == m2 -> listOf(a[alpha], -r[sigma])
                     else -> listOf(a[alpha], b[beta], -r[sigma])
                 }
-                c1?.let { clause(*it.toIntArray()) }
-                c2?.let { clause(*it.toIntArray()) }
+                c1?.let { clause(it) }
+                c2?.let { clause(it) }
             }
         }
     }
@@ -83,10 +83,10 @@ fun Solver.declareTotalizer(variables: Iterable<Int>): BoolVarArray {
     return newBoolVarArray(totalizer.size) { (i) -> totalizer[i - 1] }
 }
 
-fun Solver.declareTotalizer(variables: Sequence<Int>): BoolVarArray =
+fun Solver.declareTotalizer(variables: Sequence<Literal>): BoolVarArray =
     declareTotalizer(variables.asIterable())
 
-fun Solver.declareTotalizer(block: suspend SequenceScope<Int>.() -> Unit): BoolVarArray =
+fun Solver.declareTotalizer(block: suspend SequenceScope<Literal>.() -> Unit): BoolVarArray =
     declareTotalizer(sequence(block).constrainOnce())
 
 /**
