@@ -19,7 +19,7 @@ class PositiveCompoundScenarioTree(
     override val modularOutputEvents: MultiArray<List<OutputEvent>>,
     override val modularInputNames: MultiArray<List<String>>,
     override val modularOutputNames: MultiArray<List<String>>,
-    override val isTrie: Boolean = true
+    override val isTrie: Boolean = true,
 ) : CompoundScenarioTree<PositiveScenarioTree, PositiveCompoundScenario, PositiveCompoundScenarioTree.Node>,
     CompoundImpl<PositiveScenarioTree>() {
 
@@ -74,7 +74,7 @@ class PositiveCompoundScenarioTree(
 
     inner class Node(
         override val element: CompoundScenarioElement,
-        override val parent: Node?
+        override val parent: Node?,
     ) : CompoundScenarioTree.Node<Node>, CompoundImpl<ScenarioTree.Node<*>>() {
         override val M: Int = this@PositiveCompoundScenarioTree.M
         override val id: Int = this@PositiveCompoundScenarioTree.size + 1 // one-based

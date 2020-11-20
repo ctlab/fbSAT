@@ -54,6 +54,6 @@ class InferArbitraryModularBasicCommand :
             numberOfStates = params.numberOfStates,
             maxOutgoingTransitions = params.maxOutgoingTransitions,
             maxTransitions = params.maxTransitions,
-            isEncodeReverseImplication = extraOptions.isEncodeReverseImplication
+            isEncodeReverseImplication = extraOptions.isEncodeReverseImplication,
         )
 }

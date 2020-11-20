@@ -66,7 +66,7 @@ sealed class ScenarioAction<E, V> : GenericScenarioAction<E, V>
 
 data class InputAction(
     override val event: InputEvent?,
-    override val values: InputValues
+    override val values: InputValues,
 ) : ScenarioAction<InputEvent, InputValues>(),
     GenericScenarioInputAction<InputEvent, InputValues> {
     // override fun toString(): String = super.toString()
@@ -74,7 +74,7 @@ data class InputAction(
 
 data class OutputAction(
     override val event: OutputEvent?,
-    override val values: OutputValues
+    override val values: OutputValues,
 ) : ScenarioAction<OutputEvent, OutputValues>(),
     GenericScenarioOutputAction<OutputEvent, OutputValues> {
     // override fun toString(): String = super.toString()

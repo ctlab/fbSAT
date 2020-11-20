@@ -51,6 +51,6 @@ class InferArbitraryModularBasicMinCCommand :
             scenarioTree = scenarioTree,
             numberOfModules = params.numberOfModules,
             start = params.startNumberOfStates,
-            end = params.endNumberOfStates
+            end = params.endNumberOfStates,
         )
 }

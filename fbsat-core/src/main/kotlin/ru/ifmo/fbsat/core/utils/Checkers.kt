@@ -7,7 +7,7 @@ import ru.ifmo.fbsat.core.scenario.Scenario
 // TODO: call `check` instead of returning Boolean
 fun Automaton.checkMapping(
     scenarios: List<Scenario>,
-    mapping: IntMultiArray
+    mapping: IntMultiArray,
 ): Boolean {
     var isOk = true
     for ((i, scenario) in scenarios.withIndex(start = 1)) {

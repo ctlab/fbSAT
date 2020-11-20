@@ -1,31 +1,31 @@
-package ru.ifmo.fbsat.core.task.distributed.extended
+package ru.ifmo.fbsat.core.task.modular.extended
 
-import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.solver.DomainVarArray
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
-import ru.ifmo.fbsat.core.solver.declareModularContext
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.single.extended.declareExtendedVariables
-import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.log
 
 @Suppress("LocalVariableName")
-fun Solver.declareDistributedExtendedVariables(
-    modularP: MultiArray<Int>,
+internal fun Solver._declareModularExtendedVariables(
+    P: Int,
 ) {
-    context["modularP"] = modularP
+    context["P"] = P
 
     /* Modular */
-    forEachModularContext { m ->
-        declareExtendedVariables(P = modularP[m])
+    forEachModularContext {
+        declareExtendedVariables(P = P)
     }
 
     /* Cardinality */
+    comment("Cardinality (N)")
     val cardinalityN = context("cardinalityN") {
         declareCardinality {
+            @Suppress("NAME_SHADOWING")
             forEachModularContext {
+                // val moduleCardinalityN: Cardinality = context["cardinalityN"]
+                // yieldAll(moduleCardinalityN.totalizer.values)
                 val C: Int = context["C"]
                 val K: Int = context["K"]
                 val P: Int = context["P"]
@@ -36,9 +36,5 @@ fun Solver.declareDistributedExtendedVariables(
                             yield(nodeType[c, k, p] neq NodeType.NONE)
             }
         }
-    }
-
-    if (Globals.IS_DUMP_VARS_IN_CNF) {
-        log.warn("Dumping of DistributedExtendedVariables to CNF is not implemented yet")
     }
 }

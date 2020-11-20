@@ -18,7 +18,7 @@ import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.withIndex
 import java.io.File
 
-@Suppress("DuplicatedCode")
+@Suppress("DuplicatedCode", "LocalVariableName")
 fun Inferrer.distributedCegis2(
     numberOfModules: Int, // M
     compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
@@ -33,7 +33,7 @@ fun Inferrer.distributedCegis2(
     maxTransitions: Int? = null, // T_sum, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N_sum, unconstrained if null
     smvDir: File,
-    startD: Int = 1
+    startD: Int = 1,
 ): DistributedAutomaton? {
     log.info("Performing distributed CEGIS (second version)...")
 
@@ -62,7 +62,7 @@ fun Inferrer.distributedCegis2(
     )
     // =====
 
-    var negativeTree = negativeCompoundScenarioTree
+    var negativeTree: NegativeCompoundScenarioTree? = negativeCompoundScenarioTree
     var D = 1
 
     for (iterationNumber in 1 until 10000) {
@@ -84,9 +84,9 @@ fun Inferrer.distributedCegis2(
             return null
         }
 
-        val negativeCompoundScenarioTree: NegativeCompoundScenarioTree by solver.context
-        negativeTree = negativeCompoundScenarioTree
-        D = automaton.modular.values.map { it.numberOfStates }.max()!!
+        negativeTree = solver.context["negativeCompoundScenarioTree"]
+        requireNotNull(negativeTree)
+        D = automaton.modular.values.map { it.numberOfStates }.maxOrNull()!!
 
         // ==============
         for (m in 1..M) {

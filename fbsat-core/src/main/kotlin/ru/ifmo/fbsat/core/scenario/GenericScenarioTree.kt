@@ -25,7 +25,7 @@ interface GenericScenarioTree<S, N>
 internal inline fun <N, E> GenericScenarioTree<*, N>.addGenericScenario(
     scenario: GenericScenario<E>,
     sameNode: (index: Int, element: E, child: N) -> N,
-    newNode: (index: Int, element: E, current: N) -> N
+    newNode: (index: Int, element: E, current: N) -> N,
 ) where N : GenericScenarioTree.Node<N, E>,
         E : GenericScenario.Element<*, *> {
     var current = root

@@ -8,7 +8,7 @@ private fun List<String>.joinToStringAutoBrace(separator: String): String {
 fun makeDnfString(
     terms: List<List<String>>,
     conjunction: String = "&",
-    disjunction: String = "|"
+    disjunction: String = "|",
 ): String =
     if (terms.isEmpty()) "0"
     else terms.joinToString(disjunction) { it.joinToString(conjunction) }
@@ -16,7 +16,7 @@ fun makeDnfString(
 fun makeCnfString(
     terms: List<List<String>>,
     conjunction: String = "&",
-    disjunction: String = "|"
+    disjunction: String = "|",
 ): String =
     if (terms.isEmpty()) "1"
     else terms.joinToString(conjunction) { it.joinToStringAutoBrace(disjunction) }

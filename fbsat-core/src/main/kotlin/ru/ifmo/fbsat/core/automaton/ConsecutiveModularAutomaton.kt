@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
@@ -8,10 +9,10 @@ import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.RawAssignment
-import ru.ifmo.fbsat.core.solver.SolverContext
+import ru.ifmo.fbsat.core.solver.Context
+import ru.ifmo.fbsat.core.solver.Model
+import ru.ifmo.fbsat.core.utils.ModularContext
 import ru.ifmo.fbsat.core.utils.log
-import ru.ifmo.fbsat.core.utils.magic
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.withIndex
 
@@ -21,7 +22,7 @@ class ConsecutiveModularAutomaton(
     val inputEvents: List<InputEvent>,
     val outputEvents: List<OutputEvent>,
     val inputNames: List<String>,
-    val outputNames: List<String>
+    val outputNames: List<String>,
 ) {
     val M: Int = modules.shape.single()
     val numberOfModules: Int = M
@@ -142,17 +143,23 @@ class ConsecutiveModularAutomaton(
 }
 
 fun buildBasicConsecutiveModularAutomaton(
-    context: SolverContext,
-    raw: RawAssignment,
-    useStateUsed: Boolean = false
+    context: Context,
+    model: Model,
 ): ConsecutiveModularAutomaton {
-    return magic()
+    val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
+    val modularContext: ModularContext = context["modularContext"]
+    val modules = modularContext.map { buildBasicAutomaton(it, model) }
+
+    return ConsecutiveModularAutomaton(modules, scenarioTree)
 }
 
 fun buildExtendedConsecutiveModularAutomaton(
-    context: SolverContext,
-    raw: RawAssignment,
-    useStateUsed: Boolean = false
+    context: Context,
+    model: Model,
 ): ConsecutiveModularAutomaton {
-    return magic()
+    val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
+    val modularContext: ModularContext = context["modularContext"]
+    val modules = modularContext.map { buildExtendedAutomaton(it, model) }
+
+    return ConsecutiveModularAutomaton(modules, scenarioTree)
 }

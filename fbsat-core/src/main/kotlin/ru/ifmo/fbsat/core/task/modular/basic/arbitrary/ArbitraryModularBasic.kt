@@ -14,17 +14,17 @@ fun Inferrer.arbitraryModularBasic(
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
     maxTransitions: Int? = null, // T, unconstrained if null
-    isEncodeReverseImplication: Boolean = true
+    isEncodeReverseImplication: Boolean = true,
 ): ArbitraryModularAutomaton? {
     reset()
     declare(
         ArbitraryModularBasicTask(
-            scenarioTree = scenarioTree,
+            positiveScenarioTree = scenarioTree,
             numberOfModules = numberOfModules,
             numberOfStates = numberOfStates,
             maxOutgoingTransitions = maxOutgoingTransitions,
             maxTransitions = maxTransitions,
-            isEncodeReverseImplication = isEncodeReverseImplication
+            isEncodeReverseImplication = isEncodeReverseImplication,
         )
     )
     return inferArbitraryModularBasic()
@@ -34,7 +34,7 @@ fun Inferrer.arbitraryModularBasicMinC(
     scenarioTree: PositiveScenarioTree,
     numberOfModules: Int, // M
     start: Int = 1, // C_start
-    end: Int = 20 // C_end
+    end: Int = 20, // C_end
 ): ArbitraryModularAutomaton {
     var best: ArbitraryModularAutomaton? = null
     for (C in start..end) {
@@ -42,7 +42,7 @@ fun Inferrer.arbitraryModularBasicMinC(
             arbitraryModularBasic(
                 scenarioTree = scenarioTree,
                 numberOfModules = numberOfModules,
-                numberOfStates = C
+                numberOfStates = C,
             )
         }
         if (result != null) {
@@ -59,18 +59,16 @@ fun Inferrer.arbitraryModularBasicMinC(
 
 fun Inferrer.arbitraryModularBasicMin(
     scenarioTree: PositiveScenarioTree,
-    numberOfModules: Int // M
+    numberOfModules: Int, // M
+    numberOfStates: Int? = null, // C_start, 1 if null
 ): ArbitraryModularAutomaton? {
-    arbitraryModularBasicMinC(scenarioTree, numberOfModules = numberOfModules)
+    arbitraryModularBasicMinC(scenarioTree, numberOfModules = numberOfModules, start = numberOfStates ?: 1)
     return optimizeArbitraryModularT()
 }
 
 fun Inferrer.inferArbitraryModularBasic(): ArbitraryModularAutomaton? {
-    val rawAssignment = solver.solve() ?: return null
-    val automaton = buildBasicArbitraryModularAutomaton(
-        context = solver.context,
-        raw = rawAssignment
-    )
+    val model = solver.solve() ?: return null
+    val automaton = buildBasicArbitraryModularAutomaton(solver.context, model)
 
     // TODO: check automaton
     // log.warn("Mapping check is not implemented yet")

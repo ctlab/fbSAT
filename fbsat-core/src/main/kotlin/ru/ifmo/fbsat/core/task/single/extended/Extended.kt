@@ -18,7 +18,7 @@ fun Inferrer.extended(
     maxGuardSize: Int, // P
     maxTransitions: Int? = null, // T, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N, unconstrained if null
-    isEncodeReverseImplication: Boolean = true
+    isEncodeReverseImplication: Boolean = true,
 ): Automaton? {
     reset()
     declare(
@@ -42,7 +42,7 @@ fun Inferrer.extended(
 fun Inferrer.extendedMin(
     scenarioTree: PositiveScenarioTree,
     numberOfStates: Int? = null, // C_start
-    maxGuardSize: Int // P
+    maxGuardSize: Int, // P
 ): Automaton? {
     basicMinC(scenarioTree, start = numberOfStates ?: 1) // ?: return null
     declare(ExtendedTask(maxGuardSize = maxGuardSize))
@@ -55,7 +55,7 @@ fun Inferrer.extendedMinUB(
     numberOfStates: Int? = null, // C_start
     start: Int = 1, // P_start
     end: Int = 20, // P_end
-    maxPlateauWidth: Int? = null // w, =Inf if null
+    maxPlateauWidth: Int? = null, // w, =Inf if null
 ): Automaton? {
     require(start >= 1)
     require(end >= 1)
@@ -102,11 +102,8 @@ fun Inferrer.extendedMinUB(
 }
 
 fun Inferrer.inferExtended(): Automaton? {
-    val rawAssignment = solver.solve() ?: return null
-    // val vars = solver.context.extendedVars
-    // val assignment = ExtendedAssignment.fromRaw(rawAssignment, vars)
-    // val automaton = assignment.toAutomaton()
-    val automaton = buildExtendedAutomaton(solver.context, rawAssignment)
+    val model = solver.solve() ?: return null
+    val automaton = buildExtendedAutomaton(solver.context, model)
 
     // with(vars) {
     //     check(

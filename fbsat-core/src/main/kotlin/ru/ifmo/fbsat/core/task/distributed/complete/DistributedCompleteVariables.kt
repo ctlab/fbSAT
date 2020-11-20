@@ -3,26 +3,30 @@ package ru.ifmo.fbsat.core.task.distributed.complete
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareModularContext
-import ru.ifmo.fbsat.core.solver.switchContext
+import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.single.complete.declareCompleteVariables
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.project
 
+@Suppress("LocalVariableName")
 fun Solver.declareDistributedCompleteVariables(
-    negativeCompoundScenarioTree: NegativeCompoundScenarioTree
+    negativeCompoundScenarioTree: NegativeCompoundScenarioTree,
 ) {
-    val M: Int by context
+    context["negativeCompoundScenarioTree"] = negativeCompoundScenarioTree
+    context["negCompoundScenarioTree"] = negativeCompoundScenarioTree
+    context["negativeCompoundTree"] = negativeCompoundScenarioTree
+    context["negCompoundTree"] = negativeCompoundScenarioTree
+    context["forbiddenLoops"] = mutableSetOf<Pair<Int, Int>>()
 
     /* Modular */
-    val modularContext = declareModularContext(M)
-    for (m in 1..M) switchContext(modularContext[m]) {
+    forEachModularContext { m ->
         declareCompleteVariables(
             negativeScenarioTree = negativeCompoundScenarioTree.project(m)
         )
     }
 
     if (Globals.IS_DUMP_VARS_IN_CNF) {
-        log.warn("Dump of CompleteVariables to CNF is not implemented yet")
+        log.warn("Dumping of DistributedCompleteVariables to CNF is not implemented yet")
     }
 }

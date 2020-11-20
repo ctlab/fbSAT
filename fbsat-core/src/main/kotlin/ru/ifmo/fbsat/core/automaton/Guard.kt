@@ -57,7 +57,7 @@ class UnconditionalGuard : Guard {
 class TruthTableGuard(
     val truthTable: Map<InputValues, Boolean?>,
     private val inputNames: List<String>,
-    private val uniqueInputs: List<InputValues>
+    private val uniqueInputs: List<InputValues>,
 ) : Guard {
     val cnf: List<List<Int>> = emptyList()
 
@@ -107,7 +107,7 @@ class ParseTreeGuard(
     parent: IntMultiArray,
     childLeft: IntMultiArray,
     childRight: IntMultiArray,
-    private val inputNames: List<String>? = null
+    private val inputNames: List<String>? = null,
 ) : Guard {
     val nodes: List<Node>
 
@@ -139,7 +139,7 @@ class ParseTreeGuard(
 
     inner class Node(
         val nodeType: NodeType,
-        val terminalNumber: Int // 1..X, or 0 if non-terminal
+        val terminalNumber: Int, // 1..X, or 0 if non-terminal
     ) {
         var parent: Node? = null
             internal set
@@ -354,7 +354,7 @@ class StringGuard(val expr: String, val inputNames: List<String>) : Guard {
 
 class DnfGuard(
     val dnf: List<List<String>>,
-    val inputNames: List<String>
+    val inputNames: List<String>,
 ) : Guard {
     // Note: `_dnf` is one-based and signed
     private val _dnf: List<List<Int>> =

@@ -76,7 +76,7 @@ class Graph(val name: String) {
     }
 
     data class Node(
-        val id: Int
+        val id: Int,
     ) {
         private val _attributes: MutableMap<String, String> = mutableMapOf()
 
@@ -113,7 +113,7 @@ class Graph(val name: String) {
 
     data class Edge(
         val source: Node,
-        val destination: Node
+        val destination: Node,
     ) {
         private val _attributes: MutableMap<String, String> = mutableMapOf()
 

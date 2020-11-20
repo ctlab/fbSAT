@@ -25,7 +25,7 @@ interface DomainVar<T> {
     infix fun neq(value: T): Literal
     fun bit(index: Int): Literal
 
-    fun convert(raw: RawAssignment): T?
+    fun convert(model: Model): T?
 
     companion object Factory {
         @JvmStatic
@@ -33,7 +33,7 @@ interface DomainVar<T> {
             domain: Iterable<T>,
             solver: Solver,
             encoding: VarEncoding,
-            init: (T) -> Literal
+            init: (T) -> Literal,
         ): DomainVar<T> = when (encoding) {
             VarEncoding.ONEHOT -> OneHotDomainVar(domain, solver, init)
             VarEncoding.ONEHOT_BINARY -> OneHotBinaryDomainVar(domain, solver, init)
@@ -42,7 +42,7 @@ interface DomainVar<T> {
 }
 
 private abstract class AbstractDomainVar<T>(
-    private val storage: Map<T, Literal>
+    private val storage: Map<T, Literal>,
 ) : DomainVar<T> {
     final override val domain: Set<T> = storage.keys
     final override val literals: Collection<Literal> = storage.values
@@ -54,14 +54,14 @@ private abstract class AbstractDomainVar<T>(
     final override fun neq(value: T): Literal = -eq(value)
     final override fun bit(index: Int): Literal = bits[index]
 
-    final override fun convert(raw: RawAssignment): T? =
-        storage.entries.firstOrNull { raw[it.value] }?.key
+    final override fun convert(model: Model): T? =
+        storage.entries.firstOrNull { model[it.value] }?.key
 }
 
 private class OneHotDomainVar<T>(
     domain: Iterable<T>,
     solver: Solver,
-    init: (T) -> Literal
+    init: (T) -> Literal,
 ) : AbstractDomainVar<T>(domain, init) {
     // Note: LSP is violated intentionally
     override val bits: List<Literal>
@@ -80,7 +80,7 @@ private class OneHotDomainVar<T>(
 private class OneHotBinaryDomainVar<T>(
     domain: Iterable<T>,
     solver: Solver,
-    init: (T) -> Literal
+    init: (T) -> Literal,
 ) : AbstractDomainVar<T>(domain, init) {
     @Suppress("LeakingThis")
     override val bits: List<Literal> = solver.encodeOneHotBinary(this)
@@ -91,20 +91,20 @@ private class OneHotBinaryDomainVar<T>(
 }
 
 class BoolVarArray private constructor(
-    private val backend: IntMultiArray
+    private val backend: IntMultiArray,
 ) : MultiArray<Literal> by backend {
     companion object Factory {
         @JvmStatic
         fun create(
             shape: IntArray,
-            init: (IntArray) -> Literal
+            init: (IntArray) -> Literal,
         ): BoolVarArray = BoolVarArray(IntMultiArray.create(shape, init))
 
         @JvmStatic
         @JvmName("createVararg")
         fun create(
             vararg shape: Int,
-            init: (IntArray) -> Literal
+            init: (IntArray) -> Literal,
         ): BoolVarArray = create(shape, init)
     }
 }
@@ -118,3 +118,5 @@ typealias DomainVarArray<T> = MultiArray<DomainVar<T>>
 val BoolVarArray.literals: List<Literal> get() = values
 
 val <T> DomainVarArray<T>.literals: List<Literal> get() = values.flatMap { it.literals }
+
+typealias SequenceScopeLiteral = suspend SequenceScope<Literal>.() -> Unit

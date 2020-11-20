@@ -2,14 +2,15 @@ package ru.ifmo.fbsat.core.constraints
 
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
+import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.solver.imply
 
 fun Solver.declareGuardConditionsBfsConstraints() {
     comment("Guard conditions BFS constraints")
-    val C: Int by context
-    val K: Int by context
-    val P: Int by context
-    val nodeParent: IntVarArray by context
+    val C: Int = context["C"]
+    val K: Int = context["K"]
+    val P: Int = context["P"]
+    val nodeParent: IntVarArray = context["nodeParent"]
 
     for (c in 1..C)
         for (k in 1..K) {
@@ -25,37 +26,25 @@ fun Solver.declareGuardConditionsBfsConstraints() {
 }
 
 fun Solver.declareParallelModularGuardConditionsBfsConstraints() {
-    // comment("Parallel modular guard conditions BFS constraints")
-    // with(parallelModularExtendedVariables) {
-    //     for (m in 1..M) {
-    //         comment("Parallel modular guard conditions BFS constraints: for module m = $m")
-    //         declareGuardConditionsBfsConstraints(
-    //             extendedVars = modularExtendedVariables[m]
-    //         )
-    //     }
-    // }
+    comment("Parallel modular guard conditions BFS constraints")
+    forEachModularContext { m ->
+        comment("Parallel modular guard conditions BFS constraints: for module m = $m")
+        declareGuardConditionsBfsConstraints()
+    }
 }
 
 fun Solver.declareConsecutiveModularGuardConditionsBfsConstraints() {
-    // comment("Consecutive modular guard conditions BFS constraints")
-    // with(consecutiveModularExtendedVariables) {
-    //     for (m in 1..M) {
-    //         comment("Consecutive modular guard conditions BFS constraints: for module m = $m")
-    //         declareGuardConditionsBfsConstraints(
-    //             extendedVars = modularExtendedVariables[m]
-    //         )
-    //     }
-    // }
+    comment("Consecutive modular guard conditions BFS constraints")
+    forEachModularContext { m ->
+        comment("Consecutive modular guard conditions BFS constraints: for module m = $m")
+        declareGuardConditionsBfsConstraints()
+    }
 }
 
 fun Solver.declareDistributedGuardConditionsBfsConstraints() {
-    // comment("Distributed guard conditions BFS constraints")
-    // with(distributedExtendedVariables) {
-    //     for (m in 1..M) {
-    //         comment("Distributed guard conditions BFS constraints: for module m = $m")
-    //         declareGuardConditionsBfsConstraints(
-    //             extendedVars = modularExtendedVariables[m]
-    //         )
-    //     }
-    // }
+    comment("Distributed guard conditions BFS constraints")
+    forEachModularContext { m ->
+        comment("Distributed guard conditions BFS constraints: for module m = $m")
+        declareGuardConditionsBfsConstraints()
+    }
 }

@@ -17,7 +17,7 @@ fun Inferrer.complete(
     maxOutgoingTransitions: Int? = null, // K, =C if null
     maxGuardSize: Int, // P
     maxTransitions: Int? = null, // T, unconstrained if null
-    maxTotalGuardsSize: Int? = null // N, unconstrained if null
+    maxTotalGuardsSize: Int? = null, // N, unconstrained if null
 ): Automaton? {
     reset()
     declare(
@@ -30,14 +30,14 @@ fun Inferrer.complete(
         )
     )
     declare(ExtendedTask(maxGuardSize = maxGuardSize, maxTotalGuardsSize = maxTotalGuardsSize))
-    declare(CompleteTask(negativeScenarioTree))
+    declare(CompleteTask(negativeScenarioTree = negativeScenarioTree))
     return inferExtended()
 }
 
 fun Inferrer.completeMin(
     scenarioTree: PositiveScenarioTree,
     negativeScenarioTree: NegativeScenarioTree? = null, // empty if null
-    maxGuardSize: Int // P
+    maxGuardSize: Int, // P
 ): Automaton? {
     val basicAutomaton = basicMinC(scenarioTree)
     // Note: we have to reset because basicMinC uses isEncodeReverseImplication = true,

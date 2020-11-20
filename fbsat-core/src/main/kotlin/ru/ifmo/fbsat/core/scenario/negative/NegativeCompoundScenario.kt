@@ -19,7 +19,7 @@ class NegativeCompoundScenario private constructor(
     override val M: Int,
     override val elements: List<CompoundScenarioElement>,
     val loopPosition: Int?,
-    override val modular: ImmutableMultiArray<NegativeScenario>
+    override val modular: ImmutableMultiArray<NegativeScenario>,
 ) : CompoundScenario<NegativeScenario>, CompoundImpl<NegativeScenario>() {
     // TODO: constructor(modularNegativeScenario: MultiArray<NegativeScenario>)
 
@@ -40,7 +40,7 @@ class NegativeCompoundScenario private constructor(
             modularInputEvents: MultiArray<List<InputEvent>>,
             modularOutputEvents: MultiArray<List<OutputEvent>>,
             modularInputNames: MultiArray<List<String>>,
-            modularOutputNames: MultiArray<List<String>>
+            modularOutputNames: MultiArray<List<String>>,
         ): NegativeCompoundScenario {
             val loopPosition = counterexample.loops.trim().split(" ").firstOrNull()?.toInt()
             val ceElements = counterexample.nodes

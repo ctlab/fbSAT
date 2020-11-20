@@ -27,7 +27,7 @@ class CompoundScenarioElement private constructor(
     override val M: Int,
     override val inputAction: CompoundInputAction,
     override val outputAction: CompoundOutputAction,
-    override val modular: ImmutableMultiArray<ScenarioElement>
+    override val modular: ImmutableMultiArray<ScenarioElement>,
 ) : GenericScenario.Element<CompoundInputAction, CompoundOutputAction>,
     CompoundImpl<ScenarioElement>() {
 
@@ -43,7 +43,7 @@ class CompoundScenarioElement private constructor(
     constructor(
         M: Int,
         inputAction: CompoundInputAction,
-        outputAction: CompoundOutputAction
+        outputAction: CompoundOutputAction,
     ) : this(
         M = M,
         inputAction = inputAction,

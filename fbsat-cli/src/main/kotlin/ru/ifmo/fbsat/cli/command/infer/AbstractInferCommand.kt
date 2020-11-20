@@ -3,6 +3,7 @@ package ru.ifmo.fbsat.cli.command.infer
 import com.github.ajalt.clikt.core.CliktCommand
 import ru.ifmo.fbsat.cli.command.infer.options.ExtraOptions
 import ru.ifmo.fbsat.cli.command.infer.options.SolverOptions
+import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
 

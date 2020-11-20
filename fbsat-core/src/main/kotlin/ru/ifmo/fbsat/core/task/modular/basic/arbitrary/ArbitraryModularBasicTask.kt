@@ -10,18 +10,18 @@ import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 
 data class ArbitraryModularBasicTask(
-    val scenarioTree: PositiveScenarioTree,
+    val positiveScenarioTree: PositiveScenarioTree,
     val numberOfModules: Int, // M
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int? = null, // K, =C if null
     val maxTransitions: Int? = null, // T, unconstrained if null
-    val isEncodeReverseImplication: Boolean = true
+    val isEncodeReverseImplication: Boolean = true,
 ) : Task() {
     override fun Solver.declare_() {
         /* Variables */
         comment("$name: Variables")
         declareArbitraryModularBasicVariables(
-            scenarioTree = scenarioTree,
+            scenarioTree = positiveScenarioTree,
             M = numberOfModules,
             C = numberOfStates,
             K = maxOutgoingTransitions ?: numberOfStates
@@ -35,7 +35,7 @@ data class ArbitraryModularBasicTask(
 
         /* Initial cardinality constraints */
         comment("$name: Initial cardinality (T) constraints")
-        val cardinalityT: Cardinality by context
+        val cardinalityT: Cardinality = context["cardinalityT"]
         cardinalityT.updateUpperBoundLessThanOrEqual(maxTransitions)
     }
 }

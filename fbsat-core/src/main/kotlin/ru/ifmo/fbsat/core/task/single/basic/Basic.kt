@@ -15,7 +15,7 @@ fun Inferrer.basic(
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
     maxTransitions: Int? = null, // T, unconstrained if null
-    isEncodeReverseImplication: Boolean = true
+    isEncodeReverseImplication: Boolean = true,
 ): Automaton? {
     reset()
     declare(
@@ -35,7 +35,7 @@ fun Inferrer.basicMinC(
     scenarioTree: PositiveScenarioTree,
     start: Int = 1, // C_start
     end: Int = 20, // C_end
-    isEncodeReverseImplication: Boolean = true
+    isEncodeReverseImplication: Boolean = true,
 ): Automaton {
     var best: Automaton? = null
     for (C in start..end) {
@@ -56,21 +56,15 @@ fun Inferrer.basicMinC(
 
 fun Inferrer.basicMin(
     scenarioTree: PositiveScenarioTree,
-    isEncodeReverseImplication: Boolean = true
+    isEncodeReverseImplication: Boolean = true,
 ): Automaton? {
     basicMinC(scenarioTree, isEncodeReverseImplication = isEncodeReverseImplication)
     return optimizeT()
 }
 
 fun Inferrer.inferBasic(): Automaton? {
-    val rawAssignment = solver.solve() ?: return null
-    // val vars = solver.context.basicVars
-    // val assignment = BasicAssignment.fromRaw(rawAssignment, vars)
-    // val automaton = assignment.toAutomaton()
-    val automaton = buildBasicAutomaton(
-        context = solver.context,
-        raw = rawAssignment
-    )
+    val model = solver.solve() ?: return null
+    val automaton = buildBasicAutomaton(solver.context, model)
 
     // TODO: refactor mapping check
     // with(vars) {

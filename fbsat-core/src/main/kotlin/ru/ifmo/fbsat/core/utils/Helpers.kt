@@ -1,6 +1,8 @@
 package ru.ifmo.fbsat.core.utils
 
+import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.GenericMultiArray
+import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.TimeSpan
@@ -135,7 +137,7 @@ fun <K, V, T> Map<K, V>.getForce(key: K): T {
     return this[key] as T
 }
 
-val <T> T.exhaustive: T
+inline val <T> T.exhaustive: T
     get() = this
 
 inline fun <reified T> mutableListOfNulls(size: Int): MutableList<T?> = MutableList(size) { null }
@@ -176,7 +178,7 @@ fun algorithmChoice(
     c: Int,
     z: Int,
     algorithmTop: BoolVarArray,
-    algorithmBot: BoolVarArray
+    algorithmBot: BoolVarArray,
 ): Int {
     val p = tree.parent(v)
     val oldValue = tree.outputValue(p, z)
@@ -237,13 +239,13 @@ inline fun <reified T> multiArrayOf(vararg x: T): MultiArray<T> =
 // TODO: remove after fixing MultiArray library
 inline fun <reified T> MultiArray.Companion.createNullable(
     shape: IntArray,
-    init: (IntArray) -> T
+    init: (IntArray) -> T,
 ): MultiArray<T> = GenericMultiArray.create(shape, init)
 
 @JvmName("MultiArray_createNullableVararg")
 inline fun <reified T> MultiArray.Companion.createNullable(
     vararg shape: Int,
-    init: (IntArray) -> T
+    init: (IntArray) -> T,
 ): MultiArray<T> = createNullable(shape, init)
 
 inline fun <reified T : Any> multiArrayOfNulls(shape: IntArray): MultiArray<T?> =

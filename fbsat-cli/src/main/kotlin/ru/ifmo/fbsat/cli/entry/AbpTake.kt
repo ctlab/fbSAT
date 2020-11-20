@@ -8,14 +8,11 @@ import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
-import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenario
-import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.negative.readCounterexamplesFromFile
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.solver.MiniSat
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.task.distributed.complete.distributedCegis
 import ru.ifmo.fbsat.core.task.distributed.complete.distributedCegis2
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
@@ -25,7 +22,6 @@ import ru.ifmo.fbsat.core.utils.multiArrayOf
 import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.toMultiArray
-import ru.ifmo.fbsat.core.utils.withIndex
 import java.io.File
 
 fun main() {
@@ -52,8 +48,9 @@ fun main() {
         listOf("deliver", "acknowledge", "output_bit")
     )
     val solver = MiniSat()
-    // val outDir = File("out/abp-take2")
-    val outDir = File("out/abp-100x50-all")
+    val outDir = File("out/abp-take2")
+    // val outDir = File("out/abp-100x50-all")
+    // val outDir = File("out/abp-10x25-all_new")
     val inferrer = Inferrer(solver, outDir)
 
     check(modularOutputNames.values.all { it.size == 3 })
@@ -67,7 +64,10 @@ fun main() {
     Globals.modularName = listOf("sender", "receiver").toMultiArray()
 
     // val fileTraces = File("data/abp-take/trace.xml")
-    val fileTraces = File("data/abp-take/trace_100_50.xml")
+    // val fileTraces = File("data/abp-take/trace_100_50.xml")
+    // val fileTraces = File("data/abp-take/trace_10_25.xml")
+    // val fileTraces = File("data/abp-take/trace_10_50.xml")
+    val fileTraces = File("data/abp-take/trace_1_100.xml")
     val traces = readCounterexamplesFromFile(fileTraces)
     val scenarios = traces.map { trace ->
         PositiveCompoundScenario.fromCounterexample(

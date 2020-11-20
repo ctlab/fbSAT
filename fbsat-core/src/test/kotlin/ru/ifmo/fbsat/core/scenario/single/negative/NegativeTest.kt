@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.scenario.single.negative
 
+import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldBeTrue
-import org.amshove.kluent.shouldEqual
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import ru.ifmo.fbsat.core.scenario.InputEvent
@@ -50,35 +50,35 @@ class NegativeTest {
 
     @Test
     fun `counter-example from file`() {
-        val ces = Counterexample.fromFile(file)
-        ces.size shouldEqual 1
+        val ces = Counterexample.from(file)
+        ces.size shouldBeEqualTo 1
         val ce = ces.single()
 
-        ce.states.size shouldEqual 4
-        ce.loopPosition shouldEqual 2
+        ce.states.size shouldBeEqualTo 4
+        ce.loopPosition shouldBeEqualTo 2
         ce.states[1].isLoop.shouldBeTrue()
 
         for ((i, state) in ce.states.withIndex())
-            state.name shouldEqual "1.${i + 1}"
+            state.name shouldBeEqualTo "1.${i + 1}"
 
         for (state in ce.states)
-            state.variables.size shouldEqual 4
+            state.variables.size shouldBeEqualTo 4
     }
 
     @Test
     fun `negative scenario from file`() {
-        val nss = NegativeScenario.fromFile(
+        val nss = NegativeScenario.from(
             file,
             inputEvents,
             outputEvents,
             inputNames,
             outputNames
         )
-        nss.size shouldEqual 1
+        nss.size shouldBeEqualTo 1
         val ns = nss.single()
 
-        ns.elements.size shouldEqual 3
-        ns.loopPosition shouldEqual 1
+        ns.elements.size shouldBeEqualTo 3
+        ns.loopPosition shouldBeEqualTo 1
     }
 
     @Test
@@ -87,6 +87,6 @@ class NegativeTest {
             OldNegativeScenarioTree.fromFile(
                 file, inputEvents, outputEvents, inputNames, outputNames
             )
-        nst.size shouldEqual 4
+        nst.size shouldBeEqualTo 4
     }
 }

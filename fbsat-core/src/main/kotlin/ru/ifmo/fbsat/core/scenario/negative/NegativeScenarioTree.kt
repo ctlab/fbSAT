@@ -12,7 +12,7 @@ class NegativeScenarioTree(
     override val outputEvents: List<OutputEvent>,
     override val inputNames: List<String>,
     override val outputNames: List<String>,
-    override val isTrie: Boolean = false
+    override val isTrie: Boolean = false,
 ) : ScenarioTree<NegativeScenario, NegativeScenarioTree.Node> {
     private val _scenarios: MutableList<NegativeScenario> = mutableListOf()
     private val _nodes: MutableList<Node> = mutableListOf()
@@ -26,6 +26,17 @@ class NegativeScenarioTree(
         // Create the root (auto-added to _nodes)
         Node(element = auxScenarioElement, parent = null)
     }
+
+    constructor(
+        positiveScenarioTree: ScenarioTree<*, *>,
+        isTrie: Boolean = false,
+    ) : this(
+        inputEvents = positiveScenarioTree.inputEvents,
+        outputEvents = positiveScenarioTree.outputEvents,
+        inputNames = positiveScenarioTree.inputNames,
+        outputNames = positiveScenarioTree.outputNames,
+        isTrie = isTrie
+    )
 
     fun loopBacks(v: Int): List<Int> = nodes[v - 1].loopBacks.map { it.id }
 
@@ -74,7 +85,7 @@ class NegativeScenarioTree(
 
     inner class Node(
         override val element: ScenarioElement,
-        override val parent: Node?
+        override val parent: Node?,
     ) : ScenarioTree.Node<Node> {
         private val _children: MutableList<Node> = mutableListOf()
 

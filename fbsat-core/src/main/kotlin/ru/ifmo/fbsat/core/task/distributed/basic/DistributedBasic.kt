@@ -20,7 +20,7 @@ fun Inferrer.distributedBasic(
     modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
-    maxTransitions: Int? = null // T_sum, unconstrained if null
+    maxTransitions: Int? = null, // T_sum, unconstrained if null
 ): DistributedAutomaton? {
     reset()
     declare(
@@ -46,7 +46,7 @@ fun Inferrer.distributedBasicMinC(
     // modularEndNumberOfStates: MultiArray<Int> = MultiArray.create(numberOfModules){20}, // C_end
     start: Int = 1, // C_start
     end: Int = 20, // C_end
-    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true }
+    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
 ): DistributedAutomaton? {
     val M = numberOfModules
     var best: DistributedAutomaton? = null
@@ -87,10 +87,10 @@ fun Inferrer.distributedBasicMinC(
 }
 
 fun Inferrer.inferDistributedBasic(): DistributedAutomaton? {
-    val rawAssignment = solver.solve() ?: return null
+    val model = solver.solve() ?: return null
     val automaton = buildBasicDistributedAutomaton(
         context = solver.context,
-        raw = rawAssignment
+        model = model
     )
 
     // TODO: check mapping

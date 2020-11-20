@@ -13,11 +13,11 @@ sealed class CompoundEvent<E> : GenericEvent, CompoundImpl<E>()
     where E : Event?
 
 class CompoundInputEvent(
-    override val modular: ImmutableMultiArray<InputEvent?>
+    override val modular: ImmutableMultiArray<InputEvent?>,
 ) : CompoundEvent<InputEvent?>(), GenericInputEvent
 
 class CompoundOutputEvent(
-    override val modular: ImmutableMultiArray<OutputEvent?>
+    override val modular: ImmutableMultiArray<OutputEvent?>,
 ) : CompoundEvent<OutputEvent?>(), GenericOutputEvent
 
 // Compound Values
@@ -26,11 +26,11 @@ sealed class CompoundValues<V> : GenericValues, CompoundImpl<V>()
     where V : Values
 
 class CompoundInputValues(
-    override val modular: ImmutableMultiArray<InputValues>
+    override val modular: ImmutableMultiArray<InputValues>,
 ) : CompoundValues<InputValues>(), GenericInputValues
 
 class CompoundOutputValues(
-    override val modular: ImmutableMultiArray<OutputValues>
+    override val modular: ImmutableMultiArray<OutputValues>,
 ) : CompoundValues<OutputValues>(), GenericOutputValues
 
 // Compound Action
@@ -44,7 +44,7 @@ class CompoundInputAction private constructor(
     override val M: Int,
     override val event: CompoundInputEvent,
     override val values: CompoundInputValues,
-    override val modular: ImmutableMultiArray<InputAction>
+    override val modular: ImmutableMultiArray<InputAction>,
 ) : CompoundScenarioAction<CompoundInputEvent, CompoundInputValues, InputAction>(),
     GenericScenarioInputAction<CompoundInputEvent, CompoundInputValues> {
 
@@ -71,7 +71,7 @@ class CompoundOutputAction private constructor(
     override val M: Int,
     override val event: CompoundOutputEvent,
     override val values: CompoundOutputValues,
-    override val modular: ImmutableMultiArray<OutputAction>
+    override val modular: ImmutableMultiArray<OutputAction>,
 ) : CompoundScenarioAction<CompoundOutputEvent, CompoundOutputValues, OutputAction>(),
     GenericScenarioOutputAction<CompoundOutputEvent, CompoundOutputValues> {
 

@@ -21,7 +21,7 @@ class OldPositiveScenarioTree(
     override val outputEvents: List<OutputEvent>,
     override val inputNames: List<String>,
     override val outputNames: List<String>,
-    private val isTrie: Boolean = true
+    private val isTrie: Boolean = true,
 ) : OldScenarioTreeInterface {
     private val lazyCache = LazyCache()
     private val _scenarios: MutableList<PositiveScenario> = mutableListOf()
@@ -85,7 +85,7 @@ class OldPositiveScenarioTree(
 
     inner class Node(
         val element: ScenarioElement,
-        val parent: Node?
+        val parent: Node?,
     ) {
         private val _children: MutableList<Node> = mutableListOf()
 
@@ -197,7 +197,7 @@ class OldPositiveScenarioTree(
             outputNames: List<String>,
             inputEvents: List<InputEvent>? = null,
             outputEvents: List<OutputEvent>? = null,
-            isTrie: Boolean = true
+            isTrie: Boolean = true,
         ): OldPositiveScenarioTree {
             return OldPositiveScenarioTree(
                 inputEvents = inputEvents ?: scenarios.flatMap { scenario ->
@@ -220,7 +220,7 @@ class OldPositiveScenarioTree(
             outputNames: List<String>,
             inputEvents: List<InputEvent>? = null,
             outputEvents: List<OutputEvent>? = null,
-            isTrie: Boolean = true
+            isTrie: Boolean = true,
         ): OldPositiveScenarioTree {
             val scenarios: List<PositiveScenario> = PositiveScenario.fromFile(file)
             return fromScenarios(

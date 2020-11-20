@@ -9,7 +9,7 @@ import ru.ifmo.fbsat.core.utils.Globals
 
 data class ConsecutiveModularExtendedTask(
     val maxGuardSize: Int, // P
-    val maxTotalGuardsSize: Int? = null // N, unconstrained if null
+    val maxTotalGuardsSize: Int? = null, // N, unconstrained if null
 ) : Task() {
     override fun Solver.declare_() {
         /* Variables */
@@ -24,8 +24,15 @@ data class ConsecutiveModularExtendedTask(
         if (Globals.IS_BFS_GUARD) declareConsecutiveModularGuardConditionsBfsConstraints()
 
         /* Initial cardinality constraints*/
+        // ======================
+        // forEachModularContext { m ->
+        //     comment("$name: Initial cardinality (N) constraints: for module m = $m")
+        //     val cardinalityN: Cardinality = context["cardinalityN"]
+        //     cardinalityN.updateUpperBoundLessThanOrEqual(...)
+        // }
+        // ======================
         comment("$name: Initial cardinality (N) constraints")
-        val cardinalityN: Cardinality by context
+        val cardinalityN: Cardinality = context["cardinalityN"]
         cardinalityN.updateUpperBoundLessThanOrEqual(maxTotalGuardsSize)
     }
 }

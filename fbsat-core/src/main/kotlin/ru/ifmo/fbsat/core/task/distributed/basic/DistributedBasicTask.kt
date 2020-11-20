@@ -9,8 +9,7 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.SolverContext
-import ru.ifmo.fbsat.core.solver.switchContext
+import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
@@ -23,7 +22,7 @@ data class DistributedBasicTask(
     val modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
     val modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     val modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
-    val maxTransitions: Int? = null // T, unconstrained if null
+    val maxTransitions: Int? = null, // T, unconstrained if null
 ) : Task() {
     init {
         require(modularScenarioTree.shape.single() == numberOfModules)
@@ -54,15 +53,13 @@ data class DistributedBasicTask(
         // declareDistributedBasicAdhocConstraints()
 
         /* Initial cardinality constraints */
-        val modularContext: MultiArray<SolverContext> by context
-        val M: Int by context
-        for (m in 1..M) switchContext(modularContext[m]) {
+        forEachModularContext { m ->
             comment("$name: Initial cardinality (T) constraints: for module m = $m")
-            val cardinalityT: Cardinality by context
+            val cardinalityT: Cardinality = context["cardinalityT"]
             cardinalityT.updateUpperBoundLessThanOrEqual(modularMaxTransitions[m])
         }
         comment("$name: Initial cardinality (T) constraints")
-        val cardinalityT: Cardinality by context
+        val cardinalityT: Cardinality = context["cardinalityT"]
         cardinalityT.updateUpperBoundLessThanOrEqual(maxTransitions)
     }
 }

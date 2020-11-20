@@ -3,8 +3,9 @@ package ru.ifmo.fbsat.core.task.single.extforest
 import ru.ifmo.fbsat.core.solver.Solver
 
 fun Solver.declareExtForestVariables(
-    P: Int
+    P: Int,
 ) {
+    TODO()
     // /* Guard conditions variables */
     // val nodeType = newDomainVarArray(P) { NodeType.values().asIterable() }
     // val nodeInputVariable = newIntVarArray(P) { 0..X }

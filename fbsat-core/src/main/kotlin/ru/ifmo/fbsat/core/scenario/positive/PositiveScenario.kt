@@ -17,7 +17,7 @@ import ru.ifmo.fbsat.core.utils.useLines
 import java.io.File
 
 data class PositiveScenario(
-    override val elements: List<ScenarioElement>
+    override val elements: List<ScenarioElement>,
 ) : Scenario {
     companion object {
         fun fromFile(file: File, preprocess: Boolean = true): List<PositiveScenario> {

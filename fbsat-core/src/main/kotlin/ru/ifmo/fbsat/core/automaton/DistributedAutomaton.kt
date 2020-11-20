@@ -6,19 +6,20 @@ import com.github.lipen.multiarray.mapIndexed
 import ru.ifmo.fbsat.core.scenario.CompoundScenario
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
-import ru.ifmo.fbsat.core.scenario.modularInputActionsSeq
+import ru.ifmo.fbsat.core.scenario.inputActionsSeq
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
-import ru.ifmo.fbsat.core.solver.RawAssignment
-import ru.ifmo.fbsat.core.solver.SolverContext
+import ru.ifmo.fbsat.core.solver.Context
+import ru.ifmo.fbsat.core.solver.Model
 import ru.ifmo.fbsat.core.utils.Compound
 import ru.ifmo.fbsat.core.utils.CompoundImpl
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
 import ru.ifmo.fbsat.core.utils.M
 import ru.ifmo.fbsat.core.utils.ModularAutomaton
+import ru.ifmo.fbsat.core.utils.ModularContext
 import ru.ifmo.fbsat.core.utils.ModularEvalResult
 import ru.ifmo.fbsat.core.utils.ModularEvalResult_adhoc
 import ru.ifmo.fbsat.core.utils.ModularEvalState
@@ -35,7 +36,7 @@ import java.io.File
 
 @Suppress("MemberVisibilityCanBePrivate", "FunctionName", "PropertyName")
 class DistributedAutomaton(
-    val modules: ModularAutomaton
+    val modules: ModularAutomaton,
 ) : CompoundImpl<Automaton>() {
     override val modular: ImmutableMultiArray<Automaton> = modules.toImmutable()
     val modularInputEvents: MultiArray<List<InputEvent>> = modules.map { it.inputEvents }
@@ -52,7 +53,7 @@ class DistributedAutomaton(
     class CompoundEvalState private constructor(
         val modularState: ModularState,
         val modularOutputValues: ModularOutputValues,
-        override val modular: ImmutableMultiArray<Automaton.EvalState>
+        override val modular: ImmutableMultiArray<Automaton.EvalState>,
     ) : Compound<Automaton.EvalState> {
         constructor(modularEvalState: ModularEvalState) : this(
             modularState = modularEvalState.map { it.state },
@@ -63,7 +64,7 @@ class DistributedAutomaton(
         constructor(
             M: Int,
             modularState: ModularState,
-            modularOutputValues: ModularOutputValues
+            modularOutputValues: ModularOutputValues,
         ) : this(
             modularState = modularState,
             modularOutputValues = modularOutputValues,
@@ -92,7 +93,7 @@ class DistributedAutomaton(
     class CompoundEvalResult private constructor(
         val modularDestination: ModularState,
         val modularOutputAction: ModularOutputAction,
-        override val modular: ModularEvalResult_adhoc
+        override val modular: ModularEvalResult_adhoc,
     ) : Compound<Automaton.EvalResult> {
         val modularOutputValues: ModularOutputValues = modularOutputAction.map { it.values }
         val newEvalState: CompoundEvalState =
@@ -107,7 +108,7 @@ class DistributedAutomaton(
         constructor(
             M: Int,
             modularDestination: ModularState,
-            modularOutputAction: ModularOutputAction
+            modularOutputAction: ModularOutputAction,
         ) : this(
             modularDestination = modularDestination,
             modularOutputAction = modularOutputAction,
@@ -128,7 +129,7 @@ class DistributedAutomaton(
     )
     fun eval(
         modularInputAction: ModularInputAction,
-        evalState: CompoundEvalState
+        evalState: CompoundEvalState,
     ): CompoundEvalResult =
         evalState.eval(modularInputAction)
 
@@ -139,21 +140,21 @@ class DistributedAutomaton(
     )
     fun eval(
         modularInputActions: Sequence<ModularInputAction>,
-        startEvalState: CompoundEvalState
+        startEvalState: CompoundEvalState,
     ): Sequence<CompoundEvalResult> =
         startEvalState.eval(modularInputActions)
 
     fun eval(
         modularInputActions: Sequence<ModularInputAction>,
         modularStartState: ModularState = modules.map { it.initialState },
-        modularStartOutputValues: ModularOutputValues = modules.map { Globals.INITIAL_OUTPUT_VALUES }
+        modularStartOutputValues: ModularOutputValues = modules.map { Globals.INITIAL_OUTPUT_VALUES },
     ): Sequence<CompoundEvalResult> =
         CompoundEvalState(M, modularStartState, modularStartOutputValues).eval(modularInputActions)
 
     fun eval(
         modularInputActions: Iterable<ModularInputAction>,
         modularStartState: ModularState = modules.map { it.initialState },
-        modularStartOutputValues: ModularOutputValues = modules.map { Globals.INITIAL_OUTPUT_VALUES }
+        modularStartOutputValues: ModularOutputValues = modules.map { Globals.INITIAL_OUTPUT_VALUES },
     ): List<CompoundEvalResult> =
         eval(modularInputActions.asSequence(), modularStartState, modularStartOutputValues).toList()
 
@@ -161,7 +162,7 @@ class DistributedAutomaton(
      * Evaluate the given [scenario].
      */
     fun eval(scenario: CompoundScenario<*>): Sequence<CompoundEvalResult> =
-        eval(scenario.modularInputActionsSeq)
+        eval(scenario.inputActionsSeq.map { it.modular })
 
     fun map_(scenario: CompoundScenario<*>): List<CompoundEvalResult?> {
         val mapping: MutableList<CompoundEvalResult?> = mutableListOfNulls(scenario.elements.size)
@@ -291,14 +292,14 @@ class DistributedAutomaton(
 }
 
 fun buildBasicDistributedAutomaton(
-    context: SolverContext,
-    raw: RawAssignment
+    context: Context,
+    model: Model,
 ): DistributedAutomaton {
-    val modularContext: MultiArray<SolverContext> by context
+    val modularContext: ModularContext = context["modularContext"]
     val modules: MultiArray<Automaton> = modularContext.map { ctx ->
         buildBasicAutomaton(
             context = ctx,
-            raw = raw,
+            model = model,
             useStateUsed = true
         )
     }
@@ -306,14 +307,14 @@ fun buildBasicDistributedAutomaton(
 }
 
 fun buildExtendedDistributedAutomaton(
-    context: SolverContext,
-    raw: RawAssignment
+    context: Context,
+    model: Model,
 ): DistributedAutomaton {
-    val modularContext: MultiArray<SolverContext> by context
+    val modularContext: ModularContext = context["modularContext"]
     val modules: MultiArray<Automaton> = modularContext.map { ctx ->
         buildExtendedAutomaton(
             context = ctx,
-            raw = raw,
+            model = model,
             useStateUsed = true
         )
     }

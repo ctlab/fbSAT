@@ -25,7 +25,7 @@ fun <T : Any> optimizeTopDown(
     end: Int = 0,
     nextInitial: (Int?) -> T?,
     next: (Int) -> T?,
-    query: (T) -> Int
+    query: (T) -> Int,
 ): T? {
     if (start != null) require(start >= end)
     if (start != null) require(start >= 0)
@@ -57,7 +57,7 @@ fun <T : Any> optimizeTopDown(
 
 fun Inferrer.optimizeT(start: Int? = null, end: Int = 0): Automaton? {
     log.info("Optimizing T...")
-    val cardinalityT: Cardinality by solver.context
+    val cardinalityT: Cardinality = solver.context["cardinalityT"]
     return optimizeTopDown(
         start = start,
         end = end,
@@ -75,7 +75,7 @@ fun Inferrer.optimizeT(start: Int? = null, end: Int = 0): Automaton? {
 
 fun Inferrer.optimizeN(start: Int? = null, end: Int = 0): Automaton? {
     log.info("Optimizing N...")
-    val cardinalityN: Cardinality by solver.context
+    val cardinalityN: Cardinality = solver.context["cardinalityN"]
     return optimizeTopDown(
         start = start,
         end = end,
@@ -94,7 +94,7 @@ fun Inferrer.optimizeN(start: Int? = null, end: Int = 0): Automaton? {
 @Suppress("FunctionName")
 fun Inferrer.optimizeN_Forest(start: Int? = null, end: Int = 0): Automaton? {
     log.info("Optimizing N...")
-    val cardinalityN: Cardinality by solver.context
+    val cardinalityN: Cardinality = solver.context["cardinalityN"]
     return optimizeTopDown(
         start = start,
         end = end,
@@ -112,7 +112,7 @@ fun Inferrer.optimizeN_Forest(start: Int? = null, end: Int = 0): Automaton? {
 
 fun Inferrer.optimizeParallelModularT(start: Int? = null, end: Int = 0): ParallelModularAutomaton? {
     log.info("Optimizing T...")
-    val cardinalityT: Cardinality by solver.context
+    val cardinalityT: Cardinality = solver.context["cardinalityT"]
     return optimizeTopDown(
         start = start,
         end = end,
@@ -130,7 +130,7 @@ fun Inferrer.optimizeParallelModularT(start: Int? = null, end: Int = 0): Paralle
 
 fun Inferrer.optimizeConsecutiveModularT(start: Int? = null, end: Int = 0): ConsecutiveModularAutomaton? {
     log.info("Optimizing T...")
-    val cardinalityT: Cardinality by solver.context
+    val cardinalityT: Cardinality = solver.context["cardinalityT"]
     return optimizeTopDown(
         start = start,
         end = end,
@@ -148,7 +148,7 @@ fun Inferrer.optimizeConsecutiveModularT(start: Int? = null, end: Int = 0): Cons
 
 fun Inferrer.optimizeArbitraryModularT(start: Int? = null, end: Int = 0): ArbitraryModularAutomaton? {
     log.info("Optimizing T...")
-    val cardinalityT: Cardinality by solver.context
+    val cardinalityT: Cardinality = solver.context["cardinalityT"]
     return optimizeTopDown(
         start = start,
         end = end,
@@ -166,7 +166,7 @@ fun Inferrer.optimizeArbitraryModularT(start: Int? = null, end: Int = 0): Arbitr
 
 fun Inferrer.optimizeConsecutiveModularN(start: Int? = null, end: Int = 0): ConsecutiveModularAutomaton? {
     log.info("Optimizing N...")
-    val cardinalityN: Cardinality by solver.context
+    val cardinalityN: Cardinality = solver.context["cardinalityN"]
     return optimizeTopDown(
         start = start,
         end = end,
@@ -184,7 +184,7 @@ fun Inferrer.optimizeConsecutiveModularN(start: Int? = null, end: Int = 0): Cons
 
 fun Inferrer.optimizeParallelModularN(start: Int? = null, end: Int = 0): ParallelModularAutomaton? {
     log.info("Optimizing N...")
-    val cardinalityN: Cardinality by solver.context
+    val cardinalityN: Cardinality = solver.context["cardinalityN"]
     return optimizeTopDown(
         start = start,
         end = end,
@@ -202,7 +202,7 @@ fun Inferrer.optimizeParallelModularN(start: Int? = null, end: Int = 0): Paralle
 
 fun Inferrer.optimizeDistributedSumC(start: Int? = null, end: Int = 0): DistributedAutomaton? {
     log.info("Optimizing Csum...")
-    val cardinalityC: Cardinality by solver.context
+    val cardinalityC: Cardinality = solver.context["cardinalityC"]
     return optimizeTopDown(
         start = start,
         end = end,
@@ -220,7 +220,7 @@ fun Inferrer.optimizeDistributedSumC(start: Int? = null, end: Int = 0): Distribu
 
 fun Inferrer.optimizeDistributedSumC_Extended(start: Int? = null, end: Int = 0): DistributedAutomaton? {
     log.info("Optimizing Csum...")
-    val cardinalityC: Cardinality by solver.context
+    val cardinalityC: Cardinality = solver.context["cardinalityC"]
     return optimizeTopDown(
         start = start,
         end = end,
@@ -238,7 +238,7 @@ fun Inferrer.optimizeDistributedSumC_Extended(start: Int? = null, end: Int = 0):
 
 fun Inferrer.optimizeDistributedSumC_Complete(start: Int? = null, end: Int = 0): DistributedAutomaton? {
     log.info("Optimizing Csum...")
-    val cardinalityC: Cardinality by solver.context
+    val cardinalityC: Cardinality = solver.context["cardinalityC"]
     return optimizeTopDown(
         start = start,
         end = end,
@@ -256,7 +256,7 @@ fun Inferrer.optimizeDistributedSumC_Complete(start: Int? = null, end: Int = 0):
 
 fun Inferrer.optimizeDistributedSumN(start: Int? = null, end: Int = 0): DistributedAutomaton? {
     log.info("Optimizing Nsum...")
-    val cardinalityN: Cardinality by solver.context
+    val cardinalityN: Cardinality = solver.context["cardinalityN"]
     return optimizeTopDown(
         start = start,
         end = end,

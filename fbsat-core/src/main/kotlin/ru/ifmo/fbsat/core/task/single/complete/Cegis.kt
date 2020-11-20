@@ -25,7 +25,7 @@ fun Inferrer.cegis(
     maxGuardSize: Int, // P
     maxTransitions: Int? = null, // T, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N, unconstrained if null
-    smvDir: File
+    smvDir: File,
 ): Automaton? {
     reset()
     declare(
@@ -50,7 +50,7 @@ fun Inferrer.cegisMin(
     startNumberOfStates: Int? = null,
     maxGuardSize: Int? = null, // P, search if null
     maxPlateauWidth: Int? = null, // w, =Inf if null
-    smvDir: File
+    smvDir: File,
 ): Automaton? {
     val extendedAutomaton = if (maxGuardSize == null) {
         extendedMinUB(scenarioTree, numberOfStates = startNumberOfStates, maxPlateauWidth = maxPlateauWidth)
@@ -69,12 +69,7 @@ fun Inferrer.cegisMin(
     extendedAutomaton.pprint()
     log.info("extendedAutomaton has C = $C, P = $P, N = $N")
 
-    val negativeScenarioTree = initialNegativeScenarioTree ?: NegativeScenarioTree(
-        inputEvents = scenarioTree.inputEvents,
-        outputEvents = scenarioTree.outputEvents,
-        inputNames = scenarioTree.inputNames,
-        outputNames = scenarioTree.outputNames
-    )
+    val negativeScenarioTree = initialNegativeScenarioTree ?: NegativeScenarioTree(scenarioTree)
 
     for (loopNumber in 1..100) {
         log.just("===== Loop number #$loopNumber, N = $N =====")
@@ -110,8 +105,8 @@ fun Inferrer.performCegis(smvDir: File): Automaton? {
     // Copy smv files to output directory
     smvDir.copyRecursively(outDir, overwrite = true)
 
-    val scenarioTree: PositiveScenarioTree by solver.context
-    val negativeScenarioTree: NegativeScenarioTree by solver.context
+    val scenarioTree: PositiveScenarioTree = solver.context["scenarioTree"]
+    val negativeScenarioTree: NegativeScenarioTree = solver.context["negativeScenarioTree"]
     lateinit var lastNegativeScenarios: List<NegativeScenario>
 
     for (iterationNumber in 1 until 10000) {
@@ -139,12 +134,12 @@ fun Inferrer.performCegis(smvDir: File): Automaton? {
         }
         // Convert counterexamples to negative scenarios
         val negativeScenarios = counterexamples.map {
-            NegativeScenario.fromCounterexample(
-                it,
-                scenarioTree.inputEvents,
-                scenarioTree.outputEvents,
-                scenarioTree.inputNames,
-                scenarioTree.outputNames
+            NegativeScenario.from(
+                counterexample = it,
+                inputEvents = scenarioTree.inputEvents,
+                outputEvents = scenarioTree.outputEvents,
+                inputNames = scenarioTree.inputNames,
+                outputNames = scenarioTree.outputNames
             )
         }
         // Populate negTree with new negative scenarios
@@ -181,7 +176,7 @@ fun Automaton.verifyWithNuSMV(dir: File): List<Counterexample> {
     val fileCounterexamples = dir.resolve("counterexamples")
     return if (fileCounterexamples.exists()) {
         // Read new counterexamples
-        val counterexamples: List<Counterexample> = Counterexample.fromFile(fileCounterexamples)
+        val counterexamples: List<Counterexample> = Counterexample.from(fileCounterexamples)
 
         // [DEBUG] Append new counterexamples to 'ce'
         log.debug { "Dumping ${counterexamples.size} counterexample(s)..." }

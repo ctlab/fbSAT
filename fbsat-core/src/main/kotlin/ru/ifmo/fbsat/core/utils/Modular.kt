@@ -10,7 +10,9 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.Context
 
+internal typealias ModularContext = MultiArray<Context>
 internal typealias ModularOldScenarioTree = MultiArray<OldPositiveScenarioTree>
 internal typealias ModularScenarioTree = MultiArray<PositiveScenarioTree>
 internal typealias ModularAutomaton = MultiArray<Automaton>

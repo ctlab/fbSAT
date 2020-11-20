@@ -13,6 +13,7 @@ import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedTask
 import ru.ifmo.fbsat.core.task.distributed.extended.inferDistributedExtended
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumC_Complete
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumN
+import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 import kotlin.math.min
 
@@ -28,7 +29,7 @@ fun Inferrer.distributedComplete(
     modularMaxTotalGuardsSize: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [N]
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
     maxTransitions: Int? = null, // T_sum, unconstrained if null
-    maxTotalGuardsSize: Int? = null // N_sum, unconstrained if null
+    maxTotalGuardsSize: Int? = null, // N_sum, unconstrained if null
 ): DistributedAutomaton? {
     reset()
     declare(
@@ -70,7 +71,7 @@ fun Inferrer.completeMin_(
     modularMaxGuardSize: MultiArray<Int>, // [P]
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
-    maxTransitions: Int? = null // T_sum, unconstrained if null
+    maxTransitions: Int? = null, // T_sum, unconstrained if null
 ): DistributedAutomaton? {
     reset()
     declare(
@@ -111,9 +112,11 @@ fun Inferrer.completeMin__(
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
     maxTransitions: Int? = null, // T_sum, unconstrained if null
-    startD: Int = 1
+    startD: Int = 1,
 ): DistributedAutomaton? {
-    for (D in startD..100) {
+    // for (D in startD..100) {
+    for (D in startD..5) {
+        log.info("Trying D = $D...")
         // val automaton = completeMin_(
         //     numberOfModules = numberOfModules,
         //     compoundScenarioTree = compoundScenarioTree,
@@ -168,13 +171,13 @@ fun Inferrer.completeMin__(
 }
 
 fun Inferrer.inferDistributedComplete(): DistributedAutomaton? {
-    val rawAssignment = solver.solve() ?: return null
+    val model = solver.solve() ?: return null
     // val vars = solver.context.distributedExtendedVars
-    // val assignment = DistributedExtendedAssignment.fromRaw(rawAssignment, vars)
+    // val assignment = DistributedExtendedAssignment.frommodel(model, vars)
     // val automaton = assignment.toAutomaton()
     val automaton = buildExtendedDistributedAutomaton(
         context = solver.context,
-        raw = rawAssignment
+        model = model
     )
 
     // TODO: check mapping
@@ -182,7 +185,7 @@ fun Inferrer.inferDistributedComplete(): DistributedAutomaton? {
 
     // val completeVars = solver.context.distributedCompleteVars
     // val modularNegMapping = completeVars.modularCompleteVariables.map {
-    //     it.negMapping.convert(rawAssignment)
+    //     it.negMapping.convert(model)
     // }
     // println("Negative mapping:")
     // for (v in 1..completeVars.negativeCompoundScenarioTree.size) {
@@ -197,7 +200,7 @@ fun Inferrer.inferDistributedComplete(): DistributedAutomaton? {
 
     // val completeVars = solver.context.distributedCompleteVars.modularCompleteVariables[1]
     // val negTree = completeVars.negativeScenarioTree
-    // val negMapping = completeVars.negMapping.convert(rawAssignment)
+    // val negMapping = completeVars.negMapping.convert(model)
 
     // for (scenario in negTree.scenarios) {
     //     val automatonNegMapping = automaton.modular[1].map(scenario)

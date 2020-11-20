@@ -5,7 +5,7 @@ import java.util.Deque
 
 class Cardinality(
     val totalizer: BoolVarArray,
-    private val solver: Solver
+    private val solver: Solver,
 ) {
     var upperBound: Int? = null // sum(totalizer) <= upperBound
         private set
@@ -35,8 +35,8 @@ fun Solver.declareCardinality(variables: Iterable<Literal>): Cardinality =
 fun Solver.declareCardinality(variables: Sequence<Literal>): Cardinality =
     declareCardinality(variables.asIterable())
 
-fun Solver.declareCardinality(block: suspend SequenceScope<Literal>.() -> Unit): Cardinality =
-    declareCardinality(sequence(block).constrainOnce())
+fun Solver.declareCardinality(variables: SequenceScopeLiteral): Cardinality =
+    declareCardinality(sequence(variables).constrainOnce())
 
 fun Solver.declareTotalizer(variables: Iterable<Literal>): BoolVarArray {
     val queue: Deque<List<Int>> = ArrayDeque()
@@ -86,8 +86,8 @@ fun Solver.declareTotalizer(variables: Iterable<Literal>): BoolVarArray {
 fun Solver.declareTotalizer(variables: Sequence<Literal>): BoolVarArray =
     declareTotalizer(variables.asIterable())
 
-fun Solver.declareTotalizer(block: suspend SequenceScope<Literal>.() -> Unit): BoolVarArray =
-    declareTotalizer(sequence(block).constrainOnce())
+fun Solver.declareTotalizer(variables: SequenceScopeLiteral): BoolVarArray =
+    declareTotalizer(sequence(variables).constrainOnce())
 
 /**
  * Declares cardinality constraint `sum(totalizer) <= x`

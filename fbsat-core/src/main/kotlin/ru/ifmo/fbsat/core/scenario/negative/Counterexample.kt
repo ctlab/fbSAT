@@ -11,7 +11,7 @@ import ru.ifmo.fbsat.core.utils.useLines
 import java.io.File
 
 data class Counterexample(
-    val states: List<State>
+    val states: List<State>,
 ) {
     /**
      * One-based index of loop-back state, or `null` if there is no loop.
@@ -52,7 +52,7 @@ data class Counterexample(
     }
 
     companion object {
-        fun fromFile(file: File): List<Counterexample> {
+        fun from(file: File): List<Counterexample> {
             val ces: MutableList<Counterexample> = mutableListOf()
             var states: MutableList<State> = mutableListOf()
             var hasState = false
@@ -134,27 +134,27 @@ data class THE_Counterexample(
     // @XmlSerialName("loops", namespace = "", prefix = "")
     // val loops: THE_Loops
     @XmlElement(true)
-    val loops: String
+    val loops: String,
 ) {
     @Serializable
     @XmlSerialName("node", namespace = "", prefix = "")
     data class THE_Node(
         @XmlSerialName("state", namespace = "", prefix = "")
-        val states: List<THE_State>
+        val states: List<THE_State>,
     ) {
         @Serializable
         @XmlSerialName("state", namespace = "", prefix = "")
         data class THE_State(
             val id: Int,
             @SerialName("value")
-            val values: List<THE_Value>
+            val values: List<THE_Value>,
         ) {
             @Serializable
             @XmlSerialName("value", namespace = "", prefix = "")
             data class THE_Value(
                 val variable: String,
                 @XmlValue(true)
-                val content: String
+                val content: String,
             )
         }
     }
@@ -163,13 +163,13 @@ data class THE_Counterexample(
     @XmlSerialName("loops", namespace = "", prefix = "")
     data class THE_Loops(
         @XmlValue(true)
-        val loops: String
+        val loops: String,
     )
 }
 
 fun counterexampleFromString(s: String): THE_Counterexample {
     val xml = XML()
-    return xml.parse(THE_Counterexample.serializer(), s)
+    return xml.decodeFromString(THE_Counterexample.serializer(), s)
 }
 
 fun readCounterexamplesFromFile(file: File): List<THE_Counterexample> {

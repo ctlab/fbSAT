@@ -14,7 +14,7 @@ fun Inferrer.extForest(
     totalNodes: Int, // P
     maxTransitions: Int? = null, // T, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N, unconstrained if null
-    isEncodeReverseImplication: Boolean = true
+    isEncodeReverseImplication: Boolean = true,
 ): Automaton? {
     reset()
     declare(
@@ -37,7 +37,7 @@ fun Inferrer.extForest(
 
 fun Inferrer.extForestMin(
     scenarioTree: PositiveScenarioTree,
-    totalNodes: Int // P
+    totalNodes: Int, // P
 ): Automaton? {
     basicMinC(scenarioTree)
     declare(ExtForestTask(totalNodes = totalNodes))
@@ -45,7 +45,7 @@ fun Inferrer.extForestMin(
 }
 
 fun Inferrer.inferExtForest(): Automaton? {
-    val rawAssignment = solver.solve() ?: return null
+    val model = solver.solve() ?: return null
     val automaton = TODO()
 
     // TODO: check mapping

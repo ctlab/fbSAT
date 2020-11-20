@@ -19,7 +19,7 @@ class OldNegativeScenarioTree(
     override val outputEvents: List<OutputEvent>,
     override val inputNames: List<String>,
     override val outputNames: List<String>,
-    private val isTrie: Boolean = true
+    private val isTrie: Boolean = true,
 ) : OldScenarioTreeInterface {
     private val lazyCache = LazyCache()
     private val _negativeScenarios: MutableList<NegativeScenario> = mutableListOf()
@@ -70,7 +70,7 @@ class OldNegativeScenarioTree(
     inner class Node(
         val element: ScenarioElement,
         val parent: Node?,
-        var isTerminal: Boolean = false
+        var isTerminal: Boolean = false,
     ) {
         private val _children: MutableList<Node> = mutableListOf()
 
@@ -274,7 +274,7 @@ class OldNegativeScenarioTree(
             outputEvents: List<OutputEvent>,
             inputNames: List<String>,
             outputNames: List<String>,
-            isTrie: Boolean = true
+            isTrie: Boolean = true,
         ): OldNegativeScenarioTree {
             return OldNegativeScenarioTree(
                 inputEvents = inputEvents,
@@ -293,10 +293,10 @@ class OldNegativeScenarioTree(
             outputEvents: List<OutputEvent>,
             inputNames: List<String>,
             outputNames: List<String>,
-            isTrie: Boolean = true
+            isTrie: Boolean = true,
         ): OldNegativeScenarioTree {
             val negativeScenarios: List<NegativeScenario> =
-                NegativeScenario.fromFile(
+                NegativeScenario.from(
                     file = file,
                     inputEvents = inputEvents,
                     outputEvents = outputEvents,

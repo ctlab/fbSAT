@@ -14,7 +14,7 @@ fun Inferrer.consecutiveModularBasic(
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
     maxTransitions: Int? = null, // T, unconstrained if null
-    isEncodeReverseImplication: Boolean = true
+    isEncodeReverseImplication: Boolean = true,
 ): ConsecutiveModularAutomaton? {
     reset()
     declare(
@@ -24,7 +24,7 @@ fun Inferrer.consecutiveModularBasic(
             numberOfStates = numberOfStates,
             maxOutgoingTransitions = maxOutgoingTransitions,
             maxTransitions = maxTransitions,
-            isEncodeReverseImplication = isEncodeReverseImplication
+            isEncodeReverseImplication = isEncodeReverseImplication,
         )
     )
     return inferConsecutiveModularBasic()
@@ -34,7 +34,7 @@ fun Inferrer.consecutiveModularBasicMinC(
     scenarioTree: PositiveScenarioTree,
     numberOfModules: Int, // M
     start: Int = 1, // C_start
-    end: Int = 20 // C_end
+    end: Int = 20, // C_end
 ): ConsecutiveModularAutomaton {
     var best: ConsecutiveModularAutomaton? = null
     for (C in start..end) {
@@ -42,7 +42,7 @@ fun Inferrer.consecutiveModularBasicMinC(
             consecutiveModularBasic(
                 scenarioTree = scenarioTree,
                 numberOfModules = numberOfModules,
-                numberOfStates = C
+                numberOfStates = C,
             )
         }
         if (result != null) {
@@ -59,18 +59,16 @@ fun Inferrer.consecutiveModularBasicMinC(
 
 fun Inferrer.consecutiveModularBasicMin(
     scenarioTree: PositiveScenarioTree,
-    numberOfModules: Int // M
+    numberOfModules: Int, // M
+    numberOfStates: Int? = null, // C_start, 1 if null
 ): ConsecutiveModularAutomaton? {
-    consecutiveModularBasicMinC(scenarioTree, numberOfModules = numberOfModules)
+    consecutiveModularBasicMinC(scenarioTree, numberOfModules = numberOfModules, start = numberOfStates ?: 1)
     return optimizeConsecutiveModularT()
 }
 
 fun Inferrer.inferConsecutiveModularBasic(): ConsecutiveModularAutomaton? {
-    val rawAssignment = solver.solve() ?: return null
-    val automaton = buildBasicConsecutiveModularAutomaton(
-        context = solver.context,
-        raw = rawAssignment
-    )
+    val model = solver.solve() ?: return null
+    val automaton = buildBasicConsecutiveModularAutomaton(solver.context, model)
 
     // TODO: check automaton
     // log.warn("Mapping check is not implemented yet")

@@ -6,7 +6,7 @@ import java.io.File
 
 class Inferrer(
     val solver: Solver,
-    val outDir: File = File("out")
+    val outDir: File = File("out"),
 ) {
     // Note: must use `get()` because `solver.context` is `var`.
     // val context: SolverContext get() = solver.context

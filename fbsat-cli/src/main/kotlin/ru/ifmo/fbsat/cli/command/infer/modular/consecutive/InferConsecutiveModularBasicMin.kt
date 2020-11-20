@@ -11,6 +11,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.INPUT_OUTPUT_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.SolverOptions
 import ru.ifmo.fbsat.cli.command.infer.options.inputNamesOption
 import ru.ifmo.fbsat.cli.command.infer.options.numberOfModulesOption
+import ru.ifmo.fbsat.cli.command.infer.options.numberOfStatesOption
 import ru.ifmo.fbsat.cli.command.infer.options.outDirOption
 import ru.ifmo.fbsat.cli.command.infer.options.outputNamesOption
 import ru.ifmo.fbsat.cli.command.infer.options.scenariosFileOption
@@ -27,6 +28,7 @@ private class ConsecutiveModularBasicMinInputOutputOptions : OptionGroup(INPUT_O
 
 private class ConsecutiveModularBasicMinAutomatonOptions : OptionGroup(AUTOMATON_OPTIONS) {
     val numberOfModules: Int by numberOfModulesOption().required()
+    val numberOfStates: Int? by numberOfStatesOption()
 }
 
 class InferConsecutiveModularBasicMinCommand :
@@ -44,6 +46,7 @@ class InferConsecutiveModularBasicMinCommand :
     override fun infer(): ConsecutiveModularAutomaton? =
         inferrer.consecutiveModularBasicMin(
             scenarioTree = scenarioTree,
-            numberOfModules = params.numberOfModules
+            numberOfModules = params.numberOfModules,
+            numberOfStates = params.numberOfStates
         )
 }

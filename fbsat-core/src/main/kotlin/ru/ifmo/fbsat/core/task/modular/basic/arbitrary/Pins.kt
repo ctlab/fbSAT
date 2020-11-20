@@ -8,7 +8,7 @@ internal class Pins(
     val X: Int,
     val Z: Int,
     val E: Int,
-    val O: Int
+    val O: Int,
 ) {
     val modularInboundVarPins: MultiArray<List<Int>> =
         MultiArray.create(M) { (m) -> (1..X).map { (m - 1) * X + it } }

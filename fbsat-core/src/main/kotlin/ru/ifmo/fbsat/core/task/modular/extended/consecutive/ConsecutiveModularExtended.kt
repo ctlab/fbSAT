@@ -16,7 +16,7 @@ fun Inferrer.consecutiveModularExtended(
     maxGuardSize: Int, // P
     maxTransitions: Int? = null, // T, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N, unconstrained if null
-    isEncodeReverseImplication: Boolean = true
+    isEncodeReverseImplication: Boolean = true,
 ): ConsecutiveModularAutomaton? {
     reset()
     declare(
@@ -42,7 +42,7 @@ fun Inferrer.consecutiveModularExtendedMin(
     scenarioTree: PositiveScenarioTree,
     numberOfModules: Int, // M
     numberOfStates: Int? = null, // C_start, 1 if null
-    maxGuardSize: Int // P
+    maxGuardSize: Int, // P
 ): ConsecutiveModularAutomaton? {
     consecutiveModularBasicMinC(scenarioTree, numberOfModules, start = numberOfStates ?: 1)
     declare(ConsecutiveModularExtendedTask(maxGuardSize))
@@ -50,11 +50,8 @@ fun Inferrer.consecutiveModularExtendedMin(
 }
 
 fun Inferrer.inferConsecutiveModularExtended(): ConsecutiveModularAutomaton? {
-    val rawAssignment = solver.solve() ?: return null
-    val automaton = buildExtendedConsecutiveModularAutomaton(
-        context = solver.context,
-        raw = rawAssignment
-    )
+    val model = solver.solve() ?: return null
+    val automaton = buildExtendedConsecutiveModularAutomaton(solver.context, model)
 
     // TODO: check automaton
     // log.warn("Mapping check is not implemented yet")

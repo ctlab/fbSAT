@@ -19,8 +19,8 @@ import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.RawAssignment
-import ru.ifmo.fbsat.core.solver.SolverContext
+import ru.ifmo.fbsat.core.solver.Context
+import ru.ifmo.fbsat.core.solver.Model
 import ru.ifmo.fbsat.core.solver.convertBoolVarArray
 import ru.ifmo.fbsat.core.solver.convertDomainVarArray
 import ru.ifmo.fbsat.core.solver.convertIntVarArray
@@ -37,7 +37,7 @@ class Automaton(
     val inputEvents: List<InputEvent>,
     val outputEvents: List<OutputEvent>,
     val inputNames: List<String>,
-    val outputNames: List<String>
+    val outputNames: List<String>,
 ) {
     private val lazyCache = LazyCache()
     private val _states: MutableMap<Int, State> = mutableMapOf()
@@ -71,12 +71,12 @@ class Automaton(
 
     /** Maximum number of outgoing transitions **K**. */
     val maxOutgoingTransitions: Int by lazyCache {
-        states.map { it.transitions.size }.max() ?: 0
+        states.map { it.transitions.size }.maxOrNull() ?: 0
     }
 
     /** Maximal guard size **P**. */
     val maxGuardSize: Int by lazyCache {
-        transitions.map { it.guard.size }.max()!!
+        transitions.map { it.guard.size }.maxOrNull()!!
     }
 
     /** Number of automaton transitions **T**. */
@@ -115,7 +115,7 @@ class Automaton(
     inner class State(
         val id: Int,
         val outputEvent: OutputEvent?,
-        val algorithm: Algorithm
+        val algorithm: Algorithm,
     ) {
         private val _transitions: MutableList<Transition> = mutableListOf()
         val transitions: List<Transition> = _transitions
@@ -203,7 +203,7 @@ class Automaton(
         val source: State,
         val destination: State,
         val inputEvent: InputEvent?,
-        var guard: Guard
+        var guard: Guard,
     ) {
         val k: Int = source.transitions.size + 1 // Note: 1-based
 
@@ -242,7 +242,7 @@ class Automaton(
     // TODO: Rewrite all `eval` methods to use EvalState
     data class EvalState(
         val state: Automaton.State,
-        val outputValues: OutputValues
+        val outputValues: OutputValues,
     ) {
         fun eval(inputAction: InputAction): EvalResult {
             return state.eval(inputAction, outputValues)
@@ -251,7 +251,7 @@ class Automaton(
 
     data class EvalResult(
         val destination: State,
-        val outputAction: OutputAction
+        val outputAction: OutputAction,
     ) {
         val newEvalState: EvalState = EvalState(destination, outputAction.values)
 
@@ -263,7 +263,7 @@ class Automaton(
     @Deprecated("Use evalState.eval directly", ReplaceWith("evalState.eval(inputAction)"))
     fun eval(
         inputAction: InputAction,
-        evalState: EvalState
+        evalState: EvalState,
     ): EvalResult =
         evalState.eval(inputAction)
 
@@ -271,17 +271,17 @@ class Automaton(
     fun eval(
         inputAction: InputAction,
         state: State,
-        values: OutputValues
+        values: OutputValues,
     ): EvalResult =
-        eval(inputAction, EvalState(state, values))
+        EvalState(state, values).eval(inputAction)
 
     fun eval(
         inputActions: Sequence<InputAction>,
-        startEvalState: EvalState
+        startEvalState: EvalState,
     ): Sequence<EvalResult> {
         var currentEvalState = startEvalState
         return inputActions.map { inputAction ->
-            eval(inputAction, currentEvalState).also {
+            currentEvalState.eval(inputAction).also {
                 currentEvalState = it.newEvalState
             }
         }
@@ -290,14 +290,14 @@ class Automaton(
     fun eval(
         inputActions: Sequence<InputAction>,
         startState: State = initialState,
-        startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES
+        startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES,
     ): Sequence<EvalResult> =
         eval(inputActions, EvalState(startState, startValues))
 
     fun eval(
         inputActions: Iterable<InputAction>,
         startState: State = initialState,
-        startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES
+        startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES,
     ): List<EvalResult> =
         eval(inputActions.asSequence(), startState, startValues).toList()
 
@@ -769,7 +769,7 @@ fun Automaton.endow(
     stateAlgorithm: (c: Int) -> Algorithm,
     transitionDestination: (c: Int, k: Int) -> Int,
     transitionInputEvent: (c: Int, k: Int) -> InputEvent,
-    transitionGuard: (c: Int, k: Int) -> Guard
+    transitionGuard: (c: Int, k: Int) -> Guard,
 ): Automaton = apply {
     for (c in 1..C)
         if (stateUsed(c))
@@ -792,24 +792,24 @@ fun Automaton.endow(
 }
 
 fun buildBasicAutomaton(
-    context: SolverContext,
-    raw: RawAssignment,
-    useStateUsed: Boolean = false
+    context: Context,
+    model: Model,
+    useStateUsed: Boolean = false,
 ): Automaton {
-    val scenarioTree: PositiveScenarioTree by context
-    val C: Int by context
-    val K: Int by context
-    val Z: Int by context
-    val transitionDestination by context.convertIntVarArray(raw)
-    val transitionInputEvent by context.convertIntVarArray(raw)
-    val transitionTruthTable by context.convertBoolVarArray(raw)
-    val stateOutputEvent by context.convertIntVarArray(raw)
-    val stateAlgorithmTop by context.convertBoolVarArray(raw)
-    val stateAlgorithmBot by context.convertBoolVarArray(raw)
+    val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
+    val C: Int = context["C"]
+    val K: Int = context["K"]
+    val Z: Int = context["Z"]
+    val transitionDestination = context.convertIntVarArray("transitionDestination",model)
+    val transitionInputEvent = context.convertIntVarArray("transitionInputEvent",model)
+    val transitionTruthTable = context.convertBoolVarArray("transitionTruthTable",model)
+    val stateOutputEvent = context.convertIntVarArray("stateOutputEvent",model)
+    val stateAlgorithmTop = context.convertBoolVarArray("stateAlgorithmTop",model)
+    val stateAlgorithmBot = context.convertBoolVarArray("stateAlgorithmBot",model)
 
     val stateUsedFunction: (c: Int) -> Boolean =
         if (useStateUsed) {
-            val stateUsed by context.convertBoolVarArray(raw);
+            val stateUsed = context.convertBoolVarArray("stateUsed",model);
             { c -> stateUsed[c] }
         } else {
             { true }
@@ -850,30 +850,28 @@ fun buildBasicAutomaton(
 }
 
 fun buildExtendedAutomaton(
-    context: SolverContext,
-    raw: RawAssignment,
-    useStateUsed: Boolean = false
+    context: Context,
+    model: Model,
+    useStateUsed: Boolean = false,
 ): Automaton {
-    val scenarioTree: PositiveScenarioTree by context
-    val C: Int by context
-    val K: Int by context
-    val P: Int by context
-    val Z: Int by context
-    val transitionDestination by context.convertIntVarArray(raw)
-    val transitionInputEvent by context.convertIntVarArray(raw)
-    // val transitionTruthTable by context.convertBoolVarArray(raw)
-    val stateOutputEvent by context.convertIntVarArray(raw)
-    val stateAlgorithmTop by context.convertBoolVarArray(raw)
-    val stateAlgorithmBot by context.convertBoolVarArray(raw)
-    val nodeType by context.convertDomainVarArray<NodeType>(raw)
-    val nodeInputVariable by context.convertIntVarArray(raw)
-    val nodeParent by context.convertIntVarArray(raw)
-    val nodeChild by context.convertIntVarArray(raw)
-    // val nodeValue by context.convertBoolVarArray(raw)
+    val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
+    val C: Int = context["C"]
+    val K: Int = context["K"]
+    val P: Int = context["P"]
+    val Z: Int = context["Z"]
+    val transitionDestination=context.convertIntVarArray("transitionDestination",model)
+    val transitionInputEvent=context.convertIntVarArray("transitionInputEvent",model)
+    val stateOutputEvent=context.convertIntVarArray("stateOutputEvent",model)
+    val stateAlgorithmTop=context.convertBoolVarArray("stateAlgorithmTop",model)
+    val stateAlgorithmBot=context.convertBoolVarArray("stateAlgorithmBot",model)
+    val nodeType=context.convertDomainVarArray<NodeType>("nodeType",model)
+    val nodeInputVariable=context.convertIntVarArray("nodeInputVariable",model)
+    val nodeParent=context.convertIntVarArray("nodeParent",model)
+    val nodeChild=context.convertIntVarArray("nodeChild",model)
 
     val stateUsedFunction: (c: Int) -> Boolean =
         if (useStateUsed) {
-            val stateUsed by context.convertBoolVarArray(raw);
+            val stateUsed= context.convertBoolVarArray("stateUsed",model);
             { c -> stateUsed[c] }
         } else {
             { true }
@@ -884,7 +882,8 @@ fun buildExtendedAutomaton(
         stateUsed = stateUsedFunction,
         stateOutputEvent = { c ->
             stateOutputEvent[c].let { o ->
-                if (o == 0) null else scenarioTree.outputEvents[o - 1]
+                if (o == 0) null
+                else scenarioTree.outputEvents[o - 1]
             }
         },
         stateAlgorithm = { c ->

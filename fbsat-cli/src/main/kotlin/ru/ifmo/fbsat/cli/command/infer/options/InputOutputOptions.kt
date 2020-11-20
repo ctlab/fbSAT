@@ -50,7 +50,7 @@ fun ParameterHolder.initialCounterexamplesOption() =
         canBeDir = false,
         mustBeReadable = true
     ).convert {
-        Counterexample.fromFile(it)
+        Counterexample.from(it)
     }
 
 private const val outDirFormat = "yyyy-MM-dd_HH-mm-ss"

@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.solver
 
 import com.github.lipen.jnisat.JCadical
 import com.github.lipen.jnisat.JMiniSat
+import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.measureTimeWithResult
 import okio.Buffer
 import okio.BufferedSink
@@ -10,6 +11,7 @@ import okio.buffer
 import okio.sink
 import okio.source
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.ModularContext
 import ru.ifmo.fbsat.core.utils.lineSequence
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.toList_
@@ -19,7 +21,7 @@ import java.io.File
 
 @Suppress("FunctionName")
 interface Solver : AutoCloseable {
-    var context: SolverContext
+    var context: Context
     val numberOfVariables: Int
     val numberOfClauses: Int
 
@@ -31,16 +33,8 @@ interface Solver : AutoCloseable {
     fun clause_(literals: IntArray)
     fun clause_(literals: List<Literal>)
 
-    fun solve(): RawAssignment?
+    fun solve(): Model?
     fun reset()
-
-    // fun switchContext(newContext: SolverContext, block: () -> Unit) {
-    //     // Note: override this method to allow the Solver to temporarily switch context
-    //     error("This Solver cannot switch context.")
-    // }
-    // fun SolverContext.switch(block: () -> Unit) {
-    //     switchContext(this, block)
-    // }
 
     companion object {
         const val trueLiteral: Literal = Int.MAX_VALUE
@@ -61,34 +55,46 @@ interface Solver : AutoCloseable {
         fun mock(
             comment: (String) -> Unit = {},
             clause: (List<Literal>) -> Unit = {},
-            solve: () -> RawAssignment? = { TODO() },
+            solve: () -> Model? = { TODO() },
             reset: () -> Unit = {},
-            close: () -> Unit = {}
+            close: () -> Unit = {},
         ): Solver = object : AbstractSolver() {
             override fun _comment(comment: String) = comment(comment)
             override fun _clause(literals: List<Literal>) = clause(literals)
-            override fun _solve(): RawAssignment? = solve()
+            override fun _solve(): Model? = solve()
             override fun _reset(): Unit = reset()
             override fun _close(): Unit = close()
         }
     }
 }
 
-fun Solver.newContext(): SolverContext = SolverContext(this)
-
-inline fun Solver.switchContext(newContext: SolverContext, block: () -> Unit) {
+inline fun Solver.switchContext(newContext: Context, block: () -> Unit) {
     val oldContext = this.context
     this.context = newContext
     block()
     this.context = oldContext
 }
 
+fun Solver.declareModularContext(M: Int): ModularContext =
+    context("modularContext") {
+        MultiArray.create(M) { newContext() }
+    }
+
+@Suppress("LocalVariableName")
+inline fun Solver.forEachModularContext(block: (m: Int) -> Unit) {
+    val M: Int = context["M"]
+    val modularContext: ModularContext = context["modularContext"]
+    for (m in 1..M) switchContext(modularContext[m]) {
+        block(m)
+    }
+}
+
 fun Solver.clause(literals: Sequence<Literal>) {
     clause_(literals.toList())
 }
 
-fun Solver.clause(block: suspend SequenceScope<Literal>.() -> Unit) {
-    clause(sequence(block))
+fun Solver.clause(literals: SequenceScopeLiteral) {
+    clause(sequence(literals))
 }
 
 fun Solver.clause(literals: Iterable<Literal>) {
@@ -98,48 +104,35 @@ fun Solver.clause(literals: Iterable<Literal>) {
 fun <T> Solver.newDomainVar(
     domain: Iterable<T>,
     encoding: VarEncoding = Globals.defaultVarEncoding,
-    init: (T) -> Literal = { newLiteral() }
+    init: (T) -> Literal = { newLiteral() },
 ): DomainVar<T> = DomainVar.create(domain, this, encoding, init)
 
 fun Solver.newIntVar(
     domain: Iterable<Int>,
     encoding: VarEncoding = Globals.defaultVarEncoding,
-    init: (Int) -> Literal = { newLiteral() }
+    init: (Int) -> Literal = { newLiteral() },
 ): IntVar = IntVar.create(domain, this, encoding, init)
 
 fun Solver.newBoolVarArray(
     vararg shape: Int,
-    init: (IntArray) -> Literal = { newLiteral() }
+    init: (IntArray) -> Literal = { newLiteral() },
 ): BoolVarArray = BoolVarArray.create(shape, init)
 
 fun <T> Solver.newDomainVarArray(
     vararg shape: Int,
     encoding: VarEncoding = Globals.defaultVarEncoding,
-    domain: (IntArray) -> Iterable<T>
+    domain: (IntArray) -> Iterable<T>,
 ): DomainVarArray<T> = DomainVarArray.create(shape) { index -> newDomainVar(domain(index), encoding) }
 
 fun Solver.newIntVarArray(
     vararg shape: Int,
     encoding: VarEncoding = Globals.defaultVarEncoding,
-    domain: (IntArray) -> Iterable<Int>
+    domain: (IntArray) -> Iterable<Int>,
 ): IntVarArray = IntVarArray.create(shape) { index -> newIntVar(domain(index), encoding) }
-
-fun Solver.newBoolVarArrayCtx(
-    vararg shape: Int,
-    init: (IntArray) -> Literal = { newLiteral() }
-): SolverContext.ContextProvider<BoolVarArray> =
-    context(BoolVarArray.create(shape, init))
-
-fun Solver.newIntVarArrayCtx(
-    vararg shape: Int,
-    encoding: VarEncoding = Globals.defaultVarEncoding,
-    domain: (IntArray) -> Iterable<Int>
-): SolverContext.ContextProvider<IntVarArray> =
-    context(IntVarArray.create(shape) { index -> newIntVar(domain(index), encoding) })
 
 @Suppress("FunctionName")
 abstract class AbstractSolver : Solver {
-    final override var context: SolverContext = newContext()
+    final override var context: Context = newContext()
 
     // private set
     override var numberOfVariables: Int = 0
@@ -171,7 +164,7 @@ abstract class AbstractSolver : Solver {
         }
     }
 
-    final override fun solve(): RawAssignment? {
+    final override fun solve(): Model? {
         log.debug { "Solving..." }
         val (result, solvingTime) = measureTimeWithResult { _solve() }
         log.debug {
@@ -188,7 +181,7 @@ abstract class AbstractSolver : Solver {
         log.debug { "Resetting solver..." }
         numberOfVariables = 0
         numberOfClauses = 0
-        context.map.clear()
+        context = newContext()
         _reset()
     }
 
@@ -199,14 +192,14 @@ abstract class AbstractSolver : Solver {
 
     protected abstract fun _clause(literals: List<Literal>)
     protected abstract fun _comment(comment: String)
-    protected abstract fun _solve(): RawAssignment?
+    protected abstract fun _solve(): Model?
     protected abstract fun _reset()
     protected abstract fun _close()
 }
 
 class FileSolver(
     val command: String,
-    val file: File
+    val file: File,
 ) : AbstractSolver() {
     private val buffer = Buffer()
 
@@ -220,7 +213,7 @@ class FileSolver(
         buffer.writeln("0")
     }
 
-    override fun _solve(): RawAssignment? {
+    override fun _solve(): Model? {
         file.sink().buffer().use {
             it.writeln("p cnf $numberOfVariables $numberOfClauses")
             buffer.copyTo(it.buffer)
@@ -239,7 +232,7 @@ class FileSolver(
     override fun _close() {}
 }
 
-private fun parseDimacsOutput(source: BufferedSource): RawAssignment? {
+private fun parseDimacsOutput(source: BufferedSource): Model? {
     val answer = source.lineSequence().firstOrNull { it.startsWith("s ") }
         ?: error("No answer from solver")
     return when {
@@ -255,7 +248,7 @@ private fun parseDimacsOutput(source: BufferedSource): RawAssignment? {
             .toBooleanArray()
             .let {
                 check(it.isNotEmpty()) { "No model from solver for SAT" }
-                RawAssignment0(it)
+                Model0(it)
             }
         else -> error("Bad answer (neither SAT nor UNSAT) from solver: '$answer'")
     }
@@ -288,7 +281,7 @@ class IncrementalCryptominisat : AbstractSolver() {
         buffer.writeln("0")
     }
 
-    override fun _solve(): RawAssignment? {
+    override fun _solve(): Model? {
         processInput.writeln("solve 0").flush()
         buffer.writeln("c solve")
 
@@ -317,7 +310,7 @@ class IncrementalCryptominisat : AbstractSolver() {
     }
 }
 
-private fun parseIcmsOutput(source: BufferedSource): RawAssignment? =
+private fun parseIcmsOutput(source: BufferedSource): Model? =
     when (val answer = source.readUtf8Line() ?: error("Solver returned nothing")) {
         "SAT" -> {
             val line = source.readUtf8Line() ?: error("No model from solver for SAT")
@@ -331,7 +324,7 @@ private fun parseIcmsOutput(source: BufferedSource): RawAssignment? =
                 .toBooleanArray()
                 .let {
                     check(it.isNotEmpty()) { "No model from solver for SAT" }
-                    RawAssignment0(it)
+                    Model0(it)
                 }
         }
         "UNSAT" -> null
@@ -359,7 +352,7 @@ class MiniSat : AbstractSolver() {
         backend.addClause_(literals.toIntArray())
     }
 
-    override fun _solve(): RawAssignment? {
+    override fun _solve(): Model? {
         buffer.writeln("c solve")
 
         if (Globals.IS_DEBUG) {
@@ -372,7 +365,7 @@ class MiniSat : AbstractSolver() {
 
         if (!backend.solve()) return null
         val model = backend.getModel()
-        return RawAssignment1(model)
+        return Model1(model)
     }
 
     override fun _reset() {
@@ -410,7 +403,7 @@ class Cadical : AbstractSolver() {
         backend.addClause_(literals.toIntArray())
     }
 
-    override fun _solve(): RawAssignment? {
+    override fun _solve(): Model? {
         buffer.writeln("c solve")
 
         if (Globals.IS_DEBUG) {
@@ -423,7 +416,7 @@ class Cadical : AbstractSolver() {
 
         if (!backend.solve()) return null
         val model = backend.getModel()
-        return RawAssignment1(model)
+        return Model1(model)
     }
 
     fun getValue(lit: Literal): Boolean {

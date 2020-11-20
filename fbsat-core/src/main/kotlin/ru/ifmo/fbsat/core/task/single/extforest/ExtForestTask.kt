@@ -7,7 +7,7 @@ import ru.ifmo.fbsat.core.task.Task
 
 data class ExtForestTask(
     val totalNodes: Int, // P
-    val maxTotalGuardsSize: Int? = null // N, unconstrained if null
+    val maxTotalGuardsSize: Int? = null, // N, unconstrained if null
 ) : Task() {
     override fun Solver.declare_() {
         /* Variables */
@@ -22,7 +22,7 @@ data class ExtForestTask(
 
         /* Initial cardinality constraints */
         comment("$name: Initial cardinality (N) constraints")
-        val cardinalityN: Cardinality by context
+        val cardinalityN: Cardinality = context["cardinalityN"]
         cardinalityN.updateUpperBoundLessThanOrEqual(maxTotalGuardsSize)
     }
 }

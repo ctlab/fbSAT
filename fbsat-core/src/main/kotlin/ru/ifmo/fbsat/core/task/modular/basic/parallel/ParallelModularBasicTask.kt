@@ -15,7 +15,7 @@ data class ParallelModularBasicTask(
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int? = null, // K, =C if null
     val maxTransitions: Int? = null, // T, unconstrained if null
-    val isEncodeReverseImplication: Boolean = true
+    val isEncodeReverseImplication: Boolean = true,
 ) : Task() {
     override fun Solver.declare_() {
         /* Variables */
@@ -35,7 +35,7 @@ data class ParallelModularBasicTask(
 
         /* Initial cardinality constraints */
         comment("$name: Initial cardinality (T) constraints")
-        val cardinalityT: Cardinality by context
+        val cardinalityT: Cardinality = context["cardinalityT"]
         cardinalityT.updateUpperBoundLessThanOrEqual(maxTransitions)
     }
 }

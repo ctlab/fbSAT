@@ -6,7 +6,7 @@ interface Scenario : GenericScenario<ScenarioElement>
 
 data class ScenarioElement(
     override val inputAction: InputAction,
-    override val outputAction: OutputAction
+    override val outputAction: OutputAction,
 ) : GenericScenario.Element<InputAction, OutputAction> {
     override var nodeId: Int? = null
     var ceState: String? = null // FIXME: remove

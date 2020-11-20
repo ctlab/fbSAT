@@ -14,7 +14,7 @@ class PositiveScenarioTree(
     override val outputEvents: List<OutputEvent>,
     override val inputNames: List<String>,
     override val outputNames: List<String>,
-    override val isTrie: Boolean = true
+    override val isTrie: Boolean = true,
 ) : ScenarioTree<PositiveScenario, PositiveScenarioTree.Node> {
     private val _scenarios: MutableList<PositiveScenario> = mutableListOf()
     private val _nodes: MutableList<Node> = mutableListOf()
@@ -46,7 +46,7 @@ class PositiveScenarioTree(
 
     inner class Node(
         override val element: ScenarioElement,
-        override val parent: Node?
+        override val parent: Node?,
     ) : ScenarioTree.Node<Node> {
         private val _children: MutableList<Node> = mutableListOf()
 
@@ -76,7 +76,7 @@ class PositiveScenarioTree(
             outputNames: List<String>,
             inputEvents: List<InputEvent>? = null,
             outputEvents: List<OutputEvent>? = null,
-            isTrie: Boolean = true
+            isTrie: Boolean = true,
         ): PositiveScenarioTree =
             PositiveScenarioTree(
                 inputEvents = inputEvents ?: scenarios.flatMap { scenario ->
@@ -100,7 +100,7 @@ class PositiveScenarioTree(
             outputNames: List<String>,
             inputEvents: List<InputEvent>? = null,
             outputEvents: List<OutputEvent>? = null,
-            isTrie: Boolean = true
+            isTrie: Boolean = true,
         ): PositiveScenarioTree =
             fromScenarios(
                 scenarios = PositiveScenario.fromFile(file),

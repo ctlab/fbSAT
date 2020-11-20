@@ -5,10 +5,11 @@ plugins {
     idea
     kotlin("jvm") version Versions.kotlin
     kotlin("plugin.serialization") version Versions.kotlin apply false
-    id("fr.brouillard.oss.gradle.jgitver") version Versions.jgitver
-    id("com.github.ben-manes.versions") version Versions.gradle_versions
-    id("org.jlleitschuh.gradle.ktlint") version Versions.ktlint_gradle apply false
-    id("com.github.johnrengelman.shadow") version Versions.shadow apply false
+    kotlin("kapt") version Versions.kotlin apply false
+    with(Plugins.Jgitver) { id(id) version version }
+    with(Plugins.GradleVersions) { id(id) version version }
+    with(Plugins.Ktlint) { id(id) version version apply false }
+    with(Plugins.Shadow) { id(id) version version apply false }
 }
 
 allprojects {
@@ -22,16 +23,16 @@ allprojects {
 
 subprojects {
     apply(plugin = "kotlin")
-    apply(plugin = "org.jlleitschuh.gradle.ktlint")
+    apply(plugin = Plugins.Ktlint.id)
 
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
-        implementation(Libs.pretty_print)
+        implementation(Libs.PrettyPrint.pretty_print)
 
-        testImplementation(Libs.junit_jupiter_api)
-        testRuntimeOnly(Libs.junit_jupiter_engine)
-        testImplementation(Libs.junit_jupiter_params)
-        testImplementation(Libs.kluent)
+        testImplementation(Libs.JUnit.jupiter_api)
+        testRuntimeOnly(Libs.JUnit.jupiter_engine)
+        testImplementation(Libs.JUnit.jupiter_params)
+        testImplementation(Libs.Kluent.kluent)
     }
 
     configure<KtlintExtension> {
@@ -54,7 +55,7 @@ idea {
 }
 
 tasks.wrapper {
-    gradleVersion = "6.3"
+    gradleVersion = "6.7"
     distributionType = Wrapper.DistributionType.ALL
 }
 

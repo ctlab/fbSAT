@@ -9,7 +9,7 @@ import ru.ifmo.fbsat.core.utils.Globals
 
 data class ParallelModularExtendedTask(
     val maxGuardSize: Int, // P
-    val maxTotalGuardsSize: Int? = null // N, unconstrained if null
+    val maxTotalGuardsSize: Int? = null, // N, unconstrained if null
 ) : Task() {
     override fun Solver.declare_() {
         /* Variables */
@@ -25,7 +25,7 @@ data class ParallelModularExtendedTask(
 
         /* Initial cardinality constraints*/
         comment("$name: Initial cardinality (N) constraints")
-        val cardinalityN: Cardinality by context
+        val cardinalityN: Cardinality = context["cardinalityN"]
         cardinalityN.updateUpperBoundLessThanOrEqual(maxTotalGuardsSize)
     }
 }

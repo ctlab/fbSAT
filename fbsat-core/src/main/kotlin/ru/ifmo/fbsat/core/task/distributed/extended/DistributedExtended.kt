@@ -20,7 +20,7 @@ fun Inferrer.distributedExtended(
     modularMaxTotalGuardsSize: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [N]
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
     maxTransitions: Int? = null, // T_sum, unconstrained if null
-    maxTotalGuardsSize: Int? = null // N_sum, unconstrained if null
+    maxTotalGuardsSize: Int? = null, // N_sum, unconstrained if null
 ): DistributedAutomaton? {
     reset()
     declare(
@@ -47,11 +47,8 @@ fun Inferrer.distributedExtended(
 }
 
 fun Inferrer.inferDistributedExtended(): DistributedAutomaton? {
-    val rawAssignment = solver.solve() ?: return null
-    val automaton = buildExtendedDistributedAutomaton(
-        context = solver.context,
-        raw = rawAssignment
-    )
+    val model = solver.solve() ?: return null
+    val automaton = buildExtendedDistributedAutomaton(solver.context, model)
 
     // TODO: check mapping
     // log.warn("Mapping check is not implemented yet")

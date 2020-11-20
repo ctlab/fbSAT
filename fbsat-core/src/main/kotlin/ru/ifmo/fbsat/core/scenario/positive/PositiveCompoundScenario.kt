@@ -19,7 +19,7 @@ import ru.ifmo.fbsat.core.utils.toMultiArray
 class PositiveCompoundScenario private constructor(
     override val M: Int,
     override val elements: List<CompoundScenarioElement>,
-    override val modular: ImmutableMultiArray<PositiveScenario>
+    override val modular: ImmutableMultiArray<PositiveScenario>,
 ) : CompoundScenario<PositiveScenario>, CompoundImpl<PositiveScenario>() {
     // TODO: constructor(modularPositiveScenario: MultiArray<PositiveScenario>)
 
@@ -42,7 +42,7 @@ class PositiveCompoundScenario private constructor(
             modularInputEvents: MultiArray<List<InputEvent>>,
             modularOutputEvents: MultiArray<List<OutputEvent>>,
             modularInputNames: MultiArray<List<String>>,
-            modularOutputNames: MultiArray<List<String>>
+            modularOutputNames: MultiArray<List<String>>,
         ): PositiveCompoundScenario {
             val ceElements = counterexample.nodes
                 .map { node ->

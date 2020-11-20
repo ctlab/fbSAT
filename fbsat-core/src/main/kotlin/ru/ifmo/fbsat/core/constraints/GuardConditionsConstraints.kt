@@ -1,14 +1,16 @@
+@file:Suppress("LocalVariableName")
+
 package ru.ifmo.fbsat.core.constraints
 
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
-import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import ru.ifmo.fbsat.core.solver.DomainVarArray
 import ru.ifmo.fbsat.core.solver.IntVarArray
 import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.SolverContext
+import ru.ifmo.fbsat.core.solver.autoneg
+import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.solver.iff
 import ru.ifmo.fbsat.core.solver.imply
 import ru.ifmo.fbsat.core.solver.implyAnd
@@ -17,88 +19,66 @@ import ru.ifmo.fbsat.core.solver.implyImplyIff
 import ru.ifmo.fbsat.core.solver.implyImplyIffAnd
 import ru.ifmo.fbsat.core.solver.implyImplyIffOr
 import ru.ifmo.fbsat.core.solver.sign
-import ru.ifmo.fbsat.core.solver.switchContext
 import ru.ifmo.fbsat.core.task.single.extforest.ck2p
 import ru.ifmo.fbsat.core.utils.Globals
 
 fun Solver.declarePositiveGuardConditionsConstraints() {
     comment("Positive guard conditions constraints")
-    val U: Int by context
+    val U: Int = context["U"]
 
     comment("Positive guard conditions constraints: inputless")
     declareGuardConditionsConstraintsInputless()
 
     comment("Positive guard conditions constraints: for inputs (${1..U})")
-    val positiveScenarioTree: PositiveScenarioTree by context
-    context["tree"] = positiveScenarioTree
-    declareGuardConditionsConstraintsForInputs(Us = 1..U)
+    declareGuardConditionsConstraintsForInputs(Us = 1..U, isPositive = true)
 }
 
 fun Solver.declareNegativeGuardConditionsConstraints(Us: Iterable<Int>) {
     comment("Negative guard conditions constraints")
-    val negativeContext: SolverContext by context
 
     // Note: no inputless constraints
 
     comment("Negative guard conditions constraints: for inputs ($Us)")
-    val negativeScenarioTree: NegativeScenarioTree by context
-    switchContext(negativeContext) {
-        context["tree"] = negativeScenarioTree
-        declareGuardConditionsConstraintsForInputs(Us = Us)
-    }
+    declareGuardConditionsConstraintsForInputs(Us = Us, isPositive = false)
 }
 
 fun Solver.declareParallelModularGuardConditionsConstraints() {
-    // comment("Parallel modular guard conditions constraints")
-    // with(parallelModularExtendedVariables) {
-    //     for (m in 1..M) {
-    //         comment("Parallel modular guard conditions constraints: for module m = $m")
-    //         declarePositiveGuardConditionsConstraints(
-    //             extendedVars = modularExtendedVariables[m]
-    //         )
-    //     }
-    // }
+    comment("Parallel modular guard conditions constraints")
+    forEachModularContext { m ->
+        comment("Parallel modular guard conditions constraints: for module m = $m")
+        declarePositiveGuardConditionsConstraints()
+    }
 }
 
 fun Solver.declareConsecutiveModularGuardConditionsConstraints() {
-    // comment("Consecutive modular guard conditions constraints")
-    // with(consecutiveModularExtendedVariables) {
-    //     for (m in 1..M) {
-    //         comment("Consecutive modular guard conditions constraints: for module m = $m")
-    //         declarePositiveGuardConditionsConstraints(
-    //             extendedVars = modularExtendedVariables[m]
-    //         )
-    //     }
-    // }
+    comment("Consecutive modular guard conditions constraints")
+    forEachModularContext { m ->
+        comment("Consecutive modular guard conditions constraints: for module m = $m")
+        declarePositiveGuardConditionsConstraints()
+    }
 }
 
 fun Solver.declareDistributedPositiveGuardConditionsConstraints() {
-    // comment("Distributed guard conditions constraints")
-    // with(distributedExtendedVariables) {
-    //     for (m in 1..M) {
-    //         comment("Distributed guard conditions constraints: for module m = $m")
-    //         declarePositiveGuardConditionsConstraints(
-    //             extendedVars = modularExtendedVariables[m]
-    //         )
-    //
-    //         // FIXME: this should be called from 'declareDistributedGuardConditionsAdhocConstraints' method
-    //         comment("Distributed guard conditions adhoc constraints: for module m = $m")
-    //         declareGuardConditionsAdhocConstraints(
-    //             extendedVars = modularExtendedVariables[m]
-    //         )
-    //     }
-    // }
+    comment("Distributed guard conditions constraints")
+    forEachModularContext { m ->
+        comment("Distributed guard conditions constraints: for module m = $m")
+        declarePositiveGuardConditionsConstraints()
+
+        // FIXME: this should be called from 'declareDistributedGuardConditionsAdhocConstraints' method
+        comment("Distributed guard conditions adhoc constraints: for module m = $m")
+        declareGuardConditionsAdhocConstraints()
+    }
 }
 
 fun Solver.declareGuardConditionsAdhocConstraints() {
     comment("Adhoc guard conditions constraints")
-    val C: Int by context
-    val K: Int by context
-    val P: Int by context
-    val X: Int by context
-    val nodeType: DomainVarArray<NodeType> by context
-    val nodeInputVariable: IntVarArray by context
-    val nodeChild: IntVarArray by context
+    val C: Int = context["C"]
+    val K: Int = context["K"]
+    val P: Int = context["P"]
+    val X: Int = context["X"]
+    val nodeType: DomainVarArray<NodeType> = context["nodeType"]
+    val nodeInputVariable: IntVarArray = context["nodeInputVariable"]
+    val nodeChild: IntVarArray = context["nodeChild"]
 
     comment("Forbid double negation")
     // (nodeType[p] = NOT) & (nodeChild[p] = ch) => (nodeType[ch] != NOT)
@@ -130,11 +110,11 @@ fun Solver.declareGuardConditionsAdhocConstraints() {
             for (k in 1..K)
                 for (p in 1..P)
                     for (x in 1..X)
-                        implyAnd(nodeInputVariable[c, k, p] eq x, sequence {
+                        implyAnd(nodeInputVariable[c, k, p] eq x) {
                             for (p_ in 1 until p)
                                 for (x_ in x..X)
                                     yield(nodeInputVariable[c, k, p_] neq x_)
-                        })
+                        }
     }
 
     if (Globals.IS_ENCODE_TERMINALS_MINI_ORDER) {
@@ -159,297 +139,20 @@ fun Solver.declareGuardConditionsAdhocConstraints() {
     }
 }
 
-private fun Solver.declareGuardConditionsConstraintsInputless() {
-    val C: Int by context
-    val K: Int by context
-    val P: Int by context
-    val transitionDestination: IntVarArray by context
-    val nodeType: DomainVarArray<NodeType> by context
-    val nodeInputVariable: IntVarArray by context
-    val nodeParent: IntVarArray by context
-    val nodeChild: IntVarArray by context
-
-    comment("None-typed nodes have largest indices")
-    // (nodeType[p] = NONE) => (nodeType[p+1] = NONE)
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1 until P)
-                imply(
-                    nodeType[c, k, p] eq NodeType.NONE,
-                    nodeType[c, k, p + 1] eq NodeType.NONE
-                )
-
-    comment("Only null-transitions have no guard (root is none-typed)")
-    // (transitionDestination = 0) <=> (nodeType[1] = NONE)
-    for (c in 1..C)
-        for (k in 1..K)
-            iff(
-                transitionDestination[c, k] eq 0,
-                nodeType[c, k, 1] eq NodeType.NONE
-            )
-
-    comment("child=>parent relation")
-    // (nodeChild[p] = ch) => (nodeParent[ch] = p)
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                for (ch in (p + 1)..P)
-                    imply(
-                        nodeChild[c, k, p] eq ch,
-                        nodeParent[c, k, ch] eq p
-                    )
-    // (nodeChild[p] = 0) => AND_{ch}(nodeParent[ch] != p)
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                implyAnd(nodeChild[c, k, p] eq 0, sequence {
-                    for (ch in (p + 1)..P)
-                        yield(nodeParent[c, k, ch] neq p)
-                })
-
-    comment("Only typed nodes, except the root, have parents")
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 2..P)
-                iff(
-                    nodeParent[c, k, p] neq 0,
-                    nodeType[c, k, p] neq NodeType.NONE
-                )
-
-    // TERMINALS CONSTRAINTS
-
-    comment("Only terminal nodes have associated input variables")
-    // (nodeType[p] = TERMINAL) <=> (nodeInputVariable[p] != 0)
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                iff(
-                    nodeType[c, k, p] eq NodeType.TERMINAL,
-                    nodeInputVariable[c, k, p] neq 0
-                )
-
-    comment("Terminals do not have children")
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                imply(
-                    nodeType[c, k, p] eq NodeType.TERMINAL,
-                    nodeChild[c, k, p] eq 0
-                )
-
-    // AND/OR NODES CONSTRAINTS
-
-    comment("11.0a. AND/OR nodes cannot have numbers P-1 or P")
-    for (c in 1..C)
-        for (k in 1..K) {
-            if (P >= 1) {
-                clause(nodeType[c, k, P] neq NodeType.AND)
-                clause(nodeType[c, k, P] neq NodeType.OR)
-            }
-            if (P >= 2) {
-                clause(nodeType[c, k, P - 1] neq NodeType.AND)
-                clause(nodeType[c, k, P - 1] neq NodeType.OR)
-            }
-        }
-
-    comment("11.0b. AND/OR: left child cannot have number P")
-    // (nodeType[p] = AND/OR) => (nodeChild[p] != P)
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..(P - 2))
-                for (nt in listOf(NodeType.AND, NodeType.OR))
-                    imply(
-                        nodeType[c, k, p] eq nt,
-                        nodeChild[c, k, p] neq P
-                    )
-
-    comment("11.1. AND/OR nodes have left child")
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..(P - 2))
-                for (nt in listOf(NodeType.AND, NodeType.OR))
-                    imply(
-                        nodeType[c, k, p] eq nt,
-                        nodeChild[c, k, p] neq 0
-                    )
-
-    if (Globals.IS_ENCODE_HARD_TO_EXPLAIN) {
-        comment("11.+. AND/OR: hard to explain")
-        // parent[p, par] & nodetype[par, AND/OR] => child[par, p] | child[par, p-1]
-        for (c in 1..C)
-            for (k in 1..K)
-                for (par in 1..P) {
-                    run {
-                        val ch = par + 1
-                        if (ch < P)
-                            for (nt in listOf(NodeType.AND, NodeType.OR))
-                                clause(
-                                    nodeType[c, k, par] neq nt,
-                                    nodeParent[c, k, ch] neq par,
-                                    nodeChild[c, k, par] eq ch
-                                )
-                    }
-                    for (ch in (par + 2) until P)
-                        for (nt in listOf(NodeType.AND, NodeType.OR))
-                            clause(
-                                nodeType[c, k, par] neq nt,
-                                nodeParent[c, k, ch] neq par,
-                                nodeChild[c, k, par] eq ch,
-                                nodeChild[c, k, par] eq ch - 1
-                            )
-                }
-    }
-
-    comment("Right child of binary operators follows the left one")
-    // (nodeType[p] = AND/OR) & (nodeChild[p] = ch) => (nodeParent[ch+1] = p)
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                for (ch in (p + 1) until P)
-                    for (nt in listOf(NodeType.AND, NodeType.OR))
-                        implyImply(
-                            nodeType[c, k, p] eq nt,
-                            nodeChild[c, k, p] eq ch,
-                            nodeParent[c, k, ch + 1] eq p
-                        )
-
-    // NOT NODES CONSTRAINTS
-
-    comment("12.0. NOT nodes cannot have number P")
-    for (c in 1..C)
-        for (k in 1..K)
-            if (P >= 1)
-                clause(nodeType[c, k, P] neq NodeType.NOT)
-
-    comment("12.1. NOT nodes have left child")
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1 until P)
-                imply(
-                    nodeType[c, k, p] eq NodeType.NOT,
-                    nodeChild[c, k, p] neq 0
-                )
-
-    comment("12.2. NOT: parent's child is the current node")
-    // parent[p, par] & nodetype[par, NOT] => child[par, p]
-    for (c in 1..C)
-        for (k in 1..K)
-            for (par in 1..P)
-                for (ch in (par + 1)..P)
-                    implyImply(
-                        nodeType[c, k, par] eq NodeType.NOT,
-                        nodeParent[c, k, ch] eq par,
-                        nodeChild[c, k, par] eq ch
-                    )
-
-    // NONE-TYPE NODES CONSTRAINTS
-
-    comment("None-typed nodes do not have children")
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                imply(
-                    nodeType[c, k, p] eq NodeType.NONE,
-                    nodeChild[c, k, p] eq 0
-                )
-}
-
-private fun Solver.declareGuardConditionsConstraintsForInputs(Us: Iterable<Int>) {
-    val tree: ScenarioTree<*, *> by context
-    val C: Int by context
-    val K: Int by context
-    val P: Int by context
-    val X: Int by context
-    val nodeType: DomainVarArray<NodeType> by context
-    val nodeInputVariable: IntVarArray by context
-    val nodeChild: IntVarArray by context
-    val nodeValue: BoolVarArray by context
-
-    comment("Terminal nodes have value from associated input variables")
-    // (nodeInputVariable[p] = x) => AND_{u}( nodeValue[p,u] <=> u[x] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                for (x in 1..X)
-                    for (u in Us)
-                        imply(
-                            nodeInputVariable[c, k, p] eq x,
-                            nodeValue[c, k, p, u] sign tree.uniqueInputs[u - 1][x - 1]
-                        )
-
-    comment("AND: value is calculated as a conjunction of children values")
-    // (nodeType[p] = AND) & (nodeChild[p] = ch) =>
-    //  AND_{u}( nodeValue[p,u] <=> nodeValue[ch,u] & nodeValue[ch+1,u] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                for (ch in (p + 1) until P)
-                    for (u in Us)
-                        implyImplyIffAnd(
-                            nodeType[c, k, p] eq NodeType.AND,
-                            nodeChild[c, k, p] eq ch,
-                            nodeValue[c, k, p, u],
-                            nodeValue[c, k, ch, u],
-                            nodeValue[c, k, ch + 1, u]
-                        )
-
-    comment("OR: value is calculated as a disjunction of children values")
-    // (nodeType[p] = OR) & (nodeChild[p] = ch) =>
-    //  AND_{u}( nodeValue[p,u] <=> nodeValue[ch,u] | nodeValue[ch+1,u] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                for (ch in (p + 1) until P)
-                    for (u in Us)
-                        implyImplyIffOr(
-                            nodeType[c, k, p] eq NodeType.OR,
-                            nodeChild[c, k, p] eq ch,
-                            nodeValue[c, k, p, u],
-                            nodeValue[c, k, ch, u],
-                            nodeValue[c, k, ch + 1, u]
-                        )
-
-    comment("NOT: value is calculated as a negation of a child value")
-    // (nodeType[p] = OR) & (nodeChild[p] = ch) =>
-    //  AND_{u}( nodeValue[p,u] <=> ~nodeValue[ch,u] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                for (ch in (p + 1)..P)
-                    for (u in Us)
-                        implyImplyIff(
-                            nodeType[c, k, p] eq NodeType.NOT,
-                            nodeChild[c, k, p] eq ch,
-                            nodeValue[c, k, p, u],
-                            -nodeValue[c, k, ch, u]
-                        )
-
-    comment("None-type nodes have False values")
-    // (nodeType[p] = NONE) => AND_{u}( ~nodeValue[p,u] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                for (u in Us)
-                    imply(
-                        nodeType[c, k, p] eq NodeType.NONE,
-                        -nodeValue[c, k, p, u]
-                    )
-}
-
 fun Solver.declareExtForestGuardConditionsConstraints() {
     comment("ExtForest guard conditions constraints")
-    val scenarioTree: PositiveScenarioTree by context
-    val C: Int by context
-    val K: Int by context
-    val P: Int by context
-    val X: Int by context
-    val U: Int by context
-    val transitionDestination: IntVarArray by context
-    val nodeType: DomainVarArray<NodeType> by context
-    val nodeInputVariable: IntVarArray by context
-    val nodeParent: IntVarArray by context
-    val nodeChild: IntVarArray by context
-    val nodeValue: BoolVarArray by context
+    val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
+    val C: Int = context["C"]
+    val K: Int = context["K"]
+    val P: Int = context["P"]
+    val X: Int = context["X"]
+    val U: Int = context["U"]
+    val transitionDestination: IntVarArray = context["transitionDestination"]
+    val nodeType: DomainVarArray<NodeType> = context["nodeType"]
+    val nodeInputVariable: IntVarArray = context["nodeInputVariable"]
+    val nodeParent: IntVarArray = context["nodeParent"]
+    val nodeChild: IntVarArray = context["nodeChild"]
+    val nodeValue: BoolVarArray = context["nodeValue"]
 
     comment("Parent-child relation")
     // (nodeChild[p] = ch) => (nodeParent[ch] = p)
@@ -607,8 +310,285 @@ fun Solver.declareExtForestGuardConditionsConstraints() {
     for (p in 1..P)
         for (ch in nodeChild[p].domain - 0)
             if (ch < P)
-                implyAnd(nodeParent[ch] eq p, sequence {
+                implyAnd(nodeParent[ch] eq p) {
                     for (s in 1 until p)
                         yield(nodeParent[ch + 1] neq s)
-                })
+                }
+}
+
+private fun Solver.declareGuardConditionsConstraintsInputless() {
+    val C: Int = context["C"]
+    val K: Int = context["K"]
+    val P: Int = context["P"]
+    val transitionDestination: IntVarArray = context["transitionDestination"]
+    val nodeType: DomainVarArray<NodeType> = context["nodeType"]
+    val nodeInputVariable: IntVarArray = context["nodeInputVariable"]
+    val nodeParent: IntVarArray = context["nodeParent"]
+    val nodeChild: IntVarArray = context["nodeChild"]
+
+    comment("None-typed nodes have largest indices")
+    // (nodeType[p] = NONE) => (nodeType[p+1] = NONE)
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1 until P)
+                imply(
+                    nodeType[c, k, p] eq NodeType.NONE,
+                    nodeType[c, k, p + 1] eq NodeType.NONE
+                )
+
+    comment("Only null-transitions have no guard (root is none-typed)")
+    // (transitionDestination = 0) <=> (nodeType[1] = NONE)
+    for (c in 1..C)
+        for (k in 1..K)
+            iff(
+                transitionDestination[c, k] eq 0,
+                nodeType[c, k, 1] eq NodeType.NONE
+            )
+
+    comment("child=>parent relation")
+    // (nodeChild[p] = ch) => (nodeParent[ch] = p)
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..P)
+                for (ch in (p + 1)..P)
+                    imply(
+                        nodeChild[c, k, p] eq ch,
+                        nodeParent[c, k, ch] eq p
+                    )
+    // (nodeChild[p] = 0) => AND_{ch}(nodeParent[ch] != p)
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..P)
+                implyAnd(nodeChild[c, k, p] eq 0) {
+                    for (ch in (p + 1)..P)
+                        yield(nodeParent[c, k, ch] neq p)
+                }
+
+    comment("Only typed nodes, except the root, have parents")
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 2..P)
+                iff(
+                    nodeParent[c, k, p] neq 0,
+                    nodeType[c, k, p] neq NodeType.NONE
+                )
+
+    // TERMINALS CONSTRAINTS
+
+    comment("Only terminal nodes have associated input variables")
+    // (nodeType[p] = TERMINAL) <=> (nodeInputVariable[p] != 0)
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..P)
+                iff(
+                    nodeType[c, k, p] eq NodeType.TERMINAL,
+                    nodeInputVariable[c, k, p] neq 0
+                )
+
+    comment("Terminals do not have children")
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..P)
+                imply(
+                    nodeType[c, k, p] eq NodeType.TERMINAL,
+                    nodeChild[c, k, p] eq 0
+                )
+
+    // AND/OR NODES CONSTRAINTS
+
+    comment("11.0a. AND/OR nodes cannot have numbers P-1 or P")
+    for (c in 1..C)
+        for (k in 1..K) {
+            if (P >= 1) {
+                clause(nodeType[c, k, P] neq NodeType.AND)
+                clause(nodeType[c, k, P] neq NodeType.OR)
+            }
+            if (P >= 2) {
+                clause(nodeType[c, k, P - 1] neq NodeType.AND)
+                clause(nodeType[c, k, P - 1] neq NodeType.OR)
+            }
+        }
+
+    comment("11.0b. AND/OR: left child cannot have number P")
+    // (nodeType[p] = AND/OR) => (nodeChild[p] != P)
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..(P - 2))
+                for (nt in listOf(NodeType.AND, NodeType.OR))
+                    imply(
+                        nodeType[c, k, p] eq nt,
+                        nodeChild[c, k, p] neq P
+                    )
+
+    comment("11.1. AND/OR nodes have left child")
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..(P - 2))
+                for (nt in listOf(NodeType.AND, NodeType.OR))
+                    imply(
+                        nodeType[c, k, p] eq nt,
+                        nodeChild[c, k, p] neq 0
+                    )
+
+    if (Globals.IS_ENCODE_HARD_TO_EXPLAIN) {
+        comment("11.+. AND/OR: hard to explain")
+        // parent[p, par] & nodetype[par, AND/OR] => child[par, p] | child[par, p-1]
+        for (c in 1..C)
+            for (k in 1..K)
+                for (par in 1..P) {
+                    run {
+                        val ch = par + 1
+                        if (ch < P)
+                            for (nt in listOf(NodeType.AND, NodeType.OR))
+                                clause(
+                                    nodeType[c, k, par] neq nt,
+                                    nodeParent[c, k, ch] neq par,
+                                    nodeChild[c, k, par] eq ch
+                                )
+                    }
+                    for (ch in (par + 2) until P)
+                        for (nt in listOf(NodeType.AND, NodeType.OR))
+                            clause(
+                                nodeType[c, k, par] neq nt,
+                                nodeParent[c, k, ch] neq par,
+                                nodeChild[c, k, par] eq ch,
+                                nodeChild[c, k, par] eq ch - 1
+                            )
+                }
+    }
+
+    comment("Right child of binary operators follows the left one")
+    // (nodeType[p] = AND/OR) & (nodeChild[p] = ch) => (nodeParent[ch+1] = p)
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..P)
+                for (ch in (p + 1) until P)
+                    for (nt in listOf(NodeType.AND, NodeType.OR))
+                        implyImply(
+                            nodeType[c, k, p] eq nt,
+                            nodeChild[c, k, p] eq ch,
+                            nodeParent[c, k, ch + 1] eq p
+                        )
+
+    // NOT NODES CONSTRAINTS
+
+    comment("12.0. NOT nodes cannot have number P")
+    for (c in 1..C)
+        for (k in 1..K)
+            if (P >= 1)
+                clause(nodeType[c, k, P] neq NodeType.NOT)
+
+    comment("12.1. NOT nodes have left child")
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1 until P)
+                imply(
+                    nodeType[c, k, p] eq NodeType.NOT,
+                    nodeChild[c, k, p] neq 0
+                )
+
+    comment("12.2. NOT: parent's child is the current node")
+    // parent[p, par] & nodetype[par, NOT] => child[par, p]
+    for (c in 1..C)
+        for (k in 1..K)
+            for (par in 1..P)
+                for (ch in (par + 1)..P)
+                    implyImply(
+                        nodeType[c, k, par] eq NodeType.NOT,
+                        nodeParent[c, k, ch] eq par,
+                        nodeChild[c, k, par] eq ch
+                    )
+
+    // NONE-TYPE NODES CONSTRAINTS
+
+    comment("None-typed nodes do not have children")
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..P)
+                imply(
+                    nodeType[c, k, p] eq NodeType.NONE,
+                    nodeChild[c, k, p] eq 0
+                )
+}
+
+private fun Solver.declareGuardConditionsConstraintsForInputs(Us: Iterable<Int>, isPositive: Boolean) {
+    val tree: ScenarioTree<*, *> = context.autoneg("tree",isPositive)
+    val C: Int = context["C"]
+    val K: Int = context["K"]
+    val P: Int = context["P"]
+    val X: Int = context["X"]
+    val nodeType: DomainVarArray<NodeType> = context["nodeType"]
+    val nodeInputVariable: IntVarArray = context["nodeInputVariable"]
+    val nodeChild: IntVarArray = context["nodeChild"]
+    val nodeValue: BoolVarArray = context.autoneg("nodeValue", isPositive)
+
+    comment("Terminal nodes have value from associated input variables")
+    // (nodeInputVariable[p] = x) => AND_{u}( nodeValue[p,u] <=> u[x] )
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..P)
+                for (x in 1..X)
+                    for (u in Us)
+                        imply(
+                            nodeInputVariable[c, k, p] eq x,
+                            nodeValue[c, k, p, u] sign tree.uniqueInputs[u - 1][x - 1]
+                        )
+
+    comment("AND: value is calculated as a conjunction of children values")
+    // (nodeType[p] = AND) & (nodeChild[p] = ch) =>
+    //  AND_{u}( nodeValue[p,u] <=> nodeValue[ch,u] & nodeValue[ch+1,u] )
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..P)
+                for (ch in (p + 1) until P)
+                    for (u in Us)
+                        implyImplyIffAnd(
+                            nodeType[c, k, p] eq NodeType.AND,
+                            nodeChild[c, k, p] eq ch,
+                            nodeValue[c, k, p, u],
+                            nodeValue[c, k, ch, u],
+                            nodeValue[c, k, ch + 1, u]
+                        )
+
+    comment("OR: value is calculated as a disjunction of children values")
+    // (nodeType[p] = OR) & (nodeChild[p] = ch) =>
+    //  AND_{u}( nodeValue[p,u] <=> nodeValue[ch,u] | nodeValue[ch+1,u] )
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..P)
+                for (ch in (p + 1) until P)
+                    for (u in Us)
+                        implyImplyIffOr(
+                            nodeType[c, k, p] eq NodeType.OR,
+                            nodeChild[c, k, p] eq ch,
+                            nodeValue[c, k, p, u],
+                            nodeValue[c, k, ch, u],
+                            nodeValue[c, k, ch + 1, u]
+                        )
+
+    comment("NOT: value is calculated as a negation of a child value")
+    // (nodeType[p] = OR) & (nodeChild[p] = ch) =>
+    //  AND_{u}( nodeValue[p,u] <=> ~nodeValue[ch,u] )
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..P)
+                for (ch in (p + 1)..P)
+                    for (u in Us)
+                        implyImplyIff(
+                            nodeType[c, k, p] eq NodeType.NOT,
+                            nodeChild[c, k, p] eq ch,
+                            nodeValue[c, k, p, u],
+                            -nodeValue[c, k, ch, u]
+                        )
+
+    comment("None-type nodes have False values")
+    // (nodeType[p] = NONE) => AND_{u}( ~nodeValue[p,u] )
+    for (c in 1..C)
+        for (k in 1..K)
+            for (p in 1..P)
+                for (u in Us)
+                    imply(
+                        nodeType[c, k, p] eq NodeType.NONE,
+                        -nodeValue[c, k, p, u]
+                    )
 }

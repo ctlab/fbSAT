@@ -37,7 +37,7 @@ fun Inferrer.distributedCegis(
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
     maxTransitions: Int? = null, // T_sum, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N_sum, unconstrained if null
-    smvDir: File
+    smvDir: File,
 ): DistributedAutomaton? {
     reset()
     declare(
@@ -76,14 +76,14 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
     // Copy smv files to output directory
     smvDir.copyRecursively(outDir, overwrite = true)
 
-    val modularScenarioTree: MultiArray<PositiveScenarioTree> by solver.context
-    val negativeCompoundScenarioTree: NegativeCompoundScenarioTree by solver.context
+    val modularScenarioTree: MultiArray<PositiveScenarioTree> = solver.context["modularScenarioTree"]
+    val negativeCompoundScenarioTree: NegativeCompoundScenarioTree = solver.context["negativeCompoundScenarioTree"]
     val negativeTree = negativeCompoundScenarioTree
     lateinit var lastNegativeScenarios: List<NegativeCompoundScenario>
     var lastHashCode: Int = -1
 
     // =====
-    val M: Int by solver.context
+    val M: Int = solver.context["M"]
     val modularName = multiArrayOf(
         "sender",
         "receiver"
@@ -135,25 +135,25 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
         //     } else {
         //         log.failure("[$i / ${negativeTree.scenarios.size}] Verify: FAILED")
         //         ok = false
-        //         val raw: RawAssignment = solver.context["lastRawAssignment"]
+        //         val model: model = solver.context["lastmodel"]
         //         val C = vars.modularC[1]
         //         val E = vars.modularE[1]
         //         val U = vars.modularCompleteVariables[1].negU
         //         // val assignment =
-        //         //     DistributedExtendedAssignment.fromRaw(rawAssignment, solver.context.distributedExtendedVars)
+        //         //     DistributedExtendedAssignment.frommodel(model, solver.context.distributedExtendedVars)
         //         val completeVars = vars.modularCompleteVariables[1]
-        //         val negActualTransitionFunction = completeVars.negActualTransitionFunction.convert(raw)
+        //         val negActualTransitionFunction = completeVars.negActualTransitionFunction.convert(model)
         //         for (u in 1..U)
         //             for (c in 1..C)
         //                 for (e in 1..E) {
         //                     println("negActualTransitionFunction[c = $c, e = $e, u = $u = ${negativeTree.modular[1].uniqueInputs[u - 1].values.toBinaryString()}] = ${negActualTransitionFunction[c, e, u]}")
         //                 }
-        //         val stateOutputEvent = completeVars.stateOutputEvent.convert(raw)
-        //         val negMapping = completeVars.negMapping.convert(raw)
-        //         val negFirstFired = completeVars.negFirstFired.convert(raw)
-        //         val negTransitionFiring = completeVars.negTransitionFiring.convert(raw)
-        //         val negTransitionTruthTable = completeVars.negTransitionTruthTable.convert(raw)
-        //         val actualTransitionFunction = completeVars.actualTransitionFunction.convert(raw)
+        //         val stateOutputEvent = completeVars.stateOutputEvent.convert(model)
+        //         val negMapping = completeVars.negMapping.convert(model)
+        //         val negFirstFired = completeVars.negFirstFired.convert(model)
+        //         val negTransitionFiring = completeVars.negTransitionFiring.convert(model)
+        //         val negTransitionTruthTable = completeVars.negTransitionTruthTable.convert(model)
+        //         val actualTransitionFunction = completeVars.actualTransitionFunction.convert(model)
         //         val u = negativeTree.modular[1].uniqueInputs
         //             .indexOf(InputValues("0111".toBooleanList())) + 1
         //         println("===")
