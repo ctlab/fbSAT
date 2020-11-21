@@ -1,13 +1,10 @@
 package ru.ifmo.fbsat.core.utils
 
+import com.github.lipen.multiarray.MultiArray
 import org.redundent.kotlin.xml.PrintOptions
-import ru.ifmo.fbsat.core.automaton.OutputValues
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.solver.VarEncoding
 import kotlin.properties.Delegates
-
-enum class SolverBackend {
-    INCREMENTAL_CRYPTOMINISAT, FILE, MINISAT, CADICAL;
-}
 
 enum class EpsilonOutputEvents {
     START, ONLYSTART, NONE;
@@ -37,4 +34,5 @@ object Globals {
     val xmlPrintOptions: PrintOptions =
         PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = true)
     val defaultVarEncoding: VarEncoding = VarEncoding.ONEHOT
+    var modularName: MultiArray<String> by Delegates.notNull()
 }

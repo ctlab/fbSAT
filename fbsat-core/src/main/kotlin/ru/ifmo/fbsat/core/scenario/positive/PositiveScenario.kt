@@ -1,11 +1,11 @@
 package ru.ifmo.fbsat.core.scenario.positive
 
-import ru.ifmo.fbsat.core.automaton.InputEvent
-import ru.ifmo.fbsat.core.automaton.InputValues
-import ru.ifmo.fbsat.core.automaton.OutputEvent
-import ru.ifmo.fbsat.core.automaton.OutputValues
 import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.OutputAction
+import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.preprocessed
@@ -17,7 +17,7 @@ import ru.ifmo.fbsat.core.utils.useLines
 import java.io.File
 
 data class PositiveScenario(
-    override val elements: List<ScenarioElement>
+    override val elements: List<ScenarioElement>,
 ) : Scenario {
     companion object {
         fun fromFile(file: File, preprocess: Boolean = true): List<PositiveScenario> {
@@ -60,8 +60,14 @@ data class PositiveScenario(
                 .map {
                     val (type, event, values) = it.destructured
                     when (type) {
-                        "in" -> InputAction(InputEvent(event), InputValues(values.toBooleanList()))
-                        "out" -> OutputAction(OutputEvent(event), OutputValues(values.toBooleanList()))
+                        "in" -> InputAction(
+                            event = InputEvent(event),
+                            values = InputValues(values.toBooleanList())
+                        )
+                        "out" -> OutputAction(
+                            event = OutputEvent(event),
+                            values = OutputValues(values.toBooleanList())
+                        )
                         else -> error("Unsupported action type '$type'")
                     }
                 }

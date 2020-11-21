@@ -2,13 +2,17 @@ package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
+import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.makeDnfString
+import ru.ifmo.fbsat.core.utils.pow
 import ru.ifmo.fbsat.core.utils.toBinaryString
+import ru.ifmo.fbsat.core.utils.toBooleanList
 import kotlin.math.absoluteValue
 
 interface Guard {
     val size: Int
+    val truthTableString: String
     fun eval(inputValues: InputValues): Boolean
     fun toSimpleString(): String
     fun toGraphvizString(): String
@@ -22,6 +26,8 @@ class UnconditionalGuard : Guard {
             log.warn("UnconditionalGuard has no meaningful size")
             return 0
         }
+
+    override val truthTableString: String = "1"
 
     override fun eval(inputValues: InputValues): Boolean {
         return true
@@ -51,9 +57,11 @@ class UnconditionalGuard : Guard {
 class TruthTableGuard(
     val truthTable: Map<InputValues, Boolean?>,
     private val inputNames: List<String>,
-    private val uniqueInputs: List<InputValues>
+    private val uniqueInputs: List<InputValues>,
 ) : Guard {
     val cnf: List<List<Int>> = emptyList()
+
+    override val truthTableString: String = truthTable.values.filterNotNull().toBinaryString()
 
     // minimizeToCNF(
     //     minterms = truthTable.filter { (_, value) -> value == true }.keys.map { it.number },
@@ -99,7 +107,7 @@ class ParseTreeGuard(
     parent: IntMultiArray,
     childLeft: IntMultiArray,
     childRight: IntMultiArray,
-    private val inputNames: List<String>? = null
+    private val inputNames: List<String>? = null,
 ) : Guard {
     val nodes: List<Node>
 
@@ -124,9 +132,14 @@ class ParseTreeGuard(
         }
     }
 
+    override val truthTableString: String
+        get() = (0 until 2.pow(inputNames!!.size)).map { i ->
+            eval(InputValues(i.toString(2).padStart(inputNames.size, '0').toBooleanList()))
+        }.toBinaryString()
+
     inner class Node(
         val nodeType: NodeType,
-        val terminalNumber: Int // 1..X, or 0 if non-terminal
+        val terminalNumber: Int, // 1..X, or 0 if non-terminal
     ) {
         var parent: Node? = null
             internal set
@@ -303,6 +316,9 @@ class StringGuard(val expr: String, val inputNames: List<String>) : Guard {
     override val size: Int =
         2 * literals.size - 1 + literals.count { it.startsWith("!") || it.startsWith("~") }
 
+    override val truthTableString: String
+        get() = TODO()
+
     override fun eval(inputValues: InputValues): Boolean {
         return literals.all {
             if (it.startsWith("!") || it.startsWith("~"))
@@ -338,7 +354,7 @@ class StringGuard(val expr: String, val inputNames: List<String>) : Guard {
 
 class DnfGuard(
     val dnf: List<List<String>>,
-    val inputNames: List<String>
+    val inputNames: List<String>,
 ) : Guard {
     // Note: `_dnf` is one-based and signed
     private val _dnf: List<List<Int>> =
@@ -353,6 +369,9 @@ class DnfGuard(
         }
 
     override val size: Int = dnf.sumBy { it.size }
+
+    override val truthTableString: String
+        get() = TODO()
 
     override fun eval(inputValues: InputValues): Boolean =
         if (_dnf.isEmpty()) {

@@ -103,7 +103,7 @@ fun Solver.implyImplyImplyIffIte(
     base: Literal,
     cond: Literal,
     a: Literal,
-    b: Literal
+    b: Literal,
 ) {
     clause(-x1, -x2, -x3, base, -cond, -a)
     clause(-x1, -x2, -x3, -base, -cond, a)
@@ -167,7 +167,7 @@ fun Solver.implyIffOr(x1: Literal, x2: Literal, xs: Iterable<Literal>) {
     }
 }
 
-/** [x1] => ([x2] <=> ITE([cond], [a], [b]) */
+/** [x1] => ([x2] <=> `ITE`([cond], [a], [b]) */
 fun Solver.implyIffIte(x1: Literal, x2: Literal, cond: Literal, a: Literal, b: Literal) {
     clause(-x1, x2, -cond, -a)
     clause(-x1, -x2, -cond, a)

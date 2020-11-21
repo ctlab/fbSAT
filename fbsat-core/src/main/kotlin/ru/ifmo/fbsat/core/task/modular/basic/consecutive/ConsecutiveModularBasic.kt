@@ -2,77 +2,49 @@ package ru.ifmo.fbsat.core.task.modular.basic.consecutive
 
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.automaton.buildBasicConsecutiveModularAutomaton
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.task.consecutiveModularBasicVars
-import ru.ifmo.fbsat.core.task.optimizeTopDown
+import ru.ifmo.fbsat.core.task.optimizeConsecutiveModularT
 import ru.ifmo.fbsat.core.utils.log
 
-fun Inferrer.inferConsecutiveModularBasic(): ConsecutiveModularAutomaton? {
-    val rawAssignment = solver.solve() ?: return null
-    val vars = solver.consecutiveModularBasicVars
-    val assignment = ConsecutiveModularBasicAssignment.fromRaw(rawAssignment, vars)
-    val automaton = assignment.toAutomaton()
-
-    // TODO: check automaton
-    check(true)
-
-    return automaton
-}
-
-fun Inferrer.optimizeConsecutiveModularT(start: Int? = null, end: Int = 0): ConsecutiveModularAutomaton? {
-    log.info("Optimizing T...")
-    val vars = solver.consecutiveModularBasicVars
-    return optimizeTopDown(
-        start = start,
-        end = end,
-        nextInitial = { T ->
-            vars.cardinality.updateUpperBoundLessThanOrEqual(T)
-            inferConsecutiveModularBasic()
-        },
-        next = { T ->
-            vars.cardinality.updateUpperBoundLessThan(T)
-            inferConsecutiveModularBasic()
-        },
-        query = { it.numberOfTransitions }
-    )
-}
-
 fun Inferrer.consecutiveModularBasic(
-    scenarioTree: ScenarioTree,
+    scenarioTree: PositiveScenarioTree,
     numberOfModules: Int, // M
     numberOfStates: Int, // C
     maxOutgoingTransitions: Int? = null, // K, =C if null
     maxTransitions: Int? = null, // T, unconstrained if null
-    isEncodeReverseImplication: Boolean = true
+    isEncodeReverseImplication: Boolean = true,
 ): ConsecutiveModularAutomaton? {
     reset()
-    solver.declareConsecutiveModularBasic(
-        scenarioTree = scenarioTree,
-        numberOfModules = numberOfModules,
-        numberOfStates = numberOfStates,
-        maxOutgoingTransitions = maxOutgoingTransitions,
-        maxTransitions = maxTransitions,
-        isEncodeReverseImplication = isEncodeReverseImplication
+    declare(
+        ConsecutiveModularBasicTask(
+            scenarioTree = scenarioTree,
+            numberOfModules = numberOfModules,
+            numberOfStates = numberOfStates,
+            maxOutgoingTransitions = maxOutgoingTransitions,
+            maxTransitions = maxTransitions,
+            isEncodeReverseImplication = isEncodeReverseImplication,
+        )
     )
     return inferConsecutiveModularBasic()
 }
 
 fun Inferrer.consecutiveModularBasicMinC(
-    scenarioTree: ScenarioTree,
+    scenarioTree: PositiveScenarioTree,
     numberOfModules: Int, // M
     start: Int = 1, // C_start
-    end: Int = 20 // C_end
+    end: Int = 20, // C_end
 ): ConsecutiveModularAutomaton {
     var best: ConsecutiveModularAutomaton? = null
     for (C in start..end) {
-        reset()
-        solver.declareConsecutiveModularBasic(
-            scenarioTree = scenarioTree,
-            numberOfModules = numberOfModules,
-            numberOfStates = C
-        )
-        val (result, runningTime) = measureTimeWithResult { inferConsecutiveModularBasic() }
+        val (result, runningTime) = measureTimeWithResult {
+            consecutiveModularBasic(
+                scenarioTree = scenarioTree,
+                numberOfModules = numberOfModules,
+                numberOfStates = C,
+            )
+        }
         if (result != null) {
             log.success("ConsecutiveModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
             log.info("ConsecutiveModularBasicMin: minimal C = $C")
@@ -86,9 +58,20 @@ fun Inferrer.consecutiveModularBasicMinC(
 }
 
 fun Inferrer.consecutiveModularBasicMin(
-    scenarioTree: ScenarioTree,
-    numberOfModules: Int // M
+    scenarioTree: PositiveScenarioTree,
+    numberOfModules: Int, // M
+    numberOfStates: Int? = null, // C_start, 1 if null
 ): ConsecutiveModularAutomaton? {
-    consecutiveModularBasicMinC(scenarioTree, numberOfModules = numberOfModules)
+    consecutiveModularBasicMinC(scenarioTree, numberOfModules = numberOfModules, start = numberOfStates ?: 1)
     return optimizeConsecutiveModularT()
+}
+
+fun Inferrer.inferConsecutiveModularBasic(): ConsecutiveModularAutomaton? {
+    val model = solver.solve() ?: return null
+    val automaton = buildBasicConsecutiveModularAutomaton(solver.context, model)
+
+    // TODO: check automaton
+    // log.warn("Mapping check is not implemented yet")
+
+    return automaton
 }

@@ -8,11 +8,21 @@ import okio.buffer
 import okio.sink
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.OutputAction
+import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
-import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.PinVars
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.Context
+import ru.ifmo.fbsat.core.solver.Model
+import ru.ifmo.fbsat.core.solver.convertBoolVarArray
+import ru.ifmo.fbsat.core.solver.convertIntVarArray
+import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.Pins
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.ModularContext
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.pow
 import ru.ifmo.fbsat.core.utils.random
@@ -28,18 +38,20 @@ class ArbitraryModularAutomaton(
     val inputEvents: List<InputEvent>,
     val outputEvents: List<OutputEvent>,
     val inputNames: List<String>,
-    val outputNames: List<String>
+    val outputNames: List<String>,
 ) {
     /** Number of modules */
     @Suppress("PropertyName")
-    val M: Int = modules.shape[0]
+    val M: Int = modules.shape.single()
+    val numberOfModules: Int = M
+    val numberOfStates: Int = modules.values.sumBy { it.numberOfStates }
     val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
     val totalGuardsSize: Int = modules.values.sumBy { it.totalGuardsSize }
 
     constructor(
         modules: MultiArray<Automaton>,
         inboundVarPinParent: MultiArray<Int>,
-        scenarioTree: ScenarioTree
+        scenarioTree: PositiveScenarioTree,
     ) : this(
         modules,
         inboundVarPinParent,
@@ -66,7 +78,7 @@ class ArbitraryModularAutomaton(
         val outputAction: OutputAction,
         val modularInputAction: MultiArray<InputAction>,
         val modularDestination: MultiArray<Automaton.State>,
-        val modularOutputAction: MultiArray<OutputAction>
+        val modularOutputAction: MultiArray<OutputAction>,
     )
 
     @Suppress("LocalVariableName")
@@ -76,9 +88,14 @@ class ArbitraryModularAutomaton(
         val X = inputNames.size
         val Z = outputNames.size
 
-        with(PinVars(M, X, Z, E, O)) {
+        with(Pins(M = M, X = X, Z = Z, E = E, O = O)) {
             val currentModularState = modules.map { it.initialState }
-            val currentModularInputAction = modules.map { InputAction(null, InputValues.zeros(it.inputNames.size)) }
+            val currentModularInputAction = modules.map {
+                InputAction(
+                    null,
+                    InputValues.zeros(it.inputNames.size)
+                )
+            }
             val currentModularOutputValues = modules.map { OutputValues.zeros(it.outputNames.size) }
             val currentModularOutputEvent: MultiArray<OutputEvent?> = modules.map { null }
             val currentInboundVarPinComputedValue = BooleanMultiArray.create(allInboundVarPins.size)
@@ -110,7 +127,8 @@ class ArbitraryModularAutomaton(
                     val moduleInputValues = InputValues(
                         modularInboundVarPins[m].map { currentInboundVarPinComputedValue[it] }
                     )
-                    val moduleInputAction = InputAction(moduleInputEvent, moduleInputValues)
+                    val moduleInputAction =
+                        InputAction(moduleInputEvent, moduleInputValues)
                     val result = modules[m].eval(
                         inputAction = moduleInputAction,
                         state = currentModularState[m],
@@ -153,7 +171,10 @@ class ArbitraryModularAutomaton(
                     currentModularInputAction.map { it },
                     currentModularState.map { it },
                     MultiArray.create(M) { (m) ->
-                        OutputAction(currentModularOutputEvent[m], currentModularOutputValues[m])
+                        OutputAction(
+                            currentModularOutputEvent[m],
+                            currentModularOutputValues[m]
+                        )
                     }
                 )
             }
@@ -183,8 +204,21 @@ class ArbitraryModularAutomaton(
         return true
     }
 
-    fun verify(scenarioTree: ScenarioTree): Boolean =
+    fun verify(scenarioTree: OldPositiveScenarioTree): Boolean =
         scenarioTree.scenarios.all(::verify)
+
+    fun getStats(): String {
+        return "M = $numberOfModules, " +
+            "C = ${modules.values.joinToString("+") { it.numberOfStates.toString() }} = $numberOfStates, " +
+            "K = ${modules.values.map { it.maxOutgoingTransitions }}, " +
+            "P = ${modules.values.map { it.maxGuardSize }}, " +
+            "T = ${modules.values.joinToString("+") { it.numberOfTransitions.toString() }} = $numberOfTransitions, " +
+            "N = ${modules.values.joinToString("+") { it.totalGuardsSize.toString() }} = $totalGuardsSize"
+    }
+
+    fun printStats() {
+        log.just("    " + getStats())
+    }
 
     /**
      * Dump modular automaton in FBT format to [file].
@@ -207,7 +241,7 @@ class ArbitraryModularAutomaton(
         val X = inputNames.size
         val Z = outputNames.size
 
-        with(PinVars(M, X, Z, E, O)) {
+        with(Pins(M = M, X = X, Z = Z, E = E, O = O)) {
             return xml("FBType") {
                 if (name != null) {
                     attribute("Name", name)
@@ -361,7 +395,7 @@ class ArbitraryModularAutomaton(
     }
 }
 
-fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: ScenarioTree) {
+fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: OldPositiveScenarioTree) {
     println("=======================")
 
     val modularEffectiveInputs = MultiArray.create(M) { mutableListOf<InputValues>() }
@@ -390,7 +424,11 @@ fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: ScenarioTre
         val T = numberOfTransitions
         val X = inputNames.size
         val U = 2.pow(X)
-        val allInputValues: List<InputValues> = (1..U).map { u -> InputValues((u - 1).toBinary(X)) }
+        val allInputValues: List<InputValues> = (1..U).map { u ->
+            InputValues(
+                (u - 1).toBinary(X)
+            )
+        }
         val moduleInputValues: List<InputValues> = modularEffectiveInputs[m]
 
         val inputFile = File("pla-m$m.in")
@@ -458,4 +496,73 @@ fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: ScenarioTre
             log.debug { "Minimized guard: ${transition.guard.toSimpleString()}" }
         }
     }
+}
+
+@Suppress("LocalVariableName")
+fun buildBasicArbitraryModularAutomaton(
+    context: Context,
+    model: Model,
+): ArbitraryModularAutomaton {
+    val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
+    val modularContext: ModularContext = context["modularContext"]
+    val inboundVarPinParent = context.convertIntVarArray("inboundVarPinParent", model)
+
+    val modules = modularContext.map { ctx ->
+        val C: Int = ctx["C"]
+        val K: Int = ctx["K"]
+        val X: Int = ctx["X"]
+        val Z: Int = ctx["Z"]
+        val U: Int = ctx["U"]
+        val transitionDestination = ctx.convertIntVarArray("transitionDestination", model)
+        val firstFired = ctx.convertIntVarArray("firstFired", model)
+        val notFired = ctx.convertBoolVarArray("notFired", model)
+        val stateAlgorithmBot = ctx.convertBoolVarArray("stateAlgorithmBot", model)
+        val stateAlgorithmTop = ctx.convertBoolVarArray("stateAlgorithmTop", model)
+
+        Automaton(scenarioTree).endow(
+            C = C, K = K,
+            stateOutputEvent = { OutputEvent("CNF") },
+            stateAlgorithm = { c ->
+                BinaryAlgorithm(
+                    algorithm0 = BooleanArray(Z) { z0 -> stateAlgorithmBot[c, z0 + 1] },
+                    algorithm1 = BooleanArray(Z) { z0 -> stateAlgorithmTop[c, z0 + 1] }
+                )
+            },
+            transitionDestination = { c, k -> transitionDestination[c, k] },
+            transitionInputEvent = { _, _ -> InputEvent("REQ") },
+            transitionGuard = { c, k ->
+                TruthTableGuard(
+                    truthTable = (1..U).associate { u ->
+                        InputValues(
+                            (u - 1).toString(2).padStart(X, '0').reversed().map {
+                                when (it) {
+                                    '1' -> true
+                                    '0' -> false
+                                    else -> error("Bad bit '$it'")
+                                }
+                            }) to when {
+                            notFired[c, k, 1, u] -> false
+                            firstFired[c, 1, u] == k -> true
+                            else -> null
+                        }
+                    },
+                    inputNames = scenarioTree.inputNames,
+                    uniqueInputs = scenarioTree.uniqueInputs
+                )
+            }
+        )
+    }
+
+    return ArbitraryModularAutomaton(
+        modules = modules,
+        inboundVarPinParent = inboundVarPinParent,
+        scenarioTree = scenarioTree,
+    )
+}
+
+fun buildExtendedArbitraryModularAutomaton(
+    context: Context,
+    model: Model,
+): ArbitraryModularAutomaton {
+    TODO()
 }

@@ -1,5 +1,9 @@
 package ru.ifmo.fbsat.core.utils
 
+import com.github.lipen.multiarray.BooleanMultiArray
+import com.github.lipen.multiarray.GenericMultiArray
+import com.github.lipen.multiarray.IntMultiArray
+import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.TimeSpan
 import okio.BufferedSink
@@ -9,9 +13,9 @@ import okio.buffer
 import okio.gzip
 import okio.sink
 import okio.source
-import ru.ifmo.fbsat.core.automaton.InputEvent
-import ru.ifmo.fbsat.core.automaton.OutputEvent
-import ru.ifmo.fbsat.core.scenario.ScenarioTreeInterface
+import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.solver.BoolVarArray
 import java.io.File
 import kotlin.math.pow
@@ -133,7 +137,7 @@ fun <K, V, T> Map<K, V>.getForce(key: K): T {
     return this[key] as T
 }
 
-val <T> T.exhaustive: T
+inline val <T> T.exhaustive: T
     get() = this
 
 inline fun <reified T> mutableListOfNulls(size: Int): MutableList<T?> = MutableList(size) { null }
@@ -169,12 +173,12 @@ fun <T> Iterable<T>.pairsWithReplacement(): Sequence<Pair<T, T>> = sequence {
 }
 
 fun algorithmChoice(
-    tree: ScenarioTreeInterface,
+    tree: ScenarioTree<*, *>,
     v: Int,
     c: Int,
     z: Int,
     algorithmTop: BoolVarArray,
-    algorithmBot: BoolVarArray
+    algorithmBot: BoolVarArray,
 ): Int {
     val p = tree.parent(v)
     val oldValue = tree.outputValue(p, z)
@@ -217,3 +221,35 @@ fun Iterable<Boolean>.countTrue(): Int {
 fun Iterable<Boolean>.countFalse(): Int {
     return count { !it }
 }
+
+fun <T> magic(): T = error("No magic outside of Hogwarts!")
+
+inline fun <reified T> Iterable<T>.toMultiArray(): MultiArray<T> =
+    toList_().toMultiArray()
+
+inline fun <reified T> Collection<T>.toMultiArray(): MultiArray<T> =
+    toTypedArray().toMultiArray()
+
+inline fun <reified T> Array<T>.toMultiArray(): MultiArray<T> =
+    GenericMultiArray(this, intArrayOf(size))
+
+inline fun <reified T> multiArrayOf(vararg x: T): MultiArray<T> =
+    arrayOf(*x).toMultiArray()
+
+// TODO: remove after fixing MultiArray library
+inline fun <reified T> MultiArray.Companion.createNullable(
+    shape: IntArray,
+    init: (IntArray) -> T,
+): MultiArray<T> = GenericMultiArray.create(shape, init)
+
+@JvmName("MultiArray_createNullableVararg")
+inline fun <reified T> MultiArray.Companion.createNullable(
+    vararg shape: Int,
+    init: (IntArray) -> T,
+): MultiArray<T> = createNullable(shape, init)
+
+inline fun <reified T : Any> multiArrayOfNulls(shape: IntArray): MultiArray<T?> =
+    MultiArray.createNullable(shape) { null }
+
+@JvmName("multiArrayOfNullsVararg")
+inline fun <reified T : Any> multiArrayOfNulls(vararg shape: Int): MultiArray<T?> = multiArrayOfNulls(shape)

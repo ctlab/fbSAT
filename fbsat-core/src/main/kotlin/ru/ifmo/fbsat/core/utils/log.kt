@@ -20,7 +20,8 @@ object log {
     }
 
     fun warn(msg: String) {
-        println(t.brightMagenta("[!] $msg"))
+        // println(t.brightMagenta("[!] $msg"))
+        println(t.brightYellow("[!] $msg"))
     }
 
     fun error(msg: String) {

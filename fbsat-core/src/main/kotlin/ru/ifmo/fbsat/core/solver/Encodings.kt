@@ -35,7 +35,7 @@ fun <T> Solver.encodeOneHotBinary(v: DomainVar<T>): List<Literal> {
     val bits = List(m) { newLiteral() }
 
     for ((i, x) in v.domain.withIndex())
-        implyAnd(v eq x, sequence {
+        implyAnd(v eq x) {
             // Note: bits[0] is LSB, so we reverse the bitstring
             val s = i.toString(2).padStart(bits.size, '0').reversed()
             for ((j, b) in s.withIndex()) {
@@ -45,7 +45,7 @@ fun <T> Solver.encodeOneHotBinary(v: DomainVar<T>): List<Literal> {
                     else -> error("Bad bit '$b'")
                 }
             }
-        })
+        }
 
     return bits
 }

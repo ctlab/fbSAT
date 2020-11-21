@@ -3,88 +3,93 @@
 package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.lazycache.LazyCache
+import com.github.lipen.multiarray.IntMultiArray
+import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputAction
+import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
+import ru.ifmo.fbsat.core.scenario.inputActionsSeq
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
-import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
+import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.Context
+import ru.ifmo.fbsat.core.solver.Model
+import ru.ifmo.fbsat.core.solver.convertBoolVarArray
+import ru.ifmo.fbsat.core.solver.convertDomainVarArray
+import ru.ifmo.fbsat.core.solver.convertIntVarArray
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.graph
 import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.random
+import ru.ifmo.fbsat.core.utils.toBinaryString
+import ru.ifmo.fbsat.core.utils.withIndex
 import java.io.File
 
 class Automaton(
     val inputEvents: List<InputEvent>,
     val outputEvents: List<OutputEvent>,
     val inputNames: List<String>,
-    val outputNames: List<String>
+    val outputNames: List<String>,
 ) {
     private val lazyCache = LazyCache()
     private val _states: MutableMap<Int, State> = mutableMapOf()
 
-    /**
-     * Automaton states.
-     */
+    /** Automaton states. */
     val states: Collection<State> by lazyCache {
         _states.values
     }
 
-    /**
-     * Automaton transitions.
-     */
+    /** Automaton transitions. */
     val transitions: Collection<Transition> by lazyCache {
         states.flatMap { it.transitions }
     }
 
-    /**
-     * Initial automaton state.
-     */
+    /** Initial automaton state. */
     val initialState: State by lazyCache {
         getState(1)
     }
 
-    /**
-     * Number of automaton states **C**.
-     */
+    /** Number of automaton states **C**. */
     val numberOfStates: Int by lazyCache {
         states.size
     }
 
     /**
-     * Maximum number of outgoing transitions **K**.
+     * Number of reachable automaton states.
      */
+    val numberOfReachableStates: Int by lazyCache {
+        (transitions.map { it.destination } + initialState).toSet().size
+    }
+
+    /** Maximum number of outgoing transitions **K**. */
     val maxOutgoingTransitions: Int by lazyCache {
-        states.map { it.transitions.size }.max() ?: 0
+        states.map { it.transitions.size }.maxOrNull() ?: 0
     }
 
-    /**
-     * Maximal guard size **P**.
-     */
+    /** Maximal guard size **P**. */
     val maxGuardSize: Int by lazyCache {
-        transitions.map { it.guard.size }.max()!!
+        transitions.map { it.guard.size }.maxOrNull()!!
     }
 
-    /**
-     * Number of automaton transitions **T**.
-     */
+    /** Number of automaton transitions **T**. */
     val numberOfTransitions: Int by lazyCache {
         transitions.size
     }
 
-    /**
-     * Total guards size **N**.
-     */
+    /** Total guards size **N**. */
     val totalGuardsSize: Int by lazyCache {
         transitions.sumBy { it.guard.size }
     }
 
-    constructor(scenarioTree: ScenarioTree) : this(
+    constructor(scenarioTree: PositiveScenarioTree) : this(
         scenarioTree.inputEvents,
         scenarioTree.outputEvents,
         scenarioTree.inputNames,
@@ -110,7 +115,7 @@ class Automaton(
     inner class State(
         val id: Int,
         val outputEvent: OutputEvent?,
-        val algorithm: Algorithm
+        val algorithm: Algorithm,
     ) {
         private val _transitions: MutableList<Transition> = mutableListOf()
         val transitions: List<Transition> = _transitions
@@ -121,7 +126,10 @@ class Automaton(
         }
 
         fun eval(currentValues: OutputValues): OutputAction {
-            return OutputAction(outputEvent, algorithm.eval(currentValues))
+            return OutputAction(
+                outputEvent,
+                algorithm.eval(currentValues)
+            )
         }
 
         fun eval(inputAction: InputAction, currentValues: OutputValues): EvalResult {
@@ -160,17 +168,17 @@ class Automaton(
             }.joinToString("\n")
 
             val tableBody = if (vs.isNotBlank()) """
-                <TR><TD align="center">$id / ${outputEvent?.name ?: 'ε'}</TD></TR>
-                <HR/>
-                %s
-                """.trimIndent().format(vs)
+                |<TR><TD align="center">$id / ${outputEvent?.name ?: 'ε'}</TD></TR>
+                |<HR/>
+                |%s
+                |""".trimMargin().format(vs)
             else """<TR><TD align="center">$id / ${outputEvent?.name ?: 'ε'}</TD></TR>"""
 
             val html = """
-                        <TABLE style="rounded" cellborder="0" cellspacing="0">
-                        %s
-                        </TABLE>
-                    """.trimIndent().format(tableBody.prependIndent())
+                |<TABLE style="rounded" cellborder="0" cellspacing="0">
+                |%s
+                |</TABLE>
+            """.trimMargin().format(tableBody.prependIndent())
 
             return "<\n${html.prependIndent()}>"
         }
@@ -184,8 +192,10 @@ class Automaton(
         }
 
         override fun toString(): String {
-            return "State(id=$id, outputEvent=${outputEvent?.name
-                ?: 'ε'}, algorithm=$algorithm, transitions=${transitions.map { it.destination.id }})"
+            return "State(id=$id, outputEvent=${
+                outputEvent?.name
+                    ?: 'ε'
+            }, algorithm=$algorithm, transitions=${transitions.map { it.destination.id }})"
         }
     }
 
@@ -193,7 +203,7 @@ class Automaton(
         val source: State,
         val destination: State,
         val inputEvent: InputEvent?,
-        var guard: Guard
+        var guard: Guard,
     ) {
         val k: Int = source.transitions.size + 1 // Note: 1-based
 
@@ -214,132 +224,159 @@ class Automaton(
         }
 
         fun toSmvString(): String {
-            return if (inputEvent != null)
+            return if (inputEvent != null) {
                 "_state=${source.toSmvString()} & ${inputEvent.name} & (${guard.toSmvString()})"
-            else
+            } else {
                 "_state=${source.toSmvString()} & (${guard.toSmvString()})"
+            }
         }
 
         override fun toString(): String {
-            return "Transition(k=$k, source=${source.id}, destination=${destination.id}, $inputEvent=${inputEvent?.name
-                ?: 'ε'}, guard=$guard)"
+            return "Transition(k=$k, source=${source.id}, destination=${destination.id}, $inputEvent=${
+                inputEvent?.name
+                    ?: 'ε'
+            }, guard=$guard)"
         }
     }
 
-    data class EvalResult(val destination: State, val outputAction: OutputAction) {
+    // TODO: Rewrite all `eval` methods to use EvalState
+    data class EvalState(
+        val state: Automaton.State,
+        val outputValues: OutputValues,
+    ) {
+        fun eval(inputAction: InputAction): EvalResult {
+            return state.eval(inputAction, outputValues)
+        }
+    }
+
+    data class EvalResult(
+        val destination: State,
+        val outputAction: OutputAction,
+    ) {
+        val newEvalState: EvalState = EvalState(destination, outputAction.values)
+
         override fun toString(): String {
             return "EvalResult(destination = ${destination.id}, outputAction = $outputAction)"
         }
     }
 
+    @Deprecated("Use evalState.eval directly", ReplaceWith("evalState.eval(inputAction)"))
+    fun eval(
+        inputAction: InputAction,
+        evalState: EvalState,
+    ): EvalResult =
+        evalState.eval(inputAction)
+
+    @Deprecated("Use eval(InputAction, EvalState)")
     fun eval(
         inputAction: InputAction,
         state: State,
-        values: OutputValues
+        values: OutputValues,
     ): EvalResult =
-        state.eval(inputAction, values)
-
-    fun eval(
-        inputActions: Iterable<InputAction>,
-        startState: State = initialState,
-        startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES
-    ): List<EvalResult> =
-        eval(inputActions.asSequence(), startState, startValues).toList()
+        EvalState(state, values).eval(inputAction)
 
     fun eval(
         inputActions: Sequence<InputAction>,
-        startState: State = initialState,
-        startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES
+        startEvalState: EvalState,
     ): Sequence<EvalResult> {
-        var currentState = startState
-        var currentValues = startValues
+        var currentEvalState = startEvalState
         return inputActions.map { inputAction ->
-            eval(inputAction, currentState, currentValues).also {
-                currentState = it.destination
-                currentValues = it.outputAction.values
+            currentEvalState.eval(inputAction).also {
+                currentEvalState = it.newEvalState
             }
         }
     }
 
-    fun getMapping(scenario: Scenario): List<State?> {
-        val mapping: MutableList<State?> = mutableListOfNulls(scenario.elements.size)
-        val results = eval(scenario.elements.map { it.inputAction })
-        for (i in results.indices) {
-            val result = results[i]
+    fun eval(
+        inputActions: Sequence<InputAction>,
+        startState: State = initialState,
+        startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES,
+    ): Sequence<EvalResult> =
+        eval(inputActions, EvalState(startState, startValues))
+
+    fun eval(
+        inputActions: Iterable<InputAction>,
+        startState: State = initialState,
+        startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES,
+    ): List<EvalResult> =
+        eval(inputActions.asSequence(), startState, startValues).toList()
+
+    /**
+     * Evaluate the given [scenario].
+     */
+    fun eval(scenario: Scenario): Sequence<EvalResult> =
+        eval(scenario.inputActionsSeq)
+
+    private fun map_(scenario: Scenario): List<EvalResult?> {
+        val mapping: MutableList<EvalResult?> = mutableListOfNulls(scenario.elements.size)
+        out@ for ((i, result) in eval(scenario).withIndex()) {
             val element = scenario.elements[i]
-            if (element.outputAction == result.outputAction) {
-                mapping[i] = result.destination
-            } else {
-                break
+            if (result.outputAction != element.outputAction) {
+                // log.error("No mapping for ${i + 1}-th element = $element, result = $result")
+                break@out
             }
+            mapping[i] = result
         }
         return mapping
     }
 
     /**
-     * Verify given [positiveScenario].
+     * Map the given [scenario].
+     * Nulls represent the absence of a mapping.
+     */
+    fun map(scenario: Scenario): List<State?> =
+        map_(scenario).map { it?.destination }
+
+    /**
+     * Verify the given [positiveScenario].
      *
      * @return `true` if [positiveScenario] is satisfied.
      */
     fun verify(positiveScenario: PositiveScenario): Boolean {
-        val elements = positiveScenario.elements.asSequence()
-        val results = eval(elements.map { it.inputAction })
-        for ((i, xxx) in elements.zip(results).withIndex()) {
-            val (element, result) = xxx
-            if (result.outputAction != element.outputAction) {
-                // Contradiction found => positive scenario is not satisfied => verify failure
-                println("Contradiction found => positive scenario is not satisfied")
-                println("xxx = $xxx")
-                println("i+1 = ${i + 1}")
-                println("result.outputAction != element.outputAction")
-                println("${result.outputAction} != ${element.outputAction}")
-                return false
-            }
-        }
-        return true
+        val mapping: List<State?> = map(positiveScenario)
+        return mapping.last() != null
     }
 
     /**
-     * Verify given [negativeScenario].
+     * Verify the given [negativeScenario].
      *
      * @return `true` if [negativeScenario] is **not** satisfied.
      */
     fun verify(negativeScenario: NegativeScenario): Boolean {
-        val elements = negativeScenario.elements
-        val results = eval(elements.map { it.inputAction })
-
-        for ((element, result) in elements.zip(results)) {
-            if (result.outputAction != element.outputAction) {
-                // Contradiction found => negative scenario is not satisfied => verify ok
-                return true
-            }
-        }
-
+        val mapping: List<State?> = map(negativeScenario)
         if (negativeScenario.loopPosition != null) {
-            val loop = results.elementAt(negativeScenario.loopPosition - 1)
-            val last = results.last()
-            @Suppress("LiftReturnOrAssignment")
-            if (last.destination == loop.destination) {
-                log.error("Negative scenario is satisfied (last==loop)")
-                // println(">>> satisfyingStates = ${results.map {
-                //     it.destination.id.toString().padStart(2)
-                // }} (size = ${results.size})")
-                // println(">>>        something = ${negativeScenario.elements.map {
-                //     it.nodeId.toString().padStart(2)
-                // }}")
-                // println(">>> loopPosition = ${negativeScenario.loopPosition}")
-                // println(">>> loop = $loop")
-                // println(">>> last = $last")
-                // println(">>> negativeScenario = $negativeScenario")
-                // Last and loop-back elements are satisfied by the same state
-                return false
-            } else {
-                // Last and loop-back elements are satisfied by different states
-                return true
+            val loop = mapping[negativeScenario.loopPosition - 1]
+            val last = mapping.last()
+            return when {
+                loop == null || last == null -> {
+                    // Either `loop` or `last` elements are unmapped,
+                    // which means that the negative scenario is not satisfied.
+                    true
+                }
+                loop.id == last.id -> {
+                    // Both `loop` and `last` elements map to the same state,
+                    // which means that the negative scenario is satisfied.
+                    log.error("Negative scenario is satisfied (loop==last)")
+                    false
+                }
+                else -> {
+                    // `loop` and `last` elements map to different states,
+                    // which means that the negative scenario is not satisfied.
+                    true
+                }
             }
         } else {
-            log.error("Terminal is satisfied")
-            return false
+            val last = mapping.last()
+            return if (last != null) {
+                // Satisfaction of the terminal (`last`) element of loop-less negative scenario
+                // implies the satisfaction of the negative scenario itself.
+                log.error("Negative scenario is satisfied (terminal)")
+                false
+            } else {
+                // Terminal (`last`) element of loop-less negative scenario is unmapped,
+                // which means that the negative scenario is not satisfied.
+                true
+            }
         }
     }
 
@@ -348,21 +385,30 @@ class Automaton(
      *
      * @return `true` if **all** scenarios are satisfied.
      */
-    fun verify(scenarioTree: ScenarioTree): Boolean =
+    fun verify(scenarioTree: OldPositiveScenarioTree): Boolean =
         scenarioTree.scenarios.all(::verify)
+
+    /**
+     * Verify all positive scenarios in given [positiveScenarioTree].
+     *
+     * @return `true` if **all** scenarios are satisfied.
+     */
+    fun verify(positiveScenarioTree: PositiveScenarioTree): Boolean =
+        positiveScenarioTree.scenarios.all(::verify)
 
     /**
      * Verify all negative scenarios in given [negativeScenarioTree].
      *
      * @return `true` if **all** scenarios are **not** satisfied.
      */
-    fun verify(negativeScenarioTree: NegativeScenarioTree): Boolean =
+    fun verify(negativeScenarioTree: OldNegativeScenarioTree): Boolean =
         negativeScenarioTree.negativeScenarios.all(::verify)
 
     /**
      * Dump automaton in Graphviz, FBT and SMV formats to the [dir] directory using [name] as the file basename.
      */
     fun dump(dir: File, name: String = "automaton") {
+        log.info("Dumping '$name' to <$dir>...")
         dir.mkdirs()
         dumpGv(dir.resolve("$name.gv"))
         dumpFbt(dir.resolve("$name.fbt"), name)
@@ -392,17 +438,68 @@ class Automaton(
     /**
      * Dump automaton in SMV format to [file].
      */
-    fun dumpSmv(file: File) {
+    fun dumpSmv(file: File, name: String = "CONTROL") {
         file.printWriter().use {
-            it.println(toSmvString())
+            it.println(toSmvString(name))
         }
+    }
+
+    fun calculateHashCode(): Int {
+        val codeOutputEvents =
+            states.map {
+                if (it.outputEvent != null) outputEvents.indexOf(it.outputEvent) + 1 else 0
+            }
+        val codeAlgorithms =
+            states.map {
+                with(it.algorithm as BinaryAlgorithm) {
+                    algorithm0.toBinaryString().toInt(2) + algorithm1.toBinaryString().toInt(2)
+                }
+            }
+        val codeTransitionDestination =
+            transitions.map {
+                it.destination.id
+            }
+        val codeTransitionEvents =
+            transitions.map {
+                if (it.inputEvent != null) inputEvents.indexOf(it.inputEvent) + 1 else 0
+            }
+        val codeTransitionGuards =
+            transitions.flatMap {
+                it.guard.truthTableString
+                    .windowed(8, step = 8, partialWindows = true)
+                    .map { s -> s.toInt(2) }
+            }
+        return (
+            codeOutputEvents +
+                codeAlgorithms +
+                codeTransitionDestination +
+                codeTransitionEvents +
+                codeTransitionGuards
+            )
+            .fold(0) { acc, i ->
+                (31 * acc + i).rem(1_000_000)
+            }
     }
 
     /**
      * Pretty-print automaton.
      */
     fun pprint() {
+        log.just("Automaton Hash-Code: ${calculateHashCode()}")
         log.just(toSimpleString().prependIndent("  "))
+    }
+
+    fun getStats(): String {
+        return "" +
+            "C = $numberOfStates, " +
+            "K = $maxOutgoingTransitions, " +
+            "P = $maxGuardSize, " +
+            "T = $numberOfTransitions, " +
+            "N = $totalGuardsSize"
+    }
+
+    fun printStats() {
+        log.just("    " + getStats())
     }
 
     /**
@@ -532,8 +629,9 @@ class Automaton(
                         ) {
                             state.algorithm as BinaryAlgorithm
                             "ECAction"("Algorithm" to "s${state.id}_${state.algorithm.toFbtString()}") {
-                                if (state.outputEvent != null)
+                                if (state.outputEvent != null) {
                                     attribute("Output", state.outputEvent.name)
+                                }
                             }
                         }
                     }
@@ -565,8 +663,7 @@ class Automaton(
                     )
                 }
                 for (state in states) {
-                    if (state.outputEvent == null)
-                        continue
+                    if (state.outputEvent == null) continue
 
                     val algorithm = state.algorithm as BinaryAlgorithm
                     "Algorithm"("Name" to "s${state.id}_${algorithm.toFbtString()}") {
@@ -580,12 +677,16 @@ class Automaton(
     /**
      * Stringify automaton to SMV format.
      */
-    fun toSmvString(): String {
-        val module = "CONTROL(${inputEvents.joinToString(",") { it.name }}, ${inputNames.joinToString(",")})"
+    fun toSmvString(name: String = "CONTROL"): String {
+        val module = "$name(${inputEvents.joinToString(",") { it.name }}, ${inputNames.joinToString(",")})"
 
-        val definitions: MutableMap<String, String> = mutableMapOf(
-            "_state" to "{${states.joinToString(", ") { it.toSmvString() }}}"
-        )
+        val definitions: MutableMap<String, String> = mutableMapOf()
+        if (states.size > 1) {
+            definitions["_state"] = "{${states.joinToString(", ") { it.toSmvString() }}}"
+        } else {
+            // Adhoc: add one more aux state
+            definitions["_state"] = "{${states.joinToString(", ") { it.toSmvString() }}, you_should_not_be_here}"
+        }
         for (outputEvent in outputEvents)
             definitions[outputEvent.name] = "boolean"
         for (outputName in outputNames)
@@ -663,28 +764,154 @@ class Automaton(
 fun Automaton.endow(
     C: Int,
     K: Int,
+    stateUsed: (c: Int) -> Boolean = { _ -> true },
     stateOutputEvent: (c: Int) -> OutputEvent?,
     stateAlgorithm: (c: Int) -> Algorithm,
     transitionDestination: (c: Int, k: Int) -> Int,
     transitionInputEvent: (c: Int, k: Int) -> InputEvent,
-    transitionGuard: (c: Int, k: Int) -> Guard
+    transitionGuard: (c: Int, k: Int) -> Guard,
 ): Automaton = apply {
     for (c in 1..C)
-        addState(
-            id = c,
-            outputEvent = stateOutputEvent(c),
-            algorithm = stateAlgorithm(c)
-        )
+        if (stateUsed(c))
+            addState(
+                id = c,
+                outputEvent = stateOutputEvent(c),
+                algorithm = stateAlgorithm(c)
+            )
 
     for (c in 1..C)
         for (k in 1..K) {
             val d = transitionDestination(c, k)
-            if (d != 0)
-                addTransition(
-                    sourceId = c,
-                    destinationId = d,
-                    inputEvent = transitionInputEvent(c, k),
-                    guard = transitionGuard(c, k)
-                )
+            if (d != 0) addTransition(
+                sourceId = c,
+                destinationId = d,
+                inputEvent = transitionInputEvent(c, k),
+                guard = transitionGuard(c, k)
+            )
         }
+}
+
+fun buildBasicAutomaton(
+    context: Context,
+    model: Model,
+    useStateUsed: Boolean = false,
+): Automaton {
+    val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
+    val C: Int = context["C"]
+    val K: Int = context["K"]
+    val Z: Int = context["Z"]
+    val transitionDestination = context.convertIntVarArray("transitionDestination",model)
+    val transitionInputEvent = context.convertIntVarArray("transitionInputEvent",model)
+    val transitionTruthTable = context.convertBoolVarArray("transitionTruthTable",model)
+    val stateOutputEvent = context.convertIntVarArray("stateOutputEvent",model)
+    val stateAlgorithmTop = context.convertBoolVarArray("stateAlgorithmTop",model)
+    val stateAlgorithmBot = context.convertBoolVarArray("stateAlgorithmBot",model)
+
+    val stateUsedFunction: (c: Int) -> Boolean =
+        if (useStateUsed) {
+            val stateUsed = context.convertBoolVarArray("stateUsed",model);
+            { c -> stateUsed[c] }
+        } else {
+            { true }
+        }
+
+    return Automaton(scenarioTree).endow(
+        C = C, K = K,
+        stateUsed = stateUsedFunction,
+        stateOutputEvent = { c ->
+            stateOutputEvent[c].let { o ->
+                if (o == 0) null else scenarioTree.outputEvents[o - 1]
+            }
+        },
+        stateAlgorithm = { c ->
+            BinaryAlgorithm(
+                algorithm0 = BooleanArray(Z) { z0 -> stateAlgorithmBot[c, z0 + 1] },
+                algorithm1 = BooleanArray(Z) { z0 -> stateAlgorithmTop[c, z0 + 1] }
+            )
+        },
+        transitionDestination = { c, k ->
+            transitionDestination[c, k]
+        },
+        transitionInputEvent = { c, k ->
+            scenarioTree.inputEvents[transitionInputEvent[c, k] - 1]
+        },
+        transitionGuard = { c, k ->
+            TruthTableGuard(
+                truthTable = scenarioTree.uniqueInputs
+                    .withIndex(start = 1)
+                    .associate { (u, input) ->
+                        input to transitionTruthTable[c, k, u]
+                    },
+                inputNames = scenarioTree.inputNames,
+                uniqueInputs = scenarioTree.uniqueInputs
+            )
+        }
+    )
+}
+
+fun buildExtendedAutomaton(
+    context: Context,
+    model: Model,
+    useStateUsed: Boolean = false,
+): Automaton {
+    val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
+    val C: Int = context["C"]
+    val K: Int = context["K"]
+    val P: Int = context["P"]
+    val Z: Int = context["Z"]
+    val transitionDestination=context.convertIntVarArray("transitionDestination",model)
+    val transitionInputEvent=context.convertIntVarArray("transitionInputEvent",model)
+    val stateOutputEvent=context.convertIntVarArray("stateOutputEvent",model)
+    val stateAlgorithmTop=context.convertBoolVarArray("stateAlgorithmTop",model)
+    val stateAlgorithmBot=context.convertBoolVarArray("stateAlgorithmBot",model)
+    val nodeType=context.convertDomainVarArray<NodeType>("nodeType",model)
+    val nodeInputVariable=context.convertIntVarArray("nodeInputVariable",model)
+    val nodeParent=context.convertIntVarArray("nodeParent",model)
+    val nodeChild=context.convertIntVarArray("nodeChild",model)
+
+    val stateUsedFunction: (c: Int) -> Boolean =
+        if (useStateUsed) {
+            val stateUsed= context.convertBoolVarArray("stateUsed",model);
+            { c -> stateUsed[c] }
+        } else {
+            { true }
+        }
+
+    return Automaton(scenarioTree).endow(
+        C = C, K = K,
+        stateUsed = stateUsedFunction,
+        stateOutputEvent = { c ->
+            stateOutputEvent[c].let { o ->
+                if (o == 0) null
+                else scenarioTree.outputEvents[o - 1]
+            }
+        },
+        stateAlgorithm = { c ->
+            BinaryAlgorithm(
+                algorithm0 = BooleanArray(Z) { z0 -> stateAlgorithmBot[c, z0 + 1] },
+                algorithm1 = BooleanArray(Z) { z0 -> stateAlgorithmTop[c, z0 + 1] }
+            )
+        },
+        transitionDestination = { c, k ->
+            transitionDestination[c, k]
+        },
+        transitionInputEvent = { c, k ->
+            scenarioTree.inputEvents[transitionInputEvent[c, k] - 1]
+        },
+        transitionGuard = { c, k ->
+            ParseTreeGuard(
+                nodeType = MultiArray.create(P) { (p) -> nodeType[c, k, p] },
+                terminal = IntMultiArray.create(P) { (p) -> nodeInputVariable[c, k, p] },
+                parent = IntMultiArray.create(P) { (p) -> nodeParent[c, k, p] },
+                childLeft = IntMultiArray.create(P) { (p) -> nodeChild[c, k, p] },
+                childRight = IntMultiArray.create(P) { (p) ->
+                    if (nodeType[c, k, p] in setOf(NodeType.AND, NodeType.OR))
+                        nodeChild[c, k, p] + 1
+                    else
+                        0
+                },
+                inputNames = scenarioTree.inputNames
+            )
+        }
+    )
 }

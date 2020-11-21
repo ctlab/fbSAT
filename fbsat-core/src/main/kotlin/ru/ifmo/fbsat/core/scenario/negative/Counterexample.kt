@@ -1,11 +1,17 @@
 package ru.ifmo.fbsat.core.scenario.negative
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import nl.adaptivity.xmlutil.serialization.XML
+import nl.adaptivity.xmlutil.serialization.XmlElement
+import nl.adaptivity.xmlutil.serialization.XmlSerialName
+import nl.adaptivity.xmlutil.serialization.XmlValue
 import ru.ifmo.fbsat.core.utils.sourceAutoGzip
 import ru.ifmo.fbsat.core.utils.useLines
 import java.io.File
 
 data class Counterexample(
-    val states: List<State>
+    val states: List<State>,
 ) {
     /**
      * One-based index of loop-back state, or `null` if there is no loop.
@@ -36,7 +42,7 @@ data class Counterexample(
                 when (variables[it]) {
                     "TRUE" -> true
                     "FALSE" -> false
-                    else -> error("Value of variable '$it' must be either 'TRUE' or 'FALSE'")
+                    else -> error("Value of variable '$it' must be either 'TRUE' or 'FALSE', but encountered '${variables[it]}'")
                 }
             }
     }
@@ -46,7 +52,7 @@ data class Counterexample(
     }
 
     companion object {
-        fun fromFile(file: File): List<Counterexample> {
+        fun from(file: File): List<Counterexample> {
             val ces: MutableList<Counterexample> = mutableListOf()
             var states: MutableList<State> = mutableListOf()
             var hasState = false
@@ -59,18 +65,14 @@ data class Counterexample(
                     when {
                         line.startsWith("Trace Description") -> {
                             // Add last state
-                            if (hasState)
-                                states.add(
-                                    State(
-                                        stateName,
-                                        isLoop,
-                                        variables
-                                    )
-                                )
+                            if (hasState) {
+                                states.add(State(stateName, isLoop, variables))
+                            }
                             hasState = false
                             // Add counter-example
-                            if (states.isNotEmpty())
+                            if (states.isNotEmpty()) {
                                 ces.add(Counterexample(states))
+                            }
                             // Reset states
                             states = mutableListOf()
                         }
@@ -79,27 +81,16 @@ data class Counterexample(
                         }
                         line == "-- Loop starts here" -> {
                             // Add last state
-                            if (hasState)
-                                states.add(
-                                    State(
-                                        stateName,
-                                        isLoop,
-                                        variables
-                                    )
-                                )
+                            if (hasState) {
+                                states.add(State(stateName, isLoop, variables))
+                            }
                             hasState = false
                             isLoop = true
                         }
                         line.startsWith("-> State") -> {
                             // Add last state
                             if (hasState) {
-                                states.add(
-                                    State(
-                                        stateName,
-                                        isLoop,
-                                        variables
-                                    )
-                                )
+                                states.add(State(stateName, isLoop, variables))
                                 // Reset isLoop only after state processing
                                 isLoop = false
                             }
@@ -111,26 +102,89 @@ data class Counterexample(
                         else -> {
                             val (name, value) = line.split(" = ", limit = 2)
                             // Cut dot-prefix in name (e.g. "C." - controller var, or "P." - plant var)
-                            variables[name.substringAfter('.')] = value
+                            variables[name.substringAfter('.').substringAfter("$")] = value
                         }
                     }
                 }
 
                 // Post-add state
-                if (hasState)
-                    states.add(
-                        State(
-                            stateName,
-                            isLoop,
-                            variables
-                        )
-                    )
+                if (hasState) {
+                    states.add(State(stateName, isLoop, variables))
+                }
                 // Post-add counter-example
-                if (states.isNotEmpty())
+                if (states.isNotEmpty()) {
                     ces.add(Counterexample(states))
+                }
             }
 
             return ces
         }
     }
+}
+
+@Serializable
+@XmlSerialName("counter-example", namespace = "", prefix = "")
+data class THE_Counterexample(
+    val type: Int,
+    val id: Int,
+    @XmlSerialName("desc", namespace = "", prefix = "")
+    val description: String,
+    @XmlSerialName("node", namespace = "", prefix = "")
+    val nodes: List<THE_Node>,
+    // @XmlSerialName("loops", namespace = "", prefix = "")
+    // val loops: THE_Loops
+    @XmlElement(true)
+    val loops: String,
+) {
+    @Serializable
+    @XmlSerialName("node", namespace = "", prefix = "")
+    data class THE_Node(
+        @XmlSerialName("state", namespace = "", prefix = "")
+        val states: List<THE_State>,
+    ) {
+        @Serializable
+        @XmlSerialName("state", namespace = "", prefix = "")
+        data class THE_State(
+            val id: Int,
+            @SerialName("value")
+            val values: List<THE_Value>,
+        ) {
+            @Serializable
+            @XmlSerialName("value", namespace = "", prefix = "")
+            data class THE_Value(
+                val variable: String,
+                @XmlValue(true)
+                val content: String,
+            )
+        }
+    }
+
+    @Serializable
+    @XmlSerialName("loops", namespace = "", prefix = "")
+    data class THE_Loops(
+        @XmlValue(true)
+        val loops: String,
+    )
+}
+
+fun counterexampleFromString(s: String): THE_Counterexample {
+    val xml = XML()
+    return xml.decodeFromString(THE_Counterexample.serializer(), s)
+}
+
+fun readCounterexamplesFromFile(file: File): List<THE_Counterexample> {
+    val xmlString = file.readText()
+        .replace("<loops> </loops>", "<loops/>")
+    val lines = xmlString.lines()
+    val headerLines = lines.mapIndexedNotNull { index, s ->
+        if (s.startsWith("<?xml")) index else null
+    }.toList()
+    return (headerLines + lines.size)
+        .zipWithNext { a, b ->
+            lines.subList(a, b).joinToString("\n")
+        }
+        .map(::counterexampleFromString)
+        .also {
+            check(it.size == xmlString.lineSequence().count { line -> line.contains("?xml") })
+        }
 }

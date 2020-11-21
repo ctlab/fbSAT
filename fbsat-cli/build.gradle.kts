@@ -1,13 +1,18 @@
 plugins {
     application
-    id("com.github.johnrengelman.shadow")
+    id(Plugins.Shadow.id)
+    kotlin("plugin.serialization")
 }
 
 dependencies {
     implementation(project(":core"))
-    implementation(Libs.clikt)
-    implementation(Libs.multiarray)
-    implementation(Libs.klock)
+    implementation(Libs.Clikt.clikt)
+    implementation(Libs.MultiArray.multiarray)
+    implementation(Libs.Klock.klock_jvm)
+
+    implementation(Libs.KotlinxSerialization.serialization_json)
+    implementation(Libs.XmlUtil.xmlutil_jvm)
+    implementation(Libs.XmlUtil.xmlutil_serialization_jvm)
 }
 
 application {

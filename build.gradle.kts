@@ -4,30 +4,42 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 plugins {
     idea
     kotlin("jvm") version Versions.kotlin
-    id("fr.brouillard.oss.gradle.jgitver") version Versions.jgitver
-    id("com.github.ben-manes.versions") version Versions.gradle_versions
-    id("org.jlleitschuh.gradle.ktlint") version Versions.ktlint apply false
-    id("com.github.johnrengelman.shadow") version Versions.shadow apply false
+    kotlin("plugin.serialization") version Versions.kotlin apply false
+    kotlin("kapt") version Versions.kotlin apply false
+    with(Plugins.Jgitver) { id(id) version version }
+    with(Plugins.GradleVersions) { id(id) version version }
+    with(Plugins.Ktlint) { id(id) version version apply false }
+    with(Plugins.Shadow) { id(id) version version apply false }
 }
 
 allprojects {
     group = "ru.ifmo.fbsat"
     repositories {
-        maven(url = "https://jitpack.io")
+        mavenCentral()
         jcenter()
+        maven(url = "https://jitpack.io")
     }
 }
 
 subprojects {
     apply(plugin = "kotlin")
-    apply(plugin = "org.jlleitschuh.gradle.ktlint")
+    apply(plugin = Plugins.Ktlint.id)
 
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
+        implementation(Libs.PrettyPrint.pretty_print)
+
+        testImplementation(Libs.JUnit.jupiter_api)
+        testRuntimeOnly(Libs.JUnit.jupiter_engine)
+        testImplementation(Libs.JUnit.jupiter_params)
+        testImplementation(Libs.Kluent.kluent)
     }
 
     configure<KtlintExtension> {
+        version.set(Versions.ktlint)
         ignoreFailures.set(true)
+        enableExperimentalRules.set(true)
+        disabledRules.set(setOf("import-ordering"))
     }
 
     tasks.withType<KotlinCompile> {
@@ -43,7 +55,7 @@ idea {
 }
 
 tasks.wrapper {
-    gradleVersion = "6.3"
+    gradleVersion = "6.7"
     distributionType = Wrapper.DistributionType.ALL
 }
 

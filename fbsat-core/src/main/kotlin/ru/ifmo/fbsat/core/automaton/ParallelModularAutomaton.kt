@@ -4,25 +4,38 @@ package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.multiarray.mapIndexed
 import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
+import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputAction
+import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
+import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
-import ru.ifmo.fbsat.core.scenario.positive.ScenarioTree
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.Context
+import ru.ifmo.fbsat.core.solver.Model
+import ru.ifmo.fbsat.core.solver.convertBoolVarArray
+import ru.ifmo.fbsat.core.solver.convertDomainVarArray
+import ru.ifmo.fbsat.core.solver.convertIntVarArray
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.ModularContext
+import ru.ifmo.fbsat.core.utils.log
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.random
+import ru.ifmo.fbsat.core.utils.withIndex
 import ru.ifmo.fbsat.core.utils.writeEventMerger
 import java.io.File
 
-@Suppress("PropertyName")
+@Suppress("MemberVisibilityCanBePrivate", "PropertyName")
 class ParallelModularAutomaton(
     val modules: MultiArray<Automaton>, // [M] : Automaton
-    val outputVariableModule: IntMultiArray // [Z] : 1..M
+    val outputVariableModule: IntMultiArray, // [Z] : 1..M
 ) {
-    val M: Int = modules.shape[0]
-    val Z: Int = outputVariableModule.shape[0]
+    val M: Int = modules.shape.single()
+    val Z: Int = outputVariableModule.shape.single()
     val moduleOutputVariables: MultiArray<List<Int>> = // [M] : {1..Z}
         MultiArray.create(M) { (m) ->
             (1..Z).filter { z -> outputVariableModule[z] == m }
@@ -36,6 +49,8 @@ class ParallelModularAutomaton(
         modules[m].outputNames[moduleOutputVariables[m].indexOf(z)]
     }
 
+    val numberOfModules: Int = M
+    val numberOfStates: Int = modules.values.sumBy { it.numberOfStates }
     val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
     val totalGuardsSize: Int = modules.values.sumBy { it.totalGuardsSize }
 
@@ -116,7 +131,7 @@ class ParallelModularAutomaton(
      *
      * @return `true` if **all** scenarios are satisfied.
      */
-    fun verify(scenarioTree: ScenarioTree): Boolean =
+    fun verify(scenarioTree: OldPositiveScenarioTree): Boolean =
         scenarioTree.scenarios.all(::verify)
 
     /**
@@ -128,6 +143,19 @@ class ParallelModularAutomaton(
         }
         if (M != 2) writeEventMerger(M, file.resolveSibling("E_MERGE$M.fbt"), "E_MERGE$M")
         file.writeText(toFbtString(name))
+    }
+
+    fun getStats(): String {
+        return "M = $numberOfModules, " +
+            "C = ${modules.values.joinToString("+") { it.numberOfStates.toString() }} = $numberOfStates, " +
+            "K = ${modules.values.map { it.maxOutgoingTransitions }}, " +
+            "P = ${modules.values.map { it.maxGuardSize }}, " +
+            "T = ${modules.values.joinToString("+") { it.numberOfTransitions.toString() }} = $numberOfTransitions, " +
+            "N = ${modules.values.joinToString("+") { it.totalGuardsSize.toString() }} = $totalGuardsSize"
+    }
+
+    fun printStats() {
+        log.just("    " + getStats())
     }
 
     /**
@@ -265,4 +293,137 @@ class ParallelModularAutomaton(
             }
         }.toString(Globals.xmlPrintOptions)
     }
+}
+
+fun buildBasicParallelModularAutomaton(
+    context: Context,
+    model: Model,
+): ParallelModularAutomaton {
+    val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
+    val modularContext: ModularContext = context["modularContext"]
+    val moduleControllingOutputVariable = context.convertIntVarArray("moduleControllingOutputVariable", model)
+
+    val modules = modularContext.mapIndexed { (m), ctx ->
+        val C: Int = ctx["C"]
+        val K: Int = ctx["K"]
+        val Z: Int = ctx["Z"]
+        val transitionDestination = ctx.convertIntVarArray("transitionDestination",model)
+        val transitionInputEvent = ctx.convertIntVarArray("transitionInputEvent",model)
+        val transitionTruthTable = ctx.convertBoolVarArray("transitionTruthTable",model)
+        val stateOutputEvent = ctx.convertIntVarArray("stateOutputEvent",model)
+        val stateAlgorithmBot =ctx.convertBoolVarArray("stateAlgorithmBot",model)
+        val stateAlgorithmTop =ctx.convertBoolVarArray("stateAlgorithmTop",model)
+        val moduleOutputVariables = (1..Z).filter { z -> moduleControllingOutputVariable[z] == m }
+
+        Automaton(
+            inputEvents = scenarioTree.inputEvents,
+            outputEvents = scenarioTree.outputEvents,
+            inputNames = scenarioTree.inputNames,
+            outputNames = moduleOutputVariables.map { z -> scenarioTree.outputNames[z - 1] }
+        ).endow(
+            C = C, K = K,
+            stateOutputEvent = { c ->
+                stateOutputEvent[c].let { o ->
+                    if (o == 0) null
+                    else scenarioTree.outputEvents[o - 1]
+                }
+            },
+            stateAlgorithm = { c ->
+                BinaryAlgorithm(
+                    algorithm0 = moduleOutputVariables.map { z -> stateAlgorithmBot[c, z] },
+                    algorithm1 = moduleOutputVariables.map { z -> stateAlgorithmTop[c, z] }
+                )
+            },
+            transitionDestination = { c, k ->
+                transitionDestination[c, k]
+            },
+            transitionInputEvent = { c, k ->
+                scenarioTree.inputEvents[transitionInputEvent[c, k] - 1]
+            },
+            transitionGuard = { c, k ->
+                TruthTableGuard(
+                    truthTable = scenarioTree.uniqueInputs
+                        .withIndex(start = 1)
+                        .associate { (u, input) ->
+                            input to transitionTruthTable[c, k, u]
+                        },
+                    inputNames = scenarioTree.inputNames,
+                    uniqueInputs = scenarioTree.uniqueInputs
+                )
+            }
+        )
+    }
+
+    return ParallelModularAutomaton(modules, moduleControllingOutputVariable)
+}
+
+fun buildExtendedParallelModularAutomaton(
+    context: Context,
+    model: Model,
+    useStateUsed: Boolean = false,
+): ParallelModularAutomaton {
+    val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
+    val modularContext: ModularContext = context["modularContext"]
+    val moduleControllingOutputVariable =context.convertIntVarArray("moduleControllingOutputVariable",model)
+
+    val modules = modularContext.mapIndexed { (m), ctx ->
+        val C: Int = ctx["C"]
+        val K: Int = ctx["K"]
+        val P: Int = ctx["P"]
+        val Z: Int = ctx["Z"]
+        val transitionDestination =ctx.convertIntVarArray("transitionDestination",model)
+        val transitionInputEvent =ctx.convertIntVarArray("transitionInputEvent",model)
+        val stateOutputEvent =ctx.convertIntVarArray("stateOutputEvent",model)
+        val stateAlgorithmBot =ctx.convertBoolVarArray("stateAlgorithmBot",model)
+        val stateAlgorithmTop =ctx.convertBoolVarArray("stateAlgorithmTop",model)
+        val nodeType =ctx.convertDomainVarArray<NodeType>("nodeType",model)
+        val nodeInputVariable =ctx.convertIntVarArray("nodeInputVariable",model)
+        val nodeParent =ctx.convertIntVarArray("nodeParent",model)
+        val nodeChild =ctx.convertIntVarArray("nodeChild",model)
+        val moduleOutputVariables = (1..Z).filter { z -> moduleControllingOutputVariable[z] == m }
+
+        Automaton(
+            scenarioTree.inputEvents,
+            scenarioTree.outputEvents,
+            scenarioTree.inputNames,
+            moduleOutputVariables.map { z -> scenarioTree.outputNames[z - 1] }
+        ).endow(
+            C = C, K = K,
+            stateOutputEvent = { c ->
+                stateOutputEvent[c].let { o ->
+                    if (o == 0) null
+                    else scenarioTree.outputEvents[o - 1]
+                }
+            },
+            stateAlgorithm = { c ->
+                BinaryAlgorithm(
+                    algorithm0 = moduleOutputVariables.map { z -> stateAlgorithmBot[c, z] },
+                    algorithm1 = moduleOutputVariables.map { z -> stateAlgorithmTop[c, z] }
+                )
+            },
+            transitionDestination = { c, k ->
+                transitionDestination[c, k]
+            },
+            transitionInputEvent = { c, k ->
+                scenarioTree.inputEvents[transitionInputEvent[c, k] - 1]
+            },
+            transitionGuard = { c, k ->
+                ParseTreeGuard(
+                    nodeType = MultiArray.create(P) { (p) -> nodeType[c, k, p] },
+                    terminal = IntMultiArray.create(P) { (p) -> nodeInputVariable[c, k, p] },
+                    parent = IntMultiArray.create(P) { (p) -> nodeParent[c, k, p] },
+                    childLeft = IntMultiArray.create(P) { (p) -> nodeChild[c, k, p] },
+                    childRight = IntMultiArray.create(P) { (p) ->
+                        if (nodeType[c, k, p] in setOf(NodeType.AND, NodeType.OR))
+                            nodeChild[c, k, p] + 1
+                        else
+                            0
+                    },
+                    inputNames = scenarioTree.inputNames
+                )
+            }
+        )
+    }
+
+    return ParallelModularAutomaton(modules, moduleControllingOutputVariable)
 }
