@@ -1,7 +1,7 @@
 @file:Suppress("PublicApiImplicitType", "MemberVisibilityCanBePrivate")
 
 object Versions {
-    const val kotlin = "1.4.10"
+    const val kotlin = "1.4.20"
     const val jgitver = "0.9.1"
     const val clikt = "2.8.0"
     const val mordant = "1.2.1"
