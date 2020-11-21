@@ -307,12 +307,12 @@ fun buildBasicParallelModularAutomaton(
         val C: Int = ctx["C"]
         val K: Int = ctx["K"]
         val Z: Int = ctx["Z"]
-        val transitionDestination = ctx.convertIntVarArray("transitionDestination",model)
-        val transitionInputEvent = ctx.convertIntVarArray("transitionInputEvent",model)
-        val transitionTruthTable = ctx.convertBoolVarArray("transitionTruthTable",model)
-        val stateOutputEvent = ctx.convertIntVarArray("stateOutputEvent",model)
-        val stateAlgorithmBot =ctx.convertBoolVarArray("stateAlgorithmBot",model)
-        val stateAlgorithmTop =ctx.convertBoolVarArray("stateAlgorithmTop",model)
+        val transitionDestination = ctx.convertIntVarArray("transitionDestination", model)
+        val transitionInputEvent = ctx.convertIntVarArray("transitionInputEvent", model)
+        val transitionTruthTable = ctx.convertBoolVarArray("transitionTruthTable", model)
+        val stateOutputEvent = ctx.convertIntVarArray("stateOutputEvent", model)
+        val stateAlgorithmBot = ctx.convertBoolVarArray("stateAlgorithmBot", model)
+        val stateAlgorithmTop = ctx.convertBoolVarArray("stateAlgorithmTop", model)
         val moduleOutputVariables = (1..Z).filter { z -> moduleControllingOutputVariable[z] == m }
 
         Automaton(
@@ -364,22 +364,22 @@ fun buildExtendedParallelModularAutomaton(
 ): ParallelModularAutomaton {
     val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
     val modularContext: ModularContext = context["modularContext"]
-    val moduleControllingOutputVariable =context.convertIntVarArray("moduleControllingOutputVariable",model)
+    val moduleControllingOutputVariable = context.convertIntVarArray("moduleControllingOutputVariable", model)
 
     val modules = modularContext.mapIndexed { (m), ctx ->
         val C: Int = ctx["C"]
         val K: Int = ctx["K"]
         val P: Int = ctx["P"]
         val Z: Int = ctx["Z"]
-        val transitionDestination =ctx.convertIntVarArray("transitionDestination",model)
-        val transitionInputEvent =ctx.convertIntVarArray("transitionInputEvent",model)
-        val stateOutputEvent =ctx.convertIntVarArray("stateOutputEvent",model)
-        val stateAlgorithmBot =ctx.convertBoolVarArray("stateAlgorithmBot",model)
-        val stateAlgorithmTop =ctx.convertBoolVarArray("stateAlgorithmTop",model)
-        val nodeType =ctx.convertDomainVarArray<NodeType>("nodeType",model)
-        val nodeInputVariable =ctx.convertIntVarArray("nodeInputVariable",model)
-        val nodeParent =ctx.convertIntVarArray("nodeParent",model)
-        val nodeChild =ctx.convertIntVarArray("nodeChild",model)
+        val transitionDestination = ctx.convertIntVarArray("transitionDestination", model)
+        val transitionInputEvent = ctx.convertIntVarArray("transitionInputEvent", model)
+        val stateOutputEvent = ctx.convertIntVarArray("stateOutputEvent", model)
+        val stateAlgorithmBot = ctx.convertBoolVarArray("stateAlgorithmBot", model)
+        val stateAlgorithmTop = ctx.convertBoolVarArray("stateAlgorithmTop", model)
+        val nodeType = ctx.convertDomainVarArray<NodeType>("nodeType", model)
+        val nodeInputVariable = ctx.convertIntVarArray("nodeInputVariable", model)
+        val nodeParent = ctx.convertIntVarArray("nodeParent", model)
+        val nodeChild = ctx.convertIntVarArray("nodeChild", model)
         val moduleOutputVariables = (1..Z).filter { z -> moduleControllingOutputVariable[z] == m }
 
         Automaton(

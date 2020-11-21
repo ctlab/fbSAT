@@ -1,8 +1,6 @@
 package ru.ifmo.fbsat.core.utils
 
-import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.GenericMultiArray
-import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.TimeSpan

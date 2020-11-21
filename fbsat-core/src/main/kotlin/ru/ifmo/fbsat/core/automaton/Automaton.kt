@@ -800,16 +800,16 @@ fun buildBasicAutomaton(
     val C: Int = context["C"]
     val K: Int = context["K"]
     val Z: Int = context["Z"]
-    val transitionDestination = context.convertIntVarArray("transitionDestination",model)
-    val transitionInputEvent = context.convertIntVarArray("transitionInputEvent",model)
-    val transitionTruthTable = context.convertBoolVarArray("transitionTruthTable",model)
-    val stateOutputEvent = context.convertIntVarArray("stateOutputEvent",model)
-    val stateAlgorithmTop = context.convertBoolVarArray("stateAlgorithmTop",model)
-    val stateAlgorithmBot = context.convertBoolVarArray("stateAlgorithmBot",model)
+    val transitionDestination = context.convertIntVarArray("transitionDestination", model)
+    val transitionInputEvent = context.convertIntVarArray("transitionInputEvent", model)
+    val transitionTruthTable = context.convertBoolVarArray("transitionTruthTable", model)
+    val stateOutputEvent = context.convertIntVarArray("stateOutputEvent", model)
+    val stateAlgorithmTop = context.convertBoolVarArray("stateAlgorithmTop", model)
+    val stateAlgorithmBot = context.convertBoolVarArray("stateAlgorithmBot", model)
 
     val stateUsedFunction: (c: Int) -> Boolean =
         if (useStateUsed) {
-            val stateUsed = context.convertBoolVarArray("stateUsed",model);
+            val stateUsed = context.convertBoolVarArray("stateUsed", model);
             { c -> stateUsed[c] }
         } else {
             { true }
@@ -859,19 +859,19 @@ fun buildExtendedAutomaton(
     val K: Int = context["K"]
     val P: Int = context["P"]
     val Z: Int = context["Z"]
-    val transitionDestination=context.convertIntVarArray("transitionDestination",model)
-    val transitionInputEvent=context.convertIntVarArray("transitionInputEvent",model)
-    val stateOutputEvent=context.convertIntVarArray("stateOutputEvent",model)
-    val stateAlgorithmTop=context.convertBoolVarArray("stateAlgorithmTop",model)
-    val stateAlgorithmBot=context.convertBoolVarArray("stateAlgorithmBot",model)
-    val nodeType=context.convertDomainVarArray<NodeType>("nodeType",model)
-    val nodeInputVariable=context.convertIntVarArray("nodeInputVariable",model)
-    val nodeParent=context.convertIntVarArray("nodeParent",model)
-    val nodeChild=context.convertIntVarArray("nodeChild",model)
+    val transitionDestination = context.convertIntVarArray("transitionDestination", model)
+    val transitionInputEvent = context.convertIntVarArray("transitionInputEvent", model)
+    val stateOutputEvent = context.convertIntVarArray("stateOutputEvent", model)
+    val stateAlgorithmTop = context.convertBoolVarArray("stateAlgorithmTop", model)
+    val stateAlgorithmBot = context.convertBoolVarArray("stateAlgorithmBot", model)
+    val nodeType = context.convertDomainVarArray<NodeType>("nodeType", model)
+    val nodeInputVariable = context.convertIntVarArray("nodeInputVariable", model)
+    val nodeParent = context.convertIntVarArray("nodeParent", model)
+    val nodeChild = context.convertIntVarArray("nodeChild", model)
 
     val stateUsedFunction: (c: Int) -> Boolean =
         if (useStateUsed) {
-            val stateUsed= context.convertBoolVarArray("stateUsed",model);
+            val stateUsed = context.convertBoolVarArray("stateUsed", model);
             { c -> stateUsed[c] }
         } else {
             { true }
