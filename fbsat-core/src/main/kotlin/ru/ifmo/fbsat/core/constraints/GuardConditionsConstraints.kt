@@ -142,6 +142,7 @@ fun Solver.declareGuardConditionsAdhocConstraints() {
 fun Solver.declareExtForestGuardConditionsConstraints() {
     comment("ExtForest guard conditions constraints")
     val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
+    val uniqueInputs = scenarioTree.uniqueInputs
     val C: Int = context["C"]
     val K: Int = context["K"]
     val P: Int = context["P"]
@@ -202,7 +203,7 @@ fun Solver.declareExtForestGuardConditionsConstraints() {
             for (u in 1..U)
                 imply(
                     nodeInputVariable[p] eq x,
-                    nodeValue[p, u] sign scenarioTree.uniqueInputs[u - 1][x - 1]
+                    nodeValue[p, u] sign uniqueInputs[u - 1][x - 1]
                 )
 
     comment("AND/OR/NOT: left child")
@@ -512,7 +513,8 @@ private fun Solver.declareGuardConditionsConstraintsInputless() {
 }
 
 private fun Solver.declareGuardConditionsConstraintsForInputs(Us: Iterable<Int>, isPositive: Boolean) {
-    val tree: ScenarioTree<*, *> = context.autoneg("tree",isPositive)
+    val tree: ScenarioTree<*, *> = context.autoneg("tree", isPositive)
+    val uniqueInputs = tree.uniqueInputs
     val C: Int = context["C"]
     val K: Int = context["K"]
     val P: Int = context["P"]
@@ -531,7 +533,7 @@ private fun Solver.declareGuardConditionsConstraintsForInputs(Us: Iterable<Int>,
                     for (u in Us)
                         imply(
                             nodeInputVariable[c, k, p] eq x,
-                            nodeValue[c, k, p, u] sign tree.uniqueInputs[u - 1][x - 1]
+                            nodeValue[c, k, p, u] sign uniqueInputs[u - 1][x - 1]
                         )
 
     comment("AND: value is calculated as a conjunction of children values")
