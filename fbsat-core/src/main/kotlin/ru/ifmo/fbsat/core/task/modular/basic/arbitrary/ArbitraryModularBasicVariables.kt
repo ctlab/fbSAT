@@ -111,8 +111,9 @@ fun Solver.declareArbitraryModularBasicVariables(
                 }
             }
         }
-        val outboundVarPinComputedValue =
-            context("outboundVarPinComputedValue") { newBoolVarArray(V, allOutboundVarPins.size) }
+        val outboundVarPinComputedValue = context("outboundVarPinComputedValue") {
+            newBoolVarArray(V, allOutboundVarPins.size)
+        }
         val inboundEventPinConsumedEvent = context("inboundEventPinConsumedEvent") {
             newIntVarArray(V, allInboundEventPins.size) { listOf(0, 1) }
         }
