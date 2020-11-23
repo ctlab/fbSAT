@@ -36,6 +36,8 @@ interface Solver : AutoCloseable {
     fun solve(): Model?
     fun reset()
 
+    fun dumpCnf(file: File)
+
     companion object {
         const val trueLiteral: Literal = Int.MAX_VALUE
         const val falseLiteral: Literal = -trueLiteral
@@ -58,12 +60,14 @@ interface Solver : AutoCloseable {
             solve: () -> Model? = { TODO() },
             reset: () -> Unit = {},
             close: () -> Unit = {},
+            dumpCnf: (File) -> Unit = { TODO() },
         ): Solver = object : AbstractSolver() {
             override fun _comment(comment: String) = comment(comment)
             override fun _clause(literals: List<Literal>) = clause(literals)
             override fun _solve(): Model? = solve()
             override fun _reset(): Unit = reset()
             override fun _close(): Unit = close()
+            override fun _dumpCnf(file: File) = dumpCnf(file)
         }
     }
 }
@@ -190,11 +194,24 @@ abstract class AbstractSolver : Solver {
         _close()
     }
 
+    override fun dumpCnf(file: File) {
+        log.debug { "Dumping clauses to $file..." }
+        _dumpCnf(file)
+    }
+
     protected abstract fun _clause(literals: List<Literal>)
     protected abstract fun _comment(comment: String)
     protected abstract fun _solve(): Model?
     protected abstract fun _reset()
     protected abstract fun _close()
+    protected abstract fun _dumpCnf(file: File)
+}
+
+private fun Solver.writeCnf(file: File, buffer: Buffer) {
+    file.sink().buffer().use {
+        it.writeln("p cnf $numberOfVariables $numberOfClauses")
+        buffer.copyTo(it.buffer)
+    }
 }
 
 class FileSolver(
@@ -230,6 +247,10 @@ class FileSolver(
     }
 
     override fun _close() {}
+
+    override fun _dumpCnf(file: File) {
+        writeCnf(file, buffer)
+    }
 }
 
 private fun parseDimacsOutput(source: BufferedSource): Model? {
@@ -308,6 +329,10 @@ class IncrementalCryptominisat : AbstractSolver() {
         // processInput.writeln("halt")
         process.destroy()
     }
+
+    override fun _dumpCnf(file: File) {
+        writeCnf(file, buffer)
+    }
 }
 
 private fun parseIcmsOutput(source: BufferedSource): Model? =
@@ -376,6 +401,10 @@ class MiniSat : AbstractSolver() {
     override fun _close() {
         backend.close()
     }
+
+    override fun _dumpCnf(file: File) {
+        writeCnf(file, buffer)
+    }
 }
 
 class Cadical : AbstractSolver() {
@@ -436,5 +465,9 @@ class Cadical : AbstractSolver() {
 
     override fun _close() {
         backend.close()
+    }
+
+    override fun _dumpCnf(file: File) {
+        writeCnf(file, buffer)
     }
 }
