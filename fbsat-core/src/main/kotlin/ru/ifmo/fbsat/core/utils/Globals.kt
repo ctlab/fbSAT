@@ -35,4 +35,5 @@ object Globals {
         PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = true)
     val defaultVarEncoding: VarEncoding = VarEncoding.ONEHOT
     var modularName: MultiArray<String> by Delegates.notNull()
+    var USE_ASSUMPTIONS: Boolean = true
 }

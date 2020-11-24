@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.solver
 
+import ru.ifmo.fbsat.core.utils.Globals
 import java.util.ArrayDeque
 import java.util.Deque
 
@@ -98,6 +99,9 @@ fun Solver.declareComparatorLessThanOrEqual(totalizer: BoolVarArray, x: Int, dec
     val max = declared ?: totalizer.values.size
     comment("Comparator(<=$x up to $max)")
     for (i in max downTo x + 1) {
-        clause(-totalizer[i])
+        when (Globals.USE_ASSUMPTIONS && this is AssumptionSupportable) {
+            true -> addAssumptions(-totalizer[i])
+            false -> clause(-totalizer[i])
+        }
     }
 }
