@@ -37,6 +37,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isReuseK: Boolean by isReuseKOption()
     val isDumpVarsInCnf: Boolean by isDumpVarsInCnfOption()
     val isDebug: Boolean by isDebugOption()
+    val useAssumptions: Boolean by useAssumptions()
 }
 
 fun ParameterHolder.isForbidOrOption() =
@@ -212,5 +213,14 @@ fun ParameterHolder.isDebugOption() =
         help = "Debug mode"
     ).flag(
         "--no-debug",
+        default = false
+    )
+
+fun ParameterHolder.useAssumptions() =
+    option(
+        "--use-assumptions",
+        help = "Assumptions mode"
+    ).flag(
+        "--no-use-assumptions",
         default = false
     )

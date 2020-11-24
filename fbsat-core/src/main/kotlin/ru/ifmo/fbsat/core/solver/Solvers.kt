@@ -19,6 +19,28 @@ import ru.ifmo.fbsat.core.utils.write
 import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
 
+interface AssumptionSupportable {
+    fun addAssumptions(vararg assumptions: Literal)
+    fun getAssumptions(): IntArray
+    fun clearAssumptions()
+}
+
+class AssumptionSupportableImpl : AssumptionSupportable {
+    var assumptions = mutableSetOf<Literal>()
+
+    override fun addAssumptions(vararg assumptions: Literal) {
+        this.assumptions.addAll(assumptions.asIterable())
+    }
+
+    override fun getAssumptions() : IntArray {
+        return assumptions.toIntArray();
+    }
+
+    override fun clearAssumptions() {
+        assumptions.clear()
+    }
+}
+
 @Suppress("FunctionName")
 interface Solver : AutoCloseable {
     var context: Context
@@ -331,7 +353,7 @@ private fun parseIcmsOutput(source: BufferedSource): Model? =
         else -> error("Bad answer (neither SAT nor UNSAT) from solver: '$answer'")
     }
 
-class MiniSat : AbstractSolver() {
+class MiniSat : AbstractSolver(), AssumptionSupportable by AssumptionSupportableImpl() {
     private val backend = JMiniSat()
     private val buffer = Buffer()
 
@@ -363,7 +385,10 @@ class MiniSat : AbstractSolver() {
             }
         }
 
-        if (!backend.solve()) return null
+        if (when {
+            getAssumptions().isEmpty() -> !backend.solve()
+            else -> !backend.solve(*getAssumptions())
+        }) return null
         val model = backend.getModel()
         return Model1(model)
     }
@@ -371,6 +396,7 @@ class MiniSat : AbstractSolver() {
     override fun _reset() {
         backend.reset()
         buffer.clear()
+        clearAssumptions()
     }
 
     override fun _close() {
@@ -378,7 +404,7 @@ class MiniSat : AbstractSolver() {
     }
 }
 
-class Cadical : AbstractSolver() {
+class Cadical : AbstractSolver(), AssumptionSupportable by AssumptionSupportableImpl() {
     private lateinit var backend: JCadical
     private val buffer = Buffer()
 
@@ -414,7 +440,10 @@ class Cadical : AbstractSolver() {
             }
         }
 
-        if (!backend.solve()) return null
+        if (when {
+                getAssumptions().isEmpty() -> !backend.solve()
+                else -> !backend.solve(*getAssumptions())
+            }) return null
         val model = backend.getModel()
         return Model1(model)
     }
@@ -432,6 +461,7 @@ class Cadical : AbstractSolver() {
         backend = JCadical()
         backend.setLongOption("--elim=0")
         buffer.clear()
+        clearAssumptions()
     }
 
     override fun _close() {

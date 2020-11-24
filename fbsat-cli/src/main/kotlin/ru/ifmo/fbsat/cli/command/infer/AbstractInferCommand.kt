@@ -35,6 +35,7 @@ abstract class AbstractInferCommand<AutomatonType : Any>(name: String) : CliktCo
             Globals.IS_REUSE_K = isReuseK
             Globals.IS_DUMP_VARS_IN_CNF = isDumpVarsInCnf
             Globals.IS_DEBUG = isDebug
+            Globals.USE_ASSUMPTIONS = useAssumptions
         }
     }
 
