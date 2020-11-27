@@ -5,6 +5,8 @@ package ru.ifmo.fbsat.core.automaton
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.mapIndexed
+import com.github.lipen.satlib.utils.Context
+import com.github.lipen.satlib.utils.Model
 import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputEvent
@@ -15,14 +17,12 @@ import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.Context
-import ru.ifmo.fbsat.core.solver.Model
 import ru.ifmo.fbsat.core.solver.convertBoolVarArray
 import ru.ifmo.fbsat.core.solver.convertDomainVarArray
 import ru.ifmo.fbsat.core.solver.convertIntVarArray
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.ModularContext
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.random
 import ru.ifmo.fbsat.core.utils.withIndex
@@ -155,7 +155,7 @@ class ParallelModularAutomaton(
     }
 
     fun printStats() {
-        log.just("    " + getStats())
+        mylog.just("    " + getStats())
     }
 
     /**
@@ -360,7 +360,6 @@ fun buildBasicParallelModularAutomaton(
 fun buildExtendedParallelModularAutomaton(
     context: Context,
     model: Model,
-    useStateUsed: Boolean = false,
 ): ParallelModularAutomaton {
     val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
     val modularContext: ModularContext = context["modularContext"]

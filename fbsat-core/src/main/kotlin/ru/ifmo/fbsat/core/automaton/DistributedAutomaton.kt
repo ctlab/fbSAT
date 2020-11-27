@@ -3,6 +3,8 @@ package ru.ifmo.fbsat.core.automaton
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import com.github.lipen.multiarray.mapIndexed
+import com.github.lipen.satlib.utils.Context
+import com.github.lipen.satlib.utils.Model
 import ru.ifmo.fbsat.core.scenario.CompoundScenario
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
@@ -11,8 +13,6 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
-import ru.ifmo.fbsat.core.solver.Context
-import ru.ifmo.fbsat.core.solver.Model
 import ru.ifmo.fbsat.core.utils.Compound
 import ru.ifmo.fbsat.core.utils.CompoundImpl
 import ru.ifmo.fbsat.core.utils.Globals
@@ -28,7 +28,7 @@ import ru.ifmo.fbsat.core.utils.ModularOutputAction
 import ru.ifmo.fbsat.core.utils.ModularOutputValues
 import ru.ifmo.fbsat.core.utils.ModularScenarioTree
 import ru.ifmo.fbsat.core.utils.ModularState
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.toImmutable
 import ru.ifmo.fbsat.core.utils.toMultiArray
@@ -220,7 +220,7 @@ class DistributedAutomaton(
                 loop.values.map { it.id } == last.values.map { it.id } -> {
                     // Both `loop` and `last` elements map to the same state,
                     // which means that the negative scenario is satisfied.
-                    log.error("Negative scenario is satisfied (loop==last)")
+                    mylog.error("Negative scenario is satisfied (loop==last)")
                     // for ((i, state) in mapping.withIndex(start = 1)) {
                     //     log.debug { "$i -> ${state?.values}" }
                     // }
@@ -234,12 +234,12 @@ class DistributedAutomaton(
                 }
             }
         } else {
-            log.warn("Loopless negative scenario?")
+            mylog.warn("Loopless negative scenario?")
             val last = mapping.last()
             return if (last != null) {
                 // Satisfaction of the terminal (`last`) element of loop-less negative scenario
                 // implies the satisfaction of the negative scenario itself.
-                log.error("Negative scenario is satisfied (terminal)")
+                mylog.error("Negative scenario is satisfied (terminal)")
                 false
             } else {
                 // Terminal (`last`) element of loop-less negative scenario is unmapped,
@@ -274,7 +274,7 @@ class DistributedAutomaton(
     fun verify(modularScenarioTree: ModularScenarioTree): Boolean {
         for (m in 1..M) {
             if (!modules[m].verify(modularScenarioTree[m])) {
-                log.error("Scenario tree verification failed for m = $m")
+                mylog.error("Scenario tree verification failed for m = $m")
                 return false
             }
         }

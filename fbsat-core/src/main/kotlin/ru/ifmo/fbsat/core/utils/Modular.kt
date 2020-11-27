@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.core.utils
 
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.satlib.utils.Context
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
@@ -10,7 +11,6 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.Context
 
 internal typealias ModularContext = MultiArray<Context>
 internal typealias ModularOldScenarioTree = MultiArray<OldPositiveScenarioTree>

@@ -4,9 +4,10 @@ import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
 import ru.ifmo.fbsat.core.automaton.buildBasicParallelModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeParallelModularT
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 
 fun Inferrer.parallelModularBasic(
     scenarioTree: PositiveScenarioTree,
@@ -46,12 +47,12 @@ fun Inferrer.parallelModularBasicMinC(
             )
         }
         if (result != null) {
-            log.success("ParallelModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
-            log.info("ParallelModularBasicMin: minimal C = $C")
+            mylog.success("ParallelModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
+            mylog.info("ParallelModularBasicMin: minimal C = $C")
             best = result
             break
         } else {
-            log.failure("ParallelModularBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
+            mylog.failure("ParallelModularBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
         }
     }
     return checkNotNull(best) { "ParallelModularBasicMin: automaton not found." }
@@ -67,7 +68,7 @@ fun Inferrer.parallelModularBasicMin(
 }
 
 fun Inferrer.inferParallelModularBasic(): ParallelModularAutomaton? {
-    val model = solver.solve() ?: return null
+    val model = solver.solveAndGetModel() ?: return null
     val automaton = buildBasicParallelModularAutomaton(solver.context, model)
 
     // TODO: check automaton

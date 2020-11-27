@@ -2,26 +2,28 @@
 
 package ru.ifmo.fbsat.core.constraints
 
+import com.github.lipen.satlib.op.iff
+import com.github.lipen.satlib.op.imply
+import com.github.lipen.satlib.op.implyAnd
+import com.github.lipen.satlib.op.implyImply
+import com.github.lipen.satlib.op.implyImplyIff
+import com.github.lipen.satlib.op.implyImplyIffAnd
+import com.github.lipen.satlib.op.implyImplyIffOr
+import com.github.lipen.satlib.solver.Solver
+import com.github.lipen.satlib.utils.BoolVarArray
+import com.github.lipen.satlib.utils.DomainVarArray
+import com.github.lipen.satlib.utils.IntVarArray
+import com.github.lipen.satlib.utils.sign
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.BoolVarArray
-import ru.ifmo.fbsat.core.solver.DomainVarArray
-import ru.ifmo.fbsat.core.solver.IntVarArray
-import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.autoneg
+import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.forEachModularContext
-import ru.ifmo.fbsat.core.solver.iff
-import ru.ifmo.fbsat.core.solver.imply
-import ru.ifmo.fbsat.core.solver.implyAnd
-import ru.ifmo.fbsat.core.solver.implyImply
-import ru.ifmo.fbsat.core.solver.implyImplyIff
-import ru.ifmo.fbsat.core.solver.implyImplyIffAnd
-import ru.ifmo.fbsat.core.solver.implyImplyIffOr
-import ru.ifmo.fbsat.core.solver.sign
 import ru.ifmo.fbsat.core.task.single.extforest.ck2p
 import ru.ifmo.fbsat.core.utils.Globals
 
+@Suppress("LocalVariableName")
 fun Solver.declarePositiveGuardConditionsConstraints() {
     comment("Positive guard conditions constraints")
     val U: Int = context["U"]

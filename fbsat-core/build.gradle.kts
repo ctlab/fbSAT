@@ -1,9 +1,9 @@
+import de.undercouch.gradle.tasks.download.DownloadAction
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("plugin.serialization")
-    kotlin("kapt")
 }
 
 dependencies {
@@ -14,13 +14,12 @@ dependencies {
     implementation(Libs.Okio.okio)
     implementation(Libs.LazyCache.lazycache)
     implementation(Libs.Klock.klock_jvm)
-    implementation(Libs.JniSat.jnisat)
+    implementation(Libs.Satlib.satlib_core)
     implementation(Libs.KotlinxSerialization.serialization_json)
     implementation(Libs.XmlUtil.xmlutil_jvm)
     implementation(Libs.XmlUtil.xmlutil_serialization_jvm)
-    implementation(Libs.Arrow.arrow_core)
-    implementation(Libs.Arrow.arrow_syntax)
-    kapt(Libs.Arrow.arrow_meta)
+    implementation(Libs.Log4j.log4j_api)
+    implementation(Libs.Log4j.log4j_core)
 }
 
 tasks.withType<KotlinCompile> {

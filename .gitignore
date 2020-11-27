@@ -7,7 +7,7 @@ build/
 out/
 target/
 
-# Project file, compiled bytecode, logs, archives, scripts
+# Project file, compiled bytecode, logs, archives, scripts, libraries
 *.iml
 *.class
 *.log
@@ -20,6 +20,8 @@ target/
 *.sh
 *.bat
 *.py
+*.dll
+*.so
 /logs/
 /data/
 

@@ -6,7 +6,7 @@ import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.addGenericScenario
 import ru.ifmo.fbsat.core.scenario.auxScenarioElement
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import java.io.File
 
 class PositiveScenarioTree(
@@ -64,9 +64,9 @@ class PositiveScenarioTree(
     }
 
     fun printStats() {
-        log.info("Scenarios: ${scenarios.size}")
-        log.info("Elements: ${scenarios.sumBy { it.elements.size }}")
-        log.info("Tree size: $size")
+        mylog.info("Scenarios: ${scenarios.size}")
+        mylog.info("Elements: ${scenarios.sumBy { it.elements.size }}")
+        mylog.info("Tree size: $size")
     }
 
     companion object {

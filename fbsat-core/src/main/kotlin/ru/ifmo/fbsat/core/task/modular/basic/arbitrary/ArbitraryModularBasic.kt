@@ -4,9 +4,10 @@ import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.automaton.buildBasicArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeArbitraryModularT
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 
 fun Inferrer.arbitraryModularBasic(
     scenarioTree: PositiveScenarioTree,
@@ -46,12 +47,12 @@ fun Inferrer.arbitraryModularBasicMinC(
             )
         }
         if (result != null) {
-            log.success("ArbitraryModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
-            log.info("ArbitraryModularBasicMin: minimal C = $C")
+            mylog.success("ArbitraryModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
+            mylog.info("ArbitraryModularBasicMin: minimal C = $C")
             best = result
             break
         } else {
-            log.failure("ArbitraryModularBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
+            mylog.failure("ArbitraryModularBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
         }
     }
     return checkNotNull(best) { "ArbitraryModularBasicMin: automaton not found." }
@@ -67,7 +68,7 @@ fun Inferrer.arbitraryModularBasicMin(
 }
 
 fun Inferrer.inferArbitraryModularBasic(): ArbitraryModularAutomaton? {
-    val model = solver.solve() ?: return null
+    val model = solver.solveAndGetModel() ?: return null
     val automaton = buildBasicArbitraryModularAutomaton(solver.context, model)
 
     // TODO: check automaton

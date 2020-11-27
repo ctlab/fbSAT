@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.task
 
-import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.utils.log
+import com.github.lipen.satlib.solver.Solver
+import ru.ifmo.fbsat.core.utils.mylog
 import java.io.File
 
 class Inferrer(
@@ -12,7 +12,7 @@ class Inferrer(
     // val context: SolverContext get() = solver.context
 
     init {
-        log.info("Inferrer created with solver = $solver, outDir = $outDir")
+        mylog.info("Inferrer created with solver = $solver, outDir = $outDir")
     }
 
     fun reset() {

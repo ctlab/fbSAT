@@ -1,9 +1,9 @@
 package ru.ifmo.fbsat.core.task.modular.extended.consecutive
 
+import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularGuardConditionsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularGuardConditionsConstraints
 import ru.ifmo.fbsat.core.solver.Cardinality
-import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 

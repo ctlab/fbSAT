@@ -27,7 +27,6 @@ import ru.ifmo.fbsat.cli.command.infer.mono.InferExtendedCommand
 import ru.ifmo.fbsat.cli.command.infer.mono.InferExtendedMinCommand
 import ru.ifmo.fbsat.cli.command.infer.mono.InferExtendedMinUBCommand
 
-@Suppress("MemberVisibilityCanBePrivate")
 class InferCommand : NoOpCliktCommand() {
     init {
         subcommands(

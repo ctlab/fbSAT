@@ -2,6 +2,11 @@ package ru.ifmo.fbsat.core.solver
 
 import java.util.ArrayDeque
 import java.util.Deque
+import com.github.lipen.satlib.solver.Solver
+import com.github.lipen.satlib.utils.newBoolVarArray
+import com.github.lipen.satlib.utils.BoolVarArray
+import com.github.lipen.satlib.utils.Lit
+import com.github.lipen.satlib.utils.SequenceScopeLit
 
 class Cardinality(
     val totalizer: BoolVarArray,
@@ -26,19 +31,19 @@ class Cardinality(
     }
 }
 
-fun Solver.declareCardinality(variables: Iterable<Literal>): Cardinality =
+fun Solver.declareCardinality(variables: Iterable<Lit>): Cardinality =
     Cardinality(
         totalizer = declareTotalizer(variables),
         solver = this
     )
 
-fun Solver.declareCardinality(variables: Sequence<Literal>): Cardinality =
+fun Solver.declareCardinality(variables: Sequence<Lit>): Cardinality =
     declareCardinality(variables.asIterable())
 
-fun Solver.declareCardinality(variables: SequenceScopeLiteral): Cardinality =
+fun Solver.declareCardinality(variables: SequenceScopeLit): Cardinality =
     declareCardinality(sequence(variables).constrainOnce())
 
-fun Solver.declareTotalizer(variables: Iterable<Literal>): BoolVarArray {
+fun Solver.declareTotalizer(variables: Iterable<Lit>): BoolVarArray {
     val queue: Deque<List<Int>> = ArrayDeque()
 
     for (e in variables) {
@@ -83,10 +88,10 @@ fun Solver.declareTotalizer(variables: Iterable<Literal>): BoolVarArray {
     return newBoolVarArray(totalizer.size) { (i) -> totalizer[i - 1] }
 }
 
-fun Solver.declareTotalizer(variables: Sequence<Literal>): BoolVarArray =
+fun Solver.declareTotalizer(variables: Sequence<Lit>): BoolVarArray =
     declareTotalizer(variables.asIterable())
 
-fun Solver.declareTotalizer(variables: SequenceScopeLiteral): BoolVarArray =
+fun Solver.declareTotalizer(variables: SequenceScopeLit): BoolVarArray =
     declareTotalizer(sequence(variables).constrainOnce())
 
 /**

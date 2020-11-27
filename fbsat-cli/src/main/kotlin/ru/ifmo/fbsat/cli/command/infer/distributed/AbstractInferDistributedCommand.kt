@@ -10,7 +10,7 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.toImmutable
 import java.io.File
 
@@ -52,9 +52,9 @@ abstract class AbstractInferDistributedCommand(name: String) :
 
     final override fun printAndCheck(automaton: DistributedAutomaton?) {
         if (automaton == null) {
-            log.failure("Automaton not found")
+            mylog.failure("Automaton not found")
         } else {
-            log.success("Inference: OK")
+            mylog.success("Inference: OK")
             // log.info("Inferred automaton:")
             // automaton.pprint()
             // log.info("Inferred automaton has:")
@@ -63,9 +63,9 @@ abstract class AbstractInferDistributedCommand(name: String) :
             // TODO: automaton.dump(outDir)
 
             if (automaton.verify(compoundScenarioTree))
-                log.success("Verify: OK")
+                mylog.success("Verify: OK")
             else {
-                log.failure("Verify: FAILED")
+                mylog.failure("Verify: FAILED")
             }
         }
     }

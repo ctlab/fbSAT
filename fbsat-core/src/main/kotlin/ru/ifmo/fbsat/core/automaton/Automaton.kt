@@ -5,6 +5,8 @@ package ru.ifmo.fbsat.core.automaton
 import com.github.lipen.lazycache.LazyCache
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.satlib.utils.Context
+import com.github.lipen.satlib.utils.Model
 import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
@@ -19,14 +21,12 @@ import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.Context
-import ru.ifmo.fbsat.core.solver.Model
 import ru.ifmo.fbsat.core.solver.convertBoolVarArray
 import ru.ifmo.fbsat.core.solver.convertDomainVarArray
 import ru.ifmo.fbsat.core.solver.convertIntVarArray
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.graph
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.random
 import ru.ifmo.fbsat.core.utils.toBinaryString
@@ -356,7 +356,7 @@ class Automaton(
                 loop.id == last.id -> {
                     // Both `loop` and `last` elements map to the same state,
                     // which means that the negative scenario is satisfied.
-                    log.error("Negative scenario is satisfied (loop==last)")
+                    mylog.error("Negative scenario is satisfied (loop==last)")
                     false
                 }
                 else -> {
@@ -370,7 +370,7 @@ class Automaton(
             return if (last != null) {
                 // Satisfaction of the terminal (`last`) element of loop-less negative scenario
                 // implies the satisfaction of the negative scenario itself.
-                log.error("Negative scenario is satisfied (terminal)")
+                mylog.error("Negative scenario is satisfied (terminal)")
                 false
             } else {
                 // Terminal (`last`) element of loop-less negative scenario is unmapped,
@@ -408,7 +408,7 @@ class Automaton(
      * Dump automaton in Graphviz, FBT and SMV formats to the [dir] directory using [name] as the file basename.
      */
     fun dump(dir: File, name: String = "automaton") {
-        log.info("Dumping '$name' to <$dir>...")
+        mylog.info("Dumping '$name' to <$dir>...")
         dir.mkdirs()
         dumpGv(dir.resolve("$name.gv"))
         dumpFbt(dir.resolve("$name.fbt"), name)
@@ -485,8 +485,8 @@ class Automaton(
      * Pretty-print automaton.
      */
     fun pprint() {
-        log.just("Automaton Hash-Code: ${calculateHashCode()}")
-        log.just(toSimpleString().prependIndent("  "))
+        mylog.just("Automaton Hash-Code: ${calculateHashCode()}")
+        mylog.just(toSimpleString().prependIndent("  "))
     }
 
     fun getStats(): String {
@@ -499,7 +499,7 @@ class Automaton(
     }
 
     fun printStats() {
-        log.just("    " + getStats())
+        mylog.just("    " + getStats())
     }
 
     /**

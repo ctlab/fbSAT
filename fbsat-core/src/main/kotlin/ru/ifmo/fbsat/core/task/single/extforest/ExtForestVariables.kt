@@ -1,6 +1,6 @@
 package ru.ifmo.fbsat.core.task.single.extforest
 
-import ru.ifmo.fbsat.core.solver.Solver
+import com.github.lipen.satlib.solver.Solver
 
 fun Solver.declareExtForestVariables(
     P: Int,

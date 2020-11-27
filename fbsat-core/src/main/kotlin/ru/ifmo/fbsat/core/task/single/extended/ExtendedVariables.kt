@@ -1,13 +1,13 @@
 package ru.ifmo.fbsat.core.task.single.extended
 
+import com.github.lipen.satlib.solver.Solver
+import com.github.lipen.satlib.utils.newBoolVarArray
+import com.github.lipen.satlib.utils.newDomainVarArray
+import com.github.lipen.satlib.utils.newIntVarArray
+import com.github.lipen.satlib.utils.BoolVarArray
 import ru.ifmo.fbsat.core.automaton.NodeType
-import ru.ifmo.fbsat.core.solver.BoolVarArray
-import ru.ifmo.fbsat.core.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.literals
-import ru.ifmo.fbsat.core.solver.newBoolVarArray
-import ru.ifmo.fbsat.core.solver.newDomainVarArray
-import ru.ifmo.fbsat.core.solver.newIntVarArray
 import ru.ifmo.fbsat.core.utils.Globals
 
 @Suppress("LocalVariableName")

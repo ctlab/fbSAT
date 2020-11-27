@@ -3,6 +3,8 @@
 package ru.ifmo.fbsat.cli.entry
 
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.satlib.solver.MiniSatSolver
+import com.github.lipen.satlib.solver.Solver
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.scenario.InputEvent
@@ -11,13 +13,12 @@ import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.negative.readCounterexamplesFromFile
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
-import ru.ifmo.fbsat.core.solver.MiniSat
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.complete.distributedCegis2
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.multiArrayOf
 import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.timeSince
@@ -26,7 +27,7 @@ import java.io.File
 
 fun main() {
     val timeStart = PerformanceCounter.reference
-    log.br(DateTime.nowLocal().format("yyyy-MM-dd HH:mm:ss"))
+    mylog.br(DateTime.nowLocal().format("yyyy-MM-dd HH:mm:ss"))
 
     val M = 2
     val modularName = multiArrayOf(
@@ -47,7 +48,7 @@ fun main() {
         listOf("done", "packet", "output_bit"),
         listOf("deliver", "acknowledge", "output_bit")
     )
-    val solver = MiniSat()
+    val solver: Solver = MiniSatSolver()
     val outDir = File("out/abp-take2")
     // val outDir = File("out/abp-100x50-all")
     // val outDir = File("out/abp-10x25-all_new")
@@ -162,9 +163,9 @@ fun main() {
         positiveCompoundScenarioTree.addScenario(scenario)
     }
     // positiveCompoundScenarioTree.addScenario(positiveCompoundScenario)
-    log.info("Positive scenarios: ${scenarios.size}")
-    log.info("Positive compound scenario tree size: ${positiveCompoundScenarioTree.size}")
-    log.info("Positive scenario trees sizes: ${positiveCompoundScenarioTree.modular.values.map { it.size }}")
+    mylog.info("Positive scenarios: ${scenarios.size}")
+    mylog.info("Positive compound scenario tree size: ${positiveCompoundScenarioTree.size}")
+    mylog.info("Positive scenario trees sizes: ${positiveCompoundScenarioTree.modular.values.map { it.size }}")
 
     // ===== Counterexample
 
@@ -243,7 +244,7 @@ fun main() {
     val T2: Int? = 7 // 8 min
     val N2: Int? = 7 // 28 min
 
-    log.info("Inferring the sender...")
+    mylog.info("Inferring the sender...")
     // val distributedAutomaton = inferrer.distributedBasic(
     //     numberOfModules = M,
     //     compoundScenarioTree = positiveCompoundScenarioTree,
@@ -329,16 +330,16 @@ fun main() {
     // )
 
     if (distributedAutomaton == null) {
-        log.failure("Inference failed")
+        mylog.failure("Inference failed")
     } else {
-        log.success("Inference succeeded!")
+        mylog.success("Inference succeeded!")
 
         for (m in 1..M) {
             val automaton = distributedAutomaton.project(m)
             val name = modularName[m]
-            log.info("Inferred $name:")
+            mylog.info("Inferred $name:")
             automaton.pprint()
-            log.info(
+            mylog.info(
                 "Inferred $name has " +
                     "${automaton.numberOfStates} states, " +
                     "${automaton.numberOfTransitions} transitions and " +
@@ -348,11 +349,11 @@ fun main() {
             automaton.dump(outDir, name = name)
 
             if (automaton.verify(positiveCompoundScenarioTree.project(m))) {
-                log.success("Verify: OK")
+                mylog.success("Verify: OK")
             } else {
-                log.failure("Verify: FAILED")
+                mylog.failure("Verify: FAILED")
             }
-            log.br()
+            mylog.br()
         }
     }
 
@@ -377,6 +378,6 @@ fun main() {
     //         "N = ${distributedAutomaton.modular.map { it.totalGuardsSize }.values.joinToString("+") { it.toString() }} = ${distributedAutomaton.totalGuardsSize}")
     // }
 
-    log.br(DateTime.nowLocal().format("yyyy-MM-dd HH:mm:ss"))
-    log.success("All done in %.3f seconds".format(timeSince(timeStart).seconds))
+    mylog.br(DateTime.nowLocal().format("yyyy-MM-dd HH:mm:ss"))
+    mylog.success("All done in %.3f seconds".format(timeSince(timeStart).seconds))
 }

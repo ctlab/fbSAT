@@ -2,7 +2,7 @@ package ru.ifmo.fbsat.core.task.single.extforest
 
 import ru.ifmo.fbsat.core.constraints.declareExtForestGuardConditionsConstraints
 import ru.ifmo.fbsat.core.solver.Cardinality
-import ru.ifmo.fbsat.core.solver.Solver
+import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
 
 data class ExtForestTask(

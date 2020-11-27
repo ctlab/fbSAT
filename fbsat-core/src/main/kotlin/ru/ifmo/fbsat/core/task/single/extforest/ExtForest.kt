@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.task.single.extforest
 
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeN_Forest
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
@@ -45,7 +46,7 @@ fun Inferrer.extForestMin(
 }
 
 fun Inferrer.inferExtForest(): Automaton? {
-    val model = solver.solve() ?: return null
+    val model = solver.solveAndGetModel() ?: return null
     val automaton = TODO()
 
     // TODO: check mapping

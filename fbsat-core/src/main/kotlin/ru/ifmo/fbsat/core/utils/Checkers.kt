@@ -14,9 +14,9 @@ fun Automaton.checkMapping(
         val automatonMapping = map(scenario).map { it?.id ?: 0 }
         val assignmentMapping = scenario.elements.map { mapping[it.nodeId!!] }
         if (automatonMapping != assignmentMapping) {
-            log.error("Scenario $i/${scenarios.size} mapping mismatch:")
-            log.error("Automaton mapping:  ${automatonMapping.joinToString(" ")}")
-            log.error("Assignment mapping: ${assignmentMapping.joinToString(" ")}")
+            mylog.error("Scenario $i/${scenarios.size} mapping mismatch:")
+            mylog.error("Automaton mapping:  ${automatonMapping.joinToString(" ")}")
+            mylog.error("Assignment mapping: ${assignmentMapping.joinToString(" ")}")
             isOk = false
         }
     }

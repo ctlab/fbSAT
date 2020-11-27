@@ -2,19 +2,20 @@
 
 package ru.ifmo.fbsat.core.constraints
 
-import ru.ifmo.fbsat.core.solver.BoolVarArray
-import ru.ifmo.fbsat.core.solver.IntVarArray
-import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.atLeastOne
-import ru.ifmo.fbsat.core.solver.atMostOne
+import com.github.lipen.satlib.op.atLeastOne
+import com.github.lipen.satlib.op.atMostOne
+import com.github.lipen.satlib.op.exactlyOne
+import com.github.lipen.satlib.op.iff
+import com.github.lipen.satlib.op.iffAnd
+import com.github.lipen.satlib.op.iffOr
+import com.github.lipen.satlib.op.imply
+import com.github.lipen.satlib.op.implyAnd
+import com.github.lipen.satlib.solver.Solver
+import com.github.lipen.satlib.utils.BoolVarArray
+import com.github.lipen.satlib.utils.IntVarArray
 import ru.ifmo.fbsat.core.solver.autoneg
-import ru.ifmo.fbsat.core.solver.exactlyOne
+import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.forEachModularContext
-import ru.ifmo.fbsat.core.solver.iff
-import ru.ifmo.fbsat.core.solver.iffAnd
-import ru.ifmo.fbsat.core.solver.iffOr
-import ru.ifmo.fbsat.core.solver.imply
-import ru.ifmo.fbsat.core.solver.implyAnd
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms

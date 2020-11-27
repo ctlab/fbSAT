@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.utils
 
 import com.github.lipen.multiarray.GenericMultiArray
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.satlib.utils.BoolVarArray
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.TimeSpan
 import okio.BufferedSink
@@ -14,7 +15,6 @@ import okio.source
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
-import ru.ifmo.fbsat.core.solver.BoolVarArray
 import java.io.File
 import kotlin.math.pow
 import kotlin.random.Random
@@ -108,7 +108,7 @@ fun BufferedSink.write(s: String): BufferedSink = writeUtf8(s)
 
 fun BufferedSink.writeln(s: String): BufferedSink = write(s).writeByte(10) // 10 is '\n'
 
-fun <R> BufferedSink.useWith(block: BufferedSink.() -> R): R = use(block)
+inline fun <T : AutoCloseable?, R> T.useWith(block: T.() -> R): R = use(block)
 
 fun copyFile(source: File, destination: File) {
     // Note: destination folder existence must be ensured externally!

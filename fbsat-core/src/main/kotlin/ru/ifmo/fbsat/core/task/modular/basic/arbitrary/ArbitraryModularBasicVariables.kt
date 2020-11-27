@@ -2,16 +2,16 @@ package ru.ifmo.fbsat.core.task.modular.basic.arbitrary
 
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.IntVarArray
-import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.VarEncoding
+import com.github.lipen.satlib.solver.Solver
+import com.github.lipen.satlib.utils.newBoolVarArray
+import com.github.lipen.satlib.utils.newIntVarArray
+import com.github.lipen.satlib.utils.IntVarArray
+import com.github.lipen.satlib.utils.newOneHotBinaryIntVarArray
 import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.declareModularContext
 import ru.ifmo.fbsat.core.solver.forEachModularContext
-import ru.ifmo.fbsat.core.solver.newBoolVarArray
-import ru.ifmo.fbsat.core.solver.newIntVarArray
 import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.pow
 
 @Suppress("LocalVariableName")
@@ -29,8 +29,8 @@ fun Solver.declareArbitraryModularBasicVariables(
     check(E == 1 && O == 1) { "Only one input/output event is supported" }
 
     val U = 2.pow(X)
-    log.debug { "U = $U" }
-    log.debug { "V = $V" }
+    mylog.debug { "U = $U" }
+    mylog.debug { "V = $V" }
 
     context["positiveScenarioTree"] = scenarioTree
     context["scenarioTree"] = scenarioTree
@@ -97,7 +97,7 @@ fun Solver.declareArbitraryModularBasicVariables(
         }
         val modularInputIndex = context("modularInputIndex") {
             MultiArray.create(M) {
-                newIntVarArray(V, encoding = VarEncoding.ONEHOT_BINARY) { 1..U }
+                newOneHotBinaryIntVarArray(V) { 1..U }
             }
         }
         val inboundVarPinComputedValue = context("inboundVarPinComputedValue") {

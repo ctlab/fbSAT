@@ -2,6 +2,8 @@ package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
+import com.github.lipen.satlib.utils.Context
+import com.github.lipen.satlib.utils.Model
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
@@ -9,10 +11,8 @@ import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.Context
-import ru.ifmo.fbsat.core.solver.Model
 import ru.ifmo.fbsat.core.utils.ModularContext
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.withIndex
 
@@ -66,11 +66,11 @@ class ConsecutiveModularAutomaton(
                 for (m in 2..M) {
                     if (element.outputEvent != null) {
                         if (result.outputAction.event != OutputEvent("CNF")) {
-                            log.error("Module m = $m")
-                            log.error("Scenario element #$i $element: FAILED")
-                            log.error("Output event mismatch: ${result.outputAction.event} != CNF")
-                            log.error("Result: $result")
-                            log.error("Scenario: ${scenario.elements}")
+                            mylog.error("Module m = $m")
+                            mylog.error("Scenario element #$i $element: FAILED")
+                            mylog.error("Output event mismatch: ${result.outputAction.event} != CNF")
+                            mylog.error("Result: $result")
+                            mylog.error("Scenario: ${scenario.elements}")
                             return false
                         }
                     }
@@ -83,7 +83,7 @@ class ConsecutiveModularAutomaton(
                     // }
                     if (element.outputEvent == null) {
                         if (result.outputAction.values != currentValues) {
-                            log.warn("Output values changed on epsilon event")
+                            mylog.warn("Output values changed on epsilon event")
                         }
                     }
 
@@ -105,17 +105,17 @@ class ConsecutiveModularAutomaton(
             }
 
             if (result.outputAction.event != element.outputEvent) {
-                log.error("Scenario element #$i $element: FAILED")
-                log.error("Output event mismatch: ${result.outputAction.event} != ${element.outputEvent}")
-                log.error("Result: $result")
-                log.error("Scenario: ${scenario.elements}")
+                mylog.error("Scenario element #$i $element: FAILED")
+                mylog.error("Output event mismatch: ${result.outputAction.event} != ${element.outputEvent}")
+                mylog.error("Result: $result")
+                mylog.error("Scenario: ${scenario.elements}")
                 return false
             }
             if (result.outputAction.values != element.outputValues) {
-                log.error("Scenario element #$i $element: FAILED")
-                log.error("Output values mismatch: ${result.outputAction.values.values.toBinaryString()} != ${element.outputValues.values.toBinaryString()}")
-                log.error("Result: $result")
-                log.error("Scenario: ${scenario.elements}")
+                mylog.error("Scenario element #$i $element: FAILED")
+                mylog.error("Output values mismatch: ${result.outputAction.values.values.toBinaryString()} != ${element.outputValues.values.toBinaryString()}")
+                mylog.error("Result: $result")
+                mylog.error("Scenario: ${scenario.elements}")
                 return false
             }
 
@@ -138,7 +138,7 @@ class ConsecutiveModularAutomaton(
     }
 
     fun printStats() {
-        log.just("    " + getStats())
+        mylog.just("    " + getStats())
     }
 }
 

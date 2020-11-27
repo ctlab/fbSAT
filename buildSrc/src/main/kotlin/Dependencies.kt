@@ -11,7 +11,7 @@ object Versions {
     const val okio = "2.9.0"
     const val multiarray = "0.6.0"
     const val lazycache = "0.3.0"
-    const val jnisat = "0.7.0"
+    const val satlib = "0.8.0"
     const val pretty_print = "2.0.2"
     const val xml_builder = "1.5.3"
     const val xmlutil = "0.80.1"
@@ -22,6 +22,9 @@ object Versions {
     const val ktlint_gradle_plugin = "9.4.1"
     const val shadow = "6.1.0"
     const val gradle_versions = "0.36.0"
+    const val gradle_download_task = "4.1.1"
+    const val kotlin_logging = "2.0.3"
+    const val log4j = "2.14.0"
 }
 
 object Libs {
@@ -57,6 +60,20 @@ object Libs {
         const val pretty_print = "com.tylerthrailkill.helpers:pretty-print:$version"
     }
 
+    // https://github.com/MicroUtils/kotlin-logging
+    object KotlinLogging {
+        const val version = Versions.kotlin_logging
+        const val kotlin_logging = "io.github.microutils:kotlin-logging:$version"
+    }
+
+    // https://github.com/apache/logging-log4j2
+    object Log4j {
+        const val version = Versions.log4j
+        const val log4j_api = "org.apache.logging.log4j:log4j-api:$version"
+        const val log4j_core = "org.apache.logging.log4j:log4j-core:$version"
+        const val log4j_slf4j_impl = "org.apache.logging.log4j:log4j-slf4j-impl:$version"
+    }
+
     // https://github.com/korlibs/klock
     object Klock {
         const val version = Versions.klock
@@ -81,10 +98,15 @@ object Libs {
         const val lazycache = "com.github.lipen:kotlin-lazycache:$version"
     }
 
-    // https://github.com/Lipen/kotlin-jnisat
-    object JniSat {
-        const val version = Versions.jnisat
-        const val jnisat = "com.github.Lipen:kotlin-jnisat:$version"
+    // https://github.com/Lipen/kotlin-satlib
+    object Satlib {
+        const val version = Versions.satlib
+        const val satlib = "com.github.Lipen:kotlin-satlib:$version"
+
+        // Specific submodules:
+        const val satlib_core = "com.github.Lipen.kotlin-satlib:core:$version"
+        const val satlib_jni = "com.github.Lipen.kotlin-satlib:jni:$version"
+        const val satlib_utils = "com.github.Lipen.kotlin-satlib:utils:$version"
     }
 
     // https://github.com/redundent/kotlin-xml-builder
@@ -109,6 +131,7 @@ object Libs {
     // https://github.com/Kotlin/kotlinx.coroutines
     object KotlinxCoroutines {
         const val version = Versions.kotlinx_coroutines
+        const val coroutines_core = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
     }
 
     // https://github.com/arrow-kt/arrow
@@ -143,5 +166,11 @@ object Plugins {
     object Shadow {
         const val version = Versions.shadow
         const val id = "com.github.johnrengelman.shadow"
+    }
+
+    // https://github.c om/michel-kraemer/gradle-download-task
+    object GradleDownloadTask {
+        const val version = Versions.gradle_download_task
+        const val id = "de.undercouch.download"
     }
 }

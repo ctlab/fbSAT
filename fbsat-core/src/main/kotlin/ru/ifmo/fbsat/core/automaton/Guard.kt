@@ -3,7 +3,7 @@ package ru.ifmo.fbsat.core.automaton
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.InputValues
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.makeDnfString
 import ru.ifmo.fbsat.core.utils.pow
 import ru.ifmo.fbsat.core.utils.toBinaryString
@@ -23,7 +23,7 @@ interface Guard {
 class UnconditionalGuard : Guard {
     override val size: Int
         get() {
-            log.warn("UnconditionalGuard has no meaningful size")
+            mylog.warn("UnconditionalGuard has no meaningful size")
             return 0
         }
 
@@ -379,8 +379,8 @@ class DnfGuard(
             false
         } else {
             _dnf.any { term ->
-                term.all { literal ->
-                    (literal < 0) xor inputValues.values[literal.absoluteValue - 1]
+                term.all { Lit ->
+                    (Lit < 0) xor inputValues.values[Lit.absoluteValue - 1]
                 }
             }
         }

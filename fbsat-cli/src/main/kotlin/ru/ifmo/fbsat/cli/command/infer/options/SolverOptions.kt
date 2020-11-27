@@ -9,7 +9,14 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.switch
 import com.github.ajalt.clikt.parameters.types.file
-import ru.ifmo.fbsat.core.solver.Solver
+import com.github.lipen.satlib.solver.CadicalSolver
+import com.github.lipen.satlib.solver.CryptoMiniSatSolver
+import com.github.lipen.satlib.solver.DimacsFileSolver
+import com.github.lipen.satlib.solver.DimacsStreamSolver
+import com.github.lipen.satlib.solver.GlucoseSolver
+import com.github.lipen.satlib.solver.MiniSatSolver
+import com.github.lipen.satlib.solver.Solver
+import ru.ifmo.fbsat.core.utils.Globals
 import java.io.File
 
 internal const val SOLVER_OPTIONS = "Solver Options"
@@ -19,37 +26,56 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
     val solverBackend: SolverBackend by solverBackendOption()
     val fileSolverCmd: String by fileSolverCmdOption()
     val fileSolverFile: File by fileSolverFileOption()
+    val streamSolverCmd: String by streamSolverCmdOption()
 
     val solver: Solver by lazy {
         when (solverBackend) {
             SolverBackend.FILE -> {
-                Solver.filesolver(fileSolverCmd, fileSolverFile)
+                DimacsFileSolver(fileSolverCmd, fileSolverFile)
+            }
+            SolverBackend.STREAM -> {
+                DimacsStreamSolver(streamSolverCmd)
             }
             SolverBackend.ICMS -> {
-                Solver.icms()
+                DimacsStreamSolver(Globals.ICMS_CMD)
             }
             SolverBackend.MINISAT -> {
-                Solver.minisat()
+                when (val simp = Globals.MINISAT_SIMP_STRATEGY) {
+                    null -> MiniSatSolver()
+                    else -> MiniSatSolver(simp)
+                }
+            }
+            SolverBackend.GLUCOSE -> {
+                when (val simp = Globals.GLUCOSE_SIMP_STRATEGY) {
+                    null -> GlucoseSolver()
+                    else -> GlucoseSolver(simp)
+                }
+            }
+            SolverBackend.CRYPTOMINISAT -> {
+                CryptoMiniSatSolver()
             }
             SolverBackend.CADICAL -> {
-                Solver.cadical()
+                CadicalSolver()
             }
         }
     }
 }
 
 enum class SolverBackend {
-    FILE, ICMS, MINISAT, CADICAL;
+    FILE, STREAM, ICMS, MINISAT, GLUCOSE, CRYPTOMINISAT, CADICAL;
 }
 
 fun ParameterHolder.solverBackendOption() =
     option(
         help = "SAT-solver backend",
-        helpTags = mapOf(DEFAULT to "icms (IncrementalCryptominisat)")
+        helpTags = mapOf(DEFAULT to "icms (incremental-cryptominisat)")
     ).switch(
         "--filesolver" to SolverBackend.FILE,
+        "--streamsolver" to SolverBackend.STREAM,
         "--icms" to SolverBackend.ICMS,
         "--minisat" to SolverBackend.MINISAT,
+        "--glucose" to SolverBackend.GLUCOSE,
+        "--cryptominisat" to SolverBackend.CRYPTOMINISAT,
         "--cadical" to SolverBackend.CADICAL
     ).default(
         SolverBackend.ICMS
@@ -75,21 +101,11 @@ fun ParameterHolder.fileSolverFileOption() =
         File("cnf")
     )
 
-fun createSolver(
-    solverBackend: SolverBackend,
-    fileSolverCmd: String,
-    fileSolverFile: File
-): Solver = when (solverBackend) {
-    SolverBackend.FILE -> {
-        Solver.filesolver(fileSolverCmd, fileSolverFile)
-    }
-    SolverBackend.ICMS -> {
-        Solver.icms()
-    }
-    SolverBackend.MINISAT -> {
-        Solver.minisat()
-    }
-    SolverBackend.CADICAL -> {
-        Solver.cadical()
-    }
-}
+fun ParameterHolder.streamSolverCmdOption() =
+    option(
+        "--streamsolver-cmd",
+        help = "StreamSolver command",
+        metavar = "<cmd>"
+    ).default(
+        "cadical"
+    )

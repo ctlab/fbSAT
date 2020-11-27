@@ -18,7 +18,7 @@ import ru.ifmo.fbsat.core.task.modular.extended.parallel.inferParallelModularExt
 import ru.ifmo.fbsat.core.task.single.basic.inferBasic
 import ru.ifmo.fbsat.core.task.single.extended.inferExtended
 import ru.ifmo.fbsat.core.task.single.extforest.inferExtForest
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 
 fun <T : Any> optimizeTopDown(
     start: Int? = null,
@@ -33,9 +33,9 @@ fun <T : Any> optimizeTopDown(
 
     val (initialResult, runningTime) = measureTimeWithResult { nextInitial(start) }
     if (initialResult != null) {
-        log.success("optimizeTopDown: <= $start -> ${query(initialResult)} in %.3f s".format(runningTime.seconds))
+        mylog.success("optimizeTopDown: <= $start -> ${query(initialResult)} in %.3f s".format(runningTime.seconds))
     } else {
-        log.failure("optimizeTopDown: <= $start -> UNSAT in %.3f s.".format(runningTime.seconds))
+        mylog.failure("optimizeTopDown: <= $start -> UNSAT in %.3f s.".format(runningTime.seconds))
         return null
     }
 
@@ -45,10 +45,10 @@ fun <T : Any> optimizeTopDown(
         if (x <= end) break
         val (result, runningTime) = measureTimeWithResult { next(x) }
         if (result != null) {
-            log.success("optimizeTopDown: < $x -> ${query(result)} in %.3f s".format(runningTime.seconds))
+            mylog.success("optimizeTopDown: < $x -> ${query(result)} in %.3f s".format(runningTime.seconds))
             best = result
         } else {
-            log.failure("optimizeTopDown: < $x -> UNSAT in %.3f s.".format(runningTime.seconds))
+            mylog.failure("optimizeTopDown: < $x -> UNSAT in %.3f s.".format(runningTime.seconds))
             break
         }
     }
@@ -56,7 +56,7 @@ fun <T : Any> optimizeTopDown(
 }
 
 fun Inferrer.optimizeT(start: Int? = null, end: Int = 0): Automaton? {
-    log.info("Optimizing T...")
+    mylog.info("Optimizing T...")
     val cardinalityT: Cardinality = solver.context["cardinalityT"]
     return optimizeTopDown(
         start = start,
@@ -74,7 +74,7 @@ fun Inferrer.optimizeT(start: Int? = null, end: Int = 0): Automaton? {
 }
 
 fun Inferrer.optimizeN(start: Int? = null, end: Int = 0): Automaton? {
-    log.info("Optimizing N...")
+    mylog.info("Optimizing N...")
     val cardinalityN: Cardinality = solver.context["cardinalityN"]
     return optimizeTopDown(
         start = start,
@@ -93,7 +93,7 @@ fun Inferrer.optimizeN(start: Int? = null, end: Int = 0): Automaton? {
 
 @Suppress("FunctionName")
 fun Inferrer.optimizeN_Forest(start: Int? = null, end: Int = 0): Automaton? {
-    log.info("Optimizing N...")
+    mylog.info("Optimizing N...")
     val cardinalityN: Cardinality = solver.context["cardinalityN"]
     return optimizeTopDown(
         start = start,
@@ -111,7 +111,7 @@ fun Inferrer.optimizeN_Forest(start: Int? = null, end: Int = 0): Automaton? {
 }
 
 fun Inferrer.optimizeParallelModularT(start: Int? = null, end: Int = 0): ParallelModularAutomaton? {
-    log.info("Optimizing T...")
+    mylog.info("Optimizing T...")
     val cardinalityT: Cardinality = solver.context["cardinalityT"]
     return optimizeTopDown(
         start = start,
@@ -129,7 +129,7 @@ fun Inferrer.optimizeParallelModularT(start: Int? = null, end: Int = 0): Paralle
 }
 
 fun Inferrer.optimizeConsecutiveModularT(start: Int? = null, end: Int = 0): ConsecutiveModularAutomaton? {
-    log.info("Optimizing T...")
+    mylog.info("Optimizing T...")
     val cardinalityT: Cardinality = solver.context["cardinalityT"]
     return optimizeTopDown(
         start = start,
@@ -147,7 +147,7 @@ fun Inferrer.optimizeConsecutiveModularT(start: Int? = null, end: Int = 0): Cons
 }
 
 fun Inferrer.optimizeArbitraryModularT(start: Int? = null, end: Int = 0): ArbitraryModularAutomaton? {
-    log.info("Optimizing T...")
+    mylog.info("Optimizing T...")
     val cardinalityT: Cardinality = solver.context["cardinalityT"]
     return optimizeTopDown(
         start = start,
@@ -165,7 +165,7 @@ fun Inferrer.optimizeArbitraryModularT(start: Int? = null, end: Int = 0): Arbitr
 }
 
 fun Inferrer.optimizeConsecutiveModularN(start: Int? = null, end: Int = 0): ConsecutiveModularAutomaton? {
-    log.info("Optimizing N...")
+    mylog.info("Optimizing N...")
     val cardinalityN: Cardinality = solver.context["cardinalityN"]
     return optimizeTopDown(
         start = start,
@@ -183,7 +183,7 @@ fun Inferrer.optimizeConsecutiveModularN(start: Int? = null, end: Int = 0): Cons
 }
 
 fun Inferrer.optimizeParallelModularN(start: Int? = null, end: Int = 0): ParallelModularAutomaton? {
-    log.info("Optimizing N...")
+    mylog.info("Optimizing N...")
     val cardinalityN: Cardinality = solver.context["cardinalityN"]
     return optimizeTopDown(
         start = start,
@@ -201,7 +201,7 @@ fun Inferrer.optimizeParallelModularN(start: Int? = null, end: Int = 0): Paralle
 }
 
 fun Inferrer.optimizeDistributedSumC(start: Int? = null, end: Int = 0): DistributedAutomaton? {
-    log.info("Optimizing Csum...")
+    mylog.info("Optimizing Csum...")
     val cardinalityC: Cardinality = solver.context["cardinalityC"]
     return optimizeTopDown(
         start = start,
@@ -219,7 +219,7 @@ fun Inferrer.optimizeDistributedSumC(start: Int? = null, end: Int = 0): Distribu
 }
 
 fun Inferrer.optimizeDistributedSumC_Extended(start: Int? = null, end: Int = 0): DistributedAutomaton? {
-    log.info("Optimizing Csum...")
+    mylog.info("Optimizing Csum...")
     val cardinalityC: Cardinality = solver.context["cardinalityC"]
     return optimizeTopDown(
         start = start,
@@ -237,7 +237,7 @@ fun Inferrer.optimizeDistributedSumC_Extended(start: Int? = null, end: Int = 0):
 }
 
 fun Inferrer.optimizeDistributedSumC_Complete(start: Int? = null, end: Int = 0): DistributedAutomaton? {
-    log.info("Optimizing Csum...")
+    mylog.info("Optimizing Csum...")
     val cardinalityC: Cardinality = solver.context["cardinalityC"]
     return optimizeTopDown(
         start = start,
@@ -255,7 +255,7 @@ fun Inferrer.optimizeDistributedSumC_Complete(start: Int? = null, end: Int = 0):
 }
 
 fun Inferrer.optimizeDistributedSumN(start: Int? = null, end: Int = 0): DistributedAutomaton? {
-    log.info("Optimizing Nsum...")
+    mylog.info("Optimizing Nsum...")
     val cardinalityN: Cardinality = solver.context["cardinalityN"]
     return optimizeTopDown(
         start = start,

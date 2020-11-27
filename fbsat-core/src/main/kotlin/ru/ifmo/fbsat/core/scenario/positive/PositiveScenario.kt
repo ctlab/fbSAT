@@ -10,7 +10,7 @@ import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.preprocessed
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.sourceAutoGzip
 import ru.ifmo.fbsat.core.utils.toBooleanList
 import ru.ifmo.fbsat.core.utils.useLines
@@ -34,7 +34,7 @@ data class PositiveScenario(
                 }
 
                 if (scenarios.size != numberOfScenarios)
-                    log.warn("Number of scenarios mismatch: specified $numberOfScenarios, but found ${scenarios.size}")
+                    mylog.warn("Number of scenarios mismatch: specified $numberOfScenarios, but found ${scenarios.size}")
 
                 scenarios
             }

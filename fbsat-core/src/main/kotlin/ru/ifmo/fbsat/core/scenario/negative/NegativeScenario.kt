@@ -8,7 +8,7 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import java.io.File
 
 data class NegativeScenario(
@@ -71,7 +71,7 @@ data class NegativeScenario(
 
             val loopPosition = counterexample.loopPosition!!
             return if (loopPosition == 1) {
-                log.warn("loopPosition = 1, duplicating ${elements.size} elements...")
+                mylog.warn("loopPosition = 1, duplicating ${elements.size} elements...")
                 // Duplicate elements
                 NegativeScenario(elements + elements, elements.size)
             } else {

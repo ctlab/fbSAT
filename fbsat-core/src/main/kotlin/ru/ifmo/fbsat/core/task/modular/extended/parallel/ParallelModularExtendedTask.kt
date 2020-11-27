@@ -3,7 +3,7 @@ package ru.ifmo.fbsat.core.task.modular.extended.parallel
 import ru.ifmo.fbsat.core.constraints.declareParallelModularGuardConditionsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareParallelModularGuardConditionsConstraints
 import ru.ifmo.fbsat.core.solver.Cardinality
-import ru.ifmo.fbsat.core.solver.Solver
+import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 

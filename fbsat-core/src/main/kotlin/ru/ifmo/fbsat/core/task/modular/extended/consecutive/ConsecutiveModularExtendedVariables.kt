@@ -1,6 +1,6 @@
 package ru.ifmo.fbsat.core.task.modular.extended.consecutive
 
-import ru.ifmo.fbsat.core.solver.Solver
+import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.task.modular.extended._declareModularExtendedVariables
 
 @Suppress("LocalVariableName")

@@ -3,13 +3,14 @@ package ru.ifmo.fbsat.core.task.single.extended
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.buildExtendedAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeN
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.task.single.basic.basic
 import ru.ifmo.fbsat.core.task.single.basic.basicMin
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 
 fun Inferrer.extended(
     scenarioTree: PositiveScenarioTree,
@@ -73,17 +74,17 @@ fun Inferrer.extendedMinUB(
     var Plow: Int? = null
     var N: Int? = null // <=
 
-    log.info("Tmin = $Tmin")
+    mylog.info("Tmin = $Tmin")
 
     for (P in start..end) {
-        log.info("Trying P = $P, N = $N")
+        mylog.info("Trying P = $P, N = $N")
 
         if (best != null && P > (best.totalGuardsSize - Tmin)) {
-            log.warn("Reached upper bound: P = $P, Plow = $Plow, Nbest = ${best.totalGuardsSize}, Tmin = $Tmin")
+            mylog.warn("Reached upper bound: P = $P, Plow = $Plow, Nbest = ${best.totalGuardsSize}, Tmin = $Tmin")
             break
         }
         if (Plow != null && maxPlateauWidth != null && (P - Plow) > maxPlateauWidth) {
-            log.warn("Reached maximum plateau width: P = $P, Plow = $Plow, w = $maxPlateauWidth")
+            mylog.warn("Reached maximum plateau width: P = $P, Plow = $Plow, w = $maxPlateauWidth")
             break
         }
 
@@ -102,7 +103,7 @@ fun Inferrer.extendedMinUB(
 }
 
 fun Inferrer.inferExtended(): Automaton? {
-    val model = solver.solve() ?: return null
+    val model = solver.solveAndGetModel() ?: return null
     val automaton = buildExtendedAutomaton(solver.context, model)
 
     // with(vars) {

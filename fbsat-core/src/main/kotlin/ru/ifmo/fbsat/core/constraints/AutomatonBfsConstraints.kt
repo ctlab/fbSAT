@@ -2,16 +2,16 @@
 
 package ru.ifmo.fbsat.core.constraints
 
-import ru.ifmo.fbsat.core.solver.BoolVarArray
-import ru.ifmo.fbsat.core.solver.IntVarArray
-import ru.ifmo.fbsat.core.solver.Solver
+import com.github.lipen.satlib.op.iff
+import com.github.lipen.satlib.op.iffAnd
+import com.github.lipen.satlib.op.iffOr
+import com.github.lipen.satlib.op.imply
+import com.github.lipen.satlib.solver.Solver
+import com.github.lipen.satlib.utils.BoolVarArray
+import com.github.lipen.satlib.utils.IntVarArray
+import com.github.lipen.satlib.utils.newBoolVarArray
+import com.github.lipen.satlib.utils.newIntVarArray
 import ru.ifmo.fbsat.core.solver.forEachModularContext
-import ru.ifmo.fbsat.core.solver.iff
-import ru.ifmo.fbsat.core.solver.iffAnd
-import ru.ifmo.fbsat.core.solver.iffOr
-import ru.ifmo.fbsat.core.solver.imply
-import ru.ifmo.fbsat.core.solver.newBoolVarArray
-import ru.ifmo.fbsat.core.solver.newIntVarArray
 
 fun Solver.declareAutomatonBfsConstraints() {
     comment("Automaton BFS constraints")

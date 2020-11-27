@@ -1,10 +1,11 @@
 package ru.ifmo.fbsat.core.constraints
 
-import ru.ifmo.fbsat.core.solver.IntVarArray
-import ru.ifmo.fbsat.core.solver.Solver
+import com.github.lipen.satlib.op.imply
+import com.github.lipen.satlib.solver.Solver
+import com.github.lipen.satlib.utils.IntVarArray
 import ru.ifmo.fbsat.core.solver.forEachModularContext
-import ru.ifmo.fbsat.core.solver.imply
 
+@Suppress("LocalVariableName")
 fun Solver.declareGuardConditionsBfsConstraints() {
     comment("Guard conditions BFS constraints")
     val C: Int = context["C"]

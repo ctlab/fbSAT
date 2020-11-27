@@ -5,7 +5,7 @@ import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonStructur
 import ru.ifmo.fbsat.core.constraints.declarePositiveConsecutiveModularMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Cardinality
-import ru.ifmo.fbsat.core.solver.Solver
+import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 

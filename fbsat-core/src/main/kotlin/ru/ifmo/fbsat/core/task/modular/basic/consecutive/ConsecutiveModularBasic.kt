@@ -4,9 +4,10 @@ import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.automaton.buildBasicConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeConsecutiveModularT
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 
 fun Inferrer.consecutiveModularBasic(
     scenarioTree: PositiveScenarioTree,
@@ -46,12 +47,12 @@ fun Inferrer.consecutiveModularBasicMinC(
             )
         }
         if (result != null) {
-            log.success("ConsecutiveModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
-            log.info("ConsecutiveModularBasicMin: minimal C = $C")
+            mylog.success("ConsecutiveModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
+            mylog.info("ConsecutiveModularBasicMin: minimal C = $C")
             best = result
             break
         } else {
-            log.failure("ConsecutiveModularBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
+            mylog.failure("ConsecutiveModularBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
         }
     }
     return checkNotNull(best) { "ConsecutiveModularBasicMin: automaton not found." }
@@ -67,7 +68,7 @@ fun Inferrer.consecutiveModularBasicMin(
 }
 
 fun Inferrer.inferConsecutiveModularBasic(): ConsecutiveModularAutomaton? {
-    val model = solver.solve() ?: return null
+    val model = solver.solveAndGetModel() ?: return null
     val automaton = buildBasicConsecutiveModularAutomaton(solver.context, model)
 
     // TODO: check automaton

@@ -6,9 +6,10 @@ import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.buildBasicAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeT
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 
 fun Inferrer.basic(
     scenarioTree: PositiveScenarioTree,
@@ -43,12 +44,12 @@ fun Inferrer.basicMinC(
             basic(scenarioTree, numberOfStates = C, isEncodeReverseImplication = isEncodeReverseImplication)
         }
         if (result != null) {
-            log.success("BasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
-            log.info("BasicMin: minimal C = $C")
+            mylog.success("BasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
+            mylog.info("BasicMin: minimal C = $C")
             best = result
             break
         } else {
-            log.failure("BasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
+            mylog.failure("BasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
         }
     }
     return checkNotNull(best) { "BasicMin: automaton not found." }
@@ -63,7 +64,7 @@ fun Inferrer.basicMin(
 }
 
 fun Inferrer.inferBasic(): Automaton? {
-    val model = solver.solve() ?: return null
+    val model = solver.solveAndGetModel() ?: return null
     val automaton = buildBasicAutomaton(solver.context, model)
 
     // TODO: refactor mapping check

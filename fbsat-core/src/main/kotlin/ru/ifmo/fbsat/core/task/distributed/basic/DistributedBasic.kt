@@ -7,9 +7,10 @@ import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.buildBasicDistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumC
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 
 fun Inferrer.distributedBasic(
@@ -62,17 +63,17 @@ fun Inferrer.distributedBasicMinC(
             )
         }
         if (result != null) {
-            log.success("DistributedBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
-            log.info(
+            mylog.success("DistributedBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
+            mylog.info(
                 "DistributedBasicMin: minimal C = $C " +
                     "(${result.modular.map { it.numberOfStates }.values.joinToString("+")})"
             )
             best = result
 
-            log.info("DistributedBasicMin: minimizing sum of C_i...")
+            mylog.info("DistributedBasicMin: minimizing sum of C_i...")
             best = optimizeDistributedSumC()!!
 
-            log.success(
+            mylog.success(
                 "DistributedBasicMin: minimal Cs = " +
                     "(${best.modular.map { it.numberOfStates }.values.joinToString("+")}) = " +
                     "${best.numberOfStates}"
@@ -80,14 +81,14 @@ fun Inferrer.distributedBasicMinC(
 
             break
         } else {
-            log.failure("DistributedBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
+            mylog.failure("DistributedBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
         }
     }
     return best
 }
 
 fun Inferrer.inferDistributedBasic(): DistributedAutomaton? {
-    val model = solver.solve() ?: return null
+    val model = solver.solveAndGetModel() ?: return null
     val automaton = buildBasicDistributedAutomaton(
         context = solver.context,
         model = model

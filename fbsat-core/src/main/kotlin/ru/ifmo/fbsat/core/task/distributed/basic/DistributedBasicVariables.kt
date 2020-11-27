@@ -4,16 +4,16 @@ import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.BoolVarArray
-import ru.ifmo.fbsat.core.solver.IntVarArray
-import ru.ifmo.fbsat.core.solver.Solver
+import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.declareModularContext
 import ru.ifmo.fbsat.core.solver.forEachModularContext
-import ru.ifmo.fbsat.core.solver.newBoolVarArray
+import com.github.lipen.satlib.utils.newBoolVarArray
+import com.github.lipen.satlib.utils.BoolVarArray
+import com.github.lipen.satlib.utils.IntVarArray
 import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 
 @Suppress("LocalVariableName")
 fun Solver.declareDistributedBasicVariables(
@@ -43,6 +43,9 @@ fun Solver.declareDistributedBasicVariables(
     context["modularZ"] = modularZ
     context["modularU"] = modularU
 
+    val falseVar = newLiteral()
+    addClause(-falseVar)
+
     /* Modular */
     declareModularContext(M)
     forEachModularContext { m ->
@@ -60,7 +63,7 @@ fun Solver.declareDistributedBasicVariables(
         val stateUsed = context("stateUsed") {
             newBoolVarArray(modularC.values.maxOrNull()!!) { (c) ->
                 if (c <= modularC[m]) newLiteral()
-                else Solver.falseLiteral
+                else falseVar
             }
         }
     }
@@ -92,6 +95,6 @@ fun Solver.declareDistributedBasicVariables(
     }
 
     if (Globals.IS_DUMP_VARS_IN_CNF) {
-        log.warn("Dumping of DistributedBasicVariables to CNF is not implemented yet")
+        mylog.warn("Dumping of DistributedBasicVariables to CNF is not implemented yet")
     }
 }

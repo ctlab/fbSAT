@@ -1,9 +1,10 @@
 package ru.ifmo.fbsat.core.utils
 
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.satlib.solver.GlucoseSolver
+import com.github.lipen.satlib.solver.MiniSatSolver
 import org.redundent.kotlin.xml.PrintOptions
 import ru.ifmo.fbsat.core.scenario.OutputValues
-import ru.ifmo.fbsat.core.solver.VarEncoding
 import kotlin.properties.Delegates
 
 enum class EpsilonOutputEvents {
@@ -33,6 +34,8 @@ object Globals {
     var IS_DUMP_VARS_IN_CNF: Boolean = false
     val xmlPrintOptions: PrintOptions =
         PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = true)
-    val defaultVarEncoding: VarEncoding = VarEncoding.ONEHOT
     var modularName: MultiArray<String> by Delegates.notNull()
+    var ICMS_CMD: String = "incremental-cryptominisat"
+    var MINISAT_SIMP_STRATEGY: MiniSatSolver.Companion.SimpStrategy? = null
+    var GLUCOSE_SIMP_STRATEGY: GlucoseSolver.Companion.SimpStrategy? = null
 }

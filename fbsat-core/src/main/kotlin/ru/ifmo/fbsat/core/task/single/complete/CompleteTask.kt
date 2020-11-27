@@ -7,16 +7,16 @@ import ru.ifmo.fbsat.core.constraints.declareNegativeMappingConstraints
 import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.BoolVarArray
-import ru.ifmo.fbsat.core.solver.IntVar
-import ru.ifmo.fbsat.core.solver.IntVarArray
-import ru.ifmo.fbsat.core.solver.Literal
-import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.newBoolVarArray
-import ru.ifmo.fbsat.core.solver.newIntVar
+import com.github.lipen.satlib.solver.Solver
+import com.github.lipen.satlib.utils.newBoolVarArray
+import com.github.lipen.satlib.utils.BoolVarArray
+import com.github.lipen.satlib.utils.IntVar
+import com.github.lipen.satlib.utils.IntVarArray
+import com.github.lipen.satlib.utils.Lit
+import com.github.lipen.satlib.utils.newIntVar
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.timeSince
 
 data class CompleteTask(
@@ -68,9 +68,9 @@ fun Solver.updateNegativeReduction(
 
     fun inputChoice(
         u: Int,
-        inOldNegUIs: (Int) -> Literal,
-        inPosUIs: (Int) -> Literal,
-    ): Literal =
+        inOldNegUIs: (Int) -> Lit,
+        inPosUIs: (Int) -> Lit,
+    ): Lit =
         when (val input = negUIs[u - 1]) {
             in oldNegUIs -> inOldNegUIs(getOldNegU(input))
             in posUIs -> inPosUIs(getPosU(input))
@@ -166,7 +166,7 @@ fun Solver.updateNegativeReduction(
     }
 
     if (Globals.IS_DUMP_VARS_IN_CNF) {
-        log.warn("Dumping of CompleteVariables to CNF is not implemented yet")
+        mylog.warn("Dumping of CompleteVariables to CNF is not implemented yet")
     }
 
     /* Constraints */
@@ -176,7 +176,7 @@ fun Solver.updateNegativeReduction(
 
     val nVarsDiff = numberOfVariables - nVarsStart
     val nClausesDiff = numberOfClauses - nClausesStart
-    log.debug {
+    mylog.debug {
         "updateNegativeReduction: declared $nVarsDiff variables and $nClausesDiff clauses in %.3f s."
             .format(timeSince(timeStart).seconds)
     }

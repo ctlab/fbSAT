@@ -3,33 +3,34 @@
 package ru.ifmo.fbsat.core.constraints
 
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.satlib.op.atLeastOne
+import com.github.lipen.satlib.op.atMostOne
+import com.github.lipen.satlib.op.iff
+import com.github.lipen.satlib.op.iffAnd
+import com.github.lipen.satlib.op.iffImply
+import com.github.lipen.satlib.op.iffOr
+import com.github.lipen.satlib.op.imply
+import com.github.lipen.satlib.op.implyAnd
+import com.github.lipen.satlib.op.implyIff
+import com.github.lipen.satlib.op.implyIffAnd
+import com.github.lipen.satlib.op.implyIffIte
+import com.github.lipen.satlib.op.implyImply
+import com.github.lipen.satlib.op.implyImplyImply
+import com.github.lipen.satlib.op.implyOr
+import com.github.lipen.satlib.solver.Solver
+import com.github.lipen.satlib.utils.BoolVarArray
+import com.github.lipen.satlib.utils.IntVarArray
+import com.github.lipen.satlib.utils.sign
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.BoolVarArray
-import ru.ifmo.fbsat.core.solver.IntVarArray
-import ru.ifmo.fbsat.core.solver.Solver
-import ru.ifmo.fbsat.core.solver.atLeastOne
-import ru.ifmo.fbsat.core.solver.atMostOne
 import ru.ifmo.fbsat.core.solver.autoneg
+import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.forEachModularContext
-import ru.ifmo.fbsat.core.solver.iff
-import ru.ifmo.fbsat.core.solver.iffAnd
-import ru.ifmo.fbsat.core.solver.iffImply
-import ru.ifmo.fbsat.core.solver.iffOr
-import ru.ifmo.fbsat.core.solver.imply
-import ru.ifmo.fbsat.core.solver.implyAnd
-import ru.ifmo.fbsat.core.solver.implyIff
-import ru.ifmo.fbsat.core.solver.implyIffAnd
-import ru.ifmo.fbsat.core.solver.implyIffIte
-import ru.ifmo.fbsat.core.solver.implyImply
-import ru.ifmo.fbsat.core.solver.implyImplyImply
-import ru.ifmo.fbsat.core.solver.implyOr
-import ru.ifmo.fbsat.core.solver.sign
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.Pins
 import ru.ifmo.fbsat.core.utils.algorithmChoice
 import ru.ifmo.fbsat.core.utils.exhaustive
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.withIndex
 
 fun Solver.declarePositiveMappingConstraints(
@@ -251,7 +252,7 @@ fun Solver.declarePositiveConsecutiveModularMappingConstraints(
 
     // TODO: encode reverse-implication
     if (isEncodeReverseImplication) {
-        log.warn("Reverse-implication encoding is not implemented yet")
+        mylog.warn("Reverse-implication encoding is not implemented yet")
     }
 
     comment("Computed output value definition")
@@ -349,7 +350,7 @@ fun Solver.declarePositiveArbitraryModularMappingConstraints(
 
     // TODO: encode reverse-implication
     if (isEncodeReverseImplication) {
-        log.warn("Reverse-implication encoding is not implemented yet")
+        mylog.warn("Reverse-implication encoding is not implemented yet")
     }
 
     comment("Additional arbitrary modular mapping constraints")

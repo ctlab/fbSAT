@@ -7,13 +7,14 @@ import ru.ifmo.fbsat.core.automaton.buildExtendedDistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask
 import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedTask
 import ru.ifmo.fbsat.core.task.distributed.extended.inferDistributedExtended
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumC_Complete
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumN
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 import kotlin.math.min
 
@@ -116,7 +117,7 @@ fun Inferrer.completeMin__(
 ): DistributedAutomaton? {
     // for (D in startD..100) {
     for (D in startD..5) {
-        log.info("Trying D = $D...")
+        mylog.info("Trying D = $D...")
         // val automaton = completeMin_(
         //     numberOfModules = numberOfModules,
         //     compoundScenarioTree = compoundScenarioTree,
@@ -171,7 +172,7 @@ fun Inferrer.completeMin__(
 }
 
 fun Inferrer.inferDistributedComplete(): DistributedAutomaton? {
-    val model = solver.solve() ?: return null
+    val model = solver.solveAndGetModel() ?: return null
     // val vars = solver.context.distributedExtendedVars
     // val assignment = DistributedExtendedAssignment.frommodel(model, vars)
     // val automaton = assignment.toAutomaton()

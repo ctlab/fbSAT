@@ -2,14 +2,14 @@ package ru.ifmo.fbsat.core.task.distributed.complete
 
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
+import com.github.lipen.satlib.op.iffAnd
+import com.github.lipen.satlib.op.iffImply
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.IntVarArray
-import ru.ifmo.fbsat.core.solver.Solver
+import com.github.lipen.satlib.solver.Solver
+import com.github.lipen.satlib.utils.IntVarArray
 import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.forEachModularContext
-import ru.ifmo.fbsat.core.solver.iffAnd
-import ru.ifmo.fbsat.core.solver.iffImply
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.task.single.complete.updateNegativeReduction
 

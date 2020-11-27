@@ -15,7 +15,7 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask
 import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedTask
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.multiArrayOf
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 import ru.ifmo.fbsat.core.utils.project
@@ -71,7 +71,7 @@ fun Inferrer.distributedCegis(
 
 @Suppress("DuplicatedCode")
 fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
-    log.info("Performing distributed CEGIS...")
+    mylog.info("Performing distributed CEGIS...")
 
     // Copy smv files to output directory
     smvDir.copyRecursively(outDir, overwrite = true)
@@ -113,7 +113,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
         // Infer update
         val automaton = inferDistributedComplete()
         if (automaton == null) {
-            log.failure("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
+            mylog.failure("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
             return null
         }
         check(automaton.modules.shape.single() == M) { "modules.size must be M = $M" }
@@ -123,7 +123,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
             // Dump intermediate automaton
             automaton.project(m).dump(outDir, "_${modularName[m]}_iter%04d".format(iterationNumber))
             // Print intermediate automaton
-            log.info("Intermediate inferred automaton (module $m):")
+            mylog.info("Intermediate inferred automaton (module $m):")
             automaton.project(m).pprint()
         }
         // Check that inferred automaton does not satisfy negative scenario tree
@@ -179,7 +179,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
         // Check stale via hash code
         val hash = automaton.modules[1].calculateHashCode()
         if (hash == lastHashCode) {
-            log.warn("Stale (by hash)")
+            mylog.warn("Stale (by hash)")
         }
         lastHashCode = hash
         // =============
@@ -189,10 +189,10 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
             modularModuleName = multiArrayOf("Sender", "Receiver")
         )
         if (counterexamples.isEmpty()) {
-            log.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
-            log.success("No counterexamples!")
-            log.info("Final compound negative scenario tree size: ${negativeTree.size}")
-            log.info("Final number of negative scenarios: ${negativeTree.scenarios.size}")
+            mylog.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
+            mylog.success("No counterexamples!")
+            mylog.info("Final compound negative scenario tree size: ${negativeTree.size}")
+            mylog.info("Final number of negative scenarios: ${negativeTree.scenarios.size}")
             return automaton
         }
         // Convert counterexamples to negative scenarios
@@ -217,7 +217,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
         // Verify negative scenarios
         for ((i, negScenario) in negativeScenarios.withIndex(start = 1)) {
             if (automaton.verify(negScenario)) {
-                log.failure("Verify negative scenario #$i: disproved")
+                mylog.failure("Verify negative scenario #$i: disproved")
 
                 println("Mapping of negScenario (loopBack = ${negScenario.loopPosition}):")
                 for ((j, state) in automaton.map(negScenario).withIndex(start = 1)) {
@@ -227,7 +227,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
 
                 error("sad")
             } else {
-                log.success("Verify negative scenario #$i: confirmed")
+                mylog.success("Verify negative scenario #$i: confirmed")
             }
         }
         // Note: it is suffice to check just `negSc == lastNegSc`, but it may be costly,
@@ -236,7 +236,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
             error("Stale")
         }
         lastNegativeScenarios = negativeScenarios
-        log.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
+        mylog.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
     }
     return null
 }
@@ -247,12 +247,12 @@ fun DistributedAutomaton.verifyWithNuSMV(dir: File, modularModuleName: MultiArra
 
     // Perform formal verification using NuSMV, generate counterexamples to given ltl-spec
     val cmd = "make model counterexamples"
-    log.debug { "Running '$cmd'..." }
+    mylog.debug { "Running '$cmd'..." }
     val timeStart = PerformanceCounter.reference
     val process = Runtime.getRuntime().exec(cmd, null, dir)
     val exitcode = process.waitFor()
     val runningTime = timeSince(timeStart)
-    log.debug { "'$cmd' returned with $exitcode in %.3f s.".format(runningTime.seconds) }
+    mylog.debug { "'$cmd' returned with $exitcode in %.3f s.".format(runningTime.seconds) }
     check(exitcode == 0) {
         process.inputStream.source().useLines { lines ->
             for (line in lines) {

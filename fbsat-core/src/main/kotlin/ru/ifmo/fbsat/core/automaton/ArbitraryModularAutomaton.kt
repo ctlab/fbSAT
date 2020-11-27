@@ -3,6 +3,8 @@ package ru.ifmo.fbsat.core.automaton
 import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
+import com.github.lipen.satlib.utils.Context
+import com.github.lipen.satlib.utils.Model
 import com.soywiz.klock.DateTime
 import okio.buffer
 import okio.sink
@@ -16,14 +18,12 @@ import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.Context
-import ru.ifmo.fbsat.core.solver.Model
 import ru.ifmo.fbsat.core.solver.convertBoolVarArray
 import ru.ifmo.fbsat.core.solver.convertIntVarArray
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.Pins
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.ModularContext
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.pow
 import ru.ifmo.fbsat.core.utils.random
 import ru.ifmo.fbsat.core.utils.toBinary
@@ -187,17 +187,17 @@ class ArbitraryModularAutomaton(
         var i = 1
         for ((element, result) in elements.zip(eval(elements.map { it.inputAction }))) {
             if (result.outputAction != element.outputAction) {
-                log.error("i = $i: FAILED")
-                log.error("Bad output action: result.outputAction != element.outputAction")
-                log.error("result.outputAction = ${result.outputAction}")
-                log.error("element.outputAction = ${element.outputAction}")
-                log.error("element = $element")
-                log.error("result.modularInputAction = ${result.modularInputAction.values.map { "${it.event}[${it.values.values.toBinaryString()}]" }}")
-                log.error("result.modularDestination = ${result.modularDestination.values.map { it.id }}")
-                log.error("result.modularOutputAction = ${result.modularOutputAction.values.map { "${it.event}[${it.values.values.toBinaryString()}]" }}")
+                mylog.error("i = $i: FAILED")
+                mylog.error("Bad output action: result.outputAction != element.outputAction")
+                mylog.error("result.outputAction = ${result.outputAction}")
+                mylog.error("element.outputAction = ${element.outputAction}")
+                mylog.error("element = $element")
+                mylog.error("result.modularInputAction = ${result.modularInputAction.values.map { "${it.event}[${it.values.values.toBinaryString()}]" }}")
+                mylog.error("result.modularDestination = ${result.modularDestination.values.map { it.id }}")
+                mylog.error("result.modularOutputAction = ${result.modularOutputAction.values.map { "${it.event}[${it.values.values.toBinaryString()}]" }}")
                 return false
             } else {
-                log.success("i = $i: OK")
+                mylog.success("i = $i: OK")
             }
             i++
         }
@@ -217,7 +217,7 @@ class ArbitraryModularAutomaton(
     }
 
     fun printStats() {
-        log.just("    " + getStats())
+        mylog.just("    " + getStats())
     }
 
     /**
@@ -411,16 +411,16 @@ fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: OldPositive
 
     for (m in 1..M) {
         modularEffectiveInputs[m].sortBy { it.values.toBinaryString() }
-        log.info("Module #$m effective inputs (${modularEffectiveInputs[m].size} total):")
+        mylog.info("Module #$m effective inputs (${modularEffectiveInputs[m].size} total):")
         for (input in modularEffectiveInputs[m]) {
-            log.info("    ${input.values.toBinaryString()}")
+            mylog.info("    ${input.values.toBinaryString()}")
         }
     }
 
     println("=======================")
 
     for (m in 1..M) with(modules[m]) {
-        log.info("Minimizing guards for module #$m...")
+        mylog.info("Minimizing guards for module #$m...")
         val T = numberOfTransitions
         val X = inputNames.size
         val U = 2.pow(X)
@@ -432,7 +432,7 @@ fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: OldPositive
         val moduleInputValues: List<InputValues> = modularEffectiveInputs[m]
 
         val inputFile = File("pla-m$m.in")
-        log.debug { "Writing PLA to '$inputFile'..." }
+        mylog.debug { "Writing PLA to '$inputFile'..." }
         inputFile.sink().buffer().useWith {
             writeln(".i $X")
             writeln(".o $T")
@@ -459,11 +459,11 @@ fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: OldPositive
             }
             writeln(".e")
         }
-        log.debug { "Done writing PLA to '$inputFile'" }
+        mylog.debug { "Done writing PLA to '$inputFile'" }
 
         // val command = "boom -SD -Si100 $inputFile"
         val command = "espresso $inputFile"
-        log.debug { "Executing '$command'..." }
+        mylog.debug { "Executing '$command'..." }
         val process = Runtime.getRuntime().exec(command)
 
         val guardProducts: List<MutableList<List<String>>> = List(T) { mutableListOf<List<String>>() }
@@ -493,7 +493,7 @@ fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: OldPositive
             // val dnf = makeDnfString(products)
             // log.debug { "Minimized guard: $dnf" }
             transition.guard = DnfGuard(products, inputNames)
-            log.debug { "Minimized guard: ${transition.guard.toSimpleString()}" }
+            mylog.debug { "Minimized guard: ${transition.guard.toSimpleString()}" }
         }
     }
 }

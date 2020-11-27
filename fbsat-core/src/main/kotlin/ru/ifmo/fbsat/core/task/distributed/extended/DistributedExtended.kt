@@ -5,6 +5,7 @@ import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.buildExtendedDistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
@@ -47,7 +48,7 @@ fun Inferrer.distributedExtended(
 }
 
 fun Inferrer.inferDistributedExtended(): DistributedAutomaton? {
-    val model = solver.solve() ?: return null
+    val model = solver.solveAndGetModel() ?: return null
     val automaton = buildExtendedDistributedAutomaton(solver.context, model)
 
     // TODO: check mapping

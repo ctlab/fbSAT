@@ -4,7 +4,7 @@ import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.constraints.declareDistributedGuardConditionsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareDistributedPositiveGuardConditionsConstraints
 import ru.ifmo.fbsat.core.solver.Cardinality
-import ru.ifmo.fbsat.core.solver.Solver
+import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
