@@ -2,13 +2,13 @@ package ru.ifmo.fbsat.core.task.distributed.basic
 
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.mapIndexed
+import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.constraints.declareDistributedAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareDistributedAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declareDistributedPositiveMappingConstraints_compound
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Cardinality
-import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals

@@ -1,10 +1,10 @@
 package ru.ifmo.fbsat.core.task.single.complete
 
+import com.github.lipen.satlib.solver.Solver
+import com.github.lipen.satlib.utils.newBoolVarArray
+import com.github.lipen.satlib.utils.newIntVarArray
 import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
-import com.github.lipen.satlib.solver.Solver
-import com.github.lipen.satlib.utils.newIntVarArray
-import com.github.lipen.satlib.utils.newBoolVarArray
 
 fun Solver.declareCompleteVariables(
     negativeScenarioTree: NegativeScenarioTree,

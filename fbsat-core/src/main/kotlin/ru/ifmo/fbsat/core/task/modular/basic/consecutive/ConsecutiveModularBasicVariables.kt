@@ -1,10 +1,10 @@
 package ru.ifmo.fbsat.core.task.modular.basic.consecutive
 
 import com.github.lipen.multiarray.MultiArray
-import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import com.github.lipen.satlib.solver.Solver
-import com.github.lipen.satlib.utils.newBoolVarArray
 import com.github.lipen.satlib.utils.IntVarArray
+import com.github.lipen.satlib.utils.newBoolVarArray
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.declareModularContext
 import ru.ifmo.fbsat.core.solver.forEachModularContext

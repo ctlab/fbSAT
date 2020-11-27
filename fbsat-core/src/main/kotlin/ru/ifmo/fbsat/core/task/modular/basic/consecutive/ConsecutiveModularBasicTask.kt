@@ -1,11 +1,11 @@
 package ru.ifmo.fbsat.core.task.modular.basic.consecutive
 
+import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareConsecutiveModularAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveConsecutiveModularMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Cardinality
-import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 

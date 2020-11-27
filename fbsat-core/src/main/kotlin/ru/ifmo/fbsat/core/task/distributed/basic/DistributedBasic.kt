@@ -10,8 +10,8 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumC
-import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
+import ru.ifmo.fbsat.core.utils.mylog
 
 fun Inferrer.distributedBasic(
     numberOfModules: Int, // M

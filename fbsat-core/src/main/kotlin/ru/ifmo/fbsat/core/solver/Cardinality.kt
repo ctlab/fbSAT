@@ -1,12 +1,12 @@
 package ru.ifmo.fbsat.core.solver
 
-import java.util.ArrayDeque
-import java.util.Deque
 import com.github.lipen.satlib.solver.Solver
-import com.github.lipen.satlib.utils.newBoolVarArray
 import com.github.lipen.satlib.utils.BoolVarArray
 import com.github.lipen.satlib.utils.Lit
 import com.github.lipen.satlib.utils.SequenceScopeLit
+import com.github.lipen.satlib.utils.newBoolVarArray
+import java.util.ArrayDeque
+import java.util.Deque
 
 class Cardinality(
     val totalizer: BoolVarArray,

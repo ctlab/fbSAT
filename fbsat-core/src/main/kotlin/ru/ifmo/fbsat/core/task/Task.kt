@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.task
 
-import com.soywiz.klock.PerformanceCounter
 import com.github.lipen.satlib.solver.Solver
+import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.timeSince
 

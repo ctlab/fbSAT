@@ -1,10 +1,10 @@
 package ru.ifmo.fbsat.core.task.single.extended
 
+import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.constraints.declareGuardConditionsAdhocConstraints
 import ru.ifmo.fbsat.core.constraints.declareGuardConditionsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveGuardConditionsConstraints
 import ru.ifmo.fbsat.core.solver.Cardinality
-import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 

@@ -1,9 +1,9 @@
 package ru.ifmo.fbsat.core.task.single.basic
 
-import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import com.github.lipen.satlib.solver.Solver
 import com.github.lipen.satlib.utils.newBoolVarArray
 import com.github.lipen.satlib.utils.newIntVarArray
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.literals
 import ru.ifmo.fbsat.core.utils.Globals

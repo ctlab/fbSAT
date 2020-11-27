@@ -1,5 +1,12 @@
 package ru.ifmo.fbsat.core.task.single.complete
 
+import com.github.lipen.satlib.solver.Solver
+import com.github.lipen.satlib.utils.BoolVarArray
+import com.github.lipen.satlib.utils.IntVar
+import com.github.lipen.satlib.utils.IntVarArray
+import com.github.lipen.satlib.utils.Lit
+import com.github.lipen.satlib.utils.newBoolVarArray
+import com.github.lipen.satlib.utils.newIntVar
 import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.constraints.declareNegativeAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declareNegativeGuardConditionsConstraints
@@ -7,13 +14,6 @@ import ru.ifmo.fbsat.core.constraints.declareNegativeMappingConstraints
 import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import com.github.lipen.satlib.solver.Solver
-import com.github.lipen.satlib.utils.newBoolVarArray
-import com.github.lipen.satlib.utils.BoolVarArray
-import com.github.lipen.satlib.utils.IntVar
-import com.github.lipen.satlib.utils.IntVarArray
-import com.github.lipen.satlib.utils.Lit
-import com.github.lipen.satlib.utils.newIntVar
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.mylog

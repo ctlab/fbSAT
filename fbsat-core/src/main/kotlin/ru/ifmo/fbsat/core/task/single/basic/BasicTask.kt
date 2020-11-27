@@ -1,11 +1,11 @@
 package ru.ifmo.fbsat.core.task.single.basic
 
+import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.constraints.declareAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.Cardinality
-import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 

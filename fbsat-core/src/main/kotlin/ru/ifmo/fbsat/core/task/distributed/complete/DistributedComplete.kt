@@ -14,8 +14,8 @@ import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedTask
 import ru.ifmo.fbsat.core.task.distributed.extended.inferDistributedExtended
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumC_Complete
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumN
-import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
+import ru.ifmo.fbsat.core.utils.mylog
 import kotlin.math.min
 
 fun Inferrer.distributedComplete(

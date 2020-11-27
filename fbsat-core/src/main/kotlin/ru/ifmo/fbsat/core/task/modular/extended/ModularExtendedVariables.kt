@@ -1,8 +1,8 @@
 package ru.ifmo.fbsat.core.task.modular.extended
 
-import ru.ifmo.fbsat.core.automaton.NodeType
 import com.github.lipen.satlib.solver.Solver
 import com.github.lipen.satlib.utils.DomainVarArray
+import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.single.extended.declareExtendedVariables

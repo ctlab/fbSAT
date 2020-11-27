@@ -22,8 +22,8 @@ import ru.ifmo.fbsat.core.solver.convertDomainVarArray
 import ru.ifmo.fbsat.core.solver.convertIntVarArray
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.ModularContext
-import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.random
 import ru.ifmo.fbsat.core.utils.withIndex
 import ru.ifmo.fbsat.core.utils.writeEventMerger

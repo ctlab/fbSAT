@@ -28,8 +28,8 @@ import ru.ifmo.fbsat.core.utils.ModularOutputAction
 import ru.ifmo.fbsat.core.utils.ModularOutputValues
 import ru.ifmo.fbsat.core.utils.ModularScenarioTree
 import ru.ifmo.fbsat.core.utils.ModularState
-import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
+import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.toImmutable
 import ru.ifmo.fbsat.core.utils.toMultiArray
 import java.io.File
