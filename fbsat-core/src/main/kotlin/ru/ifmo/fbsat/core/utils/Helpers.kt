@@ -104,6 +104,8 @@ inline fun <T> Source.useLines(block: (Sequence<String>) -> T): T =
 fun BufferedSource.lineSequence(): Sequence<String> =
     sequence<String> { while (true) yield(readUtf8Line() ?: break) }.constrainOnce()
 
+fun BufferedSource.readLine(): String? = readUtf8Line()
+
 fun BufferedSink.write(s: String): BufferedSink = writeUtf8(s)
 
 fun BufferedSink.writeln(s: String): BufferedSink = write(s).writeByte(10) // 10 is '\n'

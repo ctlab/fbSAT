@@ -21,6 +21,7 @@ import ru.ifmo.fbsat.core.utils.ModularContext
 
 @Deprecated("Do not add empty clauses!")
 fun Solver.clause() {
+    @Suppress("deprecation")
     addClause()
 }
 
@@ -36,12 +37,13 @@ fun Solver.clause(lit1: Lit, lit2: Lit, lit3: Lit) {
     addClause(lit1, lit2, lit3)
 }
 
-fun Solver.clause(vararg literals: Lit) {
-    addClause_(literals)
+fun Solver.clause(literals: LitArray) {
+    addClause(literals)
 }
 
-fun Solver.clause_(literals: LitArray) {
-    addClause_(literals)
+@JvmName("clauseVararg")
+fun Solver.clause(vararg literals: Lit) {
+    addClause(literals)
 }
 
 fun Solver.clause(literals: List<Lit>) {

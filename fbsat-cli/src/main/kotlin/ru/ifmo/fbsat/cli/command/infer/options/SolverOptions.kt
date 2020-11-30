@@ -16,6 +16,7 @@ import com.github.lipen.satlib.solver.DimacsStreamSolver
 import com.github.lipen.satlib.solver.GlucoseSolver
 import com.github.lipen.satlib.solver.MiniSatSolver
 import com.github.lipen.satlib.solver.Solver
+import ru.ifmo.fbsat.core.solver.IncrementalCryptominisatSolver
 import ru.ifmo.fbsat.core.utils.Globals
 import java.io.File
 
@@ -31,13 +32,13 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
     val solver: Solver by lazy {
         when (solverBackend) {
             SolverBackend.FILE -> {
-                DimacsFileSolver(fileSolverCmd, fileSolverFile)
+                DimacsFileSolver({ fileSolverFile }, { fileSolverCmd.format(it) })
             }
             SolverBackend.STREAM -> {
-                DimacsStreamSolver(streamSolverCmd)
+                DimacsStreamSolver { streamSolverCmd }
             }
             SolverBackend.ICMS -> {
-                DimacsStreamSolver(Globals.ICMS_CMD)
+                IncrementalCryptominisatSolver { Globals.ICMS_CMD }
             }
             SolverBackend.MINISAT -> {
                 when (val simp = Globals.MINISAT_SIMP_STRATEGY) {
