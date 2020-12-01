@@ -11,8 +11,10 @@ gradleEnterprise {
     }
 }
 
-include("core")
-project(":core").projectDir = file("fbsat-core")
+fun myInclude(name:String) {
+    include(name)
+    project(":$name").projectDir = file("fbsat-$name")
+}
 
-include("cli")
-project(":cli").projectDir = file("fbsat-cli")
+myInclude("core")
+myInclude("cli")
