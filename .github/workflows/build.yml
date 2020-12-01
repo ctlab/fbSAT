@@ -20,5 +20,5 @@ jobs:
       - name: Build with Gradle
         uses: eskatos/gradle-command-action@v1
         with:
-          arguments: build build --stacktrace --scan
+          arguments: build --stacktrace --scan
           dependencies-cache-enabled: true
