@@ -1,3 +1,4 @@
+import de.undercouch.gradle.tasks.download.DownloadAction
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
@@ -50,7 +51,7 @@ subprojects {
     }
 }
 
-fun Task.download(action: de.undercouch.gradle.tasks.download.DownloadAction.() -> Unit) =
+fun Task.download(action: DownloadAction.() -> Unit) =
     download.configure(delegateClosureOf(action))
 
 val osArch: String = run {
