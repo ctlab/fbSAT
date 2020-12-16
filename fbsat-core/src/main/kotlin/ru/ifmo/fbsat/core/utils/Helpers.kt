@@ -2,7 +2,7 @@ package ru.ifmo.fbsat.core.utils
 
 import com.github.lipen.multiarray.GenericMultiArray
 import com.github.lipen.multiarray.MultiArray
-import com.github.lipen.satlib.utils.BoolVarArray
+import com.github.lipen.satlib.core.BoolVarArray
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.TimeSpan
 import okio.BufferedSink

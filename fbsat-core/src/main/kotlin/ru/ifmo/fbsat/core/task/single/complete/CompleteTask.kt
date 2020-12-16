@@ -1,12 +1,12 @@
 package ru.ifmo.fbsat.core.task.single.complete
 
+import com.github.lipen.satlib.core.BoolVarArray
+import com.github.lipen.satlib.core.IntVar
+import com.github.lipen.satlib.core.IntVarArray
+import com.github.lipen.satlib.core.Lit
+import com.github.lipen.satlib.core.newBoolVarArray
+import com.github.lipen.satlib.core.newIntVar
 import com.github.lipen.satlib.solver.Solver
-import com.github.lipen.satlib.utils.BoolVarArray
-import com.github.lipen.satlib.utils.IntVar
-import com.github.lipen.satlib.utils.IntVarArray
-import com.github.lipen.satlib.utils.Lit
-import com.github.lipen.satlib.utils.newBoolVarArray
-import com.github.lipen.satlib.utils.newIntVar
 import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.constraints.declareNegativeAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declareNegativeGuardConditionsConstraints

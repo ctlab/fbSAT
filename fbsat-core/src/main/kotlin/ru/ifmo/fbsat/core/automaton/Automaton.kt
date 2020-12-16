@@ -5,8 +5,8 @@ package ru.ifmo.fbsat.core.automaton
 import com.github.lipen.lazycache.LazyCache
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
-import com.github.lipen.satlib.utils.Context
-import com.github.lipen.satlib.utils.Model
+import com.github.lipen.satlib.core.Context
+import com.github.lipen.satlib.core.Model
 import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction

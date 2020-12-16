@@ -1,13 +1,13 @@
 package ru.ifmo.fbsat.core.task.modular.basic.arbitrary
 
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.satlib.card.declareCardinality
+import com.github.lipen.satlib.core.IntVarArray
+import com.github.lipen.satlib.core.newBoolVarArray
+import com.github.lipen.satlib.core.newIntVarArray
+import com.github.lipen.satlib.core.newOneHotBinaryIntVarArray
 import com.github.lipen.satlib.solver.Solver
-import com.github.lipen.satlib.utils.IntVarArray
-import com.github.lipen.satlib.utils.newBoolVarArray
-import com.github.lipen.satlib.utils.newIntVarArray
-import com.github.lipen.satlib.utils.newOneHotBinaryIntVarArray
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.declareModularContext
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables

@@ -2,6 +2,10 @@
 
 package ru.ifmo.fbsat.core.constraints
 
+import com.github.lipen.satlib.core.BoolVarArray
+import com.github.lipen.satlib.core.DomainVarArray
+import com.github.lipen.satlib.core.IntVarArray
+import com.github.lipen.satlib.core.sign
 import com.github.lipen.satlib.op.iff
 import com.github.lipen.satlib.op.imply
 import com.github.lipen.satlib.op.implyAnd
@@ -10,10 +14,6 @@ import com.github.lipen.satlib.op.implyImplyIff
 import com.github.lipen.satlib.op.implyImplyIffAnd
 import com.github.lipen.satlib.op.implyImplyIffOr
 import com.github.lipen.satlib.solver.Solver
-import com.github.lipen.satlib.utils.BoolVarArray
-import com.github.lipen.satlib.utils.DomainVarArray
-import com.github.lipen.satlib.utils.IntVarArray
-import com.github.lipen.satlib.utils.sign
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree

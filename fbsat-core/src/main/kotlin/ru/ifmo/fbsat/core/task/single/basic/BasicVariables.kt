@@ -1,10 +1,10 @@
 package ru.ifmo.fbsat.core.task.single.basic
 
+import com.github.lipen.satlib.card.declareCardinality
+import com.github.lipen.satlib.core.newBoolVarArray
+import com.github.lipen.satlib.core.newIntVarArray
 import com.github.lipen.satlib.solver.Solver
-import com.github.lipen.satlib.utils.newBoolVarArray
-import com.github.lipen.satlib.utils.newIntVarArray
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.literals
 import ru.ifmo.fbsat.core.utils.Globals
 
@@ -94,6 +94,6 @@ fun Solver.declareBasicVariables(
         comment("stateAlgorithmBot = ${stateAlgorithmBot.literals}")
         comment("stateAlgorithmTop = ${stateAlgorithmTop.literals}")
         comment("mapping = ${mapping.literals}")
-        comment("totalizerT = ${cardinalityT.totalizer.literals}")
+        comment("totalizerT = ${cardinalityT.totalizer}")
     }
 }

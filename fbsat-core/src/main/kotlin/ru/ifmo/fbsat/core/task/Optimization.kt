@@ -1,12 +1,12 @@
 package ru.ifmo.fbsat.core.task
 
+import com.github.lipen.satlib.card.Cardinality
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
-import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.task.distributed.basic.inferDistributedBasic
 import ru.ifmo.fbsat.core.task.distributed.complete.inferDistributedComplete
 import ru.ifmo.fbsat.core.task.distributed.extended.inferDistributedExtended
@@ -18,6 +18,7 @@ import ru.ifmo.fbsat.core.task.modular.extended.parallel.inferParallelModularExt
 import ru.ifmo.fbsat.core.task.single.basic.inferBasic
 import ru.ifmo.fbsat.core.task.single.extended.inferExtended
 import ru.ifmo.fbsat.core.task.single.extforest.inferExtForest
+import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.mylog
 
 fun <T : Any> optimizeTopDown(
@@ -55,219 +56,217 @@ fun <T : Any> optimizeTopDown(
     return best
 }
 
-fun Inferrer.optimizeT(start: Int? = null, end: Int = 0): Automaton? {
+fun <T : Any> Cardinality.optimizeTopDown(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+    infer: () -> T?,
+    query: (T) -> Int,
+): T? = optimizeTopDown(
+    start = start,
+    end = end,
+    nextInitial = { bound ->
+        if (useAssumptions) assumeLowerBoundGreaterThanOrEqual(bound)
+        else declareUpperBoundLessThanOrEqual(bound)
+        infer()
+    },
+    next = { bound ->
+        if (useAssumptions) assumeUpperBoundLessThan(bound)
+        else declareUpperBoundLessThan(bound)
+        infer()
+    },
+    query = query
+)
+
+fun Inferrer.optimizeT(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): Automaton? {
     mylog.info("Optimizing T...")
-    val cardinalityT: Cardinality = solver.context["cardinalityT"]
-    return optimizeTopDown(
+    val cardinality: Cardinality = solver.context["cardinalityT"]
+    return cardinality.optimizeTopDown(
         start = start,
         end = end,
-        nextInitial = { T ->
-            cardinalityT.updateUpperBoundLessThanOrEqual(T)
-            inferBasic()
-        },
-        next = { T ->
-            cardinalityT.updateUpperBoundLessThan(T)
-            inferBasic()
-        },
+        useAssumptions = useAssumptions,
+        infer = { inferBasic() },
         query = { it.numberOfTransitions }
     )
 }
 
-fun Inferrer.optimizeN(start: Int? = null, end: Int = 0): Automaton? {
+fun Inferrer.optimizeN(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): Automaton? {
     mylog.info("Optimizing N...")
-    val cardinalityN: Cardinality = solver.context["cardinalityN"]
-    return optimizeTopDown(
+    val cardinality: Cardinality = solver.context["cardinalityN"]
+    return cardinality.optimizeTopDown(
         start = start,
         end = end,
-        nextInitial = { N ->
-            cardinalityN.updateUpperBoundLessThanOrEqual(N)
-            inferExtended()
-        },
-        next = { N ->
-            cardinalityN.updateUpperBoundLessThan(N)
-            inferExtended()
-        },
+        useAssumptions = useAssumptions,
+        infer = { inferExtended() },
         query = { it.totalGuardsSize }
     )
 }
 
 @Suppress("FunctionName")
-fun Inferrer.optimizeN_Forest(start: Int? = null, end: Int = 0): Automaton? {
+fun Inferrer.optimizeN_Forest(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): Automaton? {
     mylog.info("Optimizing N...")
-    val cardinalityN: Cardinality = solver.context["cardinalityN"]
-    return optimizeTopDown(
+    val cardinality: Cardinality = solver.context["cardinalityN"]
+    return cardinality.optimizeTopDown(
         start = start,
         end = end,
-        nextInitial = { N ->
-            cardinalityN.updateUpperBoundLessThanOrEqual(N)
-            inferExtForest()
-        },
-        next = { N ->
-            cardinalityN.updateUpperBoundLessThan(N)
-            inferExtForest()
-        },
+        useAssumptions = useAssumptions,
+        infer = { inferExtForest() },
         query = { it.totalGuardsSize }
     )
 }
 
-fun Inferrer.optimizeParallelModularT(start: Int? = null, end: Int = 0): ParallelModularAutomaton? {
+fun Inferrer.optimizeParallelModularT(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): ParallelModularAutomaton? {
     mylog.info("Optimizing T...")
-    val cardinalityT: Cardinality = solver.context["cardinalityT"]
-    return optimizeTopDown(
+    val cardinality: Cardinality = solver.context["cardinalityT"]
+    return cardinality.optimizeTopDown(
         start = start,
         end = end,
-        nextInitial = { T ->
-            cardinalityT.updateUpperBoundLessThanOrEqual(T)
-            inferParallelModularBasic()
-        },
-        next = { T ->
-            cardinalityT.updateUpperBoundLessThan(T)
-            inferParallelModularBasic()
-        },
+        useAssumptions = useAssumptions,
+        infer = { inferParallelModularBasic() },
         query = { it.numberOfTransitions }
     )
 }
 
-fun Inferrer.optimizeConsecutiveModularT(start: Int? = null, end: Int = 0): ConsecutiveModularAutomaton? {
+fun Inferrer.optimizeConsecutiveModularT(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): ConsecutiveModularAutomaton? {
     mylog.info("Optimizing T...")
-    val cardinalityT: Cardinality = solver.context["cardinalityT"]
-    return optimizeTopDown(
+    val cardinality: Cardinality = solver.context["cardinalityT"]
+    return cardinality.optimizeTopDown(
         start = start,
         end = end,
-        nextInitial = { T ->
-            cardinalityT.updateUpperBoundLessThanOrEqual(T)
-            inferConsecutiveModularBasic()
-        },
-        next = { T ->
-            cardinalityT.updateUpperBoundLessThan(T)
-            inferConsecutiveModularBasic()
-        },
+        useAssumptions = useAssumptions,
+        infer = { inferConsecutiveModularBasic() },
         query = { it.numberOfTransitions }
     )
 }
 
-fun Inferrer.optimizeArbitraryModularT(start: Int? = null, end: Int = 0): ArbitraryModularAutomaton? {
+fun Inferrer.optimizeArbitraryModularT(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): ArbitraryModularAutomaton? {
     mylog.info("Optimizing T...")
-    val cardinalityT: Cardinality = solver.context["cardinalityT"]
-    return optimizeTopDown(
+    val cardinality: Cardinality = solver.context["cardinalityT"]
+    return cardinality.optimizeTopDown(
         start = start,
         end = end,
-        nextInitial = { T ->
-            cardinalityT.updateUpperBoundLessThanOrEqual(T)
-            inferArbitraryModularBasic()
-        },
-        next = { T ->
-            cardinalityT.updateUpperBoundLessThan(T)
-            inferArbitraryModularBasic()
-        },
+        useAssumptions = useAssumptions,
+        infer = { inferArbitraryModularBasic() },
         query = { it.numberOfTransitions }
     )
 }
 
-fun Inferrer.optimizeConsecutiveModularN(start: Int? = null, end: Int = 0): ConsecutiveModularAutomaton? {
+fun Inferrer.optimizeConsecutiveModularN(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): ConsecutiveModularAutomaton? {
     mylog.info("Optimizing N...")
-    val cardinalityN: Cardinality = solver.context["cardinalityN"]
-    return optimizeTopDown(
+    val cardinality: Cardinality = solver.context["cardinalityN"]
+    return cardinality.optimizeTopDown(
         start = start,
         end = end,
-        nextInitial = { N ->
-            cardinalityN.updateUpperBoundLessThanOrEqual(N)
-            inferConsecutiveModularExtended()
-        },
-        next = { N ->
-            cardinalityN.updateUpperBoundLessThan(N)
-            inferConsecutiveModularExtended()
-        },
+        useAssumptions = useAssumptions,
+        infer = { inferConsecutiveModularExtended() },
         query = { it.totalGuardsSize }
     )
 }
 
-fun Inferrer.optimizeParallelModularN(start: Int? = null, end: Int = 0): ParallelModularAutomaton? {
+fun Inferrer.optimizeParallelModularN(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): ParallelModularAutomaton? {
     mylog.info("Optimizing N...")
-    val cardinalityN: Cardinality = solver.context["cardinalityN"]
-    return optimizeTopDown(
+    val cardinality: Cardinality = solver.context["cardinalityN"]
+    return cardinality.optimizeTopDown(
         start = start,
         end = end,
-        nextInitial = { N ->
-            cardinalityN.updateUpperBoundLessThanOrEqual(N)
-            inferParallelModularExtended()
-        },
-        next = { N ->
-            cardinalityN.updateUpperBoundLessThan(N)
-            inferParallelModularExtended()
-        },
+        useAssumptions = useAssumptions,
+        infer = { inferParallelModularExtended() },
         query = { it.totalGuardsSize }
     )
 }
 
-fun Inferrer.optimizeDistributedSumC(start: Int? = null, end: Int = 0): DistributedAutomaton? {
+fun Inferrer.optimizeDistributedSumC(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): DistributedAutomaton? {
     mylog.info("Optimizing Csum...")
-    val cardinalityC: Cardinality = solver.context["cardinalityC"]
-    return optimizeTopDown(
+    val cardinality: Cardinality = solver.context["cardinalityC"]
+    return cardinality.optimizeTopDown(
         start = start,
         end = end,
-        nextInitial = { C ->
-            cardinalityC.updateUpperBoundLessThanOrEqual(C)
-            inferDistributedBasic()
-        },
-        next = { C ->
-            cardinalityC.updateUpperBoundLessThan(C)
-            inferDistributedBasic()
-        },
+        useAssumptions = useAssumptions,
+        infer = { inferDistributedBasic() },
         query = { it.numberOfReachableStates }
     )
 }
 
-fun Inferrer.optimizeDistributedSumC_Extended(start: Int? = null, end: Int = 0): DistributedAutomaton? {
+fun Inferrer.optimizeDistributedSumC_Extended(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): DistributedAutomaton? {
     mylog.info("Optimizing Csum...")
-    val cardinalityC: Cardinality = solver.context["cardinalityC"]
-    return optimizeTopDown(
+    val cardinality: Cardinality = solver.context["cardinalityC"]
+    return cardinality.optimizeTopDown(
         start = start,
         end = end,
-        nextInitial = { C ->
-            cardinalityC.updateUpperBoundLessThanOrEqual(C)
-            inferDistributedExtended()
-        },
-        next = { C ->
-            cardinalityC.updateUpperBoundLessThan(C)
-            inferDistributedExtended()
-        },
+        useAssumptions = useAssumptions,
+        infer = { inferDistributedExtended() },
         query = { it.numberOfReachableStates }
     )
 }
 
-fun Inferrer.optimizeDistributedSumC_Complete(start: Int? = null, end: Int = 0): DistributedAutomaton? {
+fun Inferrer.optimizeDistributedSumC_Complete(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): DistributedAutomaton? {
     mylog.info("Optimizing Csum...")
-    val cardinalityC: Cardinality = solver.context["cardinalityC"]
-    return optimizeTopDown(
+    val cardinality: Cardinality = solver.context["cardinalityC"]
+    return cardinality.optimizeTopDown(
         start = start,
         end = end,
-        nextInitial = { C ->
-            cardinalityC.updateUpperBoundLessThanOrEqual(C)
-            inferDistributedComplete()
-        },
-        next = { C ->
-            cardinalityC.updateUpperBoundLessThan(C)
-            inferDistributedComplete()
-        },
+        useAssumptions = useAssumptions,
+        infer = { inferDistributedComplete() },
         query = { it.numberOfReachableStates }
     )
 }
 
-fun Inferrer.optimizeDistributedSumN(start: Int? = null, end: Int = 0): DistributedAutomaton? {
+fun Inferrer.optimizeDistributedSumN(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): DistributedAutomaton? {
     mylog.info("Optimizing Nsum...")
-    val cardinalityN: Cardinality = solver.context["cardinalityN"]
-    return optimizeTopDown(
+    val cardinality: Cardinality = solver.context["cardinalityN"]
+    return cardinality.optimizeTopDown(
         start = start,
         end = end,
-        nextInitial = { N ->
-            cardinalityN.updateUpperBoundLessThanOrEqual(N)
-            inferDistributedExtended()
-        },
-        next = { N ->
-            cardinalityN.updateUpperBoundLessThan(N)
-            inferDistributedExtended()
-        },
+        useAssumptions = useAssumptions,
+        infer = { inferDistributedExtended() },
         query = { it.totalGuardsSize }
     )
 }

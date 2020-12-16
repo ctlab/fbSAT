@@ -3,20 +3,20 @@ package ru.ifmo.fbsat.core.solver
 import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.satlib.core.BoolVarArray
+import com.github.lipen.satlib.core.Context
+import com.github.lipen.satlib.core.DomainVar
+import com.github.lipen.satlib.core.DomainVarArray
+import com.github.lipen.satlib.core.IntVar
+import com.github.lipen.satlib.core.IntVarArray
+import com.github.lipen.satlib.core.Lit
+import com.github.lipen.satlib.core.LitArray
+import com.github.lipen.satlib.core.Model
+import com.github.lipen.satlib.core.SequenceScopeLit
+import com.github.lipen.satlib.core.convert
+import com.github.lipen.satlib.core.newContext
 import com.github.lipen.satlib.solver.Solver
 import com.github.lipen.satlib.solver.switchContext
-import com.github.lipen.satlib.utils.BoolVarArray
-import com.github.lipen.satlib.utils.Context
-import com.github.lipen.satlib.utils.DomainVar
-import com.github.lipen.satlib.utils.DomainVarArray
-import com.github.lipen.satlib.utils.IntVar
-import com.github.lipen.satlib.utils.IntVarArray
-import com.github.lipen.satlib.utils.Lit
-import com.github.lipen.satlib.utils.LitArray
-import com.github.lipen.satlib.utils.Model
-import com.github.lipen.satlib.utils.SequenceScopeLit
-import com.github.lipen.satlib.utils.convert
-import com.github.lipen.satlib.utils.newContext
 import ru.ifmo.fbsat.core.utils.ModularContext
 
 @Deprecated("Do not add empty clauses!")

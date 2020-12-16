@@ -3,8 +3,8 @@ package ru.ifmo.fbsat.core.automaton
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import com.github.lipen.multiarray.mapIndexed
-import com.github.lipen.satlib.utils.Context
-import com.github.lipen.satlib.utils.Model
+import com.github.lipen.satlib.core.Context
+import com.github.lipen.satlib.core.Model
 import ru.ifmo.fbsat.core.scenario.CompoundScenario
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent

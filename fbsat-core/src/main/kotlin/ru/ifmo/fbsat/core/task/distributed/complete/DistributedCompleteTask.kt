@@ -2,10 +2,10 @@ package ru.ifmo.fbsat.core.task.distributed.complete
 
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
+import com.github.lipen.satlib.core.IntVarArray
 import com.github.lipen.satlib.op.iffAnd
 import com.github.lipen.satlib.op.iffImply
 import com.github.lipen.satlib.solver.Solver
-import com.github.lipen.satlib.utils.IntVarArray
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.clause

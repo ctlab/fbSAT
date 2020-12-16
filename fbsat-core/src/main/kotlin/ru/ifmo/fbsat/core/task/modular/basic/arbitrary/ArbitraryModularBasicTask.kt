@@ -1,11 +1,11 @@
 package ru.ifmo.fbsat.core.task.modular.basic.arbitrary
 
+import com.github.lipen.satlib.card.Cardinality
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.constraints.declareArbitraryModularAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareArbitraryModularAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveArbitraryModularMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 
@@ -36,6 +36,6 @@ data class ArbitraryModularBasicTask(
         /* Initial cardinality constraints */
         comment("$name: Initial cardinality (T) constraints")
         val cardinalityT: Cardinality = context["cardinalityT"]
-        cardinalityT.updateUpperBoundLessThanOrEqual(maxTransitions)
+        cardinalityT.declareUpperBoundLessThanOrEqual(maxTransitions)
     }
 }

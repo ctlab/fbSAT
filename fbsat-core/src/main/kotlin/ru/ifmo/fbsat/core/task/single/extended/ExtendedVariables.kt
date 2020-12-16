@@ -1,12 +1,12 @@
 package ru.ifmo.fbsat.core.task.single.extended
 
+import com.github.lipen.satlib.card.declareCardinality
+import com.github.lipen.satlib.core.BoolVarArray
+import com.github.lipen.satlib.core.newBoolVarArray
+import com.github.lipen.satlib.core.newDomainVarArray
+import com.github.lipen.satlib.core.newIntVarArray
 import com.github.lipen.satlib.solver.Solver
-import com.github.lipen.satlib.utils.BoolVarArray
-import com.github.lipen.satlib.utils.newBoolVarArray
-import com.github.lipen.satlib.utils.newDomainVarArray
-import com.github.lipen.satlib.utils.newIntVarArray
 import ru.ifmo.fbsat.core.automaton.NodeType
-import ru.ifmo.fbsat.core.solver.declareCardinality
 import ru.ifmo.fbsat.core.solver.literals
 import ru.ifmo.fbsat.core.utils.Globals
 
@@ -59,6 +59,6 @@ fun Solver.declareExtendedVariables(
         comment("nodeParent = ${nodeParent.literals}")
         comment("nodeChild = ${nodeChild.literals}")
         comment("nodeValue = ${nodeValue.literals}")
-        comment("totalizerN = ${cardinalityN.totalizer.literals}")
+        comment("totalizerN = ${cardinalityN.totalizer}")
     }
 }

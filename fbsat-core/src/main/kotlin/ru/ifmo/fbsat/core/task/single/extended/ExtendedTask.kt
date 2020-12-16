@@ -1,10 +1,10 @@
 package ru.ifmo.fbsat.core.task.single.extended
 
+import com.github.lipen.satlib.card.Cardinality
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.constraints.declareGuardConditionsAdhocConstraints
 import ru.ifmo.fbsat.core.constraints.declareGuardConditionsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveGuardConditionsConstraints
-import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 
@@ -28,6 +28,6 @@ data class ExtendedTask(
         /* Initial cardinality constraints */
         comment("$name: Initial cardinality (N) constraints")
         val cardinalityN: Cardinality = context["cardinalityN"]
-        cardinalityN.updateUpperBoundLessThanOrEqual(maxTotalGuardsSize)
+        cardinalityN.declareUpperBoundLessThanOrEqual(maxTotalGuardsSize)
     }
 }

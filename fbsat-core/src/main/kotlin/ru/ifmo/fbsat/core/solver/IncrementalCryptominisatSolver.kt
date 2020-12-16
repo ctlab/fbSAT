@@ -1,9 +1,9 @@
 package ru.ifmo.fbsat.core.solver
 
+import com.github.lipen.satlib.core.Lit
+import com.github.lipen.satlib.core.LitArray
+import com.github.lipen.satlib.core.Model
 import com.github.lipen.satlib.solver.AbstractSolver
-import com.github.lipen.satlib.utils.Lit
-import com.github.lipen.satlib.utils.LitArray
-import com.github.lipen.satlib.utils.Model
 import okio.BufferedSink
 import okio.BufferedSource
 import okio.buffer

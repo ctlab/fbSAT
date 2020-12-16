@@ -2,6 +2,8 @@
 
 package ru.ifmo.fbsat.core.constraints
 
+import com.github.lipen.satlib.core.BoolVarArray
+import com.github.lipen.satlib.core.IntVarArray
 import com.github.lipen.satlib.op.atLeastOne
 import com.github.lipen.satlib.op.atMostOne
 import com.github.lipen.satlib.op.exactlyOne
@@ -11,8 +13,6 @@ import com.github.lipen.satlib.op.iffOr
 import com.github.lipen.satlib.op.imply
 import com.github.lipen.satlib.op.implyAnd
 import com.github.lipen.satlib.solver.Solver
-import com.github.lipen.satlib.utils.BoolVarArray
-import com.github.lipen.satlib.utils.IntVarArray
 import ru.ifmo.fbsat.core.solver.autoneg
 import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.forEachModularContext

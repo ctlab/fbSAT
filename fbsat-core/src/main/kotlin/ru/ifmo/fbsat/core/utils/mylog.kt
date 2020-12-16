@@ -2,7 +2,6 @@ package ru.ifmo.fbsat.core.utils
 
 import com.github.ajalt.mordant.TermColors
 
-@Deprecated("Use proper logging, already!")
 @Suppress("ClassName")
 object mylog {
     private val t = TermColors()

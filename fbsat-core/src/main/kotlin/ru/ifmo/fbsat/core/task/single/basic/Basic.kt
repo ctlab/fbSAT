@@ -57,9 +57,16 @@ fun Inferrer.basicMinC(
 
 fun Inferrer.basicMin(
     scenarioTree: PositiveScenarioTree,
+    start: Int = 1, // C_start
+    end: Int = 20, // C_end
     isEncodeReverseImplication: Boolean = true,
 ): Automaton? {
-    basicMinC(scenarioTree, isEncodeReverseImplication = isEncodeReverseImplication)
+    basicMinC(
+        scenarioTree = scenarioTree,
+        start = start,
+        end = end,
+        isEncodeReverseImplication = isEncodeReverseImplication
+    )
     return optimizeT()
 }
 

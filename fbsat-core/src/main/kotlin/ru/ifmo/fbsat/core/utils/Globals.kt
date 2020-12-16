@@ -32,6 +32,7 @@ object Globals {
     var IS_DEBUG: Boolean = false
     var IS_REUSE_K: Boolean = true
     var IS_DUMP_VARS_IN_CNF: Boolean = false
+    var IS_USE_ASSUMPTIONS: Boolean = false
     val xmlPrintOptions: PrintOptions =
         PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = true)
     var modularName: MultiArray<String> by Delegates.notNull()

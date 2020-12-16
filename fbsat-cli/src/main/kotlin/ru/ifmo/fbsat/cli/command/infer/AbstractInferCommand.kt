@@ -33,6 +33,7 @@ abstract class AbstractInferCommand<AutomatonType : Any>(name: String) : CliktCo
             Globals.IS_ENCODE_TOTALIZER = isEncodeTotalizer
             Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS = isEncodeDisjunctiveTransitions
             Globals.IS_REUSE_K = isReuseK
+            Globals.IS_USE_ASSUMPTIONS = isUseAssumptions
             Globals.IS_DUMP_VARS_IN_CNF = isDumpVarsInCnf
             Globals.IS_DEBUG = isDebug
         }

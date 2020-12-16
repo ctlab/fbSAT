@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.utils
 
 import com.github.lipen.multiarray.MultiArray
-import com.github.lipen.satlib.utils.Context
+import com.github.lipen.satlib.core.Context
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent

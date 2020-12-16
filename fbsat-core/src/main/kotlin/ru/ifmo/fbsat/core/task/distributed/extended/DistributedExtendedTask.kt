@@ -1,10 +1,10 @@
 package ru.ifmo.fbsat.core.task.distributed.extended
 
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.satlib.card.Cardinality
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.constraints.declareDistributedGuardConditionsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareDistributedPositiveGuardConditionsConstraints
-import ru.ifmo.fbsat.core.solver.Cardinality
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
@@ -32,10 +32,10 @@ data class DistributedExtendedTask(
         forEachModularContext { m ->
             comment("$name: Initial cardinality (T) constraints: for module m = $m")
             val cardinalityN: Cardinality = context["cardinalityN"]
-            cardinalityN.updateUpperBoundLessThanOrEqual(modularMaxTotalGuardsSize[m])
+            cardinalityN.declareUpperBoundLessThanOrEqual(modularMaxTotalGuardsSize[m])
         }
         comment("$name: Initial cardinality (T) constraints")
         val cardinalityN: Cardinality = context["cardinalityN"]
-        cardinalityN.updateUpperBoundLessThanOrEqual(maxTotalGuardsSize)
+        cardinalityN.declareUpperBoundLessThanOrEqual(maxTotalGuardsSize)
     }
 }

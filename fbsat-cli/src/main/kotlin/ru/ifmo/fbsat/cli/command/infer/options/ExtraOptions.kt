@@ -35,6 +35,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isEncodeTotalizer: Boolean by isEncodeTotalizerOption()
     val isEncodeDisjunctiveTransitions: Boolean by isEncodeDisjunctiveTransitionsOption()
     val isReuseK: Boolean by isReuseKOption()
+    val isUseAssumptions: Boolean by isUseAssumptionsOption()
     val isDumpVarsInCnf: Boolean by isDumpVarsInCnfOption()
     val isDebug: Boolean by isDebugOption()
 }
@@ -195,6 +196,15 @@ fun ParameterHolder.isReuseKOption() =
     ).flag(
         "--no-reuse-k",
         default = Globals.IS_REUSE_K
+    )
+
+fun ParameterHolder.isUseAssumptionsOption() =
+    option(
+        "--use-assumptions",
+        help = "Use assumptions during cardinality optimizations"
+    ).flag(
+        "--no-use-assumptions",
+        default = Globals.IS_USE_ASSUMPTIONS
     )
 
 fun ParameterHolder.isDumpVarsInCnfOption() =
