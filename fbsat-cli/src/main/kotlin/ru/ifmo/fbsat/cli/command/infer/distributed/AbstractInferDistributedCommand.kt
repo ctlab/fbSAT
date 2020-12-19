@@ -11,7 +11,6 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.mylog
-import ru.ifmo.fbsat.core.utils.toImmutable
 import java.io.File
 
 abstract class AbstractInferDistributedCommand(name: String) :
@@ -36,14 +35,14 @@ abstract class AbstractInferDistributedCommand(name: String) :
         val M = numberOfModules
         compoundScenarioTree = PositiveCompoundScenarioTree(
             M = M,
-            modularInputEvents = MultiArray.create(M) { scenarioTree.inputEvents },
-            modularOutputEvents = MultiArray.create(M) { scenarioTree.outputEvents },
-            modularInputNames = MultiArray.create(M) { scenarioTree.inputNames },
-            modularOutputNames = MultiArray.create(M) { scenarioTree.outputNames }
+            modularInputEvents = MultiArray.new(M) { scenarioTree.inputEvents },
+            modularOutputEvents = MultiArray.new(M) { scenarioTree.outputEvents },
+            modularInputNames = MultiArray.new(M) { scenarioTree.inputNames },
+            modularOutputNames = MultiArray.new(M) { scenarioTree.outputNames }
         )
         for (scenario in scenarioTree.scenarios) {
             val compoundElements = scenario.elements.map { elem ->
-                CompoundScenarioElement(MultiArray.create(M) { elem }.toImmutable())
+                CompoundScenarioElement(MultiArray.new(M) { elem })
             }
             val multiScenario = PositiveCompoundScenario(M, compoundElements)
             compoundScenarioTree.addScenario(multiScenario)

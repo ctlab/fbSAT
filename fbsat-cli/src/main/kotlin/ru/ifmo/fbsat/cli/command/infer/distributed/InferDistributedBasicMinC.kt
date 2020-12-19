@@ -48,7 +48,7 @@ class InferDistributedBasicMinCCommand : AbstractInferDistributedCommand("distri
             numberOfModules = M,
             compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = compoundScenarioTree.modular,
-            modularIsEncodeReverseImplication = MultiArray.create(M) { extraOptions.isEncodeReverseImplication }
+            modularIsEncodeReverseImplication = MultiArray.new(M) { extraOptions.isEncodeReverseImplication }
         )
     }
 }

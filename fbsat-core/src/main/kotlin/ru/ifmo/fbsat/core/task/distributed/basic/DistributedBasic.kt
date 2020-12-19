@@ -20,7 +20,7 @@ fun Inferrer.distributedBasic(
     modularNumberOfStates: MultiArray<Int>, // [C]
     modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
-    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
+    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
     maxTransitions: Int? = null, // T_sum, unconstrained if null
 ): DistributedAutomaton? {
     reset()
@@ -43,11 +43,11 @@ fun Inferrer.distributedBasicMinC(
     numberOfModules: Int, // M
     compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
     modularScenarioTree: MultiArray<PositiveScenarioTree> = compoundScenarioTree.modular,
-    // modularStartNumberOfStates: MultiArray<Int> = MultiArray.create(numberOfModules){1}, // C_start
-    // modularEndNumberOfStates: MultiArray<Int> = MultiArray.create(numberOfModules){20}, // C_end
+    // modularStartNumberOfStates: MultiArray<Int> = MultiArray.new(numberOfModules){1}, // C_start
+    // modularEndNumberOfStates: MultiArray<Int> = MultiArray.new(numberOfModules){20}, // C_end
     start: Int = 1, // C_start
     end: Int = 20, // C_end
-    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
+    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
 ): DistributedAutomaton? {
     val M = numberOfModules
     var best: DistributedAutomaton? = null
@@ -58,7 +58,7 @@ fun Inferrer.distributedBasicMinC(
                 numberOfModules = M,
                 compoundScenarioTree = compoundScenarioTree,
                 modularScenarioTree = compoundScenarioTree.modular,
-                modularNumberOfStates = MultiArray.create(M) { C },
+                modularNumberOfStates = MultiArray.new(M) { C },
                 modularIsEncodeReverseImplication = modularIsEncodeReverseImplication
             )
         }

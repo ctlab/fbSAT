@@ -900,11 +900,11 @@ fun buildExtendedAutomaton(
         },
         transitionGuard = { c, k ->
             ParseTreeGuard(
-                nodeType = MultiArray.create(P) { (p) -> nodeType[c, k, p] },
-                terminal = IntMultiArray.create(P) { (p) -> nodeInputVariable[c, k, p] },
-                parent = IntMultiArray.create(P) { (p) -> nodeParent[c, k, p] },
-                childLeft = IntMultiArray.create(P) { (p) -> nodeChild[c, k, p] },
-                childRight = IntMultiArray.create(P) { (p) ->
+                nodeType = MultiArray.new(P) { (p) -> nodeType[c, k, p] },
+                terminal = IntMultiArray.new(P) { (p) -> nodeInputVariable[c, k, p] },
+                parent = IntMultiArray.new(P) { (p) -> nodeParent[c, k, p] },
+                childLeft = IntMultiArray.new(P) { (p) -> nodeChild[c, k, p] },
+                childRight = IntMultiArray.new(P) { (p) ->
                     if (nodeType[c, k, p] in setOf(NodeType.AND, NodeType.OR))
                         nodeChild[c, k, p] + 1
                     else

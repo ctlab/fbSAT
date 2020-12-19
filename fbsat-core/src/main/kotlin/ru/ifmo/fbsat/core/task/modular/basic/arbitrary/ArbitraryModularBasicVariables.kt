@@ -96,7 +96,7 @@ fun Solver.declareArbitraryModularBasicVariables(
             }
         }
         val modularInputIndex = context("modularInputIndex") {
-            MultiArray.create(M) {
+            MultiArray.new(M) {
                 newOneHotBinaryIntVarArray(V) { 1..U }
             }
         }

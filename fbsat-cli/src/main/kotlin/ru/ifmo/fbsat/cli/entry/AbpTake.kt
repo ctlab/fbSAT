@@ -34,10 +34,10 @@ fun main() {
         "sender",
         "receiver"
     )
-    val modularInputEvents = MultiArray.create(M) {
+    val modularInputEvents = MultiArray.new(M) {
         listOf("REQ").map { InputEvent(it) }
     }
-    val modularOutputEvents = MultiArray.create(M) {
+    val modularOutputEvents = MultiArray.new(M) {
         listOf("CNF").map { OutputEvent(it) }
     }
     val modularInputNames = multiArrayOf(
@@ -110,7 +110,7 @@ fun main() {
     //     }
     //     .zipWithNext { inputData, outputData ->
     //         CompoundScenarioElement(
-    //             modular = MultiArray.create(M) { (m) ->
+    //             modular = MultiArray.new(M) { (m) ->
     //                 ScenarioElement(
     //                     inputAction = InputAction(
     //                         event = modularInputEvents[m].firstOrNull {
@@ -360,12 +360,12 @@ fun main() {
     // val distributedAutomaton: DistributedAutomaton? = inferrer.distributedCegis(
     //     numberOfModules = 1,
     //     compoundScenarioTree = positiveCompoundScenarioTree,
-    //     modularScenarioTree = MultiArray.create(1) { positiveCompoundScenarioTree.project(1) },
+    //     modularScenarioTree = MultiArray.new(1) { positiveCompoundScenarioTree.project(1) },
     //     // negativeCompoundScenarioTree = negativeCompoundScenarioTree,
-    //     modularNumberOfStates = MultiArray.create(1) { C },
-    //     modularMaxOutgoingTransitions = MultiArray.createNullable(1) { K },
-    //     modularMaxGuardSize = MultiArray.create(1) { P },
-    //     modularMaxTransitions = MultiArray.createNullable(1) { T },
+    //     modularNumberOfStates = MultiArray.new(1) { C },
+    //     modularMaxOutgoingTransitions = MultiArray.newNullable(1) { K },
+    //     modularMaxGuardSize = MultiArray.new(1) { P },
+    //     modularMaxTransitions = MultiArray.newNullable(1) { T },
     //     smvDir = File("data/abp-take/smv")
     // )
 

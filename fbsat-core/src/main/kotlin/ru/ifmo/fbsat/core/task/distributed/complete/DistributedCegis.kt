@@ -34,7 +34,7 @@ fun Inferrer.distributedCegis(
     modularMaxGuardSize: MultiArray<Int>, // [P]
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     modularMaxTotalGuardsSize: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [N]
-    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
+    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
     maxTransitions: Int? = null, // T_sum, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N_sum, unconstrained if null
     smvDir: File,
@@ -88,10 +88,10 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
         "sender",
         "receiver"
     )
-    val modularInputEvents = MultiArray.create(M) {
+    val modularInputEvents = MultiArray.new(M) {
         listOf("REQ").map { InputEvent(it) }
     }
-    val modularOutputEvents = MultiArray.create(M) {
+    val modularOutputEvents = MultiArray.new(M) {
         listOf("CNF").map { OutputEvent(it) }
     }
     val modularInputNames = multiArrayOf(
@@ -221,7 +221,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
 
                 println("Mapping of negScenario (loopBack = ${negScenario.loopPosition}):")
                 for ((j, state) in automaton.map(negScenario).withIndex(start = 1)) {
-                    val element = negScenario.elements[j - 1].modular[1]
+                    val element = negScenario.elements[j - 1].project(1)
                     println("[$j / ${negScenario.elements.size}] Compound state: ${state?.values?.map { it.id }} for element = $element (nodeId = ${element.nodeId})" + if (j == negScenario.loopPosition) " [LOOP-BACK]" else "")
                 }
 

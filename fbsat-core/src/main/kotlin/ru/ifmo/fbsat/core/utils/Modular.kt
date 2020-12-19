@@ -19,7 +19,6 @@ internal typealias ModularAutomaton = MultiArray<Automaton>
 internal typealias ModularState = MultiArray<Automaton.State>
 internal typealias ModularEvalState = MultiArray<Automaton.EvalState>
 internal typealias ModularEvalResult = MultiArray<Automaton.EvalResult>
-internal typealias ModularEvalResult_adhoc = ImmutableMultiArray<Automaton.EvalResult>
 internal typealias ModularInputAction = MultiArray<InputAction>
 internal typealias ModularInputEvent = MultiArray<InputEvent>
 internal typealias ModularInputValues = MultiArray<InputValues>

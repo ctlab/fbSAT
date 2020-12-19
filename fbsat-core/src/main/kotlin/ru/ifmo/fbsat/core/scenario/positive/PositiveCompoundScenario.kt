@@ -12,23 +12,21 @@ import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
 import ru.ifmo.fbsat.core.utils.CompoundImpl
-import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
-import ru.ifmo.fbsat.core.utils.toImmutable
-import ru.ifmo.fbsat.core.utils.toMultiArray
+import ru.ifmo.fbsat.core.utils.project
 
 class PositiveCompoundScenario private constructor(
     override val M: Int,
     override val elements: List<CompoundScenarioElement>,
-    override val modular: ImmutableMultiArray<PositiveScenario>,
+    override val modular: MultiArray<PositiveScenario>,
 ) : CompoundScenario<PositiveScenario>, CompoundImpl<PositiveScenario>() {
     // TODO: constructor(modularPositiveScenario: MultiArray<PositiveScenario>)
 
     constructor(M: Int, elements: List<CompoundScenarioElement>) : this(
         M = M,
         elements = elements,
-        modular = MultiArray.create(M) { (m) ->
-            PositiveScenario(elements.map { it.modular.toMultiArray()[m] })
-        }.toImmutable()
+        modular = MultiArray.new(M) { (m) ->
+            PositiveScenario(elements.map { it.project(m) })
+        }
     )
 
     // Note: `constructor(modular: MultiArray<PositiveScenario>)` is prohibited
@@ -52,7 +50,7 @@ class PositiveCompoundScenario private constructor(
                 }
                 .zipWithNext { inputData, outputData ->
                     CompoundScenarioElement(
-                        modular = MultiArray.create(M) { (m) ->
+                        modular = MultiArray.new(M) { (m) ->
                             ScenarioElement(
                                 inputAction = InputAction(
                                     event = modularInputEvents[m].firstOrNull {

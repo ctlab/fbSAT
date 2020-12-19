@@ -11,15 +11,13 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.utils.CompoundImpl
-import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
 import ru.ifmo.fbsat.core.utils.project
-import ru.ifmo.fbsat.core.utils.toImmutable
 
 class NegativeCompoundScenario private constructor(
     override val M: Int,
     override val elements: List<CompoundScenarioElement>,
     val loopPosition: Int?,
-    override val modular: ImmutableMultiArray<NegativeScenario>,
+    override val modular: MultiArray<NegativeScenario>,
 ) : CompoundScenario<NegativeScenario>, CompoundImpl<NegativeScenario>() {
     // TODO: constructor(modularNegativeScenario: MultiArray<NegativeScenario>)
 
@@ -27,9 +25,9 @@ class NegativeCompoundScenario private constructor(
         M = M,
         elements = elements,
         loopPosition = loopPosition,
-        modular = MultiArray.create(M) { (m) ->
+        modular = MultiArray.new(M) { (m) ->
             NegativeScenario(elements.project(m), loopPosition)
-        }.toImmutable()
+        }
     )
 
     companion object {
@@ -51,7 +49,7 @@ class NegativeCompoundScenario private constructor(
                 }
                 .zipWithNext { inputData, outputData ->
                     CompoundScenarioElement(
-                        modular = MultiArray.create(M) { (m) ->
+                        modular = MultiArray.new(M) { (m) ->
                             ScenarioElement(
                                 inputAction = InputAction(
                                     event = modularInputEvents[m].firstOrNull {

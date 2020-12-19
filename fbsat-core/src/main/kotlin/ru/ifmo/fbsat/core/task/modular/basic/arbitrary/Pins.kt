@@ -11,9 +11,9 @@ internal class Pins(
     val O: Int,
 ) {
     val modularInboundVarPins: MultiArray<List<Int>> =
-        MultiArray.create(M) { (m) -> (1..X).map { (m - 1) * X + it } }
+        MultiArray.new(M) { (m) -> (1..X).map { (m - 1) * X + it } }
     val modularOutboundVarPins: MultiArray<List<Int>> =
-        MultiArray.create(M) { (m) -> (1..Z).map { (m - 1) * Z + it } }
+        MultiArray.new(M) { (m) -> (1..Z).map { (m - 1) * Z + it } }
     val externalInboundVarPins: List<Int> =
         (1..Z).map { M * X + it }
     val externalOutboundVarPins: List<Int> =
@@ -24,9 +24,9 @@ internal class Pins(
         modularOutboundVarPins.values.flatten() + externalOutboundVarPins
 
     val modularInboundEventPins: MultiArray<List<Int>> =
-        MultiArray.create(M) { (m) -> (1..E).map { (m - 1) * E + it } }
+        MultiArray.new(M) { (m) -> (1..E).map { (m - 1) * E + it } }
     val modularOutboundEventPins: MultiArray<List<Int>> =
-        MultiArray.create(M) { (m) -> (1..O).map { (m - 1) * O + it } }
+        MultiArray.new(M) { (m) -> (1..O).map { (m - 1) * O + it } }
     val externalInboundEventPins: List<Int> =
         (1..E).map { M * O + it }
     val externalOutboundEventPins: List<Int> =

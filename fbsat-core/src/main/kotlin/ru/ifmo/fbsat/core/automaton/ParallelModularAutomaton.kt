@@ -4,6 +4,7 @@ package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.multiarray.MutableMultiArray
 import com.github.lipen.multiarray.mapIndexed
 import com.github.lipen.satlib.core.Context
 import com.github.lipen.satlib.core.Model
@@ -37,7 +38,7 @@ class ParallelModularAutomaton(
     val M: Int = modules.shape.single()
     val Z: Int = outputVariableModule.shape.single()
     val moduleOutputVariables: MultiArray<List<Int>> = // [M] : {1..Z}
-        MultiArray.create(M) { (m) ->
+        MultiArray.new(M) { (m) ->
             (1..Z).filter { z -> outputVariableModule[z] == m }
         }
 
@@ -70,7 +71,7 @@ class ParallelModularAutomaton(
     }
 
     private fun spread(outputValues: OutputValues): MultiArray<OutputValues> {
-        return MultiArray.create(Z) { (m) ->
+        return MultiArray.new(Z) { (m) ->
             OutputValues(moduleOutputVariables[m].map { outputValues[it - 1] })
         }
     }
@@ -83,15 +84,15 @@ class ParallelModularAutomaton(
     private fun eval(scenario: Scenario): List<MultiArray<Automaton.EvalResult>?> {
         val results: MutableList<MultiArray<Automaton.EvalResult>?> = mutableListOfNulls(scenario.elements.size)
 
-        val currentState: MultiArray<Automaton.State> = MultiArray.create(M) { (m) ->
+        val currentState: MutableMultiArray<Automaton.State> = MutableMultiArray.new(M) { (m) ->
             modules[m].initialState
         }
-        val currentValues: MultiArray<OutputValues> = MultiArray.create(M) { (m) ->
+        val currentValues: MutableMultiArray<OutputValues> = MutableMultiArray.new(M) { (m) ->
             OutputValues.zeros(moduleOutputVariables[m].size)
         }
 
         for ((j, element) in scenario.elements.withIndex()) {
-            val result = MultiArray.create(M) { (m) ->
+            val result = MultiArray.new(M) { (m) ->
                 currentState[m].eval(
                     inputAction = element.inputAction,
                     currentValues = currentValues[m]
@@ -99,7 +100,7 @@ class ParallelModularAutomaton(
             }
             val outputEvent = result.values.mapNotNull { it.outputAction.event }.firstOrNull()
             check(result.values.mapNotNull { it.outputAction.event }.all { it == outputEvent })
-            val outputValues = gather(MultiArray.create(M) { (m) -> result[m].outputAction.values })
+            val outputValues = gather(MultiArray.new(M) { (m) -> result[m].outputAction.values })
 
             if (OutputAction(outputEvent, outputValues) == element.outputAction) {
                 results[j] = result
@@ -408,11 +409,11 @@ fun buildExtendedParallelModularAutomaton(
             },
             transitionGuard = { c, k ->
                 ParseTreeGuard(
-                    nodeType = MultiArray.create(P) { (p) -> nodeType[c, k, p] },
-                    terminal = IntMultiArray.create(P) { (p) -> nodeInputVariable[c, k, p] },
-                    parent = IntMultiArray.create(P) { (p) -> nodeParent[c, k, p] },
-                    childLeft = IntMultiArray.create(P) { (p) -> nodeChild[c, k, p] },
-                    childRight = IntMultiArray.create(P) { (p) ->
+                    nodeType = MultiArray.new(P) { (p) -> nodeType[c, k, p] },
+                    terminal = IntMultiArray.new(P) { (p) -> nodeInputVariable[c, k, p] },
+                    parent = IntMultiArray.new(P) { (p) -> nodeParent[c, k, p] },
+                    childLeft = IntMultiArray.new(P) { (p) -> nodeChild[c, k, p] },
+                    childRight = IntMultiArray.new(P) { (p) ->
                         if (nodeType[c, k, p] in setOf(NodeType.AND, NodeType.OR))
                             nodeChild[c, k, p] + 1
                         else

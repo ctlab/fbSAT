@@ -21,7 +21,7 @@ data class DistributedBasicTask(
     val modularNumberOfStates: MultiArray<Int>, // [C]
     val modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
     val modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
-    val modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
+    val modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
     val maxTransitions: Int? = null, // T, unconstrained if null
 ) : Task() {
     init {

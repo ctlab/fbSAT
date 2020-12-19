@@ -1,8 +1,9 @@
 package ru.ifmo.fbsat.core.automaton
 
-import com.github.lipen.multiarray.BooleanMultiArray
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.multiarray.MutableMultiArray
 import com.github.lipen.multiarray.map
+import com.github.lipen.multiarray.mapToMut
 import com.github.lipen.satlib.core.Context
 import com.github.lipen.satlib.core.Model
 import com.soywiz.klock.DateTime
@@ -89,17 +90,17 @@ class ArbitraryModularAutomaton(
         val Z = outputNames.size
 
         with(Pins(M = M, X = X, Z = Z, E = E, O = O)) {
-            val currentModularState = modules.map { it.initialState }
-            val currentModularInputAction = modules.map {
+            val currentModularState = modules.mapToMut { it.initialState }
+            val currentModularInputAction = modules.mapToMut {
                 InputAction(
                     null,
                     InputValues.zeros(it.inputNames.size)
                 )
             }
-            val currentModularOutputValues = modules.map { OutputValues.zeros(it.outputNames.size) }
-            val currentModularOutputEvent: MultiArray<OutputEvent?> = modules.map { null }
-            val currentInboundVarPinComputedValue = BooleanMultiArray.create(allInboundVarPins.size)
-            val currentOutboundVarPinComputedValue = BooleanMultiArray.create(allOutboundVarPins.size)
+            val currentModularOutputValues = modules.mapToMut { OutputValues.zeros(it.outputNames.size) }
+            val currentModularOutputEvent: MutableMultiArray<OutputEvent?> = modules.mapToMut { null }
+            val currentInboundVarPinComputedValue = MutableMultiArray.newBoolean(allInboundVarPins.size)
+            val currentOutboundVarPinComputedValue = MutableMultiArray.newBoolean(allOutboundVarPins.size)
             var currentOutputValues = OutputValues.zeros(Z)
 
             return inputActions.map { inputAction ->
@@ -170,7 +171,7 @@ class ArbitraryModularAutomaton(
                     OutputAction(outputEvent, currentOutputValues),
                     currentModularInputAction.map { it },
                     currentModularState.map { it },
-                    MultiArray.create(M) { (m) ->
+                    MultiArray.new(M) { (m) ->
                         OutputAction(
                             currentModularOutputEvent[m],
                             currentModularOutputValues[m]
@@ -398,7 +399,7 @@ class ArbitraryModularAutomaton(
 fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: OldPositiveScenarioTree) {
     println("=======================")
 
-    val modularEffectiveInputs = MultiArray.create(M) { mutableListOf<InputValues>() }
+    val modularEffectiveInputs = MultiArray.new(M) { mutableListOf<InputValues>() }
     for (scenario in scenarioTree.scenarios) {
         val elements = scenario.elements.asSequence()
         val results = eval(elements.map { it.inputAction })

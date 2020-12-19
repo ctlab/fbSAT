@@ -16,12 +16,9 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.utils.Compound
 import ru.ifmo.fbsat.core.utils.CompoundImpl
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
-import ru.ifmo.fbsat.core.utils.M
 import ru.ifmo.fbsat.core.utils.ModularAutomaton
 import ru.ifmo.fbsat.core.utils.ModularContext
 import ru.ifmo.fbsat.core.utils.ModularEvalResult
-import ru.ifmo.fbsat.core.utils.ModularEvalResult_adhoc
 import ru.ifmo.fbsat.core.utils.ModularEvalState
 import ru.ifmo.fbsat.core.utils.ModularInputAction
 import ru.ifmo.fbsat.core.utils.ModularOutputAction
@@ -30,15 +27,14 @@ import ru.ifmo.fbsat.core.utils.ModularScenarioTree
 import ru.ifmo.fbsat.core.utils.ModularState
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.mylog
-import ru.ifmo.fbsat.core.utils.toImmutable
-import ru.ifmo.fbsat.core.utils.toMultiArray
+import ru.ifmo.fbsat.core.utils.project
 import java.io.File
 
 @Suppress("MemberVisibilityCanBePrivate", "FunctionName", "PropertyName")
 class DistributedAutomaton(
     val modules: ModularAutomaton,
 ) : CompoundImpl<Automaton>() {
-    override val modular: ImmutableMultiArray<Automaton> = modules.toImmutable()
+    override val modular: MultiArray<Automaton> = modules
     val modularInputEvents: MultiArray<List<InputEvent>> = modules.map { it.inputEvents }
     val modularOutputEvents: MultiArray<List<OutputEvent>> = modules.map { it.outputEvents }
     val modularInputNames: MultiArray<List<String>> = modules.map { it.inputNames }
@@ -53,12 +49,12 @@ class DistributedAutomaton(
     class CompoundEvalState private constructor(
         val modularState: ModularState,
         val modularOutputValues: ModularOutputValues,
-        override val modular: ImmutableMultiArray<Automaton.EvalState>,
+        override val modular: MultiArray<Automaton.EvalState>,
     ) : Compound<Automaton.EvalState> {
         constructor(modularEvalState: ModularEvalState) : this(
             modularState = modularEvalState.map { it.state },
             modularOutputValues = modularEvalState.map { it.outputValues },
-            modular = modularEvalState.toImmutable()
+            modular = modularEvalState
         )
 
         constructor(
@@ -68,14 +64,14 @@ class DistributedAutomaton(
         ) : this(
             modularState = modularState,
             modularOutputValues = modularOutputValues,
-            modular = MultiArray.create(M) { (m) ->
+            modular = MultiArray.new(M) { (m) ->
                 Automaton.EvalState(modularState[m], modularOutputValues[m])
-            }.toImmutable()
+            }
         )
 
         fun eval(modularInputAction: ModularInputAction): CompoundEvalResult =
             CompoundEvalResult(
-                modular.toMultiArray().mapIndexed { (m), evalState ->
+                modular.mapIndexed { (m), evalState ->
                     evalState.eval(modularInputAction[m])
                 }
             )
@@ -93,16 +89,15 @@ class DistributedAutomaton(
     class CompoundEvalResult private constructor(
         val modularDestination: ModularState,
         val modularOutputAction: ModularOutputAction,
-        override val modular: ModularEvalResult_adhoc,
-    ) : Compound<Automaton.EvalResult> {
+        override val modular: ModularEvalResult,
+    ) : CompoundImpl<Automaton.EvalResult>() {
         val modularOutputValues: ModularOutputValues = modularOutputAction.map { it.values }
-        val newEvalState: CompoundEvalState =
-            CompoundEvalState(M, modularDestination, modularOutputValues)
+        val newEvalState: CompoundEvalState = CompoundEvalState(M, modularDestination, modularOutputValues)
 
         constructor(modularResult: ModularEvalResult) : this(
             modularDestination = modularResult.map { it.destination },
             modularOutputAction = modularResult.map { it.outputAction },
-            modular = modularResult.toImmutable()
+            modular = modularResult
         )
 
         constructor(
@@ -112,9 +107,9 @@ class DistributedAutomaton(
         ) : this(
             modularDestination = modularDestination,
             modularOutputAction = modularOutputAction,
-            modular = MultiArray.create(M) { (m) ->
+            modular = MultiArray.new(M) { (m) ->
                 Automaton.EvalResult(modularDestination[m], modularOutputAction[m])
-            }.toImmutable()
+            }
         )
 
         override fun toString(): String {
@@ -169,7 +164,7 @@ class DistributedAutomaton(
         out@ for ((i, result) in eval(scenario).withIndex()) {
             val element = scenario.elements[i]
             for (m in 1..M) {
-                if (element.modular.toMultiArray()[m].outputAction != result.modular.toMultiArray()[m].outputAction) {
+                if (element.project(m).outputAction != result.project(m).outputAction) {
                     // log.error("No mapping for m = $m, element = $element, result = $result")
                     break@out
                 }

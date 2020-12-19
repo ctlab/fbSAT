@@ -114,7 +114,7 @@ fun Solver.updateNegativeReduction(
     val oldNegMapping: IntVarArray = context["negMapping"]
 
     val negActualTransitionFunction = context("negActualTransitionFunction") {
-        IntVarArray.create(C, E, negU) { (c, e, u) ->
+        IntVarArray.new(C, E, negU) { (c, e, u) ->
             inputChoice(u,
                 { oldNegActualTransitionFunction[c, e, it] },
                 { actualTransitionFunction[c, e, it] },
@@ -136,7 +136,7 @@ fun Solver.updateNegativeReduction(
         }
     }
     val negFirstFired = context("negFirstFired") {
-        IntVarArray.create(C, E, negU) { (c, e, u) ->
+        IntVarArray.new(C, E, negU) { (c, e, u) ->
             inputChoice(u,
                 { oldNegFirstFired[c, e, it] },
                 { firstFired[c, e, it] },
@@ -159,7 +159,7 @@ fun Solver.updateNegativeReduction(
         }
     }
     val negMapping = context("negMapping") {
-        IntVarArray.create(negV) { (v) ->
+        IntVarArray.new(negV) { (v) ->
             if (v in newNegVs) newIntVar(0..C)
             else oldNegMapping[v]
         }

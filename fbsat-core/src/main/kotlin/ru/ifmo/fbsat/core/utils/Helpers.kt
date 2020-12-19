@@ -1,7 +1,7 @@
 package ru.ifmo.fbsat.core.utils
 
-import com.github.lipen.multiarray.GenericMultiArray
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.multiarray.MutableMultiArray
 import com.github.lipen.satlib.core.BoolVarArray
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.TimeSpan
@@ -224,32 +224,48 @@ fun Iterable<Boolean>.countFalse(): Int {
 
 fun <T> magic(): T = error("No magic outside of Hogwarts!")
 
-inline fun <reified T> Iterable<T>.toMultiArray(): MultiArray<T> =
-    toList_().toMultiArray()
+//region ===[ MultiArray extensions ]===
 
-inline fun <reified T> Collection<T>.toMultiArray(): MultiArray<T> =
-    toTypedArray().toMultiArray()
+inline fun <reified T> Iterable<T>.toMultiArray(zerobased: Boolean = false): MultiArray<T> =
+    toList_().toMultiArray(zerobased)
 
-inline fun <reified T> Array<T>.toMultiArray(): MultiArray<T> =
-    GenericMultiArray(this, intArrayOf(size))
+inline fun <reified T> Collection<T>.toMultiArray(zerobased: Boolean = false): MultiArray<T> =
+    toTypedArray().toMultiArray(zerobased)
+
+inline fun <reified T> Array<T>.toMultiArray(zerobased: Boolean = false): MultiArray<T> =
+    MultiArray.from(this, intArrayOf(size), zerobased)
 
 inline fun <reified T> multiArrayOf(vararg x: T): MultiArray<T> =
     arrayOf(*x).toMultiArray()
 
-// TODO: remove after fixing MultiArray library
-inline fun <reified T> MultiArray.Companion.createNullable(
-    shape: IntArray,
-    init: (IntArray) -> T,
-): MultiArray<T> = GenericMultiArray.create(shape, init)
-
-@JvmName("MultiArray_createNullableVararg")
-inline fun <reified T> MultiArray.Companion.createNullable(
-    vararg shape: Int,
-    init: (IntArray) -> T,
-): MultiArray<T> = createNullable(shape, init)
-
 inline fun <reified T : Any> multiArrayOfNulls(shape: IntArray): MultiArray<T?> =
-    MultiArray.createNullable(shape) { null }
+    MultiArray.new(shape) { null }
 
 @JvmName("multiArrayOfNullsVararg")
-inline fun <reified T : Any> multiArrayOfNulls(vararg shape: Int): MultiArray<T?> = multiArrayOfNulls(shape)
+inline fun <reified T : Any> multiArrayOfNulls(vararg shape: Int): MultiArray<T?> =
+    multiArrayOfNulls(shape)
+
+//endregion
+
+//region ===[ MutableMultiArray extensions ]===
+
+inline fun <reified T> Iterable<T>.toMutableMultiArray(zerobased: Boolean = false): MutableMultiArray<T> =
+    toList_().toMutableMultiArray(zerobased)
+
+inline fun <reified T> Collection<T>.toMutableMultiArray(zerobased: Boolean = false): MutableMultiArray<T> =
+    toTypedArray().toMutableMultiArray(zerobased)
+
+inline fun <reified T> Array<T>.toMutableMultiArray(zerobased: Boolean = false): MutableMultiArray<T> =
+    MutableMultiArray.from(this, intArrayOf(size), zerobased)
+
+inline fun <reified T> mutableMultiArrayOf(vararg x: T): MutableMultiArray<T> =
+    arrayOf(*x).toMutableMultiArray()
+
+inline fun <reified T : Any> mutableMultiArrayOfNulls(shape: IntArray): MutableMultiArray<T?> =
+    MutableMultiArray.new(shape) { null }
+
+@JvmName("mutableMultiArrayOfNullsVararg")
+inline fun <reified T : Any> mutableMultiArrayOfNulls(vararg shape: Int): MutableMultiArray<T?> =
+    mutableMultiArrayOfNulls(shape)
+
+//endregion

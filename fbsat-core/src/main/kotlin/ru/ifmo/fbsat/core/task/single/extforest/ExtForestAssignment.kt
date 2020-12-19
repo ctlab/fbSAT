@@ -37,19 +37,19 @@ package ru.ifmo.fbsat.core.task.single.extforest
 //             check(nodes.isNotEmpty()) { "Empty parse tree for c = $c, k = $k" }
 //             val G = nodes.size
 //             ParseTreeGuard(
-//                 nodeType = MultiArray.create(G) { (p) ->
+//                 nodeType = MultiArray.new(G) { (p) ->
 //                     nodeType[nodes[p - 1]]
 //                 },
-//                 terminal = IntMultiArray.create(G) { (p) ->
+//                 terminal = IntMultiArray.new(G) { (p) ->
 //                     nodeInputVariable[nodes[p - 1]]
 //                 },
-//                 parent = IntMultiArray.create(G) { (p) ->
+//                 parent = IntMultiArray.new(G) { (p) ->
 //                     nodeParent[nodes[p - 1]].let { if (it != 0) nodes.indexOf(it) + 1 else 0 }
 //                 },
-//                 childLeft = IntMultiArray.create(G) { (p) ->
+//                 childLeft = IntMultiArray.new(G) { (p) ->
 //                     nodeChild[nodes[p - 1]].let { if (it != 0) nodes.indexOf(it) + 1 else 0 }
 //                 },
-//                 childRight = IntMultiArray.create(G) { (p) ->
+//                 childRight = IntMultiArray.new(G) { (p) ->
 //                     if (nodeType[nodes[p - 1]] in setOf(NodeType.AND, NodeType.OR))
 //                         nodes.indexOf(nodeChild[nodes[p - 1]]) + 2
 //                     else

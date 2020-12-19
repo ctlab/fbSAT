@@ -28,7 +28,7 @@ fun Inferrer.distributedComplete(
     modularMaxGuardSize: MultiArray<Int>, // [P]
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     modularMaxTotalGuardsSize: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [N]
-    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
+    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
     maxTransitions: Int? = null, // T_sum, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N_sum, unconstrained if null
 ): DistributedAutomaton? {
@@ -71,7 +71,7 @@ fun Inferrer.completeMin_(
     modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
     modularMaxGuardSize: MultiArray<Int>, // [P]
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
-    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
+    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
     maxTransitions: Int? = null, // T_sum, unconstrained if null
 ): DistributedAutomaton? {
     reset()
@@ -111,7 +111,7 @@ fun Inferrer.completeMin__(
     // modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
     modularMaxGuardSize: MultiArray<Int>, // [P]
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
-    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
+    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
     maxTransitions: Int? = null, // T_sum, unconstrained if null
     startD: Int = 1,
 ): DistributedAutomaton? {
@@ -123,7 +123,7 @@ fun Inferrer.completeMin__(
         //     compoundScenarioTree = compoundScenarioTree,
         //     modularScenarioTree = modularScenarioTree,
         //     negativeCompoundScenarioTree = negativeCompoundScenarioTree,
-        //     modularNumberOfStates = MultiArray.create(numberOfModules) { D },
+        //     modularNumberOfStates = MultiArray.new(numberOfModules) { D },
         //     modularMaxGuardSize = modularMaxGuardSize,
         //     modularMaxTransitions = modularMaxTransitions,
         //     modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
@@ -134,7 +134,7 @@ fun Inferrer.completeMin__(
             compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = modularScenarioTree,
             negativeCompoundScenarioTree = negativeCompoundScenarioTree,
-            modularNumberOfStates = MultiArray.create(numberOfModules) { D },
+            modularNumberOfStates = MultiArray.new(numberOfModules) { D },
             modularMaxGuardSize = modularMaxGuardSize,
             modularMaxTransitions = modularMaxTransitions,
             modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
@@ -154,7 +154,7 @@ fun Inferrer.completeMin__(
                 modularScenarioTree = modularScenarioTree,
                 negativeCompoundScenarioTree = negativeCompoundScenarioTree,
                 modularNumberOfStates = automatonMinSumC.modules.map { it.numberOfReachableStates },
-                modularMaxOutgoingTransitions = MultiArray.create(numberOfModules) { D },
+                modularMaxOutgoingTransitions = MultiArray.new(numberOfModules) { D },
                 modularMaxGuardSize = modularMaxGuardSize,
                 modularMaxTransitions = modularMaxTransitions,
                 modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,

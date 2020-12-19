@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.multiarray.MutableMultiArray
 import com.github.lipen.multiarray.map
 import com.github.lipen.satlib.core.Context
 import com.github.lipen.satlib.core.Model
@@ -47,7 +48,7 @@ class ConsecutiveModularAutomaton(
     }
 
     fun verify(scenario: PositiveScenario): Boolean {
-        val modularCurrentState = MultiArray.create(M) { (m) ->
+        val modularCurrentState = MutableMultiArray.new(M) { (m) ->
             modules[m].initialState
         }
         var currentValues = OutputValues.zeros(outputNames.size)

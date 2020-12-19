@@ -1,4 +1,4 @@
-@file:Suppress("PublicApiImplicitType", "MemberVisibilityCanBePrivate")
+@file:Suppress("PublicApiImplicitType", "MemberVisibilityCanBePrivate", "unused")
 
 object Versions {
     const val arrow = "0.11.0"
@@ -18,10 +18,10 @@ object Versions {
     const val lazycache = "0.3.0"
     const val log4j = "2.14.0"
     const val mordant = "1.2.1"
-    const val multiarray = "0.6.0"
+    const val multiarray = "0.12.0"
     const val okio = "2.9.0"
     const val pretty_print = "2.0.2"
-    const val satlib = "0.11.2"
+    const val satlib = "0.12.0"
     const val shadow = "6.1.0"
     const val xml_builder = "1.5.3"
     const val xmlutil = "0.80.1"
@@ -89,13 +89,13 @@ object Libs {
     // https://github.com/Lipen/MultiArray
     object MultiArray {
         const val version = Versions.multiarray
-        const val multiarray = "com.github.lipen:multiarray:$version"
+        const val multiarray = "com.github.Lipen:MultiArray:$version"
     }
 
     // https://github.com/Lipen/kotlin-lazycache
     object LazyCache {
         const val version = Versions.lazycache
-        const val lazycache = "com.github.lipen:kotlin-lazycache:$version"
+        const val lazycache = "com.github.Lipen:kotlin-lazycache:$version"
     }
 
     // https://github.com/Lipen/kotlin-satlib

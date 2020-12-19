@@ -67,7 +67,7 @@ fun Solver.solveAndGetModel(): Model? =
 
 fun Solver.declareModularContext(M: Int): ModularContext =
     context("modularContext") {
-        MultiArray.create(M) { newContext() }
+        MultiArray.new(M) { newContext() }
     }
 
 @Suppress("LocalVariableName")

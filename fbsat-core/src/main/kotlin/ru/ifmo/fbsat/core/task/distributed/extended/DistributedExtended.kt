@@ -19,7 +19,7 @@ fun Inferrer.distributedExtended(
     modularMaxGuardSize: MultiArray<Int>, // [P]
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     modularMaxTotalGuardsSize: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [N]
-    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.create(numberOfModules) { true },
+    modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
     maxTransitions: Int? = null, // T_sum, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N_sum, unconstrained if null
 ): DistributedAutomaton? {

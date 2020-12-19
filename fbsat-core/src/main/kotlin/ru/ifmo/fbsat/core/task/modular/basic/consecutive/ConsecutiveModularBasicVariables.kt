@@ -57,7 +57,7 @@ fun Solver.declareConsecutiveModularBasicVariables(
 
     /* Mapping variables */
     val modularComputedOutputValue = context("modularComputedOutputValue") {
-        MultiArray.create(M) { newBoolVarArray(V, Z) }
+        MultiArray.new(M) { newBoolVarArray(V, Z) }
     }
 
     /* Cardinality */

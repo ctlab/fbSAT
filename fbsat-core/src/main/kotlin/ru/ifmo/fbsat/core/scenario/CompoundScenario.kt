@@ -4,10 +4,7 @@ import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.utils.Compound
 import ru.ifmo.fbsat.core.utils.CompoundImpl
-import ru.ifmo.fbsat.core.utils.ImmutableMultiArray
 import ru.ifmo.fbsat.core.utils.project
-import ru.ifmo.fbsat.core.utils.toImmutable
-import ru.ifmo.fbsat.core.utils.toMultiArray
 
 interface CompoundScenario<S> : GenericScenario<CompoundScenarioElement>, Compound<S>
     where S : Scenario
@@ -27,7 +24,7 @@ class CompoundScenarioElement private constructor(
     override val M: Int,
     override val inputAction: CompoundInputAction,
     override val outputAction: CompoundOutputAction,
-    override val modular: ImmutableMultiArray<ScenarioElement>,
+    override val modular: MultiArray<ScenarioElement>,
 ) : GenericScenario.Element<CompoundInputAction, CompoundOutputAction>,
     CompoundImpl<ScenarioElement>() {
 
@@ -48,22 +45,22 @@ class CompoundScenarioElement private constructor(
         M = M,
         inputAction = inputAction,
         outputAction = outputAction,
-        modular = MultiArray.create(M) { (m) ->
+        modular = MultiArray.new(M) { (m) ->
             ScenarioElement(
                 inputAction = inputAction.project(m),
                 outputAction = outputAction.project(m)
             )
-        }.toImmutable()
+        }
     )
 
     constructor(modular: MultiArray<ScenarioElement>) : this(
         M = modular.shape.single(),
         inputAction = CompoundInputAction(modular.map { it.inputAction }),
         outputAction = CompoundOutputAction(modular.map { it.outputAction }),
-        modular = modular.toImmutable()
+        modular = modular
     )
 
     override fun toString(): String {
-        return "CompoundElement(${modular.toMultiArray().values})"
+        return "CompoundElement(${modular.values})"
     }
 }
