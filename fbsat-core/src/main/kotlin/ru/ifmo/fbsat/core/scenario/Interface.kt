@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.core.scenario
 
 import ru.ifmo.fbsat.core.utils.toBinaryString
+import ru.ifmo.fbsat.core.utils.toBooleanList
 
 // Event
 
@@ -39,7 +40,8 @@ sealed class Values : GenericValues {
 }
 
 data class InputValues(override val values: List<Boolean>) : Values(), GenericInputValues {
-    // override fun toString(): String = super.toString()
+    constructor(values: BooleanArray) : this(values.asList())
+    constructor(values: String) : this(values.toBooleanList())
 
     companion object {
         fun empty(): InputValues = InputValues(emptyList())
@@ -48,7 +50,8 @@ data class InputValues(override val values: List<Boolean>) : Values(), GenericIn
 }
 
 data class OutputValues(override val values: List<Boolean>) : Values(), GenericOutputValues {
-    // override fun toString(): String = super.toString()
+    constructor(values: BooleanArray) : this(values.asList())
+    constructor(values: String) : this(values.toBooleanList())
 
     companion object {
         fun empty(): OutputValues = OutputValues(emptyList())
