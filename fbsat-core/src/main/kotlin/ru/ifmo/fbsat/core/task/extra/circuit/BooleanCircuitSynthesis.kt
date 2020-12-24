@@ -1,4 +1,6 @@
-package ru.ifmo.fbsat.core.task.extra.schema
+@file:Suppress("LocalVariableName")
+
+package ru.ifmo.fbsat.core.task.extra.circuit
 
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.satlib.core.Model
@@ -21,75 +23,14 @@ import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.toBinaryString
-import ru.ifmo.fbsat.core.utils.toBooleanArray
-import ru.ifmo.fbsat.core.utils.toList_
 import ru.ifmo.fbsat.core.utils.useWith
 import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
-import kotlin.math.pow
-
-private data class Input(
-    val values: List<Boolean>,
-) {
-    constructor(values: BooleanArray) :
-        this(values.asList())
-
-    constructor(values: Iterable<Boolean>) :
-        this(values.toList_())
-
-    constructor(values: String) :
-        this(values.toBooleanArray())
-
-    constructor(i: Int, numberOfVariables: Int) :
-        this(i.toLong(), numberOfVariables)
-
-    constructor(i: Long, numberOfVariables: Int) :
-        this(List(numberOfVariables) { j -> 2L.pow(numberOfVariables - j - 1) and i != 0L })
-
-    override fun toString(): String {
-        return values.toBinaryString()
-    }
-}
-
-private data class Output(
-    val values: List<Boolean>,
-) {
-    constructor(values: BooleanArray) :
-        this(values.asList())
-
-    constructor(values: Iterable<Boolean>) :
-        this(values.toList_())
-
-    constructor(values: String) :
-        this(values.toBooleanArray())
-
-    override fun toString(): String {
-        return values.toBinaryString()
-    }
-}
-
-private var iBlockType = 0
-
-private enum class BlockType(val value: Int) {
-    AND(++iBlockType),
-    OR(++iBlockType),
-
-    // XOR(++iBlockType),
-    NOT(++iBlockType),
-    // IMPLY(++iBlockType),
-    ;
-
-    companion object {
-        private val lookup: Map<Int, BlockType> = values().associateBy(BlockType::value)
-
-        fun from(value: Int): BlockType = lookup.getValue(value)
-    }
-}
 
 @Suppress("LocalVariableName")
-private fun synthesizeSchema(tt: Map<Input, Output>, M: Int, X: Int, Z: Int): Boolean {
+fun synthesizeBooleanCircuit(tt: Map<Input, Output>, M: Int, X: Int, Z: Int): Boolean {
     val solver = MiniSatSolver()
-    val outDir = File("out/schema-synthesis")
+    val outDir = File("out/circuit-synthesis")
     outDir.mkdirs()
 
     with(solver) {
@@ -326,11 +267,7 @@ private fun synthesizeSchema(tt: Map<Input, Output>, M: Int, X: Int, Z: Int): Bo
 
         // =================
 
-        // require(tt.values.all { it.values.size == 1 })
-        // val fileCnf = outDir.resolve("schema_${ttToBinaryString(tt.mapValues { it.value.values[0] })}_X${X}_M$M.cnf")
-        // dumpCnf(fileCnf)
-
-        val fileCnf = outDir.resolve("schema_X${X}_Z${Z}_M${M}.cnf")
+        val fileCnf = outDir.resolve("circuit_X${X}_Z${Z}_M${M}.cnf")
         dumpDimacs(fileCnf)
 
         val model: Model? = solveAndGetModel()
@@ -377,27 +314,27 @@ private fun synthesizeSchema(tt: Map<Input, Output>, M: Int, X: Int, Z: Int): Bo
                 )
             }
 
-            val fileSchema = outDir.resolve("schema.gv")
-            fileSchema.sink().buffer().useWith {
+            val fileCircuit = outDir.resolve("circuit.gv")
+            fileCircuit.sink().buffer().useWith {
                 writeln("digraph {")
                 writeln("    // Gates")
                 for (m in 1..M) {
                     writeln("    g$m [label=\"$m: ${blockType[m]}\"];")
                 }
                 writeln("    // Input variables")
-                writeln("  { rank=max")
+                writeln("    { rank=max")
                 for (x in 1..X) {
                     writeln("    X$x [label=\"X$x\"];")
                 }
-                writeln("  }")
+                writeln("    }")
                 writeln("    // Output variables")
-                writeln("  { rank=min")
+                writeln("    { rank=min")
                 for (z in 1..Z) {
                     writeln("    Z$z [label=\"Z$z\"];")
                 }
                 writeln("  }")
                 writeln("")
-                writeln("    // Schema")
+                writeln("    // Circuit")
                 for (m in 1..M) {
                     val ts = mutableListOf<String>()
                     for (pin in modularInboundVarPins[m]) {
@@ -413,22 +350,20 @@ private fun synthesizeSchema(tt: Map<Input, Output>, M: Int, X: Int, Z: Int): Bo
                     writeln("    g$m -> {${ts.joinToString(",")}};")
                 }
                 for (z in 1..Z) {
-                    val ts = mutableListOf<String>()
                     val pin = externalInboundVarPins[z - 1]
                     val par = parent[pin]
-                    if (par == 0) {
-                        continue
-                    } else if (par in externalOutboundVarPins) {
-                        ts.add("X${externalOutboundVarPins.indexOf(par) + 1}")
+                    if (par == 0) continue
+                    val t = if (par in externalOutboundVarPins) {
+                        "X${externalOutboundVarPins.indexOf(par) + 1}"
                     } else {
-                        ts.add("g${(par - 1) / ZM + 1}")
+                        "g${(par - 1) / ZM + 1}"
                     }
-                    writeln("    Z$z -> {${ts.joinToString(",")}};")
+                    writeln("    Z$z -> $t;")
                 }
                 writeln("}")
             }
-            Runtime.getRuntime().exec("dot -Tpdf -O $fileSchema")
-            Runtime.getRuntime().exec("dot -Tpng -O $fileSchema")
+            Runtime.getRuntime().exec("dot -Tpdf -O $fileCircuit")
+            Runtime.getRuntime().exec("dot -Tpng -O $fileCircuit")
 
             return true
         }
@@ -437,16 +372,16 @@ private fun synthesizeSchema(tt: Map<Input, Output>, M: Int, X: Int, Z: Int): Bo
     return false
 }
 
-private fun synthesizeSchemaIterativelyBottomUp(tt: Map<Input, Output>, X: Int, Z: Int) {
+fun synthesizeBooleanCircuitIterativelyBottomUp(tt: Map<Input, Output>, X: Int, Z: Int) {
     for (M in 1..30) {
         mylog.br()
         mylog.info("Trying M = $M for X=$X, Z=$Z...")
 
-        if (synthesizeSchema(tt, M = M, X = X, Z = Z)) {
+        if (synthesizeBooleanCircuit(tt, M = M, X = X, Z = Z)) {
             mylog.success("M = $M: Success")
             break
         } else {
-            mylog.failure("M = $M: Could not infer schema.")
+            mylog.failure("M = $M: Could not infer circuit.")
         }
     }
 }
@@ -464,8 +399,8 @@ private fun main() {
     val values = "00000000000000000000000010110110" // 10 sat (1s w/ ms, 55s w/ cms), 9 unknown (>10m)
     val tt = values.toTruthTable(X).mapValues { Output(listOf(it.value)) }
 
-    // synthesizeSchemaIterativelyBottomUp(tt, X = X, Z = Z)
-    synthesizeSchema(tt, M = 10, X = X, Z = Z)
+    // synthesizeBooleanCircuitIterativelyBottomUp(tt, X = X, Z = Z)
+    synthesizeBooleanCircuit(tt, M = 10, X = X, Z = Z)
 
     // val X = 32
     // val Z = 16
@@ -483,54 +418,6 @@ private fun main() {
     // check(dataAll.distinctBy { it.first + it.second.values.toBinaryString() }.size == dataAll.size)
     // val tt = dataAll.toMap().mapKeys { (i, _) -> Input(i) }
     // check(tt.size == dataAll.size)
-    //
-    // synthesizeSchemaIterativelyBottomUp(tt, X = X, Z = Z)
-    // // synthesizeSchema(tt, M = 20, X = X, Z = Z)
 
     mylog.success("All done in %.3f s.".format(timeSince(timeStart).seconds))
-}
-
-private operator fun <T> List<T>.get(indices: IntRange): List<T> = slice(indices)
-private operator fun <T> List<T>.get(indices: Iterable<Int>): List<T> = slice(indices)
-
-private operator fun String.get(indices: IntRange): String = slice(indices)
-private operator fun String.get(indices: Iterable<Int>): String = slice(indices)
-
-private fun Int.pow(n: Int): Int =
-    if (this == 2) 1 shl n
-    else this.toDouble().pow(n).toInt()
-
-private fun Long.pow(n: Int): Long =
-    if (this == 2L) 1L shl n
-    else this.toDouble().pow(n).toLong()
-
-private fun Boolean.toInt(): Int = if (this) 1 else 0
-
-private fun valuesToTruthTable(values: List<Boolean?>, X: Int): Map<Input, Boolean> {
-    val tt: MutableMap<Input, Boolean> = mutableMapOf()
-    for ((i, b) in values.withIndex()) {
-        if (b != null) {
-            tt[Input(i, X)] = b
-        }
-    }
-    return tt
-}
-
-@Suppress("LocalVariableName")
-private fun String.toTruthTable(X: Int): Map<Input, Boolean> {
-    val values = map {
-        when (it) {
-            '0' -> false
-            '1' -> true
-            'x', '-' -> null
-            else -> error("Bad char '$it'")
-        }
-    }
-    return valuesToTruthTable(values, X)
-}
-
-@Suppress("LocalVariableName")
-private fun ttToBinaryString(tt: Map<Input, Boolean>): String {
-    val X = tt.keys.first().values.size
-    return (0 until 2.pow(X)).joinToString("") { f -> tt[Input(f, X)]?.toInt()?.toString() ?: "x" }
 }

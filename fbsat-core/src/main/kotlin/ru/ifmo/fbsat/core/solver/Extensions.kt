@@ -127,6 +127,14 @@ fun Solver.implyIffXor(x1: Lit, x2: Lit, xs: Iterable<Lit>) {
     }.exhaustive
 }
 
+fun Solver.andImplyAnd(lhs: Iterable<Lit>, rhs: Iterable<Lit>) {
+    val pool = lhs.toList_()
+    val negPool = pool.map { -it }
+    for (x in rhs) {
+        clause(negPool + x)
+    }
+}
+
 /** [x1] => ([x2] <=> `XOR`([xs])) */
 fun Solver.implyIffXor(x1: Lit, x2: Lit, xs: Sequence<Lit>) {
     implyIffXor(x1, x2, xs.asIterable())

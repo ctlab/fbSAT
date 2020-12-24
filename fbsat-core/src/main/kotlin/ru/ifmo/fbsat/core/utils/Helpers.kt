@@ -269,3 +269,7 @@ inline fun <reified T : Any> mutableMultiArrayOfNulls(vararg shape: Int): Mutabl
     mutableMultiArrayOfNulls(shape)
 
 //endregion
+
+inline fun scope(block: () -> Unit) {
+    block()
+}

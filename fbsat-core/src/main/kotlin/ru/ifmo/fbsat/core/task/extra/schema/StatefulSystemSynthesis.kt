@@ -1,4 +1,6 @@
-package ru.ifmo.fbsat.core.task.extra.library
+@file:Suppress("DuplicatedCode")
+
+package ru.ifmo.fbsat.core.task.extra.schema
 
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
@@ -10,10 +12,15 @@ import com.github.lipen.satlib.core.newBoolVarArray
 import com.github.lipen.satlib.core.newDomainVarArray
 import com.github.lipen.satlib.core.newIntVarArray
 import com.github.lipen.satlib.core.sign
+import com.github.lipen.satlib.op.iff
+import com.github.lipen.satlib.op.iffAnd
 import com.github.lipen.satlib.op.imply
 import com.github.lipen.satlib.op.implyIff
 import com.github.lipen.satlib.op.implyIffAnd
 import com.github.lipen.satlib.op.implyIffOr
+import com.github.lipen.satlib.op.implyImplyAnd
+import com.github.lipen.satlib.op.implyImplyIff
+import com.github.lipen.satlib.op.implyImplyImply
 import com.github.lipen.satlib.solver.MiniSatSolver
 import com.soywiz.klock.PerformanceCounter
 import okio.buffer
@@ -31,91 +38,16 @@ import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.scope
 import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.toBinaryString
-import ru.ifmo.fbsat.core.utils.toBooleanArray
-import ru.ifmo.fbsat.core.utils.toList_
 import ru.ifmo.fbsat.core.utils.useWith
 import ru.ifmo.fbsat.core.utils.withIndex
 import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
-import kotlin.math.pow
 
-private data class Input(
-    val values: List<Boolean>,
-) {
-    constructor(values: BooleanArray) :
-        this(values.asList())
-
-    constructor(values: Iterable<Boolean>) :
-        this(values.toList_())
-
-    constructor(values: String) :
-        this(values.toBooleanArray())
-
-    constructor(i: Int, numberOfVariables: Int) :
-        this(i.toLong(), numberOfVariables)
-
-    constructor(i: Long, numberOfVariables: Int) :
-        this(List(numberOfVariables) { j -> 2L.pow(numberOfVariables - j - 1) and i != 0L })
-
-    override fun toString(): String {
-        return values.toBinaryString()
-    }
-}
-
-private data class Output(
-    val values: List<Boolean>,
-) {
-    constructor(values: BooleanArray) :
-        this(values.asList())
-
-    constructor(values: Iterable<Boolean>) :
-        this(values.toList_())
-
-    constructor(values: String) :
-        this(values.toBooleanArray())
-
-    override fun toString(): String {
-        return values.toBinaryString()
-    }
-}
-
-private var iBlockType = 0
-
-private enum class BlockType(val value: Int) {
-    AND(++iBlockType),
-    OR(++iBlockType),
-    NOT(++iBlockType),
-    ;
-
-    companion object {
-        private val lookup: Map<Int, BlockType> = values().associateBy(BlockType::value)
-
-        fun from(value: Int): BlockType = lookup.getValue(value)
-    }
-}
-
-private fun <T> MultiArray<T>.toList1(): List<T> {
-    require(shape.size == 1)
-    val (a) = shape
-    return List(a) { i -> this[i + 1] }
-}
-
-private fun <T> MultiArray<T>.toList2(): List<List<T>> {
-    require(shape.size == 2)
-    val (a, b) = shape
-    return List(a) { i -> List(b) { j -> this[i + 1, j + 1] } }
-}
-
-private fun <T> MultiArray<T>.toList3(): List<List<List<T>>> {
-    require(shape.size == 3)
-    val (a, b, c) = shape
-    return List(a) { i -> List(b) { j -> List(c) { k -> this[i + 1, j + 1, k + 1] } } }
-}
-
-@Suppress("LocalVariableName")
-private fun synthesizeSystemFromLibrary(
+@Suppress("LocalVariableName", "UnnecessaryVariable")
+fun synthesizeStatefulSystem(
     tree: PositiveScenarioTree,
     M: Int,
     X: Int,
@@ -124,13 +56,14 @@ private fun synthesizeSystemFromLibrary(
     // TODO: input should be a list of traces (in SMV sense)
 
     val solver = MiniSatSolver()
-    val outDir = File("out/library-synthesis")
+    val outDir = File("out/system-synthesis")
     outDir.mkdirs()
 
     with(solver) {
         val V = tree.size
+        val SM = 2
         val XM = 2
-        val ZM = 1
+        val ZM = 2
 
         // Note:
         //  - Inbound = input for module, but output for external
@@ -159,24 +92,30 @@ private fun synthesizeSystemFromLibrary(
         check(allOutboundVarPins.toList() == modularOutputVarPins.values.flatten() + externalInputVarPins)
 
         fun pin2x(pin: Int): Int {
-            @Suppress("UnnecessaryVariable")
+            // Note: `x` is 1-based
+            require(pin in externalInputVarPins)
             val x = externalInputVarPins.indexOf(pin) + 1
             return x
         }
 
         fun pin2z(pin: Int): Int {
-            @Suppress("UnnecessaryVariable")
+            // Note: `z` is 1-based
+            require(pin in externalOutputVarPins)
             val z = externalOutputVarPins.indexOf(pin) + 1
             return z
         }
 
         fun pin2mx(pin: Int): Pair<Int, Int> {
+            // Note: `m` and `x` are 1-based
+            require(pin !in externalInputVarPins)
             val m = (pin - 1) / XM + 1
             val x = modularInputVarPins[m].indexOf(pin) + 1
             return Pair(m, x)
         }
 
         fun pin2mz(pin: Int): Pair<Int, Int> {
+            // Note: `m` and `z` are 1-based
+            require(pin !in externalOutputVarPins)
             val m = (pin - 1) / ZM + 1
             val z = modularOutputVarPins[m].indexOf(pin) + 1
             return Pair(m, z)
@@ -203,15 +142,17 @@ private fun synthesizeSystemFromLibrary(
         val falseVar by lazy { newLiteral().also { clause(-it) } }
 
         val blockType = newDomainVarArray(M) {
-            BlockType.values().asIterable()
+            SystemBlockType.values().asIterable()
         }
 
-        val modularInputVarParent = newIntVarArray(M, XM) { (m, pin) ->
+        val modularInputVarParent = newIntVarArray(M, XM) { (m, _) ->
             (1 until m).flatMap { m_ -> modularOutputVarPins[m_] } + externalInputVarPins + 0
         }
-        val externalOutputVarParent = newIntVarArray(Z) { (z) ->
+        val externalOutputVarParent = newIntVarArray(Z) {
             modularOutputVarPins.values.flatten() + externalInputVarPins + 0
         }
+
+        val modularState = newIntVarArray(M, V) { 0..SM }
 
         val modularInputVarValue = newBoolVarArray(M, XM, V)
         val modularOutputVarValue = newBoolVarArray(M, ZM, V)
@@ -230,6 +171,16 @@ private fun synthesizeSystemFromLibrary(
                 val (m, x) = pin2mx(pin)
                 modularInputVarParent[m, x]
             }
+        }
+        val outboundVarPinChild = newIntVarArray(_outboundVarPins) { (pin) ->
+            // if (pin in externalInputVarPins) {
+            //     val x = pin2x(pin)
+            //     allInboundVarPins + 0
+            // } else {
+            //     val (m,z) = pin2mz(pin)
+            //     ...
+            // }
+            allInboundVarPins.filter { pin in inboundVarPinParent[it].domain } + 0
         }
         val inboundVarPinValue = BoolVarArray.new(_inboundVarPins, V) { (pin, v) ->
             if (pin in externalOutputVarPins) {
@@ -315,45 +266,267 @@ private fun synthesizeSystemFromLibrary(
         //                     )
         //     }
 
-        comment("NOT block uses only the first input pin")
+        comment("Pin parent-child relation")
+        for (pin in allInboundVarPins)
+            for (par in inboundVarPinParent[pin].domain - 0)
+                imply(
+                    outboundVarPinChild[par] eq pin,
+                    inboundVarPinParent[pin] eq par
+                )
+        for (pin in allOutboundVarPins)
+            for (ch in outboundVarPinChild[pin].domain - 0)
+                imply(
+                    outboundVarPinChild[pin] eq 0,
+                    inboundVarPinParent[ch] neq pin
+                )
+
+        comment("Unary blocks use only the first input pin")
+        for (t in SystemBlockType.values().filter { it.isUnary })
+            for (m in 1..M)
+                for (x in @Suppress("EmptyRange") 2..XM)
+                    imply(
+                        blockType[m] eq t,
+                        modularInputVarParent[m, x] eq 0
+                    )
+
+        comment("Binary blocks use only the first two input pins")
+        for (t in SystemBlockType.values().filter { it.isBinary })
+            for (m in 1..M)
+                for (x in 3..XM)
+                    imply(
+                        blockType[m] eq t,
+                        modularInputVarParent[m, x] eq 0
+                    )
+
+        comment("FF block use only the first input pin")
         for (m in 1..M)
             for (x in 2..XM)
                 imply(
-                    blockType[m] eq BlockType.NOT,
+                    blockType[m] eq SystemBlockType.FF,
                     modularInputVarParent[m, x] eq 0
+                )
+
+        comment("Stateless blocks use only one output")
+        for (t in SystemBlockType.values().filter { !it.hasState })
+            for (m in 1..M)
+                for (z in 2..ZM) {
+                    val pin = modularOutputVarPin[m, z]
+                    imply(
+                        blockType[m] eq t,
+                        outboundVarPinChild[pin] eq 0
+                    )
+                }
+
+        comment("FF block only use only one output")
+        for (m in 1..M)
+            for (z in 2..ZM) {
+                val pin = modularOutputVarPin[m, z]
+                imply(
+                    blockType[m] eq SystemBlockType.FF,
+                    outboundVarPinChild[pin] eq 0
+                )
+            }
+
+        comment("Stateless blocks don't have states")
+        for (t in SystemBlockType.values().filter { !it.hasState })
+            for (m in 1..M)
+                for (v in 1..V)
+                    imply(
+                        blockType[m] eq t,
+                        modularState[m, v] eq 0
+                    )
+
+        comment("Stateful blocks have states")
+        for (t in SystemBlockType.values().filter { it.hasState })
+            for (m in 1..M)
+                for (v in 1..V)
+                    imply(
+                        blockType[m] eq t,
+                        modularState[m, v] neq 0
+                    )
+
+        comment("Initial state (at v=1) of stateful blocks is s1")
+        for (t in SystemBlockType.values().filter { it.hasState })
+            for (m in 1..M)
+                imply(
+                    blockType[m] eq t,
+                    modularState[m, 1] eq 1
                 )
 
         comment("AND block semantics")
         for (m in 1..M)
-            for (z in 1..ZM)
-                for (v in 1..V)
-                    implyIffAnd(
-                        blockType[m] eq BlockType.AND,
-                        modularOutputVarValue[m, z, v],
-                        modularInputVarValue[m, 1, v],
-                        modularInputVarValue[m, 2, v]
-                    )
+            for (v in 1..V)
+                implyIffAnd(
+                    blockType[m] eq SystemBlockType.AND,
+                    modularOutputVarValue[m, 1, v],
+                    modularInputVarValue[m, 1, v],
+                    modularInputVarValue[m, 2, v]
+                )
 
         comment("OR block semantics")
         for (m in 1..M)
-            for (z in 1..ZM)
-                for (v in 1..V)
-                    implyIffOr(
-                        blockType[m] eq BlockType.OR,
-                        modularOutputVarValue[m, z, v],
-                        modularInputVarValue[m, 1, v],
-                        modularInputVarValue[m, 2, v]
-                    )
+            for (v in 1..V)
+                implyIffOr(
+                    blockType[m] eq SystemBlockType.OR,
+                    modularOutputVarValue[m, 1, v],
+                    modularInputVarValue[m, 1, v],
+                    modularInputVarValue[m, 2, v]
+                )
 
         comment("NOT block semantics")
         for (m in 1..M)
-            for (z in 1..ZM)
-                for (v in 1..V)
-                    implyIff(
-                        blockType[m] eq BlockType.NOT,
-                        modularOutputVarValue[m, z, v],
-                        -modularInputVarValue[m, 1, v]
+            for (v in 1..V)
+                implyIff(
+                    blockType[m] eq SystemBlockType.NOT,
+                    modularOutputVarValue[m, 1, v],
+                    -modularInputVarValue[m, 1, v]
+                )
+
+        comment("FF block semantics")
+        // guard_s1_s2 := (_state = s1) & (x1);
+        // guard_s2_s1 := (_state = s2) & (!x1);
+        // next(_state) = case
+        //   guard_s1_s2 : s2;
+        //   guard_s2_s1 : s1;
+        //   TRUE: _state;
+        // esac
+        // next(z1) = case
+        //   guard_s1_s2 : TRUE;
+        //   guard_s2_s1 : FALSE;
+        //   TRUE: z1;
+        // esac
+        for (m in 1..M) {
+            val guards = listOf(
+                "s1_s2",
+                "s2_s1",
+            )
+            val G = guards.size
+            val guardValue: Map<String, BoolVarArray> = guards.associateWith { newBoolVarArray(V) }
+            check(guardValue.size == guards.size)
+            val guardFirstFired = newDomainVarArray(V) { (v) ->
+                if (v > 1) guards + "TRUE" else emptyList()
+            }
+            // Note: (guardFirstFired = 0) corresponds to "else" (`TRUE` in SMV) case
+            val guardNotFired = newBoolVarArray(G, V)
+
+            for (v in 2..V) {
+                val p = tree.parent(v)
+                // guardFirstFired definition
+                scope {
+                    val guard = guards.first()
+                    iff(
+                        guardFirstFired[v] eq guard,
+                        guardValue[guard]!![v]
                     )
+                }
+                for (g in 2..G) {
+                    val guard = guards[g - 1]
+                    iffAnd(
+                        guardFirstFired[v] eq guard,
+                        guardValue[guard]!![v],
+                        guardNotFired[g - 1, v]
+                    )
+                }
+                // guardNotFired definition
+                scope {
+                    val guard = guards.first()
+                    iff(
+                        guardNotFired[1, v],
+                        -guardValue[guard]!![v]
+                    )
+                }
+                for (g in 2..G) {
+                    val guard = guards[g - 1]
+                    iffAnd(
+                        guardNotFired[g, v],
+                        -guardValue[guard]!![v],
+                        guardNotFired[g - 1, v]
+                    )
+                }
+                // (FF=0) <=> NF[G] shortcut
+                iff(
+                    guardFirstFired[v] eq "TRUE",
+                    guardNotFired[G, v]
+                )
+                // not-NF propagation
+                for (g in 1 until G)
+                    imply(
+                        -guardNotFired[g, v],
+                        -guardNotFired[g + 1, v]
+                    )
+                // Guard definition
+                iffAnd(
+                    guardValue["s1_s2"]!![v],
+                    modularState[m, p] eq 1,
+                    modularInputVarValue[m, 1, v]
+                )
+                iffAnd(
+                    guardValue["s2_s1"]!![v],
+                    modularState[m, p] eq 2,
+                    -modularInputVarValue[m, 1, v]
+                )
+                // guardValue has no meaning outside the stateful block
+                for (guard in guards)
+                    imply(
+                        blockType[m] neq SystemBlockType.FF,
+                        -guardValue[guard]!![v]
+                    )
+                // else case for _state
+                for (s in 1..SM)
+                    implyImplyImply(
+                        blockType[m] eq SystemBlockType.FF,
+                        guardFirstFired[v] eq "TRUE",
+                        modularState[m, p] eq s,
+                        modularState[m, v] eq s
+                    )
+                // else case for output variables
+                for (z in 1..ZM)
+                    implyImplyIff(
+                        blockType[m] eq SystemBlockType.FF,
+                        guardFirstFired[v] eq "TRUE",
+                        modularOutputVarValue[m, z, v],
+                        modularOutputVarValue[m, z, p]
+                    )
+                // Block semantics
+                implyImplyAnd(
+                    blockType[m] eq SystemBlockType.FF,
+                    guardFirstFired[v] eq "s1_s2",
+                    modularState[m, v] eq 2,
+                    modularOutputVarValue[m, 1, v]
+                )
+                implyImplyAnd(
+                    blockType[m] eq SystemBlockType.FF,
+                    guardFirstFired[v] eq "s2_s1",
+                    modularState[m, v] eq 1,
+                    -modularOutputVarValue[m, 1, v]
+                )
+            }
+        }
+
+        // for (m in 1..M)
+        //     for (v in 2..V) {
+        //         val p = tree.parent(v)
+        //         andImplyAnd(
+        //             listOf(
+        //                 modularState[m, p] eq 1,
+        //                 modularInputVarValue[m, 1, v],
+        //             ),
+        //             listOf(
+        //                 modularState[m, v] eq 2,
+        //                 modularOutputVarValue[m, 1, v],
+        //             )
+        //         )
+        //         andImplyAnd(
+        //             listOf(
+        //                 modularState[m, p] eq 2,
+        //                 -modularInputVarValue[m, 1, v],
+        //             ),
+        //             listOf(
+        //                 modularState[m, v] eq 1,
+        //                 -modularOutputVarValue[m, 1, v],
+        //             )
+        //         )
+        //     }
 
         comment("Input values")
         for (v in 2..V)
@@ -387,12 +560,10 @@ private fun synthesizeSystemFromLibrary(
 
         // =================
 
-        // require(tt.values.all { it.values.size == 1 })
-        // val fileCnf = outDir.resolve("schema_${ttToBinaryString(tt.mapValues { it.value.values[0] })}_X${X}_M$M.cnf")
-        // dumpCnf(fileCnf)
+        val fileCnf = outDir.resolve("system_X${X}_Z${Z}_M${M}.cnf")
+        dumpDimacs(fileCnf)
 
         val model: Model? = solveAndGetModel()
-        // val model: Model? = null
 
         @Suppress("NAME_SHADOWING")
         if (model != null) {
@@ -431,8 +602,8 @@ private fun synthesizeSystemFromLibrary(
                 )
             }
 
-            val fileSchema = outDir.resolve("schema.gv")
-            fileSchema.sink().buffer().useWith {
+            val fileSystem = outDir.resolve("system.gv")
+            fileSystem.sink().buffer().useWith {
                 writeln("digraph {")
                 writeln("    // Gates")
                 for (m in 1..M) {
@@ -455,13 +626,13 @@ private fun synthesizeSystemFromLibrary(
                 writeln("    ${(1..Z).joinToString(" -> ") { z -> "Z$z" }};")
                 writeln("    }")
                 writeln("")
-                writeln("    // Schema")
+                writeln("    // System")
                 for (m in 1..M) {
                     val ts = sequence {
                         for (pin in modularInputVarPins[m]) {
                             when (val par = parent[pin]) {
                                 0 -> {
-                                    // break
+                                    break
                                 }
                                 in externalInputVarPins -> {
                                     yield("X${externalInputVarPins.indexOf(par) + 1}")
@@ -477,29 +648,20 @@ private fun synthesizeSystemFromLibrary(
                     }
                 }
                 for (z in 1..Z) {
-                    val ts = sequence {
-                        for (pin in externalOutputVarPins) {
-                            when (val par = parent[pin]) {
-                                0 -> {
-                                    // break
-                                }
-                                in externalInputVarPins -> {
-                                    yield("X${externalInputVarPins.indexOf(par) + 1}")
-                                }
-                                else -> {
-                                    yield("g${(par - 1) / ZM + 1}")
-                                }
-                            }
-                        }
+                    val pin = externalOutputVarPin[z]
+                    val par = parent[pin]
+                    if (par == 0) continue
+                    val t = if (par in externalInputVarPins) {
+                        "X${externalInputVarPins.indexOf(par) + 1}"
+                    } else {
+                        "g${(par - 1) / ZM + 1}"
                     }
-                    for ((i, t) in ts.withIndex(start = 1)) {
-                        writeln("    Z$z -> $t [label=\"$i\"];")
-                    }
+                    writeln("    Z$z -> $t;")
                 }
                 writeln("}")
             }
-            Runtime.getRuntime().exec("dot -Tpdf -O $fileSchema")
-            Runtime.getRuntime().exec("dot -Tpng -O $fileSchema")
+            Runtime.getRuntime().exec("dot -Tpdf -O $fileSystem")
+            Runtime.getRuntime().exec("dot -Tpng -O $fileSystem")
 
             return true
         }
@@ -508,7 +670,7 @@ private fun synthesizeSystemFromLibrary(
     return false
 }
 
-private fun synthesizeIterativeBottomUp(
+fun synthesizeStatefulSystemIterativelyBottomUp(
     tree: PositiveScenarioTree,
     X: Int,
     Z: Int,
@@ -518,7 +680,7 @@ private fun synthesizeIterativeBottomUp(
         mylog.br()
         mylog.info("Trying M = $M...")
 
-        if (synthesizeSystemFromLibrary(tree, M = M, X = X, Z = Z)) {
+        if (synthesizeStatefulSystem(tree, M = M, X = X, Z = Z)) {
             mylog.success("M = $M: Success")
             break
         } else {
@@ -582,7 +744,7 @@ private fun main() {
     tree.addScenario(PositiveScenario(es.shuffled()))
 
     val M = 10
-    if (synthesizeSystemFromLibrary(tree, M = M, X = X, Z = Z)) {
+    if (synthesizeStatefulSystem(tree, M = M, X = X, Z = Z)) {
         mylog.success("M = $M: SAT")
     } else {
         mylog.failure("M = $M: UNSAT")
@@ -591,43 +753,4 @@ private fun main() {
     // synthesizeIterativeBottomUp(tree, X = X, Z = Z, maxM = 12)
 
     mylog.success("All done in %.3f s.".format(timeSince(timeStart).seconds))
-}
-
-private fun Int.pow(n: Int): Int =
-    if (this == 2) 1 shl n
-    else this.toDouble().pow(n).toInt()
-
-private fun Long.pow(n: Int): Long =
-    if (this == 2L) 1L shl n
-    else this.toDouble().pow(n).toLong()
-
-private fun Boolean.toInt(): Int = if (this) 1 else 0
-
-private fun valuesToTruthTable(values: List<Boolean?>, X: Int): Map<Input, Boolean> {
-    val tt: MutableMap<Input, Boolean> = mutableMapOf()
-    for ((i, b) in values.withIndex()) {
-        if (b != null) {
-            tt[Input(i, X)] = b
-        }
-    }
-    return tt
-}
-
-@Suppress("LocalVariableName")
-private fun String.toTruthTable(X: Int): Map<Input, Boolean> {
-    val values = map {
-        when (it) {
-            '0' -> false
-            '1' -> true
-            'x', '-' -> null
-            else -> error("Bad char '$it'")
-        }
-    }
-    return valuesToTruthTable(values, X)
-}
-
-@Suppress("LocalVariableName")
-private fun ttToBinaryString(tt: Map<Input, Boolean>): String {
-    val X = tt.keys.first().values.size
-    return (0 until 2.pow(X)).joinToString("") { f -> tt[Input(f, X)]?.toInt()?.toString() ?: "x" }
 }
