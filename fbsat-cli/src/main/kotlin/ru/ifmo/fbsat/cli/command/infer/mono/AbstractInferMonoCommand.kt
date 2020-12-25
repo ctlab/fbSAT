@@ -6,6 +6,7 @@ import ru.ifmo.fbsat.core.utils.mylog
 
 abstract class AbstractInferMonoCommand(name: String) :
     AbstractInferCommandWithSetup<Automaton>(name) {
+
     final override fun printAndCheck(automaton: Automaton?) {
         if (automaton == null) {
             mylog.failure("Automaton not found")

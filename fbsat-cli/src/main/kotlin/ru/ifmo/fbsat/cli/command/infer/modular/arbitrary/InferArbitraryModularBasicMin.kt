@@ -33,6 +33,7 @@ private class ArbitraryModularBasicMinAutomatonOptions : OptionGroup(AUTOMATON_O
 
 class InferArbitraryModularBasicMinCommand :
     AbstractInferArbitraryModularCommand("modular-arbitrary-basic-min") {
+
     private val io by ArbitraryModularBasicMinInputOutputOptions()
     private val params by ArbitraryModularBasicMinAutomatonOptions()
     override val solverOptions by SolverOptions()
@@ -49,4 +50,18 @@ class InferArbitraryModularBasicMinCommand :
             numberOfModules = params.numberOfModules,
             numberOfStates = params.numberOfStates,
         )
+}
+
+@Suppress("ClassName")
+private object `infer modular-arbitrary-basic-min` {
+    @JvmStatic
+    fun main(args: Array<String>) {
+        InferArbitraryModularBasicMinCommand().main(listOf(
+            "-i", "data/tests-1.gz",
+            "-M", "2",
+            "--epsilon-output-events", "none",
+            "--debug",
+            "--minisat",
+        ))
+    }
 }

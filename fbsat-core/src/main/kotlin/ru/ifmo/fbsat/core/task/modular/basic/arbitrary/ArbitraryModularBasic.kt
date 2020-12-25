@@ -20,7 +20,7 @@ fun Inferrer.arbitraryModularBasic(
     reset()
     declare(
         ArbitraryModularBasicTask(
-            positiveScenarioTree = scenarioTree,
+            scenarioTree = scenarioTree,
             numberOfModules = numberOfModules,
             numberOfStates = numberOfStates,
             maxOutgoingTransitions = maxOutgoingTransitions,
@@ -28,6 +28,7 @@ fun Inferrer.arbitraryModularBasic(
             isEncodeReverseImplication = isEncodeReverseImplication,
         )
     )
+    solver.dumpDimacs(outDir.resolve("cnf_modular-arbitrary-basic_M${numberOfModules}_C${numberOfStates}.cnf"))
     return inferArbitraryModularBasic()
 }
 

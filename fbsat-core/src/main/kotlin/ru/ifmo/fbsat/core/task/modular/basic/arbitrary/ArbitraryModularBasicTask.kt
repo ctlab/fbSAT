@@ -10,7 +10,7 @@ import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 
 data class ArbitraryModularBasicTask(
-    val positiveScenarioTree: PositiveScenarioTree,
+    val scenarioTree: PositiveScenarioTree,
     val numberOfModules: Int, // M
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int? = null, // K, =C if null
@@ -21,7 +21,7 @@ data class ArbitraryModularBasicTask(
         /* Variables */
         comment("$name: Variables")
         declareArbitraryModularBasicVariables(
-            scenarioTree = positiveScenarioTree,
+            scenarioTree = scenarioTree,
             M = numberOfModules,
             C = numberOfStates,
             K = maxOutgoingTransitions ?: numberOfStates

@@ -20,6 +20,7 @@ import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.convertBoolVarArray
+import ru.ifmo.fbsat.core.solver.convertDomainVarArray
 import ru.ifmo.fbsat.core.solver.convertIntVarArray
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.Pins
 import ru.ifmo.fbsat.core.utils.Globals
@@ -197,8 +198,6 @@ class ArbitraryModularAutomaton(
                 mylog.error("result.modularDestination = ${result.modularDestination.values.map { it.id }}")
                 mylog.error("result.modularOutputAction = ${result.modularOutputAction.values.map { "${it.event}[${it.values.values.toBinaryString()}]" }}")
                 return false
-            } else {
-                mylog.success("i = $i: OK")
             }
             i++
         }
@@ -219,6 +218,20 @@ class ArbitraryModularAutomaton(
 
     fun printStats() {
         mylog.just("    " + getStats())
+    }
+
+    fun dump(dir: File, name: String = "automaton") {
+        mylog.info("Dumping '$name' to <$dir>...")
+        dir.mkdirs()
+        dumpGv(dir)
+        dumpFbt(dir.resolve("$name.fbt"), name = name)
+    }
+
+    fun dumpGv(dir: File) {
+        for (m in 1..M) {
+            modules[m].dumpGv(dir.resolve("module_$m.gv"))
+        }
+        // TODO: dump compound gv
     }
 
     /**
@@ -565,5 +578,59 @@ fun buildExtendedArbitraryModularAutomaton(
     context: Context,
     model: Model,
 ): ArbitraryModularAutomaton {
-    TODO()
+    val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
+    val modularContext: ModularContext = context["modularContext"]
+    val inboundVarPinParent = context.convertIntVarArray("inboundVarPinParent", model)
+
+    val modules = modularContext.map { ctx ->
+        val C: Int = ctx["C"]
+        val K: Int = ctx["K"]
+        val P: Int = ctx["P"]
+        val X: Int = ctx["X"]
+        val Z: Int = ctx["Z"]
+        val U: Int = ctx["U"]
+        val transitionDestination = ctx.convertIntVarArray("transitionDestination", model)
+        val firstFired = ctx.convertIntVarArray("firstFired", model)
+        val notFired = ctx.convertBoolVarArray("notFired", model)
+        val stateAlgorithmBot = ctx.convertBoolVarArray("stateAlgorithmBot", model)
+        val stateAlgorithmTop = ctx.convertBoolVarArray("stateAlgorithmTop", model)
+        val nodeType = ctx.convertDomainVarArray<NodeType>("nodeType", model)
+        val nodeInputVariable = ctx.convertIntVarArray("nodeInputVariable", model)
+        val nodeParent = ctx.convertIntVarArray("nodeParent", model)
+        val nodeChild = ctx.convertIntVarArray("nodeChild", model)
+
+        Automaton(scenarioTree).endow(
+            C = C, K = K,
+            stateOutputEvent = { OutputEvent("CNF") },
+            stateAlgorithm = { c ->
+                BinaryAlgorithm(
+                    algorithm0 = BooleanArray(Z) { z0 -> stateAlgorithmBot[c, z0 + 1] },
+                    algorithm1 = BooleanArray(Z) { z0 -> stateAlgorithmTop[c, z0 + 1] }
+                )
+            },
+            transitionDestination = { c, k -> transitionDestination[c, k] },
+            transitionInputEvent = { _, _ -> InputEvent("REQ") },
+            transitionGuard = { c, k ->
+                ParseTreeGuard(
+                    nodeType = MultiArray.new(P) { (p) -> nodeType[c, k, p] },
+                    terminal = MultiArray.new(P) { (p) -> nodeInputVariable[c, k, p] },
+                    parent = MultiArray.new(P) { (p) -> nodeParent[c, k, p] },
+                    childLeft = MultiArray.new(P) { (p) -> nodeChild[c, k, p] },
+                    childRight = MultiArray.new(P) { (p) ->
+                        if (nodeType[c, k, p] in setOf(NodeType.AND, NodeType.OR))
+                            nodeChild[c, k, p] + 1
+                        else
+                            0
+                    },
+                    inputNames = scenarioTree.inputNames
+                )
+            }
+        )
+    }
+
+    return ArbitraryModularAutomaton(
+        modules = modules,
+        inboundVarPinParent = inboundVarPinParent,
+        scenarioTree = scenarioTree,
+    )
 }

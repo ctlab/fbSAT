@@ -12,15 +12,15 @@ abstract class AbstractInferArbitraryModularCommand(name: String) :
         if (automaton == null) {
             mylog.failure("Arbitrary modular automaton not found")
         } else {
-            mylog.info("Inferred consecutive modular automaton consists of ${automaton.modules.shape.single()} modules:")
+            mylog.info("Inferred arbitrary modular automaton consists of ${automaton.modules.shape.single()} modules:")
             for ((m, module) in automaton.modules.values.withIndex(start = 1)) {
                 mylog.info("Module #$m (${module.getStats()}):")
                 module.pprint()
             }
-            mylog.info("Inferred consecutive modular automaton has:")
+            mylog.info("Inferred arbitrary modular automaton has:")
             automaton.printStats()
 
-            // TODO: automaton.dump(outDir)
+            automaton.dump(outDir)
 
             if (automaton.verify(scenarioTree.toOld()))
                 mylog.success("Verify: OK")

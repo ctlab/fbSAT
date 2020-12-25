@@ -42,6 +42,14 @@ fun Solver.declareConsecutiveModularGuardConditionsBfsConstraints() {
     }
 }
 
+fun Solver.declareArbitraryModularGuardConditionsBfsConstraints() {
+    comment("Arbitrary modular guard conditions BFS constraints")
+    forEachModularContext { m ->
+        comment("Arbitrary modular guard conditions BFS constraints: for module m = $m")
+        declareGuardConditionsBfsConstraints()
+    }
+}
+
 fun Solver.declareDistributedGuardConditionsBfsConstraints() {
     comment("Distributed guard conditions BFS constraints")
     forEachModularContext { m ->

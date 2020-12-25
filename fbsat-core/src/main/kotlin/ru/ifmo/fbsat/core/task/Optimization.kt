@@ -13,6 +13,7 @@ import ru.ifmo.fbsat.core.task.distributed.extended.inferDistributedExtended
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.inferArbitraryModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.inferConsecutiveModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.inferParallelModularBasic
+import ru.ifmo.fbsat.core.task.modular.extended.arbitrary.inferArbitraryModularExtended
 import ru.ifmo.fbsat.core.task.modular.extended.consecutive.inferConsecutiveModularExtended
 import ru.ifmo.fbsat.core.task.modular.extended.parallel.inferParallelModularExtended
 import ru.ifmo.fbsat.core.task.single.basic.inferBasic
@@ -175,6 +176,22 @@ fun Inferrer.optimizeArbitraryModularT(
     )
 }
 
+fun Inferrer.optimizeParallelModularN(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): ParallelModularAutomaton? {
+    mylog.info("Optimizing N...")
+    val cardinality: Cardinality = solver.context["cardinalityN"]
+    return cardinality.optimizeTopDown(
+        start = start,
+        end = end,
+        useAssumptions = useAssumptions,
+        infer = { inferParallelModularExtended() },
+        query = { it.totalGuardsSize }
+    )
+}
+
 fun Inferrer.optimizeConsecutiveModularN(
     start: Int? = null,
     end: Int = 0,
@@ -191,18 +208,18 @@ fun Inferrer.optimizeConsecutiveModularN(
     )
 }
 
-fun Inferrer.optimizeParallelModularN(
+fun Inferrer.optimizeArbitraryModularN(
     start: Int? = null,
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
-): ParallelModularAutomaton? {
+): ArbitraryModularAutomaton? {
     mylog.info("Optimizing N...")
     val cardinality: Cardinality = solver.context["cardinalityN"]
     return cardinality.optimizeTopDown(
         start = start,
         end = end,
         useAssumptions = useAssumptions,
-        infer = { inferParallelModularExtended() },
+        infer = { inferArbitraryModularExtended() },
         query = { it.totalGuardsSize }
     )
 }

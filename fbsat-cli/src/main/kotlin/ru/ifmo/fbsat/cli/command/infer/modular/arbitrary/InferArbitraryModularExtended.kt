@@ -10,7 +10,9 @@ import ru.ifmo.fbsat.cli.command.infer.options.ExtraOptions
 import ru.ifmo.fbsat.cli.command.infer.options.INPUT_OUTPUT_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.SolverOptions
 import ru.ifmo.fbsat.cli.command.infer.options.inputNamesOption
+import ru.ifmo.fbsat.cli.command.infer.options.maxGuardSizeOption
 import ru.ifmo.fbsat.cli.command.infer.options.maxOutgoingTransitionsOption
+import ru.ifmo.fbsat.cli.command.infer.options.maxTotalGuardsSizeOption
 import ru.ifmo.fbsat.cli.command.infer.options.maxTransitionsOption
 import ru.ifmo.fbsat.cli.command.infer.options.numberOfModulesOption
 import ru.ifmo.fbsat.cli.command.infer.options.numberOfStatesOption
@@ -18,28 +20,29 @@ import ru.ifmo.fbsat.cli.command.infer.options.outDirOption
 import ru.ifmo.fbsat.cli.command.infer.options.outputNamesOption
 import ru.ifmo.fbsat.cli.command.infer.options.scenariosFileOption
 import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
-import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.arbitraryModularBasic
+import ru.ifmo.fbsat.core.task.modular.extended.arbitrary.arbitraryModularExtended
 import java.io.File
 
-private class ArbitraryModularBasicInputOutputOptions : OptionGroup(INPUT_OUTPUT_OPTIONS) {
+private class ArbitraryModularExtendedInputOutputOptions : OptionGroup(INPUT_OUTPUT_OPTIONS) {
     val scenariosFile: File by scenariosFileOption()
     val outDir: File by outDirOption()
     val inputNames: List<String> by inputNamesOption()
     val outputNames: List<String> by outputNamesOption()
 }
 
-private class ArbitraryModularBasicAutomatonOptions : OptionGroup(AUTOMATON_OPTIONS) {
+private class ArbitraryModularExtendedAutomatonOptions : OptionGroup(AUTOMATON_OPTIONS) {
     val numberOfModules: Int by numberOfModulesOption().required()
     val numberOfStates: Int by numberOfStatesOption().required()
     val maxOutgoingTransitions: Int? by maxOutgoingTransitionsOption()
+    val maxGuardSize: Int by maxGuardSizeOption().required()
     val maxTransitions: Int? by maxTransitionsOption()
+    val maxTotalGuardsSize: Int? by maxTotalGuardsSizeOption()
 }
 
-class InferArbitraryModularBasicCommand :
-    AbstractInferArbitraryModularCommand("modular-arbitrary-basic") {
-
-    private val io by ArbitraryModularBasicInputOutputOptions()
-    private val params by ArbitraryModularBasicAutomatonOptions()
+class InferArbitraryModularExtendedCommand :
+    AbstractInferArbitraryModularCommand("modular-arbitrary-extended") {
+    private val io by ArbitraryModularExtendedInputOutputOptions()
+    private val params by ArbitraryModularExtendedAutomatonOptions()
     override val solverOptions by SolverOptions()
     override val extraOptions by ExtraOptions()
 
@@ -49,24 +52,27 @@ class InferArbitraryModularBasicCommand :
     override val outDir: File get() = io.outDir
 
     override fun infer(): ArbitraryModularAutomaton? =
-        inferrer.arbitraryModularBasic(
+        inferrer.arbitraryModularExtended(
             scenarioTree = scenarioTree,
             numberOfModules = params.numberOfModules,
             numberOfStates = params.numberOfStates,
             maxOutgoingTransitions = params.maxOutgoingTransitions,
+            maxGuardSize = params.maxGuardSize,
             maxTransitions = params.maxTransitions,
-            isEncodeReverseImplication = extraOptions.isEncodeReverseImplication,
+            maxTotalGuardsSize = params.maxTotalGuardsSize,
+            isEncodeReverseImplication = extraOptions.isEncodeReverseImplication
         )
 }
 
 @Suppress("ClassName")
-private object `infer modular-arbitrary-basic` {
+private object `infer modular-arbitrary-extended` {
     @JvmStatic
     fun main(args: Array<String>) {
-        InferArbitraryModularBasicCommand().main(listOf(
+        InferArbitraryModularExtendedCommand().main(listOf(
             "-i", "data/tests-1.gz",
-            "-M", "2",
-            "-C", "5",
+            "-M", "5",
+            "-C", "4",
+            "-P", "5",
             "--epsilon-output-events", "none",
             "--debug",
             "--minisat",
