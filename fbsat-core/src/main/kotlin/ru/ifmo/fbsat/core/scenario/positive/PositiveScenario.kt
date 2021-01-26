@@ -8,6 +8,7 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
+import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
 import ru.ifmo.fbsat.core.scenario.preprocessed
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.mylog
@@ -94,6 +95,34 @@ data class PositiveScenario(
                 PositiveScenario(elements.preprocessed)
             else
                 PositiveScenario(elements)
+        }
+
+        fun fromTrace(
+            trace: THE_Counterexample,
+            // inputEvents: List<InputEvent>,
+            // outputEvents: List<OutputEvent>,
+            inputNames: List<String>,
+            outputNames: List<String>,
+        ): PositiveScenario {
+            val elements = trace.nodes
+                .map { node ->
+                    node.states.single().values.associate { value ->
+                        value.variable to value.content.toBoolean()
+                    }
+                }
+                .zipWithNext { inputData, outputData ->
+                    ScenarioElement(
+                        inputAction = InputAction(
+                            event = InputEvent("REQ"),
+                            values = InputValues(inputNames.map { inputData.getValue(it) })
+                        ),
+                        outputAction = OutputAction(
+                            event = OutputEvent("CNF"),
+                            values = OutputValues(outputNames.map { outputData.getValue(it) })
+                        )
+                    )
+                }
+            return PositiveScenario(elements)
         }
     }
 }

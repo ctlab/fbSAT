@@ -63,14 +63,16 @@ private var iSystemBlockType = 0
 
 enum class SystemBlockType(
     val value: Int,
-    val isUnary: Boolean,
-    val isBinary: Boolean,
+    val numberOfInputs: Int,
+    val numberOfOutputs: Int,
+    // TODO: numberOfStates: Int  (0 for stateless blocks)
     val hasState: Boolean,
 ) {
-    AND(++iSystemBlockType, false, true, false),
-    OR(++iSystemBlockType, false, true, false),
-    NOT(++iSystemBlockType, true, false, false),
-    FF(++iSystemBlockType, false, false, true),
+    AND(++iSystemBlockType, 2, 1, false),
+    OR(++iSystemBlockType, 2,1, false),
+    NOT(++iSystemBlockType, 1,1, false),
+    HA(++iSystemBlockType, 2,2, false),
+    CNT(++iSystemBlockType, 1, 2, true),
     ;
 
     companion object {
