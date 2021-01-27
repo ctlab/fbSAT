@@ -356,14 +356,14 @@ private fun Solver.declareAutomatonStructureConstraintsForInputs(
 
     comment("Actual transition function definition")
     // (actualTransitionFunction[q,e,u] = q') <=>
-    //  OR_k ( (transitionDestination[q,k] = q') & (transitionInputEvent[q,k] = e) & (firstFired[q,u] = k) )
+    //  OR_k ( (transitionDestination[q,k] = q') & (transitionInputEvent[q,k] = e) & (firstFired[q,e,u] = k) )
     for (i in 1..C)
         for (e in 1..E)
             for (u in Us)
                 for (j in 1..C)
                     iffOr(actualTransitionFunction[i, e, u] eq j) {
                         for (k in 1..K) {
-                            // aux <=> (transitionDestination[q,k] = q') & (transitionInputEvent[q,k] = e) & (firstFired[q,u] = k)
+                            // aux <=> (transitionDestination[q,k] = q') & (firstFired[q,e,u] = k)
                             val aux = newLiteral()
                             iffAnd(
                                 aux,
