@@ -10,13 +10,15 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.multiArrayOf
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
-import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.withIndex
 import java.io.File
+
+private val logger = MyLogger {}
 
 @Suppress("DuplicatedCode", "LocalVariableName")
 fun Inferrer.distributedCegis2(
@@ -35,7 +37,7 @@ fun Inferrer.distributedCegis2(
     smvDir: File,
     startD: Int = 1,
 ): DistributedAutomaton? {
-    mylog.info("Performing distributed CEGIS (second version)...")
+    logger.info("Performing distributed CEGIS (second version)...")
 
     // Copy smv files to output directory
     smvDir.copyRecursively(outDir, overwrite = true)
@@ -80,7 +82,10 @@ fun Inferrer.distributedCegis2(
             startD = D
         )
         if (automaton == null) {
-            mylog.failure("CEGIS iteration #$iterationNumber failed in %.3f s".format(timeSince(timeStart).seconds))
+            logger.error(
+                "CEGIS iteration #$iterationNumber failed to infer an automaton after %.3f s"
+                    .format(timeSince(timeStart).seconds)
+            )
             return null
         }
 
@@ -93,7 +98,7 @@ fun Inferrer.distributedCegis2(
             // Dump intermediate automaton
             automaton.project(m).dump(outDir, "_${modularName[m]}_iter%04d".format(iterationNumber))
             // Print intermediate automaton
-            mylog.info("Intermediate inferred automaton (module $m):")
+            logger.info("Intermediate inferred automaton (module $m):")
             automaton.project(m).pprint()
         }
         // =============
@@ -104,10 +109,10 @@ fun Inferrer.distributedCegis2(
             modularModuleName = multiArrayOf("Sender", "Receiver")
         )
         if (counterexamples.isEmpty()) {
-            mylog.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
-            mylog.success("No counterexamples!")
-            mylog.info("Final compound negative scenario tree size: ${negativeTree.size}")
-            mylog.info("Final number of negative scenarios: ${negativeTree.scenarios.size}")
+            logger.info("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
+            logger.info("No counterexamples!")
+            logger.info("Final compound negative scenario tree size: ${negativeTree.size}")
+            logger.info("Final number of negative scenarios: ${negativeTree.scenarios.size}")
             return automaton
         }
 
@@ -133,7 +138,7 @@ fun Inferrer.distributedCegis2(
         // Verify negative scenarios
         for ((i, negScenario) in negativeScenarios.withIndex(start = 1)) {
             if (automaton.verify(negScenario)) {
-                mylog.failure("Verify negative scenario #$i: disproved")
+                logger.error("Verify negative scenario #$i: disproved")
 
                 println("Mapping of negScenario (loopBack = ${negScenario.loopPosition}):")
                 for ((j, state) in automaton.map(negScenario).withIndex(start = 1)) {
@@ -143,11 +148,11 @@ fun Inferrer.distributedCegis2(
 
                 error("sad")
             } else {
-                mylog.success("Verify negative scenario #$i: confirmed")
+                logger.info("Verify negative scenario #$i: confirmed")
             }
         }
 
-        mylog.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
+        logger.info("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
     }
     return null
 }

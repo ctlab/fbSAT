@@ -20,12 +20,14 @@ import okio.sink
 import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.useWith
 import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
+
+private val logger = MyLogger {}
 
 @Suppress("LocalVariableName")
 fun synthesizeBooleanCircuit(tt: Map<Input, Output>, M: Int, X: Int, Z: Int): Boolean {
@@ -50,17 +52,17 @@ fun synthesizeBooleanCircuit(tt: Map<Input, Output>, M: Int, X: Int, Z: Int): Bo
         val allOutboundVarPins: List<Int> =
             modularOutboundVarPins.values.flatten() + externalOutboundVarPins
 
-        mylog.info("Modules inbound pins = ${modularInboundVarPins.values}")
-        mylog.info("External inbound pins = $externalInboundVarPins")
-        mylog.info("Modules outbound pins = ${modularOutboundVarPins.values}")
-        mylog.info("External outbound pins = $externalOutboundVarPins")
+        logger.info("Modules inbound pins = ${modularInboundVarPins.values}")
+        logger.info("External inbound pins = $externalInboundVarPins")
+        logger.info("Modules outbound pins = ${modularOutboundVarPins.values}")
+        logger.info("External outbound pins = $externalOutboundVarPins")
 
         val uniqueInputs: List<Input> = tt.keys.sortedBy { it.values.toBinaryString() }
         val U = uniqueInputs.size
 
         // =================
 
-        mylog.info("Declaring variables...")
+        logger.info("Declaring variables...")
         val timeStartVariables = PerformanceCounter.reference
         val nVarsStart = numberOfVariables
 
@@ -80,14 +82,14 @@ fun synthesizeBooleanCircuit(tt: Map<Input, Output>, M: Int, X: Int, Z: Int): Bo
         val outboundVarPinValue = newBoolVarArray(allOutboundVarPins.size, U)
 
         val nVarsDiff = numberOfVariables - nVarsStart
-        mylog.debug {
+        logger.debug {
             "Done declaring $nVarsDiff variables (total $numberOfVariables) in %.2f s."
                 .format(timeSince(timeStartVariables).seconds)
         }
 
         // =================
 
-        mylog.info("Declaring constraints...")
+        logger.info("Declaring constraints...")
         val timeStartConstraints = PerformanceCounter.reference
         val nClausesStart = numberOfClauses
 
@@ -216,7 +218,7 @@ fun synthesizeBooleanCircuit(tt: Map<Input, Output>, M: Int, X: Int, Z: Int): Bo
             }
 
         val nClausesDiff = numberOfClauses - nClausesStart
-        mylog.debug {
+        logger.debug {
             "Done declaring $nClausesDiff constraints (total $numberOfClauses) in %.2f s."
                 .format(timeSince(timeStartConstraints).seconds)
         }
@@ -276,19 +278,19 @@ fun synthesizeBooleanCircuit(tt: Map<Input, Output>, M: Int, X: Int, Z: Int): Bo
         @Suppress("NAME_SHADOWING")
         if (model != null) {
             val blockType = blockType.convert(model)
-            mylog.info("blockType = ${blockType.values}")
+            logger.info("blockType = ${blockType.values}")
 
             val parent = inboundVarPinParent.convert(model)
             for (m in 1..M) {
-                mylog.info("(m = $m) parent = ${modularInboundVarPins[m].map { parent[it] }}")
+                logger.info("(m = $m) parent = ${modularInboundVarPins[m].map { parent[it] }}")
             }
-            mylog.info("(external) parent = ${externalInboundVarPins.map { parent[it] }}")
+            logger.info("(external) parent = ${externalInboundVarPins.map { parent[it] }}")
 
             val inboundValue = inboundVarPinValue.convert(model)
             val outboundValue = outboundVarPinValue.convert(model)
-            mylog.info("values (input -> external outbound -> modules inbound -> modules outbound -> external inbound):")
+            logger.info("values (input -> external outbound -> modules inbound -> modules outbound -> external inbound):")
             for (u in 1..U) {
-                mylog.just(
+                logger.just(
                     "  u=${u.toString().padEnd(3)}" +
                         " ${uniqueInputs[u - 1]}" +
                         " -> ${
@@ -374,14 +376,14 @@ fun synthesizeBooleanCircuit(tt: Map<Input, Output>, M: Int, X: Int, Z: Int): Bo
 
 fun synthesizeBooleanCircuitIterativelyBottomUp(tt: Map<Input, Output>, X: Int, Z: Int) {
     for (M in 1..30) {
-        mylog.br()
-        mylog.info("Trying M = $M for X=$X, Z=$Z...")
+        logger.just("brrr...")
+        logger.info("Trying M = $M for X=$X, Z=$Z...")
 
         if (synthesizeBooleanCircuit(tt, M = M, X = X, Z = Z)) {
-            mylog.success("M = $M: Success")
+            logger.info("M = $M: Success")
             break
         } else {
-            mylog.failure("M = $M: Could not infer circuit.")
+            logger.info("M = $M: Could not infer circuit.")
         }
     }
 }
@@ -419,5 +421,5 @@ private fun main() {
     // val tt = dataAll.toMap().mapKeys { (i, _) -> Input(i) }
     // check(tt.size == dataAll.size)
 
-    mylog.success("All done in %.3f s.".format(timeSince(timeStart).seconds))
+    logger.info("All done in %.3f s.".format(timeSince(timeStart).seconds))
 }

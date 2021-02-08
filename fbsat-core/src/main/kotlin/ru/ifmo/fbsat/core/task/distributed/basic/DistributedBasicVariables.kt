@@ -13,7 +13,9 @@ import ru.ifmo.fbsat.core.solver.declareModularContext
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 @Suppress("LocalVariableName")
 fun Solver.declareDistributedBasicVariables(
@@ -95,6 +97,6 @@ fun Solver.declareDistributedBasicVariables(
     }
 
     if (Globals.IS_DUMP_VARS_IN_CNF) {
-        mylog.warn("Dumping of DistributedBasicVariables to CNF is not implemented yet")
+        logger.warn("Dumping of DistributedBasicVariables to CNF is not implemented yet")
     }
 }

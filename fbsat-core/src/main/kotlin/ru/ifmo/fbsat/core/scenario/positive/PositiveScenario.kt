@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.scenario.positive
 
+import kotlinx.serialization.Serializable
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.InputValues
@@ -11,12 +12,15 @@ import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
 import ru.ifmo.fbsat.core.scenario.preprocessed
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.sourceAutoGzip
 import ru.ifmo.fbsat.core.utils.toBooleanList
 import ru.ifmo.fbsat.core.utils.useLines
 import java.io.File
 
+private val logger = MyLogger {}
+
+@Serializable
 data class PositiveScenario(
     override val elements: List<ScenarioElement>,
 ) : Scenario {
@@ -35,7 +39,7 @@ data class PositiveScenario(
                 }
 
                 if (scenarios.size != numberOfScenarios)
-                    mylog.warn("Number of scenarios mismatch: specified $numberOfScenarios, but found ${scenarios.size}")
+                    logger.warn("Number of scenarios mismatch: specified $numberOfScenarios, but found ${scenarios.size}")
 
                 scenarios
             }

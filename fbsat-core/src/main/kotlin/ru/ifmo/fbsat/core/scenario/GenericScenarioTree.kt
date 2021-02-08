@@ -1,6 +1,8 @@
 package ru.ifmo.fbsat.core.scenario
 
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 interface GenericScenarioTree<S, N>
     where S : GenericScenario<*>,
@@ -34,10 +36,10 @@ internal inline fun <N, E> GenericScenarioTree<*, N>.addGenericScenario(
             for (child in current.children) {
                 if (child.element.inputAction == element.inputAction) {
                     if (child.element != element) {
-                        mylog.warn("${this::class.java.simpleName} is not deterministic!")
-                        mylog.warn("  - current = $current")
-                        mylog.warn("  - element = $element")
-                        mylog.warn("  - child = $child")
+                        logger.error("${this::class.java.simpleName} is not deterministic!")
+                        logger.error("  - current = $current")
+                        logger.error("  - element = $element")
+                        logger.error("  - child = $child")
                     }
                     current = sameNode(index, element, child)
                     element.nodeId = current.id

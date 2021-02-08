@@ -41,6 +41,7 @@ private class ArbitraryModularExtendedAutomatonOptions : OptionGroup(AUTOMATON_O
 
 class InferArbitraryModularExtendedCommand :
     AbstractInferArbitraryModularCommand("modular-arbitrary-extended") {
+
     private val io by ArbitraryModularExtendedInputOutputOptions()
     private val params by ArbitraryModularExtendedAutomatonOptions()
     override val solverOptions by SolverOptions()

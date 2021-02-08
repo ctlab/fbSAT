@@ -9,6 +9,7 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.switch
 import com.github.ajalt.clikt.parameters.types.file
+import com.github.ajalt.clikt.parameters.types.int
 import com.github.lipen.satlib.solver.CadicalSolver
 import com.github.lipen.satlib.solver.CryptoMiniSatSolver
 import com.github.lipen.satlib.solver.DimacsFileSolver
@@ -18,7 +19,10 @@ import com.github.lipen.satlib.solver.MiniSatSolver
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.solver.IncrementalCryptominisatSolver
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.MyLogger
 import java.io.File
+
+private val logger = MyLogger {}
 
 internal const val SOLVER_OPTIONS = "Solver Options"
 
@@ -28,6 +32,7 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
     val fileSolverCmd: String by fileSolverCmdOption()
     val fileSolverFile: File by fileSolverFileOption()
     val streamSolverCmd: String by streamSolverCmdOption()
+    val solverSeed: Int by solverSeedOption()
 
     val solver: Solver by lazy {
         when (solverBackend) {
@@ -44,6 +49,9 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
                 when (val simp = Globals.MINISAT_SIMP_STRATEGY) {
                     null -> MiniSatSolver()
                     else -> MiniSatSolver(simp)
+                }.also {
+                    logger.debug { "Using solver seed = $solverSeed" }
+                    it.backend.setSeed(solverSeed.toDouble())
                 }
             }
             SolverBackend.GLUCOSE -> {
@@ -56,7 +64,10 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
                 CryptoMiniSatSolver()
             }
             SolverBackend.CADICAL -> {
-                CadicalSolver()
+                CadicalSolver().also {
+                    logger.debug { "Using solver seed = $solverSeed" }
+                    it.backend.setOption("seed", solverSeed)
+                }
             }
         }
     }
@@ -110,3 +121,10 @@ fun ParameterHolder.streamSolverCmdOption() =
     ).default(
         "cadical"
     )
+
+fun ParameterHolder.solverSeedOption() =
+    option(
+        "--solver-seed",
+        help = "Random seed for SAT solver",
+        metavar = "<int>"
+    ).int().default(0)

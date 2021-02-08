@@ -4,14 +4,16 @@ import com.github.ajalt.clikt.core.CliktCommand
 import ru.ifmo.fbsat.cli.command.infer.options.ExtraOptions
 import ru.ifmo.fbsat.cli.command.infer.options.SolverOptions
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 abstract class AbstractInferCommand<AutomatonType : Any>(name: String) : CliktCommand(name = name) {
     protected abstract val solverOptions: SolverOptions
     protected abstract val extraOptions: ExtraOptions
 
     final override fun run() {
-        mylog.br("${this::class.java.simpleName} ($commandName)")
+        logger.info("Command: $commandHelp (${this::class.java.simpleName})")
         setupGlobals()
         setup()
         val automaton: AutomatonType? = infer()

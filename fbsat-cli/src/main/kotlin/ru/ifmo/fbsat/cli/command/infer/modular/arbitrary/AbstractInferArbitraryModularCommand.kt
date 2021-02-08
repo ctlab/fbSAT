@@ -3,29 +3,32 @@ package ru.ifmo.fbsat.cli.command.infer.modular.arbitrary
 import ru.ifmo.fbsat.cli.command.infer.AbstractInferCommandWithSetup
 import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.toOld
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.withIndex
+
+private val logger = MyLogger {}
 
 abstract class AbstractInferArbitraryModularCommand(name: String) :
     AbstractInferCommandWithSetup<ArbitraryModularAutomaton>(name) {
+
     final override fun printAndCheck(automaton: ArbitraryModularAutomaton?) {
         if (automaton == null) {
-            mylog.failure("Arbitrary modular automaton not found")
+            logger.error("Arbitrary modular automaton not found")
         } else {
-            mylog.info("Inferred arbitrary modular automaton consists of ${automaton.modules.shape.single()} modules:")
+            logger.info("Inferred arbitrary modular automaton consists of ${automaton.modules.shape.single()} modules:")
             for ((m, module) in automaton.modules.values.withIndex(start = 1)) {
-                mylog.info("Module #$m (${module.getStats()}):")
+                logger.info("Module #$m (${module.getStats()}):")
                 module.pprint()
             }
-            mylog.info("Inferred arbitrary modular automaton has:")
+            logger.info("Inferred arbitrary modular automaton has:")
             automaton.printStats()
 
             automaton.dump(outDir)
 
             if (automaton.verify(scenarioTree.toOld()))
-                mylog.success("Verify: OK")
+                logger.info("Verify: OK")
             else {
-                mylog.failure("Verify: FAILED")
+                logger.error("Verify: FAILED")
             }
         }
     }

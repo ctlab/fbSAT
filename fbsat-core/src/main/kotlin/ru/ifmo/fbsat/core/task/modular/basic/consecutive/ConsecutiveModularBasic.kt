@@ -7,7 +7,9 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeConsecutiveModularT
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 fun Inferrer.consecutiveModularBasic(
     scenarioTree: PositiveScenarioTree,
@@ -47,12 +49,12 @@ fun Inferrer.consecutiveModularBasicMinC(
             )
         }
         if (result != null) {
-            mylog.success("ConsecutiveModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
-            mylog.info("ConsecutiveModularBasicMin: minimal C = $C")
+            logger.info("ConsecutiveModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
+            logger.info("ConsecutiveModularBasicMin: minimal C = $C")
             best = result
             break
         } else {
-            mylog.failure("ConsecutiveModularBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
+            logger.info("ConsecutiveModularBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
         }
     }
     return checkNotNull(best) { "ConsecutiveModularBasicMin: automaton not found." }

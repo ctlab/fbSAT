@@ -11,8 +11,10 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.declareModularContext
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.pow
+
+private val logger = MyLogger {}
 
 @Suppress("LocalVariableName")
 fun Solver.declareArbitraryModularBasicVariables(
@@ -29,8 +31,8 @@ fun Solver.declareArbitraryModularBasicVariables(
     check(E == 1 && O == 1) { "Only one input/output event is supported" }
 
     val U = 2.pow(X)
-    mylog.debug { "U = $U" }
-    mylog.debug { "V = $V" }
+    logger.debug { "U = $U" }
+    logger.debug { "V = $V" }
 
     context["positiveScenarioTree"] = scenarioTree
     context["scenarioTree"] = scenarioTree

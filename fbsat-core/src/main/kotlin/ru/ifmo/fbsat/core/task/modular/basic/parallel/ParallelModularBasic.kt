@@ -7,7 +7,9 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeParallelModularT
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 fun Inferrer.parallelModularBasic(
     scenarioTree: PositiveScenarioTree,
@@ -47,12 +49,12 @@ fun Inferrer.parallelModularBasicMinC(
             )
         }
         if (result != null) {
-            mylog.success("ParallelModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
-            mylog.info("ParallelModularBasicMin: minimal C = $C")
+            logger.info("ParallelModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
+            logger.info("ParallelModularBasicMin: minimal C = $C")
             best = result
             break
         } else {
-            mylog.failure("ParallelModularBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
+            logger.info("ParallelModularBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
         }
     }
     return checkNotNull(best) { "ParallelModularBasicMin: automaton not found." }

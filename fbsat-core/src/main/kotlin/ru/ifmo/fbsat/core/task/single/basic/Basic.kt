@@ -9,7 +9,9 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeT
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 fun Inferrer.basic(
     scenarioTree: PositiveScenarioTree,
@@ -41,15 +43,19 @@ fun Inferrer.basicMinC(
     var best: Automaton? = null
     for (C in start..end) {
         val (result, runningTime) = measureTimeWithResult {
-            basic(scenarioTree, numberOfStates = C, isEncodeReverseImplication = isEncodeReverseImplication)
+            basic(
+                scenarioTree = scenarioTree,
+                numberOfStates = C,
+                isEncodeReverseImplication = isEncodeReverseImplication
+            )
         }
         if (result != null) {
-            mylog.success("BasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
-            mylog.info("BasicMin: minimal C = $C")
+            logger.info("BasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
+            logger.info("BasicMin: minimal C = $C")
             best = result
             break
         } else {
-            mylog.failure("BasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
+            logger.info("BasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
         }
     }
     return checkNotNull(best) { "BasicMin: automaton not found." }

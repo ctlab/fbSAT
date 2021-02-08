@@ -13,9 +13,11 @@ import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.utils.ModularContext
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.withIndex
+
+private val logger = MyLogger {}
 
 @Suppress("PropertyName")
 class ConsecutiveModularAutomaton(
@@ -67,11 +69,11 @@ class ConsecutiveModularAutomaton(
                 for (m in 2..M) {
                     if (element.outputEvent != null) {
                         if (result.outputAction.event != OutputEvent("CNF")) {
-                            mylog.error("Module m = $m")
-                            mylog.error("Scenario element #$i $element: FAILED")
-                            mylog.error("Output event mismatch: ${result.outputAction.event} != CNF")
-                            mylog.error("Result: $result")
-                            mylog.error("Scenario: ${scenario.elements}")
+                            logger.error("Module m = $m")
+                            logger.error("Scenario element #$i $element: FAILED")
+                            logger.error("Output event mismatch: ${result.outputAction.event} != CNF")
+                            logger.error("Result: $result")
+                            logger.error("Scenario: ${scenario.elements}")
                             return false
                         }
                     }
@@ -84,7 +86,7 @@ class ConsecutiveModularAutomaton(
                     // }
                     if (element.outputEvent == null) {
                         if (result.outputAction.values != currentValues) {
-                            mylog.warn("Output values changed on epsilon event")
+                            logger.warn("Output values changed on epsilon event")
                         }
                     }
 
@@ -106,17 +108,17 @@ class ConsecutiveModularAutomaton(
             }
 
             if (result.outputAction.event != element.outputEvent) {
-                mylog.error("Scenario element #$i $element: FAILED")
-                mylog.error("Output event mismatch: ${result.outputAction.event} != ${element.outputEvent}")
-                mylog.error("Result: $result")
-                mylog.error("Scenario: ${scenario.elements}")
+                logger.error("Scenario element #$i $element: FAILED")
+                logger.error("Output event mismatch: ${result.outputAction.event} != ${element.outputEvent}")
+                logger.error("Result: $result")
+                logger.error("Scenario: ${scenario.elements}")
                 return false
             }
             if (result.outputAction.values != element.outputValues) {
-                mylog.error("Scenario element #$i $element: FAILED")
-                mylog.error("Output values mismatch: ${result.outputAction.values.values.toBinaryString()} != ${element.outputValues.values.toBinaryString()}")
-                mylog.error("Result: $result")
-                mylog.error("Scenario: ${scenario.elements}")
+                logger.error("Scenario element #$i $element: FAILED")
+                logger.error("Output values mismatch: ${result.outputAction.values.values.toBinaryString()} != ${element.outputValues.values.toBinaryString()}")
+                logger.error("Result: $result")
+                logger.error("Scenario: ${scenario.elements}")
                 return false
             }
 
@@ -139,7 +141,7 @@ class ConsecutiveModularAutomaton(
     }
 
     fun printStats() {
-        mylog.just("    " + getStats())
+        logger.info("    " + getStats())
     }
 }
 

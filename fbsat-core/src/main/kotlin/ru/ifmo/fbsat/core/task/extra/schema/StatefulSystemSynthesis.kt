@@ -33,13 +33,15 @@ import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.implyIffXor
 import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.useWith
 import ru.ifmo.fbsat.core.utils.withIndex
 import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
+
+private val logger = MyLogger {}
 
 @Suppress("LocalVariableName", "UnnecessaryVariable")
 fun synthesizeStatefulSystem(
@@ -123,14 +125,14 @@ fun synthesizeStatefulSystem(
             for (z in 1..ZM)
                 check(pin2mz(modularOutputVarPin[m, z]) == Pair(m, z))
 
-        mylog.info("Modules inbound (input var) pins = ${(1..M).map { m -> modularInputVarPins[m] }}")
-        mylog.info("External inbound (output var) pins = $externalOutputVarPins")
-        mylog.info("Modules outbound (output var) pins = ${(1..M).map { m -> modularOutputVarPins[m] }}")
-        mylog.info("External outbound (input var) pins = $externalInputVarPins")
+        logger.info("Modules inbound (input var) pins = ${(1..M).map { m -> modularInputVarPins[m] }}")
+        logger.info("External inbound (output var) pins = $externalOutputVarPins")
+        logger.info("Modules outbound (output var) pins = ${(1..M).map { m -> modularOutputVarPins[m] }}")
+        logger.info("External outbound (input var) pins = $externalInputVarPins")
 
         // =================
 
-        mylog.info("Declaring variables...")
+        logger.info("Declaring variables...")
         val timeStartVariables = PerformanceCounter.reference
         val nVarsStart = numberOfVariables
 
@@ -197,14 +199,14 @@ fun synthesizeStatefulSystem(
         }
 
         val nVarsDiff = numberOfVariables - nVarsStart
-        mylog.debug {
+        logger.debug {
             "Done declaring $nVarsDiff variables (total $numberOfVariables) in %.2f s."
                 .format(timeSince(timeStartVariables).seconds)
         }
 
         // =================
 
-        mylog.info("Declaring constraints...")
+        logger.info("Declaring constraints...")
         val timeStartConstraints = PerformanceCounter.reference
         val nClausesStart = numberOfClauses
 
@@ -593,7 +595,7 @@ fun synthesizeStatefulSystem(
         // }
 
         val nClausesDiff = numberOfClauses - nClausesStart
-        mylog.debug {
+        logger.debug {
             "Done declaring $nClausesDiff constraints (total $numberOfClauses) in %.2f s."
                 .format(timeSince(timeStartConstraints).seconds)
         }
@@ -608,19 +610,19 @@ fun synthesizeStatefulSystem(
         @Suppress("NAME_SHADOWING")
         if (model != null) {
             val blockType = blockType.convert(model)
-            mylog.info("blockType = ${blockType.values}")
+            logger.info("blockType = ${blockType.values}")
 
             val parent = inboundVarPinParent.convert(model)
             for (m in 1..M) {
-                mylog.info("(m = $m) parent = ${modularInputVarPins[m].map { parent[it] }}")
+                logger.info("(m = $m) parent = ${modularInputVarPins[m].map { parent[it] }}")
             }
-            mylog.info("(external) parent = ${externalOutputVarPins.map { parent[it] }}")
+            logger.info("(external) parent = ${externalOutputVarPins.map { parent[it] }}")
 
             val inboundValue = inboundVarPinValue.convert(model)
             val outboundValue = outboundVarPinValue.convert(model)
-            mylog.just("  v   tree.input -> tree.output :: input > input modular > output modular > output ext")
+            logger.just("  v   tree.input -> tree.output :: input > input modular > output modular > output ext")
             for (v in 1..V) {
-                mylog.just(
+                logger.just(
                     "  v=$v" +
                         " ${
                             if (v == 1) "-".repeat(X)
@@ -723,14 +725,14 @@ fun synthesizeStatefulSystemIterativelyBottomUp(
     maxM: Int = 30,
 ) {
     for (M in 1..maxM) {
-        mylog.br()
-        mylog.info("Trying M = $M...")
+        logger.just("brrr...")
+        logger.info("Trying M = $M...")
 
         if (synthesizeStatefulSystem(tree, M = M, X = X, Z = Z)) {
-            mylog.success("M = $M: Success")
+            logger.info("M = $M: Success")
             break
         } else {
-            mylog.failure("M = $M: Could not infer system.")
+            logger.info("M = $M: Could not infer system.")
         }
     }
 }
@@ -770,28 +772,28 @@ private fun main() {
     // val traceFilename = "data/counter/trace_10x20.xml"
     val traceFilename = "data/counter/trace_10x50.xml"
     val traces = readCounterexamplesFromFile(File(traceFilename))
-    mylog.info("Traces: ${traces.size}")
+    logger.info("Traces: ${traces.size}")
     val scenarios = traces.map { trace ->
         PositiveScenario.fromTrace(trace, inputNames, outputNames)
     }
     for (scenario in scenarios) {
-        mylog.info("Adding scenario of length ${scenario.elements.size}")
+        logger.info("Adding scenario of length ${scenario.elements.size}")
         tree.addScenario(scenario)
     }
-    mylog.info("Tree size: ${tree.size}")
-    mylog.info("Tree input names: ${tree.inputNames}")
-    mylog.info("Tree output names: ${tree.outputNames}")
+    logger.info("Tree size: ${tree.size}")
+    logger.info("Tree input names: ${tree.inputNames}")
+    logger.info("Tree output names: ${tree.outputNames}")
 
     // val M = 10
     // if (synthesizeStatefulSystem(tree, M = M, X = X, Z = Z)) {
-    //     mylog.success("M = $M: SAT")
+    //     logger.success("M = $M: SAT")
     // } else {
-    //     mylog.failure("M = $M: UNSAT")
+    //     logger.failure("M = $M: UNSAT")
     // }
 
     synthesizeStatefulSystemIterativelyBottomUp(tree, X = X, Z = Z, maxM = 15)
 
-    mylog.success("All done in %.3f s.".format(timeSince(timeStart).seconds))
+    logger.info("All done in %.3f s.".format(timeSince(timeStart).seconds))
 }
 
 // TODO: populate the tree

@@ -8,9 +8,9 @@ import com.soywiz.klock.DateTime
 import com.soywiz.klock.measureTime
 import ru.ifmo.fbsat.cli.command.hello.HelloCommand
 import ru.ifmo.fbsat.cli.command.infer.InferCommand
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
 
-// private val log = mu.KotlinLogging.logger {}
+private val logger = MyLogger {}
 
 class FbSAT : NoOpCliktCommand(name = "fbsat") {
     init {
@@ -30,11 +30,12 @@ class FbSAT : NoOpCliktCommand(name = "fbsat") {
 }
 
 fun main(args: Array<String>) {
-    // val t = TermColors()
-    // log.info(t.yellow("Welcome to fbSAT!"))
-    mylog.br(DateTime.nowLocal().format("yyyy-MM-dd HH:mm:ss"))
+    val dateTimeFormat = "yyyy-MM-dd HH:mm:ss"
+    logger.info("Start time: ${DateTime.nowLocal().format(dateTimeFormat)}")
+    logger.info("Args: ./fbsat " + args.joinToString(" ") {
+        if (it.contains(" ")) "\"$it\"" else it
+    })
     val runningTime = measureTime { FbSAT().main(args) }
-    mylog.br(DateTime.nowLocal().format("yyyy-MM-dd HH:mm:ss"))
-    mylog.success("All done in %.3f seconds".format(runningTime.seconds))
-    // log.info("All done in %.3f seconds.".format(runningTime.seconds))
+    logger.info("End time: ${DateTime.nowLocal().format(dateTimeFormat)}")
+    logger.info("All done in %.3f seconds".format(runningTime.seconds))
 }

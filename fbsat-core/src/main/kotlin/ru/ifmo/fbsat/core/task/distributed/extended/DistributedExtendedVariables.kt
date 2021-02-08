@@ -8,7 +8,9 @@ import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.single.extended.declareExtendedVariables
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 @Suppress("LocalVariableName")
 fun Solver.declareDistributedExtendedVariables(
@@ -38,6 +40,6 @@ fun Solver.declareDistributedExtendedVariables(
     }
 
     if (Globals.IS_DUMP_VARS_IN_CNF) {
-        mylog.warn("Dumping of DistributedExtendedVariables to CNF is not implemented yet")
+        logger.warn("Dumping of DistributedExtendedVariables to CNF is not implemented yet")
     }
 }
