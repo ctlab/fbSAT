@@ -13,9 +13,11 @@ import ru.ifmo.fbsat.core.task.single.extended.extendedMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
 import ru.ifmo.fbsat.core.task.single.extended.inferExtended
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.timeSince
 import java.io.File
+
+private val logger = MyLogger {}
 
 fun Inferrer.cegis(
     scenarioTree: PositiveScenarioTree,
@@ -26,6 +28,7 @@ fun Inferrer.cegis(
     maxTransitions: Int? = null, // T, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N, unconstrained if null
     smvDir: File,
+    loopNumber: Int = 0,
 ): Automaton? {
     reset()
     declare(
@@ -39,7 +42,7 @@ fun Inferrer.cegis(
     )
     declare(ExtendedTask(maxGuardSize = maxGuardSize, maxTotalGuardsSize = maxTotalGuardsSize))
     declare(CompleteTask(negativeScenarioTree))
-    return performCegis(smvDir)
+    return performCegis(smvDir, loopNumber)
 }
 
 @Suppress("LocalVariableName")
@@ -61,18 +64,18 @@ fun Inferrer.cegisMin(
     val C = extendedAutomaton.numberOfStates
     // Note: reusing K from extMinTask may fail!
     val K = if (Globals.IS_REUSE_K) extendedAutomaton.maxOutgoingTransitions else C
-    mylog.info("Using K = $K")
+    logger.info("Using K = $K")
     val P = extendedAutomaton.maxGuardSize
     var N = extendedAutomaton.totalGuardsSize
 
-    mylog.info("extendedAutomaton:")
+    logger.info("extendedAutomaton:")
     extendedAutomaton.pprint()
-    mylog.info("extendedAutomaton has C = $C, P = $P, N = $N")
+    logger.info("extendedAutomaton has C = $C, P = $P, N = $N")
 
     val negativeScenarioTree = initialNegativeScenarioTree ?: NegativeScenarioTree(scenarioTree)
 
     for (loopNumber in 1..100) {
-        mylog.just("===== Loop number #$loopNumber, N = $N =====")
+        logger.just("===== Loop number #$loopNumber, N = $N =====")
 
         val automaton = cegis(
             scenarioTree = scenarioTree,
@@ -81,16 +84,17 @@ fun Inferrer.cegisMin(
             maxOutgoingTransitions = K,
             maxGuardSize = P,
             maxTotalGuardsSize = N,
-            smvDir = smvDir
+            smvDir = smvDir,
+            loopNumber = loopNumber
         )
         if (automaton != null) {
-            mylog.just("Hooray! Minimal full verified automaton has been found!")
+            logger.just("Hooray! Minimal full verified automaton has been found!")
             return automaton
         } else {
-            mylog.just("UNSAT, N = $N is too small, trying larger value...")
+            logger.just("UNSAT, N = $N is too small, trying larger value...")
             N += 1
             if (N > C * K * P) {
-                mylog.error("N reached upper bound C*K*P = ${C * K * P}")
+                logger.error("N reached upper bound C*K*P = ${C * K * P}")
                 break
             }
         }
@@ -99,8 +103,8 @@ fun Inferrer.cegisMin(
 }
 
 @Suppress("DuplicatedCode")
-fun Inferrer.performCegis(smvDir: File): Automaton? {
-    mylog.info("Performing CEGIS...")
+fun Inferrer.performCegis(smvDir: File, loopNumber: Int): Automaton? {
+    logger.info("Performing CEGIS...")
 
     // Copy smv files to output directory
     smvDir.copyRecursively(outDir, overwrite = true)
@@ -111,6 +115,7 @@ fun Inferrer.performCegis(smvDir: File): Automaton? {
 
     for (iterationNumber in 1 until 10000) {
         // log.info("CEGIS iteration #$iterationNumber")
+        logger.debug("CEGIS iteration #$iterationNumber on loop $loopNumber")
         val timeStart = PerformanceCounter.reference
 
         // Update to take into account possible extension of the negative scenario tree
@@ -118,18 +123,21 @@ fun Inferrer.performCegis(smvDir: File): Automaton? {
         // Infer update
         val automaton = inferExtended()
         if (automaton == null) {
-            mylog.failure("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
+            logger.error(
+                "CEGIS iteration #$iterationNumber failed to infer an automaton after %.3f s"
+                    .format(timeSince(timeStart).seconds)
+            )
             return null
         }
         // ==============
         // Dump intermediate automaton
-        automaton.dump(outDir, "_automaton_iter%04d".format(iterationNumber))
+        automaton.dump(outDir, "_automaton_loop%d_iter%04d".format(loopNumber, iterationNumber))
         // ==============
         // Verify automaton with NuSMV
         val counterexamples = automaton.verifyWithNuSMV(outDir)
         if (counterexamples.isEmpty()) {
-            mylog.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
-            mylog.success("No counterexamples!")
+            logger.info("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
+            logger.info("No counterexamples!")
             return automaton
         }
         // Convert counterexamples to negative scenarios
@@ -154,7 +162,7 @@ fun Inferrer.performCegis(smvDir: File): Automaton? {
             error("Stale")
         }
         lastNegativeScenarios = negativeScenarios
-        mylog.success("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
+        logger.info("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
     }
     return null
 }
@@ -165,11 +173,11 @@ fun Automaton.verifyWithNuSMV(dir: File): List<Counterexample> {
 
     // Perform formal verification using NuSMV, generate counterexamples to given ltl-spec
     val cmd = "make model counterexamples"
-    mylog.debug { "Running '$cmd'..." }
+    logger.debug { "Running '$cmd'..." }
     val timeStart = PerformanceCounter.reference
     val exitcode = Runtime.getRuntime().exec(cmd, null, dir).waitFor()
     val runningTime = timeSince(timeStart)
-    mylog.debug { "'$cmd' returned with $exitcode in %.3f s.".format(runningTime.seconds) }
+    logger.debug { "'$cmd' returned with $exitcode in %.3f s.".format(runningTime.seconds) }
     check(exitcode == 0) { "NuSMV exitcode: $exitcode" }
 
     // Handle counterexamples after verification
@@ -179,7 +187,7 @@ fun Automaton.verifyWithNuSMV(dir: File): List<Counterexample> {
         val counterexamples: List<Counterexample> = Counterexample.from(fileCounterexamples)
 
         // [DEBUG] Append new counterexamples to 'ce'
-        mylog.debug { "Dumping ${counterexamples.size} counterexample(s)..." }
+        logger.debug { "Dumping ${counterexamples.size} counterexample(s)..." }
         dir.resolve("ce").appendText(fileCounterexamples.readText())
 
         counterexamples

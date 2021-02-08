@@ -5,8 +5,10 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.single.complete.declareCompleteVariables
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.project
+
+private val logger = MyLogger {}
 
 @Suppress("LocalVariableName")
 fun Solver.declareDistributedCompleteVariables(
@@ -26,6 +28,6 @@ fun Solver.declareDistributedCompleteVariables(
     }
 
     if (Globals.IS_DUMP_VARS_IN_CNF) {
-        mylog.warn("Dumping of DistributedCompleteVariables to CNF is not implemented yet")
+        logger.warn("Dumping of DistributedCompleteVariables to CNF is not implemented yet")
     }
 }

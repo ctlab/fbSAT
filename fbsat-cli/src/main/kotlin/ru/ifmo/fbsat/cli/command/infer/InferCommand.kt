@@ -6,6 +6,8 @@ import ru.ifmo.fbsat.cli.command.infer.distributed.InferDistributedBasicCommand
 import ru.ifmo.fbsat.cli.command.infer.modular.arbitrary.InferArbitraryModularBasicCommand
 import ru.ifmo.fbsat.cli.command.infer.modular.arbitrary.InferArbitraryModularBasicMinCCommand
 import ru.ifmo.fbsat.cli.command.infer.modular.arbitrary.InferArbitraryModularBasicMinCommand
+import ru.ifmo.fbsat.cli.command.infer.modular.arbitrary.InferArbitraryModularExtendedCommand
+import ru.ifmo.fbsat.cli.command.infer.modular.arbitrary.InferArbitraryModularExtendedMinCommand
 import ru.ifmo.fbsat.cli.command.infer.modular.consecutive.InferConsecutiveModularBasicCommand
 import ru.ifmo.fbsat.cli.command.infer.modular.consecutive.InferConsecutiveModularBasicMinCCommand
 import ru.ifmo.fbsat.cli.command.infer.modular.consecutive.InferConsecutiveModularBasicMinCommand
@@ -53,6 +55,8 @@ class InferCommand : NoOpCliktCommand() {
             InferArbitraryModularBasicCommand(),
             InferArbitraryModularBasicMinCommand(),
             InferArbitraryModularBasicMinCCommand(),
+            InferArbitraryModularExtendedCommand(),
+            InferArbitraryModularExtendedMinCommand(),
             InferDistributedBasicCommand()
         )
     }

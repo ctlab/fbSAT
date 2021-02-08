@@ -16,8 +16,10 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.timeSince
+
+private val logger = MyLogger {}
 
 data class CompleteTask(
     val negativeScenarioTree: NegativeScenarioTree? = null, // empty if null
@@ -166,7 +168,7 @@ fun Solver.updateNegativeReduction(
     }
 
     if (Globals.IS_DUMP_VARS_IN_CNF) {
-        mylog.warn("Dumping of CompleteVariables to CNF is not implemented yet")
+        logger.warn("Dumping of CompleteVariables to CNF is not implemented yet")
     }
 
     /* Constraints */
@@ -176,7 +178,7 @@ fun Solver.updateNegativeReduction(
 
     val nVarsDiff = numberOfVariables - nVarsStart
     val nClausesDiff = numberOfClauses - nClausesStart
-    mylog.debug {
+    logger.debug {
         "updateNegativeReduction: declared $nVarsDiff variables and $nClausesDiff clauses in %.3f s."
             .format(timeSince(timeStart).seconds)
     }

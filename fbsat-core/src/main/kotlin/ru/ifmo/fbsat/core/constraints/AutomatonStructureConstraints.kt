@@ -101,8 +101,12 @@ fun Solver.declareConsecutiveModularAutomatonStructureConstraints() {
 
 @Suppress("LocalVariableName")
 fun Solver.declareArbitraryModularAutomatonStructureConstraints() {
-    check(Globals.EPSILON_OUTPUT_EVENTS == EpsilonOutputEvents.NONE)
-    check(Globals.START_STATE_ALGORITHMS == StartStateAlgorithms.ZERONOTHING || Globals.START_STATE_ALGORITHMS == StartStateAlgorithms.ZERO)
+    check(Globals.EPSILON_OUTPUT_EVENTS == EpsilonOutputEvents.NONE) {
+        "Globals.EPSILON_OUTPUT_EVENTS must be NONE"
+    }
+    check(Globals.START_STATE_ALGORITHMS == StartStateAlgorithms.ZERONOTHING || Globals.START_STATE_ALGORITHMS == StartStateAlgorithms.ZERO) {
+        "Globals.START_STATE_ALGORITHMS must be either ZERONOTHING or ZERO"
+    }
 
     comment("Arbitrary modular automaton structure constraints")
     forEachModularContext { m ->
@@ -116,7 +120,6 @@ fun Solver.declareArbitraryModularAutomatonStructureConstraints() {
 }
 
 fun Solver.declareDistributedAutomatonStructureConstraints() {
-
     comment("Distributed automaton structure constraints")
     forEachModularContext { m ->
         comment("Distributed automaton structure constraints: for module m = $m")
@@ -353,14 +356,14 @@ private fun Solver.declareAutomatonStructureConstraintsForInputs(
 
     comment("Actual transition function definition")
     // (actualTransitionFunction[q,e,u] = q') <=>
-    //  OR_k ( (transitionDestination[q,k] = q') & (transitionInputEvent[q,k] = e) & (firstFired[q,u] = k) )
+    //  OR_k ( (transitionDestination[q,k] = q') & (transitionInputEvent[q,k] = e) & (firstFired[q,e,u] = k) )
     for (i in 1..C)
         for (e in 1..E)
             for (u in Us)
                 for (j in 1..C)
                     iffOr(actualTransitionFunction[i, e, u] eq j) {
                         for (k in 1..K) {
-                            // aux <=> (transitionDestination[q,k] = q') & (transitionInputEvent[q,k] = e) & (firstFired[q,u] = k)
+                            // aux <=> (transitionDestination[q,k] = q') & (firstFired[q,e,u] = k)
                             val aux = newLiteral()
                             iffAnd(
                                 aux,

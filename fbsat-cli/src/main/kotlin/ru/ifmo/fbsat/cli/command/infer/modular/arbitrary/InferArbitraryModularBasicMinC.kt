@@ -36,6 +36,7 @@ private class ArbitraryModularBasicMinCAutomatonOptions : OptionGroup(AUTOMATON_
 
 class InferArbitraryModularBasicMinCCommand :
     AbstractInferArbitraryModularCommand("modular-arbitrary-basic-minC") {
+
     private val io by ArbitraryModularBasicMinCInputOutputOptions()
     private val params by ArbitraryModularBasicMinCAutomatonOptions()
     override val solverOptions by SolverOptions()

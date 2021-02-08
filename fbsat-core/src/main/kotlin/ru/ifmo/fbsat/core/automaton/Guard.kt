@@ -2,13 +2,35 @@ package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
+import kotlinx.serialization.serializer
 import ru.ifmo.fbsat.core.scenario.InputValues
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.makeDnfString
-import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.pow
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.toBooleanList
 import kotlin.math.absoluteValue
+
+private val logger = MyLogger {}
+
+@Suppress("PublicApiImplicitType")
+val guardModule = SerializersModule {
+    polymorphic(Guard::class) {
+        subclass(UnconditionalGuard::class)
+        subclass(TruthTableGuard::class)
+        subclass(ParseTreeGuard::class)
+    }
+}
 
 interface Guard {
     val size: Int
@@ -20,13 +42,16 @@ interface Guard {
     fun toSmvString(): String
 }
 
+@Serializable
+@SerialName("UnconditionalGuard")
 class UnconditionalGuard : Guard {
     override val size: Int
         get() {
-            mylog.warn("UnconditionalGuard has no meaningful size")
+            logger.warn("UnconditionalGuard has no meaningful size")
             return 0
         }
 
+    @Transient
     override val truthTableString: String = "1"
 
     override fun eval(inputValues: InputValues): Boolean {
@@ -54,29 +79,32 @@ class UnconditionalGuard : Guard {
     }
 }
 
+@Deprecated("old unused code")
+object TruthTableGuardSerializer : KSerializer<TruthTableGuard> {
+    override val descriptor: SerialDescriptor = serializer<Map<InputValues, Boolean?>>().descriptor
+
+    override fun serialize(encoder: Encoder, value: TruthTableGuard) {
+        encoder.encodeSerializableValue(serializer(), value.truthTable)
+    }
+
+    override fun deserialize(decoder: Decoder): TruthTableGuard {
+        val truthTable: Map<InputValues, Boolean?> = decoder.decodeSerializableValue(serializer())
+        return TruthTableGuard(truthTable)
+    }
+}
+
+@Serializable
+@SerialName("TruthTableGuard")
 class TruthTableGuard(
     val truthTable: Map<InputValues, Boolean?>,
-    private val inputNames: List<String>,
-    private val uniqueInputs: List<InputValues>,
 ) : Guard {
-    val cnf: List<List<Int>> = emptyList()
-
     override val truthTableString: String = truthTable.values.filterNotNull().toBinaryString()
-
-    // minimizeToCNF(
-    //     minterms = truthTable.filter { (_, value) -> value == true }.keys.map { it.number },
-    //     dontcares = truthTable.filter { (_, value) -> value == null }.keys.map { it.number },
-    //     n = inputNames.size
-    // )
-    override val size: Int = cnf.sumBy { it.size }
-
-    // init {
-    //     println("Built CNF [${toSimpleString()}] from truthTable [${truthTable.values.toList().toBinaryString()}]")
-    // }
+    override val size: Int = 0
 
     override fun eval(inputValues: InputValues): Boolean {
         // return truthTable[uniqueInputs.indexOf(inputValues)] in "1x"
-        return truthTable.getValue(inputValues) ?: true
+        // return truthTable.getValue(inputValues) ?: true
+        return truthTable.getValue(inputValues)!!
     }
 
     override fun toSimpleString(): String {
@@ -87,20 +115,32 @@ class TruthTableGuard(
         }
     }
 
-    override fun toGraphvizString(): String =
-        toSimpleString()
+    override fun toGraphvizString(): String = toSimpleString()
 
-    override fun toFbtString(): String =
-        toSimpleString()
-            .replace("&", "AND")
-            .replace("|", "OR")
-            .replace("-", "NOT ")
+    override fun toFbtString(): String = "TRUTH_TABLE"
 
     override fun toSmvString(): String = "TRUTH_TABLE"
 
-    override fun toString(): String = "TruthTableGuard(tt = $truthTable)"
+    override fun toString(): String = "TruthTableGuard(truthTable = $truthTable)"
 }
 
+@Serializable
+class Box<T>(val value: T)
+
+object ParseTreeGuardSerializer : KSerializer<ParseTreeGuard> {
+    override val descriptor: SerialDescriptor = serializer<Box<String>>().descriptor
+
+    override fun serialize(encoder: Encoder, value: ParseTreeGuard) {
+        val box = Box(value.toSimpleString())
+        encoder.encodeSerializableValue(serializer(), box)
+    }
+
+    override fun deserialize(decoder: Decoder): ParseTreeGuard {
+        TODO("Deserialization of ParseTreeGuard from string")
+    }
+}
+
+@Serializable(with = ParseTreeGuardSerializer::class)
 class ParseTreeGuard(
     nodeType: MultiArray<NodeType>,
     terminal: IntMultiArray,

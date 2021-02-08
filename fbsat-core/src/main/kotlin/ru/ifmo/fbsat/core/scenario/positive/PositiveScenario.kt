@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.scenario.positive
 
+import kotlinx.serialization.Serializable
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.InputValues
@@ -8,14 +9,18 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
+import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
 import ru.ifmo.fbsat.core.scenario.preprocessed
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.sourceAutoGzip
 import ru.ifmo.fbsat.core.utils.toBooleanList
 import ru.ifmo.fbsat.core.utils.useLines
 import java.io.File
 
+private val logger = MyLogger {}
+
+@Serializable
 data class PositiveScenario(
     override val elements: List<ScenarioElement>,
 ) : Scenario {
@@ -34,7 +39,7 @@ data class PositiveScenario(
                 }
 
                 if (scenarios.size != numberOfScenarios)
-                    mylog.warn("Number of scenarios mismatch: specified $numberOfScenarios, but found ${scenarios.size}")
+                    logger.warn("Number of scenarios mismatch: specified $numberOfScenarios, but found ${scenarios.size}")
 
                 scenarios
             }
@@ -94,6 +99,34 @@ data class PositiveScenario(
                 PositiveScenario(elements.preprocessed)
             else
                 PositiveScenario(elements)
+        }
+
+        fun fromTrace(
+            trace: THE_Counterexample,
+            // inputEvents: List<InputEvent>,
+            // outputEvents: List<OutputEvent>,
+            inputNames: List<String>,
+            outputNames: List<String>,
+        ): PositiveScenario {
+            val elements = trace.nodes
+                .map { node ->
+                    node.states.single().values.associate { value ->
+                        value.variable to value.content.toBoolean()
+                    }
+                }
+                .zipWithNext { inputData, outputData ->
+                    ScenarioElement(
+                        inputAction = InputAction(
+                            event = InputEvent("REQ"),
+                            values = InputValues(inputNames.map { inputData.getValue(it) })
+                        ),
+                        outputAction = OutputAction(
+                            event = OutputEvent("CNF"),
+                            values = OutputValues(outputNames.map { outputData.getValue(it) })
+                        )
+                    )
+                }
+            return PositiveScenario(elements)
         }
     }
 }

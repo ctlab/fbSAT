@@ -1,9 +1,10 @@
 package ru.ifmo.fbsat.core.task
 
 import com.github.lipen.satlib.solver.Solver
-import com.soywiz.klock.PerformanceCounter
-import ru.ifmo.fbsat.core.utils.mylog
-import ru.ifmo.fbsat.core.utils.timeSince
+import com.soywiz.klock.measureTime
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 // FIXME: 'private constructor' is temporarily
 abstract class Task private constructor(name: String? = null) {
@@ -24,16 +25,15 @@ abstract class Task private constructor(name: String? = null) {
 fun Solver.declare(task: Task): Unit = task.declare(this)
 
 private inline fun Solver.runWithLogging(name: String, block: Solver.() -> Unit) {
-    val timeStart = PerformanceCounter.reference
     val nVarsStart = numberOfVariables
     val nClausesStart = numberOfClauses
 
-    block()
+    val runningTime = measureTime { block() }
 
     val nVarsDiff = numberOfVariables - nVarsStart
     val nClausesDiff = numberOfClauses - nClausesStart
-    mylog.info(
+    logger.info(
         "$name: declared $nVarsDiff variables and $nClausesDiff clauses in %.3f s."
-            .format(timeSince(timeStart).seconds)
+            .format(runningTime.seconds)
     )
 }

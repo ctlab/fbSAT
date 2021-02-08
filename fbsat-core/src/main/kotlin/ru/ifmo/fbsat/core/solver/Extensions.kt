@@ -15,9 +15,12 @@ import com.github.lipen.satlib.core.Model
 import com.github.lipen.satlib.core.SequenceScopeLit
 import com.github.lipen.satlib.core.convert
 import com.github.lipen.satlib.core.newContext
+import com.github.lipen.satlib.op.implyIff
 import com.github.lipen.satlib.solver.Solver
 import com.github.lipen.satlib.solver.switchContext
 import ru.ifmo.fbsat.core.utils.ModularContext
+import ru.ifmo.fbsat.core.utils.exhaustive
+import ru.ifmo.fbsat.core.utils.toList_
 
 @Deprecated("Do not add empty clauses!")
 fun Solver.clause() {
@@ -106,3 +109,43 @@ fun Context.convertBoolVarArray(name: String, model: Model): BooleanMultiArray =
 val BoolVarArray.literals: List<Lit> get() = values
 
 val <T> DomainVarArray<T>.literals: List<Lit> get() = values.flatMap { it.literals }
+
+/** [x1] => ([x2] <=> `XOR`([xs])) */
+fun Solver.implyIffXor(x1: Lit, x2: Lit, xs: Iterable<Lit>) {
+    val pool = xs.toList_()
+    when (pool.size) {
+        0 -> error("Iterable is empty")
+        1 -> implyIff(x1, x2, pool[0])
+        2 -> {
+            val (x3, x4) = pool
+            clause(-x1, -x2, -x3, -x4)
+            clause(-x1, -x2, x3, x4)
+            clause(-x1, x2, -x3, x4)
+            clause(-x1, x2, x3, -x4)
+        }
+        else -> TODO()
+    }.exhaustive
+}
+
+fun Solver.andImplyAnd(lhs: Iterable<Lit>, rhs: Iterable<Lit>) {
+    val pool = lhs.toList_()
+    val negPool = pool.map { -it }
+    for (x in rhs) {
+        clause(negPool + x)
+    }
+}
+
+/** [x1] => ([x2] <=> `XOR`([xs])) */
+fun Solver.implyIffXor(x1: Lit, x2: Lit, xs: Sequence<Lit>) {
+    implyIffXor(x1, x2, xs.asIterable())
+}
+
+/** [x1] => ([x2] <=> `XOR`([xs])) */
+fun Solver.implyIffXor(x1: Lit, x2: Lit, xs: SequenceScopeLit) {
+    implyIffXor(x1, x2, sequence(xs))
+}
+
+/** [x1] => ([x2] <=> `XOR`([xs])) */
+fun Solver.implyIffXor(x1: Lit, x2: Lit, vararg xs: Lit) {
+    implyIffXor(x1, x2, xs.asIterable())
+}

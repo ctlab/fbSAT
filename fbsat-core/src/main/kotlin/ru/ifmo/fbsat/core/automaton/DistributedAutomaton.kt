@@ -25,10 +25,12 @@ import ru.ifmo.fbsat.core.utils.ModularOutputAction
 import ru.ifmo.fbsat.core.utils.ModularOutputValues
 import ru.ifmo.fbsat.core.utils.ModularScenarioTree
 import ru.ifmo.fbsat.core.utils.ModularState
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
-import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.project
 import java.io.File
+
+private val logger = MyLogger {}
 
 @Suppress("MemberVisibilityCanBePrivate", "FunctionName", "PropertyName")
 class DistributedAutomaton(
@@ -87,6 +89,7 @@ class DistributedAutomaton(
     }
 
     class CompoundEvalResult private constructor(
+        val modularInputAction: ModularInputAction,
         val modularDestination: ModularState,
         val modularOutputAction: ModularOutputAction,
         override val modular: ModularEvalResult,
@@ -95,6 +98,7 @@ class DistributedAutomaton(
         val newEvalState: CompoundEvalState = CompoundEvalState(M, modularDestination, modularOutputValues)
 
         constructor(modularResult: ModularEvalResult) : this(
+            modularInputAction = modularResult.map { it.inputAction },
             modularDestination = modularResult.map { it.destination },
             modularOutputAction = modularResult.map { it.outputAction },
             modular = modularResult
@@ -102,13 +106,19 @@ class DistributedAutomaton(
 
         constructor(
             M: Int,
+            modularInputAction: ModularInputAction,
             modularDestination: ModularState,
             modularOutputAction: ModularOutputAction,
         ) : this(
+            modularInputAction = modularInputAction,
             modularDestination = modularDestination,
             modularOutputAction = modularOutputAction,
             modular = MultiArray.new(M) { (m) ->
-                Automaton.EvalResult(modularDestination[m], modularOutputAction[m])
+                Automaton.EvalResult(
+                    inputAction = modularInputAction[m],
+                    destination = modularDestination[m],
+                    outputAction = modularOutputAction[m]
+                )
             }
         )
 
@@ -215,7 +225,7 @@ class DistributedAutomaton(
                 loop.values.map { it.id } == last.values.map { it.id } -> {
                     // Both `loop` and `last` elements map to the same state,
                     // which means that the negative scenario is satisfied.
-                    mylog.error("Negative scenario is satisfied (loop==last)")
+                    logger.error("Negative scenario is satisfied (loop==last)")
                     // for ((i, state) in mapping.withIndex(start = 1)) {
                     //     log.debug { "$i -> ${state?.values}" }
                     // }
@@ -229,12 +239,12 @@ class DistributedAutomaton(
                 }
             }
         } else {
-            mylog.warn("Loopless negative scenario?")
+            logger.warn("Loopless negative scenario?")
             val last = mapping.last()
             return if (last != null) {
                 // Satisfaction of the terminal (`last`) element of loop-less negative scenario
                 // implies the satisfaction of the negative scenario itself.
-                mylog.error("Negative scenario is satisfied (terminal)")
+                logger.error("Negative scenario is satisfied (terminal)")
                 false
             } else {
                 // Terminal (`last`) element of loop-less negative scenario is unmapped,
@@ -269,7 +279,7 @@ class DistributedAutomaton(
     fun verify(modularScenarioTree: ModularScenarioTree): Boolean {
         for (m in 1..M) {
             if (!modules[m].verify(modularScenarioTree[m])) {
-                mylog.error("Scenario tree verification failed for m = $m")
+                logger.error("Scenario tree verification failed for m = $m")
                 return false
             }
         }

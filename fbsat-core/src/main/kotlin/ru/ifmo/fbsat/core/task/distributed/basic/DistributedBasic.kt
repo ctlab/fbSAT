@@ -10,8 +10,10 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumC
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
-import ru.ifmo.fbsat.core.utils.mylog
+
+private val logger = MyLogger {}
 
 fun Inferrer.distributedBasic(
     numberOfModules: Int, // M
@@ -63,17 +65,17 @@ fun Inferrer.distributedBasicMinC(
             )
         }
         if (result != null) {
-            mylog.success("DistributedBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
-            mylog.info(
+            logger.info("DistributedBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
+            logger.info(
                 "DistributedBasicMin: minimal C = $C " +
                     "(${result.modular.map { it.numberOfStates }.values.joinToString("+")})"
             )
             best = result
 
-            mylog.info("DistributedBasicMin: minimizing sum of C_i...")
+            logger.info("DistributedBasicMin: minimizing sum of C_i...")
             best = optimizeDistributedSumC()!!
 
-            mylog.success(
+            logger.info(
                 "DistributedBasicMin: minimal Cs = " +
                     "(${best.modular.map { it.numberOfStates }.values.joinToString("+")}) = " +
                     "${best.numberOfStates}"
@@ -81,7 +83,7 @@ fun Inferrer.distributedBasicMinC(
 
             break
         } else {
-            mylog.failure("DistributedBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
+            logger.info("DistributedBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
         }
     }
     return best

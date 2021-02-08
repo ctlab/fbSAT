@@ -2,25 +2,28 @@ package ru.ifmo.fbsat.cli.command.infer.mono
 
 import ru.ifmo.fbsat.cli.command.infer.AbstractInferCommandWithSetup
 import ru.ifmo.fbsat.core.automaton.Automaton
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 abstract class AbstractInferMonoCommand(name: String) :
     AbstractInferCommandWithSetup<Automaton>(name) {
+
     final override fun printAndCheck(automaton: Automaton?) {
         if (automaton == null) {
-            mylog.failure("Automaton not found")
+            logger.error("Automaton not found")
         } else {
-            mylog.info("Inferred automaton:")
+            logger.info("Inferred automaton:")
             automaton.pprint()
-            mylog.info("Inferred automaton has:")
+            logger.info("Inferred automaton has:")
             automaton.printStats()
 
             automaton.dump(outDir)
 
             if (automaton.verify(scenarioTree))
-                mylog.success("Verify: OK")
+                logger.info("Verify: OK")
             else {
-                mylog.failure("Verify: FAILED")
+                logger.error("Verify: FAILED")
             }
         }
     }

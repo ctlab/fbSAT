@@ -8,6 +8,7 @@ import java.io.File
 
 abstract class AbstractInferCommandWithSetup<AutomatonType : Any>(name: String) :
     AbstractInferCommand<AutomatonType>(name) {
+
     // Note: use `get()` syntax when overriding those properties!
     protected abstract val scenariosFile: File
     protected abstract val inputNames: List<String>

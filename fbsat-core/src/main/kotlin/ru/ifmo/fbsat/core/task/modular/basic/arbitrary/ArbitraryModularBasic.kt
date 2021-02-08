@@ -7,7 +7,9 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeArbitraryModularT
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 fun Inferrer.arbitraryModularBasic(
     scenarioTree: PositiveScenarioTree,
@@ -20,7 +22,7 @@ fun Inferrer.arbitraryModularBasic(
     reset()
     declare(
         ArbitraryModularBasicTask(
-            positiveScenarioTree = scenarioTree,
+            scenarioTree = scenarioTree,
             numberOfModules = numberOfModules,
             numberOfStates = numberOfStates,
             maxOutgoingTransitions = maxOutgoingTransitions,
@@ -28,6 +30,7 @@ fun Inferrer.arbitraryModularBasic(
             isEncodeReverseImplication = isEncodeReverseImplication,
         )
     )
+    solver.dumpDimacs(outDir.resolve("cnf_modular-arbitrary-basic_M${numberOfModules}_C${numberOfStates}.cnf"))
     return inferArbitraryModularBasic()
 }
 
@@ -47,12 +50,12 @@ fun Inferrer.arbitraryModularBasicMinC(
             )
         }
         if (result != null) {
-            mylog.success("ArbitraryModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
-            mylog.info("ArbitraryModularBasicMin: minimal C = $C")
+            logger.info("ArbitraryModularBasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
+            logger.info("ArbitraryModularBasicMin: minimal C = $C")
             best = result
             break
         } else {
-            mylog.failure("ArbitraryModularBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
+            logger.info("ArbitraryModularBasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
         }
     }
     return checkNotNull(best) { "ArbitraryModularBasicMin: automaton not found." }

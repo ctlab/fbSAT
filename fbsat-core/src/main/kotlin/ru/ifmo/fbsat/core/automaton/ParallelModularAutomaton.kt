@@ -23,12 +23,14 @@ import ru.ifmo.fbsat.core.solver.convertDomainVarArray
 import ru.ifmo.fbsat.core.solver.convertIntVarArray
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.ModularContext
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
-import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.random
 import ru.ifmo.fbsat.core.utils.withIndex
 import ru.ifmo.fbsat.core.utils.writeEventMerger
 import java.io.File
+
+private val logger = MyLogger {}
 
 @Suppress("MemberVisibilityCanBePrivate", "PropertyName")
 class ParallelModularAutomaton(
@@ -156,7 +158,7 @@ class ParallelModularAutomaton(
     }
 
     fun printStats() {
-        mylog.just("    " + getStats())
+        logger.info("    " + getStats())
     }
 
     /**
@@ -347,9 +349,9 @@ fun buildBasicParallelModularAutomaton(
                         .withIndex(start = 1)
                         .associate { (u, input) ->
                             input to transitionTruthTable[c, k, u]
-                        },
-                    inputNames = scenarioTree.inputNames,
-                    uniqueInputs = scenarioTree.uniqueInputs
+                        }
+                    // inputNames = scenarioTree.inputNames,
+                    // uniqueInputs = scenarioTree.uniqueInputs
                 )
             }
         )

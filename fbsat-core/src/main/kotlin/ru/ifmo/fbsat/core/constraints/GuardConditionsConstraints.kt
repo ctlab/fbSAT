@@ -60,6 +60,38 @@ fun Solver.declareConsecutiveModularGuardConditionsConstraints() {
     }
 }
 
+fun Solver.declareArbitraryModularGuardConditionsConstraints() {
+    Globals.IS_MODULAR_ARBITRARY_EXTENDED = true
+
+    comment("Arbitrary modular guard conditions constraints")
+    forEachModularContext { m ->
+        comment("Arbitrary modular guard conditions constraints: for module m = $m")
+        declarePositiveGuardConditionsConstraints()
+    }
+
+    forEachModularContext {
+        val C: Int = context["C"]
+        val K: Int = context["K"]
+        val P: Int = context["P"]
+        val X: Int = context["X"]
+        val U: Int = context["U"]
+        val Us = 1..U
+        val nodeInputVariable: IntVarArray = context["nodeInputVariable"]
+        val nodeValue: BoolVarArray = context["nodeValue"]
+
+        comment("[mod-arb-ext] Terminal nodes have value from associated input variables")
+        for (c in 1..C)
+            for (k in 1..K)
+                for (p in 1..P)
+                    for (x in 1..X)
+                        for (u in Us)
+                            imply(
+                                nodeInputVariable[c, k, p] eq x,
+                                nodeValue[c, k, p, u] sign ((u - 1) and (1 shl (x - 1)) > 0)
+                            )
+    }
+}
+
 fun Solver.declareDistributedPositiveGuardConditionsConstraints() {
     comment("Distributed guard conditions constraints")
     forEachModularContext { m ->
@@ -514,9 +546,10 @@ private fun Solver.declareGuardConditionsConstraintsInputless() {
                 )
 }
 
-private fun Solver.declareGuardConditionsConstraintsForInputs(Us: Iterable<Int>, isPositive: Boolean) {
-    val tree: ScenarioTree<*, *> = context.autoneg("tree", isPositive)
-    val uniqueInputs = tree.uniqueInputs
+private fun Solver.declareGuardConditionsConstraintsForInputs(
+    Us: Iterable<Int>,
+    isPositive: Boolean,
+) {
     val C: Int = context["C"]
     val K: Int = context["K"]
     val P: Int = context["P"]
@@ -526,17 +559,22 @@ private fun Solver.declareGuardConditionsConstraintsForInputs(Us: Iterable<Int>,
     val nodeChild: IntVarArray = context["nodeChild"]
     val nodeValue: BoolVarArray = context.autoneg("nodeValue", isPositive)
 
-    comment("Terminal nodes have value from associated input variables")
-    // (nodeInputVariable[p] = x) => AND_{u}( nodeValue[p,u] <=> u[x] )
-    for (c in 1..C)
-        for (k in 1..K)
-            for (p in 1..P)
-                for (x in 1..X)
-                    for (u in Us)
-                        imply(
-                            nodeInputVariable[c, k, p] eq x,
-                            nodeValue[c, k, p, u] sign uniqueInputs[u - 1][x - 1]
-                        )
+    if (!Globals.IS_MODULAR_ARBITRARY_EXTENDED) {
+        val tree: ScenarioTree<*, *> = context.autoneg("tree", isPositive)
+        val uniqueInputs = tree.uniqueInputs
+
+        comment("Terminal nodes have value from associated input variables")
+        // (nodeInputVariable[p] = x) => AND_{u}( nodeValue[p,u] <=> u[x] )
+        for (c in 1..C)
+            for (k in 1..K)
+                for (p in 1..P)
+                    for (x in 1..X)
+                        for (u in Us)
+                            imply(
+                                nodeInputVariable[c, k, p] eq x,
+                                nodeValue[c, k, p, u] sign uniqueInputs[u - 1][x - 1]
+                            )
+    }
 
     comment("AND: value is calculated as a conjunction of children values")
     // (nodeType[p] = AND) & (nodeChild[p] = ch) =>

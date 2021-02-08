@@ -17,17 +17,20 @@ import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.complete.distributedCegis2
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.multiArrayOf
-import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.toMultiArray
 import java.io.File
 
+private val logger = MyLogger {}
+
 fun main() {
+    val dateTimeFormat = "yyyy-MM-dd HH:mm:ss"
+    logger.info("Start time: ${DateTime.nowLocal().format(dateTimeFormat)}")
     val timeStart = PerformanceCounter.reference
-    mylog.br(DateTime.nowLocal().format("yyyy-MM-dd HH:mm:ss"))
 
     val M = 2
     val modularName = multiArrayOf(
@@ -163,9 +166,9 @@ fun main() {
         positiveCompoundScenarioTree.addScenario(scenario)
     }
     // positiveCompoundScenarioTree.addScenario(positiveCompoundScenario)
-    mylog.info("Positive scenarios: ${scenarios.size}")
-    mylog.info("Positive compound scenario tree size: ${positiveCompoundScenarioTree.size}")
-    mylog.info("Positive scenario trees sizes: ${positiveCompoundScenarioTree.modular.values.map { it.size }}")
+    logger.info("Positive scenarios: ${scenarios.size}")
+    logger.info("Positive compound scenario tree size: ${positiveCompoundScenarioTree.size}")
+    logger.info("Positive scenario trees sizes: ${positiveCompoundScenarioTree.modular.values.map { it.size }}")
 
     // ===== Counterexample
 
@@ -244,7 +247,7 @@ fun main() {
     val T2: Int? = 7 // 8 min
     val N2: Int? = 7 // 28 min
 
-    mylog.info("Inferring the sender...")
+    logger.info("Inferring the sender...")
     // val distributedAutomaton = inferrer.distributedBasic(
     //     numberOfModules = M,
     //     compoundScenarioTree = positiveCompoundScenarioTree,
@@ -330,16 +333,16 @@ fun main() {
     // )
 
     if (distributedAutomaton == null) {
-        mylog.failure("Inference failed")
+        logger.error("Inference failed")
     } else {
-        mylog.success("Inference succeeded!")
+        logger.info("Inference succeeded!")
 
         for (m in 1..M) {
             val automaton = distributedAutomaton.project(m)
             val name = modularName[m]
-            mylog.info("Inferred $name:")
+            logger.info("Inferred $name:")
             automaton.pprint()
-            mylog.info(
+            logger.info(
                 "Inferred $name has " +
                     "${automaton.numberOfStates} states, " +
                     "${automaton.numberOfTransitions} transitions and " +
@@ -349,11 +352,11 @@ fun main() {
             automaton.dump(outDir, name = name)
 
             if (automaton.verify(positiveCompoundScenarioTree.project(m))) {
-                mylog.success("Verify: OK")
+                logger.info("Verify: OK")
             } else {
-                mylog.failure("Verify: FAILED")
+                logger.error("Verify: FAILED")
             }
-            mylog.br()
+            logger.just("brrr...")
         }
     }
 
@@ -378,6 +381,6 @@ fun main() {
     //         "N = ${distributedAutomaton.modular.map { it.totalGuardsSize }.values.joinToString("+") { it.toString() }} = ${distributedAutomaton.totalGuardsSize}")
     // }
 
-    mylog.br(DateTime.nowLocal().format("yyyy-MM-dd HH:mm:ss"))
-    mylog.success("All done in %.3f seconds".format(timeSince(timeStart).seconds))
+    logger.info("End time: ${DateTime.nowLocal().format(dateTimeFormat)}")
+    logger.info("All done in %.3f seconds".format(timeSince(timeStart).seconds))
 }

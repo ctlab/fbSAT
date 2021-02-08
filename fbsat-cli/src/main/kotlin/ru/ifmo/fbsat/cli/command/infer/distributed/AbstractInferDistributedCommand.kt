@@ -10,8 +10,10 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
 import java.io.File
+
+private val logger = MyLogger {}
 
 abstract class AbstractInferDistributedCommand(name: String) :
     AbstractInferCommand<DistributedAutomaton>(name) {
@@ -51,9 +53,9 @@ abstract class AbstractInferDistributedCommand(name: String) :
 
     final override fun printAndCheck(automaton: DistributedAutomaton?) {
         if (automaton == null) {
-            mylog.failure("Automaton not found")
+            logger.error("Automaton not found")
         } else {
-            mylog.success("Inference: OK")
+            logger.info("Inference: OK")
             // log.info("Inferred automaton:")
             // automaton.pprint()
             // log.info("Inferred automaton has:")
@@ -62,9 +64,9 @@ abstract class AbstractInferDistributedCommand(name: String) :
             // TODO: automaton.dump(outDir)
 
             if (automaton.verify(compoundScenarioTree))
-                mylog.success("Verify: OK")
+                logger.info("Verify: OK")
             else {
-                mylog.failure("Verify: FAILED")
+                logger.error("Verify: FAILED")
             }
         }
     }

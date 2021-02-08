@@ -14,9 +14,11 @@ import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedTask
 import ru.ifmo.fbsat.core.task.distributed.extended.inferDistributedExtended
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumC_Complete
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumN
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
-import ru.ifmo.fbsat.core.utils.mylog
 import kotlin.math.min
+
+private val logger = MyLogger {}
 
 fun Inferrer.distributedComplete(
     numberOfModules: Int, // M
@@ -117,7 +119,7 @@ fun Inferrer.completeMin__(
 ): DistributedAutomaton? {
     // for (D in startD..100) {
     for (D in startD..5) {
-        mylog.info("Trying D = $D...")
+        logger.info("Trying D = $D...")
         // val automaton = completeMin_(
         //     numberOfModules = numberOfModules,
         //     compoundScenarioTree = compoundScenarioTree,

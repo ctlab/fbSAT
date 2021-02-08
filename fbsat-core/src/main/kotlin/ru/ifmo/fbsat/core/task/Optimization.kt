@@ -13,13 +13,16 @@ import ru.ifmo.fbsat.core.task.distributed.extended.inferDistributedExtended
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.inferArbitraryModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.inferConsecutiveModularBasic
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.inferParallelModularBasic
+import ru.ifmo.fbsat.core.task.modular.extended.arbitrary.inferArbitraryModularExtended
 import ru.ifmo.fbsat.core.task.modular.extended.consecutive.inferConsecutiveModularExtended
 import ru.ifmo.fbsat.core.task.modular.extended.parallel.inferParallelModularExtended
 import ru.ifmo.fbsat.core.task.single.basic.inferBasic
 import ru.ifmo.fbsat.core.task.single.extended.inferExtended
 import ru.ifmo.fbsat.core.task.single.extforest.inferExtForest
 import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 fun <T : Any> optimizeTopDown(
     start: Int? = null,
@@ -34,9 +37,9 @@ fun <T : Any> optimizeTopDown(
 
     val (initialResult, runningTime) = measureTimeWithResult { nextInitial(start) }
     if (initialResult != null) {
-        mylog.success("optimizeTopDown: <= $start -> ${query(initialResult)} in %.3f s".format(runningTime.seconds))
+        logger.info("optimizeTopDown: <= $start -> ${query(initialResult)} in %.3f s".format(runningTime.seconds))
     } else {
-        mylog.failure("optimizeTopDown: <= $start -> UNSAT in %.3f s.".format(runningTime.seconds))
+        logger.info("optimizeTopDown: <= $start -> UNSAT in %.3f s.".format(runningTime.seconds))
         return null
     }
 
@@ -46,10 +49,10 @@ fun <T : Any> optimizeTopDown(
         if (x <= end) break
         val (result, runningTime) = measureTimeWithResult { next(x) }
         if (result != null) {
-            mylog.success("optimizeTopDown: < $x -> ${query(result)} in %.3f s".format(runningTime.seconds))
+            logger.info("optimizeTopDown: < $x -> ${query(result)} in %.3f s".format(runningTime.seconds))
             best = result
         } else {
-            mylog.failure("optimizeTopDown: < $x -> UNSAT in %.3f s.".format(runningTime.seconds))
+            logger.info("optimizeTopDown: < $x -> UNSAT in %.3f s.".format(runningTime.seconds))
             break
         }
     }
@@ -83,7 +86,7 @@ fun Inferrer.optimizeT(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): Automaton? {
-    mylog.info("Optimizing T...")
+    logger.info("Optimizing T...")
     val cardinality: Cardinality = solver.context["cardinalityT"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -99,7 +102,7 @@ fun Inferrer.optimizeN(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): Automaton? {
-    mylog.info("Optimizing N...")
+    logger.info("Optimizing N...")
     val cardinality: Cardinality = solver.context["cardinalityN"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -116,7 +119,7 @@ fun Inferrer.optimizeN_Forest(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): Automaton? {
-    mylog.info("Optimizing N...")
+    logger.info("Optimizing N...")
     val cardinality: Cardinality = solver.context["cardinalityN"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -132,7 +135,7 @@ fun Inferrer.optimizeParallelModularT(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): ParallelModularAutomaton? {
-    mylog.info("Optimizing T...")
+    logger.info("Optimizing T...")
     val cardinality: Cardinality = solver.context["cardinalityT"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -148,7 +151,7 @@ fun Inferrer.optimizeConsecutiveModularT(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): ConsecutiveModularAutomaton? {
-    mylog.info("Optimizing T...")
+    logger.info("Optimizing T...")
     val cardinality: Cardinality = solver.context["cardinalityT"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -164,7 +167,7 @@ fun Inferrer.optimizeArbitraryModularT(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): ArbitraryModularAutomaton? {
-    mylog.info("Optimizing T...")
+    logger.info("Optimizing T...")
     val cardinality: Cardinality = solver.context["cardinalityT"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -175,28 +178,12 @@ fun Inferrer.optimizeArbitraryModularT(
     )
 }
 
-fun Inferrer.optimizeConsecutiveModularN(
-    start: Int? = null,
-    end: Int = 0,
-    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
-): ConsecutiveModularAutomaton? {
-    mylog.info("Optimizing N...")
-    val cardinality: Cardinality = solver.context["cardinalityN"]
-    return cardinality.optimizeTopDown(
-        start = start,
-        end = end,
-        useAssumptions = useAssumptions,
-        infer = { inferConsecutiveModularExtended() },
-        query = { it.totalGuardsSize }
-    )
-}
-
 fun Inferrer.optimizeParallelModularN(
     start: Int? = null,
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): ParallelModularAutomaton? {
-    mylog.info("Optimizing N...")
+    logger.info("Optimizing N...")
     val cardinality: Cardinality = solver.context["cardinalityN"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -207,12 +194,44 @@ fun Inferrer.optimizeParallelModularN(
     )
 }
 
+fun Inferrer.optimizeConsecutiveModularN(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): ConsecutiveModularAutomaton? {
+    logger.info("Optimizing N...")
+    val cardinality: Cardinality = solver.context["cardinalityN"]
+    return cardinality.optimizeTopDown(
+        start = start,
+        end = end,
+        useAssumptions = useAssumptions,
+        infer = { inferConsecutiveModularExtended() },
+        query = { it.totalGuardsSize }
+    )
+}
+
+fun Inferrer.optimizeArbitraryModularN(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): ArbitraryModularAutomaton? {
+    logger.info("Optimizing N...")
+    val cardinality: Cardinality = solver.context["cardinalityN"]
+    return cardinality.optimizeTopDown(
+        start = start,
+        end = end,
+        useAssumptions = useAssumptions,
+        infer = { inferArbitraryModularExtended() },
+        query = { it.totalGuardsSize }
+    )
+}
+
 fun Inferrer.optimizeDistributedSumC(
     start: Int? = null,
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): DistributedAutomaton? {
-    mylog.info("Optimizing Csum...")
+    logger.info("Optimizing Csum...")
     val cardinality: Cardinality = solver.context["cardinalityC"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -228,7 +247,7 @@ fun Inferrer.optimizeDistributedSumC_Extended(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): DistributedAutomaton? {
-    mylog.info("Optimizing Csum...")
+    logger.info("Optimizing Csum...")
     val cardinality: Cardinality = solver.context["cardinalityC"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -244,7 +263,7 @@ fun Inferrer.optimizeDistributedSumC_Complete(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): DistributedAutomaton? {
-    mylog.info("Optimizing Csum...")
+    logger.info("Optimizing Csum...")
     val cardinality: Cardinality = solver.context["cardinalityC"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -260,7 +279,7 @@ fun Inferrer.optimizeDistributedSumN(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): DistributedAutomaton? {
-    mylog.info("Optimizing Nsum...")
+    logger.info("Optimizing Nsum...")
     val cardinality: Cardinality = solver.context["cardinalityN"]
     return cardinality.optimizeTopDown(
         start = start,

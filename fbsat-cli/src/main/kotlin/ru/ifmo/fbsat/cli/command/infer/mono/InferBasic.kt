@@ -34,7 +34,7 @@ private class BasicAutomatonOptions : OptionGroup(AUTOMATON_OPTIONS) {
 }
 
 class InferBasicCommand : AbstractInferMonoCommand("basic") {
-    private val io: BasicInputOutputOptions by BasicInputOutputOptions()
+    private val io by BasicInputOutputOptions()
     private val params by BasicAutomatonOptions()
     override val solverOptions by SolverOptions()
     override val extraOptions by ExtraOptions()

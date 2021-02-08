@@ -28,10 +28,12 @@ import ru.ifmo.fbsat.core.solver.autoneg
 import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.Pins
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.algorithmChoice
 import ru.ifmo.fbsat.core.utils.exhaustive
-import ru.ifmo.fbsat.core.utils.mylog
 import ru.ifmo.fbsat.core.utils.withIndex
+
+private val logger = MyLogger {}
 
 fun Solver.declarePositiveMappingConstraints(
     isEncodeReverseImplication: Boolean,
@@ -252,7 +254,7 @@ fun Solver.declarePositiveConsecutiveModularMappingConstraints(
 
     // TODO: encode reverse-implication
     if (isEncodeReverseImplication) {
-        mylog.warn("Reverse-implication encoding is not implemented yet")
+        logger.warn("Reverse-implication encoding is not implemented yet")
     }
 
     comment("Computed output value definition")
@@ -350,7 +352,7 @@ fun Solver.declarePositiveArbitraryModularMappingConstraints(
 
     // TODO: encode reverse-implication
     if (isEncodeReverseImplication) {
-        mylog.warn("Reverse-implication encoding is not implemented yet")
+        logger.warn("Reverse-implication encoding is not implemented yet")
     }
 
     comment("Additional arbitrary modular mapping constraints")

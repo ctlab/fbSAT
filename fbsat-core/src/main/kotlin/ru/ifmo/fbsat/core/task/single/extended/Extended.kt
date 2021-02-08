@@ -10,7 +10,9 @@ import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.task.single.basic.basic
 import ru.ifmo.fbsat.core.task.single.basic.basicMin
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
-import ru.ifmo.fbsat.core.utils.mylog
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 fun Inferrer.extended(
     scenarioTree: PositiveScenarioTree,
@@ -74,17 +76,17 @@ fun Inferrer.extendedMinUB(
     var Plow: Int? = null
     var N: Int? = null // <=
 
-    mylog.info("Tmin = $Tmin")
+    logger.info("Tmin = $Tmin")
 
     for (P in start..end) {
-        mylog.info("Trying P = $P, N = $N")
+        logger.info("Trying P = $P, N = $N")
 
         if (best != null && P > (best.totalGuardsSize - Tmin)) {
-            mylog.warn("Reached upper bound: P = $P, Plow = $Plow, Nbest = ${best.totalGuardsSize}, Tmin = $Tmin")
+            logger.info("Reached upper bound: P = $P, Plow = $Plow, Nbest = ${best.totalGuardsSize}, Tmin = $Tmin")
             break
         }
         if (Plow != null && maxPlateauWidth != null && (P - Plow) > maxPlateauWidth) {
-            mylog.warn("Reached maximum plateau width: P = $P, Plow = $Plow, w = $maxPlateauWidth")
+            logger.info("Reached maximum plateau width: P = $P, Plow = $Plow, w = $maxPlateauWidth")
             break
         }
 

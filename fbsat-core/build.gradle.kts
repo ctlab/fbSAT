@@ -17,8 +17,6 @@ dependencies {
     implementation(Libs.KotlinxSerialization.serialization_json)
     implementation(Libs.XmlUtil.xmlutil_jvm)
     implementation(Libs.XmlUtil.xmlutil_serialization_jvm)
-    implementation(Libs.Log4j.log4j_api)
-    implementation(Libs.Log4j.log4j_core)
 }
 
 tasks.withType<KotlinCompile> {

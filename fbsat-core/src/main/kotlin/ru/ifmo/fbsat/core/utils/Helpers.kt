@@ -16,6 +16,9 @@ import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import java.io.File
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.math.pow
 import kotlin.random.Random
 
@@ -58,24 +61,20 @@ fun Iterable<Boolean?>.toBinaryString(): String {
     }
 }
 
-fun randomBinaryString(length: Int): String {
-    return (1..length).asSequence().map { "01".random() }.joinToString("")
+fun randomBinaryString(length: Int, random: Random = Random): String {
+    return (1..length).asSequence().map { "01".random(random) }.joinToString("")
 }
 
-fun <T> randomChoice(vararg choices: T): T {
-    return choices.random()
+fun <T> randomChoice(vararg choices: T, random: Random = Random): T {
+    return choices.random(random)
 }
 
-fun randomBooleanList(size: Int): List<Boolean> {
-    return List(size) { randomChoice(true, false) }
+fun randomBooleanList(size: Int, random: Random = Random): List<Boolean> {
+    return List(size) { randomChoice(true, false, random = random) }
 }
 
-fun ClosedRange<Double>.random(random: Random): Double {
+fun ClosedRange<Double>.random(random: Random = Random): Double {
     return start + random.nextDouble() * (endInclusive - start)
-}
-
-fun ClosedRange<Double>.random(): Double {
-    return random(Random)
 }
 
 /**
@@ -269,3 +268,7 @@ inline fun <reified T : Any> mutableMultiArrayOfNulls(vararg shape: Int): Mutabl
     mutableMultiArrayOfNulls(shape)
 
 //endregion
+
+inline fun scope(block: () -> Unit) {
+    block()
+}

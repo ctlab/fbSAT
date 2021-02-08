@@ -2,14 +2,14 @@
 
 object Versions {
     const val arrow = "0.11.0"
-    const val clikt = "2.8.0"
+    const val clikt = "3.1.0"
     const val gradle_download_task = "4.1.1"
     const val gradle_versions = "0.36.0"
     const val jgitver = "0.9.1"
     const val junit = "5.7.0"
     const val klock = "1.12.1"
     const val kluent = "1.63"
-    const val kotlin = "1.4.20"
+    const val kotlin = "1.4.30"
     const val kotlin_logging = "2.0.3"
     const val kotlinx_coroutines = "1.4.1"
     const val kotlinx_serialization = "1.0.1"
@@ -21,7 +21,7 @@ object Versions {
     const val multiarray = "0.12.0"
     const val okio = "2.9.0"
     const val pretty_print = "2.0.2"
-    const val satlib = "0.14.0"
+    const val satlib = "0.15.1"
     const val shadow = "6.1.0"
     const val xml_builder = "1.5.3"
     const val xmlutil = "0.80.1"
@@ -31,7 +31,7 @@ object Libs {
     // https://github.com/ajalt/clikt
     object Clikt {
         const val version = Versions.clikt
-        const val clikt = "com.github.ajalt:clikt:$version"
+        const val clikt = "com.github.ajalt.clikt:clikt:$version"
     }
 
     // https://github.com/ajalt/mordant

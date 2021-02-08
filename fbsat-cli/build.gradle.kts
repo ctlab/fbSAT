@@ -30,6 +30,7 @@ tasks.startScripts {
 
 tasks.jar {
     manifest.attributes("Main-Class" to application.mainClassName)
+    manifest.attributes("Multi-Release" to true) // needed for log4j
 }
 
 tasks.shadowJar {
@@ -37,6 +38,7 @@ tasks.shadowJar {
     archiveClassifier.set("")
     archiveVersion.set("")
     minimize {
-        // exclude(dependency("org.jetbrains.kotlin:kotlin-reflect"))
+        exclude(dependency("org.jetbrains.kotlin:kotlin-reflect"))
+        exclude(dependency(Libs.Log4j.log4j_core))
     }
 }

@@ -36,7 +36,8 @@ private class ArbitraryModularBasicAutomatonOptions : OptionGroup(AUTOMATON_OPTI
 }
 
 class InferArbitraryModularBasicCommand :
-    AbstractInferArbitraryModularCommand("modular-consecutive-basic") {
+    AbstractInferArbitraryModularCommand("modular-arbitrary-basic") {
+
     private val io by ArbitraryModularBasicInputOutputOptions()
     private val params by ArbitraryModularBasicAutomatonOptions()
     override val solverOptions by SolverOptions()
@@ -56,4 +57,19 @@ class InferArbitraryModularBasicCommand :
             maxTransitions = params.maxTransitions,
             isEncodeReverseImplication = extraOptions.isEncodeReverseImplication,
         )
+}
+
+@Suppress("ClassName")
+private object `infer modular-arbitrary-basic` {
+    @JvmStatic
+    fun main(args: Array<String>) {
+        InferArbitraryModularBasicCommand().main(listOf(
+            "-i", "data/tests-1.gz",
+            "-M", "2",
+            "-C", "5",
+            "--epsilon-output-events", "none",
+            "--debug",
+            "--minisat",
+        ))
+    }
 }

@@ -13,8 +13,8 @@ val Compound<*>.M: Int
 @Deprecated("Inherit the CompoundImpl abstract class for this functionality", level = DeprecationLevel.ERROR)
 fun Compound<*>.stringify(): String = modular.values.toString()
 
-@Suppress("PropertyName")
 abstract class CompoundImpl<out T> : Compound<T> {
+    @Suppress("PropertyName")
     open val M: Int by lazy { modular.shape.single() }
 
     override fun toString(): String = modular.values.toString()
