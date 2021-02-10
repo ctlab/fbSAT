@@ -17,7 +17,6 @@ import com.github.lipen.satlib.solver.DimacsStreamSolver
 import com.github.lipen.satlib.solver.GlucoseSolver
 import com.github.lipen.satlib.solver.MiniSatSolver
 import com.github.lipen.satlib.solver.Solver
-import mu.KotlinLogging
 import ru.ifmo.fbsat.core.solver.IncrementalCryptominisatSolver
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
@@ -47,12 +46,10 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
                 IncrementalCryptominisatSolver { Globals.ICMS_CMD }
             }
             SolverBackend.MINISAT -> {
+                logger.debug { "Using solver seed = $solverSeed" }
                 when (val simp = Globals.MINISAT_SIMP_STRATEGY) {
-                    null -> MiniSatSolver()
-                    else -> MiniSatSolver(simp)
-                }.also {
-                    logger.debug { "Using solver seed = $solverSeed" }
-                    it.backend.setSeed(solverSeed.toDouble())
+                    null -> MiniSatSolver(initialSeed = solverSeed.toDouble())
+                    else -> MiniSatSolver(simp, solverSeed.toDouble())
                 }
             }
             SolverBackend.GLUCOSE -> {
@@ -65,10 +62,8 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
                 CryptoMiniSatSolver()
             }
             SolverBackend.CADICAL -> {
-                CadicalSolver().also {
-                    logger.debug { "Using solver seed = $solverSeed" }
-                    it.backend.setOption("seed", solverSeed)
-                }
+                logger.debug { "Using solver seed = $solverSeed" }
+                CadicalSolver(initialSeed = solverSeed)
             }
         }
     }
