@@ -5,9 +5,14 @@ package ru.ifmo.fbsat.cli.command.infer.options
 import com.github.ajalt.clikt.core.ParameterHolder
 import com.github.ajalt.clikt.output.HelpFormatter.Tags.DEFAULT
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
+import com.github.ajalt.clikt.parameters.options.FlagOption
+import com.github.ajalt.clikt.parameters.options.OptionDelegate
+import com.github.ajalt.clikt.parameters.options.OptionValidator
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.switch
+import com.github.ajalt.clikt.parameters.options.validate
+import com.github.ajalt.clikt.parameters.types.double
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.lipen.satlib.solver.CadicalSolver
@@ -26,13 +31,40 @@ private val logger = MyLogger {}
 
 internal const val SOLVER_OPTIONS = "Solver Options"
 
+private fun <T> FlagOption<T>.validate(validator: OptionValidator<T>): OptionDelegate<T> = copy(validator)
+
 @Suppress("MemberVisibilityCanBePrivate")
 class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
     val solverBackend: SolverBackend by solverBackendOption()
     val fileSolverCmd: String by fileSolverCmdOption()
     val fileSolverFile: File by fileSolverFileOption()
     val streamSolverCmd: String by streamSolverCmdOption()
-    val solverSeed: Int by solverSeedOption()
+    val solverSeed: Int? by solverSeedOption().validate {
+        require(solverBackend in listOf(
+            SolverBackend.MINISAT,
+            SolverBackend.GLUCOSE,
+            SolverBackend.CADICAL,
+        )) {
+            "supported only by MiniSat, Glucose and Cadical"
+        }
+    }
+
+    // MiniSat/Glucose options:
+    val solverRndFreq: Double? by solverRndFreqOption().validate {
+        require(solverBackend in listOf(SolverBackend.MINISAT, SolverBackend.GLUCOSE)) {
+            "supported only by MiniSat/Glucose"
+        }
+    }
+    val solverRndPol: Boolean? by solverRndPolOption().validate {
+        require(solverBackend in listOf(SolverBackend.MINISAT, SolverBackend.GLUCOSE)) {
+            "supported only by MiniSat/Glucose"
+        }
+    }
+    val solverRndInit: Boolean? by solverRndInitOption().validate {
+        require(solverBackend in listOf(SolverBackend.MINISAT, SolverBackend.GLUCOSE)) {
+            "supported only by MiniSat/Glucose"
+        }
+    }
 
     val solver: Solver by lazy {
         when (solverBackend) {
@@ -46,23 +78,36 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
                 IncrementalCryptominisatSolver { Globals.ICMS_CMD }
             }
             SolverBackend.MINISAT -> {
-                logger.debug { "Using solver seed = $solverSeed" }
-                when (val simp = Globals.MINISAT_SIMP_STRATEGY) {
-                    null -> MiniSatSolver(initialSeed = solverSeed.toDouble())
-                    else -> MiniSatSolver(simp, solverSeed.toDouble())
-                }
+                logger.debug { "MiniSat: seed = $solverSeed" }
+                logger.debug { "MiniSat: rnd-freq = $solverRndFreq" }
+                logger.debug { "MiniSat: rnd-pol = $solverRndPol" }
+                logger.debug { "MiniSat: rnd-init = $solverRndInit" }
+                MiniSatSolver(
+                    simpStrategy = Globals.MINISAT_SIMP_STRATEGY ?: MiniSatSolver.Companion.SimpStrategy.ONCE,
+                    initialSeed = solverSeed?.toDouble(),
+                    initialRandomVarFreq = solverRndFreq,
+                    initialRandomPolarities = solverRndPol ?: false,
+                    initialRandomInitialActivities = solverRndInit ?: false
+                )
             }
             SolverBackend.GLUCOSE -> {
-                when (val simp = Globals.GLUCOSE_SIMP_STRATEGY) {
-                    null -> GlucoseSolver()
-                    else -> GlucoseSolver(simp)
-                }
+                logger.debug { "Glucose: seed = $solverSeed" }
+                logger.debug { "Glucose: rnd-freq = $solverRndFreq" }
+                logger.debug { "Glucose: rnd-pol = $solverRndPol" }
+                logger.debug { "Glucose: rnd-init = $solverRndInit" }
+                GlucoseSolver(
+                    simpStrategy = Globals.GLUCOSE_SIMP_STRATEGY ?: GlucoseSolver.Companion.SimpStrategy.ONCE,
+                    initialSeed = solverSeed?.toDouble(),
+                    initialRandomVarFreq = solverRndFreq,
+                    initialRandomPolarities = solverRndPol ?: false,
+                    initialRandomInitialActivities = solverRndInit ?: false
+                )
             }
             SolverBackend.CRYPTOMINISAT -> {
                 CryptoMiniSatSolver()
             }
             SolverBackend.CADICAL -> {
-                logger.debug { "Using solver seed = $solverSeed" }
+                logger.debug { "Cadical: seed = $solverSeed" }
                 CadicalSolver(initialSeed = solverSeed)
             }
         }
@@ -123,4 +168,27 @@ fun ParameterHolder.solverSeedOption() =
         "--solver-seed",
         help = "Random seed for SAT solver",
         metavar = "<int>"
-    ).int().default(0)
+    ).int()
+
+fun ParameterHolder.solverRndFreqOption() =
+    option(
+        "--solver-rnd-freq",
+        help = "MiniSat/Glucose random_var_freq",
+        metavar = "<dbl>"
+    ).double()
+
+fun ParameterHolder.solverRndPolOption() =
+    option(
+        help = "MiniSat/Glucose rnd_pol"
+    ).switch(
+        "--solver-rnd-pol" to true,
+        "--solver-no-rnd-pol" to false
+    )
+
+fun ParameterHolder.solverRndInitOption() =
+    option(
+        help = "MiniSat/Glucose rnd_init_act"
+    ).switch(
+        "--solver-rnd-init" to true,
+        "--solver-no-rnd-init" to false
+    )
