@@ -3,7 +3,6 @@
 package ru.ifmo.fbsat.cli.command.infer.options
 
 import com.github.ajalt.clikt.core.ParameterHolder
-import com.github.ajalt.clikt.output.HelpFormatter.Tags.DEFAULT
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
 import com.github.ajalt.clikt.parameters.options.FlagOption
 import com.github.ajalt.clikt.parameters.options.OptionDelegate
@@ -120,8 +119,7 @@ enum class SolverBackend {
 
 fun ParameterHolder.solverBackendOption() =
     option(
-        help = "SAT-solver backend",
-        helpTags = mapOf(DEFAULT to "icms (incremental-cryptominisat)")
+        help = "SAT-solver backend"
     ).switch(
         "--filesolver" to SolverBackend.FILE,
         "--streamsolver" to SolverBackend.STREAM,
