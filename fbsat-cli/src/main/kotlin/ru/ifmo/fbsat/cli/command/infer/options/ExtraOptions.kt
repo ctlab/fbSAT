@@ -222,5 +222,5 @@ fun ParameterHolder.isDebugOption() =
         help = "Debug mode"
     ).flag(
         "--no-debug",
-        default = false
+        default = Globals.IS_DEBUG
     )
