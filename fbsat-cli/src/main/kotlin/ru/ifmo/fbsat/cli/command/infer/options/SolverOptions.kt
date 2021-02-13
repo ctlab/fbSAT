@@ -146,7 +146,7 @@ fun ParameterHolder.fileSolverCmdOption() =
 fun ParameterHolder.fileSolverFileOption() =
     option(
         "--filesolver-file",
-        help = "FileSolver file (for CNF)",
+        help = "FileSolver CNF file",
         metavar = "<path>"
     ).file(
         canBeDir = false
