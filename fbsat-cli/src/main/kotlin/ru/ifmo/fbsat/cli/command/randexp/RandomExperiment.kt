@@ -293,13 +293,12 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
                 solverInit = { solver }
             )
 
-            if (result != null) {
+            if (result.result.automaton != null) {
                 result.result.automaton.dump(outDir, name = "inferred-automaton")
-
-                val resultFile = outDir.resolve("result.json")
-                resultFile.ensureParentExists().sink().buffer().use {
-                    it.write(myJson.encodeToString(result))
-                }
+            }
+            val resultFile = outDir.resolve("result.json")
+            resultFile.ensureParentExists().sink().buffer().use {
+                it.write(myJson.encodeToString(result))
             }
         }
     }
@@ -483,18 +482,12 @@ data class ExperimentResult(
     @Serializable
     data class InferenceResult(
         val scenarios: List<PositiveScenario>,
-        val automaton: Automaton, // inferred
+        val automaton: Automaton?, // inferred
         val forwardCheck: Int,
         val time: Double,
         val solverStats: Map<String, Int>,
     )
 }
-
-// fun performExperiment(
-//     // TODO
-// ): ExperimentResult? {
-//     return null
-// }
 
 private fun getExperimentName(
     data: ExperimentData,
@@ -517,7 +510,7 @@ fun runExperiment(
     //  pass some representative SolverInfo in `params`,
     //  and also pass the existing `solver` via lambda (e.g. `solverInit = { solver }`)
     solverInit: (SolverInfo) -> Solver = { it.instantiate() },
-): ExperimentResult? {
+): ExperimentResult {
     val name = getExperimentName(data, params)
     logger.info { "Running '$name'..." }
 
@@ -570,7 +563,26 @@ fun runExperiment(
     }
     val timeInfer = timeSince(timeInferStart)
 
-    return if (inferredAutomaton != null) {
+    val solverStats: MutableMap<String, Int> = mutableMapOf()
+    when (solver) {
+        is MiniSatSolver -> {
+            solverStats["propagations"] = solver.backend.numberOfPropagations
+            solverStats["conflicts"] = solver.backend.numberOfConflicts
+            solverStats["decisions"] = solver.backend.numberOfDecisions
+        }
+        is GlucoseSolver -> {
+            solverStats["propagations"] = solver.backend.numberOfPropagations
+            solverStats["conflicts"] = solver.backend.numberOfConflicts
+            solverStats["decisions"] = solver.backend.numberOfDecisions
+        }
+        else -> {
+            logger.debug { "$solver does not support querying statistics" }
+        }
+    }
+
+    var forwardCheck: Int = 0
+
+    if (inferredAutomaton != null) {
         // logger.info { "Original (random generated) automaton:" }
         // data.automaton.pprint()
         logger.info { "Inferred automaton:" }
@@ -593,40 +605,23 @@ fun runExperiment(
         }
         val percentOkay = okay.toDouble() / total * 100
         logger.info { "Forward-check: $okay of $total (${percentOkay.roundToInt()}%)" }
-
-        val statistics: MutableMap<String, Int> = mutableMapOf()
-        when (solver) {
-            is MiniSatSolver -> {
-                statistics["propagations"] = solver.backend.numberOfPropagations
-                statistics["conflicts"] = solver.backend.numberOfConflicts
-                statistics["decisions"] = solver.backend.numberOfDecisions
-            }
-            is GlucoseSolver -> {
-                statistics["propagations"] = solver.backend.numberOfPropagations
-                statistics["conflicts"] = solver.backend.numberOfConflicts
-                statistics["decisions"] = solver.backend.numberOfDecisions
-            }
-            else -> {
-                logger.debug { "$solver does not support querying statistics" }
-            }
-        }
-
-        ExperimentResult(
-            name = name,
-            dataName = data.name,
-            params = params,
-            result = ExperimentResult.InferenceResult(
-                scenarios = scenarios,
-                automaton = inferredAutomaton,
-                forwardCheck = okay,
-                time = timeInfer.seconds,
-                solverStats = statistics
-            )
-        )
+        forwardCheck = okay
     } else {
         logger.error { "Could not infer an automaton after %.2f s".format(timeInfer.seconds) }
-        null
     }
+
+    return ExperimentResult(
+        name = name,
+        dataName = data.name,
+        params = params,
+        result = ExperimentResult.InferenceResult(
+            scenarios = scenarios,
+            automaton = inferredAutomaton,
+            forwardCheck = forwardCheck,
+            time = timeInfer.seconds,
+            solverStats = solverStats
+        )
+    )
 }
 
 fun main() {
@@ -699,11 +694,9 @@ fun main() {
 
         val result = runExperiment(data, inferenceParams)
 
-        if (result != null) {
-            val resultFile = outDir.resolve("result.json")
-            resultFile.ensureParentExists().sink().buffer().use {
-                it.write(myJson.encodeToString(result))
-            }
+        val resultFile = outDir.resolve("result.json")
+        resultFile.ensureParentExists().sink().buffer().use {
+            it.write(myJson.encodeToString(result))
         }
     }
 
