@@ -2,27 +2,17 @@ package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.descriptors.element
-import kotlinx.serialization.encoding.CompositeDecoder
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.encoding.decodeStructure
-import kotlinx.serialization.encoding.encodeStructure
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
-import kotlinx.serialization.serializer
 import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.utils.BinaryOperation
 import ru.ifmo.fbsat.core.utils.BooleanExpression
 import ru.ifmo.fbsat.core.utils.MyLogger
+import ru.ifmo.fbsat.core.utils.ParseTreeGuardSerializer
 import ru.ifmo.fbsat.core.utils.UnaryOperation
 import ru.ifmo.fbsat.core.utils.Variable
 import ru.ifmo.fbsat.core.utils.makeDnfString
@@ -93,20 +83,6 @@ class UnconditionalGuard : Guard {
     }
 }
 
-@Deprecated("old unused code")
-object TruthTableGuardSerializer : KSerializer<TruthTableGuard> {
-    override val descriptor: SerialDescriptor = serializer<Map<InputValues, Boolean?>>().descriptor
-
-    override fun serialize(encoder: Encoder, value: TruthTableGuard) {
-        encoder.encodeSerializableValue(serializer(), value.truthTable)
-    }
-
-    override fun deserialize(decoder: Decoder): TruthTableGuard {
-        val truthTable: Map<InputValues, Boolean?> = decoder.decodeSerializableValue(serializer())
-        return TruthTableGuard(truthTable)
-    }
-}
-
 @Serializable
 @SerialName("TruthTableGuard")
 class TruthTableGuard(
@@ -140,37 +116,6 @@ class TruthTableGuard(
     override fun toSmvString(): String = "TRUTH_TABLE"
 
     override fun toString(): String = "TruthTableGuard(truthTable = $truthTable)"
-}
-
-object ParseTreeGuardSerializer : KSerializer<ParseTreeGuard> {
-    override val descriptor: SerialDescriptor =
-        buildClassSerialDescriptor("ParseTreeGuard") {
-            element<String>("expr")
-        }
-
-    override fun serialize(encoder: Encoder, value: ParseTreeGuard) {
-        val s = value.toSimpleString()
-        encoder.encodeStructure(descriptor) {
-            encodeStringElement(descriptor, 0, s)
-        }
-    }
-
-    @ExperimentalSerializationApi
-    override fun deserialize(decoder: Decoder): ParseTreeGuard {
-        return decoder.decodeStructure(descriptor) {
-            lateinit var s: String
-            if (decodeSequentially()) {
-                s = decodeStringElement(descriptor, 0)
-            } else while (true) {
-                when (val index = decodeElementIndex(descriptor)) {
-                    0 -> s = decodeStringElement(descriptor, 0)
-                    CompositeDecoder.DECODE_DONE -> break
-                    else -> error("Unexpected index: $index")
-                }
-            }
-            TODO("Create ParseTreeGuard from string")
-        }
-    }
 }
 
 @Deprecated("Use BooleanExpressionGuard", ReplaceWith("BooleanExpressionGuard.from"))
