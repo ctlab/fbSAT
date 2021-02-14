@@ -416,9 +416,19 @@ class Automaton(
     fun dump(dir: File, name: String = "automaton") {
         logger.info("Dumping '$name' to <$dir>...")
         dir.mkdirs()
+        dumpTxt(dir.resolve("$name.txt"))
         dumpGv(dir.resolve("$name.gv"))
         dumpFbt(dir.resolve("$name.fbt"), name)
         dumpSmv(dir.resolve("$name.smv"))
+    }
+
+    /**
+     * Dump automaton in text format to [file].
+     */
+    fun dumpTxt(file: File) {
+        file.printWriter().use {
+            it.println(toSimpleString())
+        }
     }
 
     /**

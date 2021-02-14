@@ -274,3 +274,5 @@ inline fun <reified T : Any> mutableMultiArrayOfNulls(vararg shape: Int): Mutabl
 inline fun scope(block: () -> Unit) {
     block()
 }
+
+fun File.ensureParentExists(): File = apply { parentFile.mkdirs() }

@@ -50,6 +50,7 @@ import ru.ifmo.fbsat.core.utils.FileAsStringSerializer
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
+import ru.ifmo.fbsat.core.utils.ensureParentExists
 import ru.ifmo.fbsat.core.utils.scope
 import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.withIndex
@@ -255,13 +256,12 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
             )
         )
 
-        // automaton.dump(outDir, name = "random-automaton_seed${automatonSeed}")
+        data.automaton.dump(outDir, name = "generated-automaton")
 
-        // val fileValidationScenarios = outDir
-        //     .resolve("validation-scenarios_n${nVal}_k${kVal}_seed${validationScenariosSeed}.json")
-        // fileValidationScenarios.sink().buffer().use {
-        //     it.write(myJson.encodeToString(validationScenarios))
-        // }
+        val dataFile = outDir.resolve("data.json")
+        dataFile.ensureParentExists().sink().buffer().use {
+            it.write(myJson.encodeToString(data))
+        }
 
         if (method != null) {
             check(n > 0) { "n must be > 0" }
@@ -302,7 +302,14 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
                 solverInit = { solver }
             )
 
-            // inferredAutomaton.dump(outDir, name = "inferred-automaton")
+            if (result != null) {
+                result.result.automaton.dump(outDir, name = "inferred-automaton")
+
+                val resultFile = outDir.resolve("result.json")
+                resultFile.ensureParentExists().sink().buffer().use {
+                    it.write(myJson.encodeToString(result))
+                }
+            }
         }
     }
 }
@@ -578,7 +585,7 @@ fun runExperiment(
         logger.info { "Inferred automaton:" }
         inferredAutomaton.pprint()
         logger.info { "Inference done in %.2f s".format(timeInfer.seconds) }
-        inferredAutomaton.dump(outDir)
+        inferredAutomaton.dump(outDir, "inferred-automaton")
 
         logger.info { "Performing forward-check..." }
         val total = data.validationScenarios.size
@@ -680,9 +687,8 @@ fun main() {
             )
         )
 
-        outDir.mkdirs()
         val dataFile = outDir.resolve("data.json")
-        dataFile.sink().buffer().use {
+        dataFile.ensureParentExists().sink().buffer().use {
             it.write(myJson.encodeToString(data))
         }
 
@@ -703,9 +709,8 @@ fun main() {
         val result = runExperiment(data, inferenceParams)
 
         if (result != null) {
-            outDir.mkdirs()
             val resultFile = outDir.resolve("result.json")
-            resultFile.sink().buffer().use {
+            resultFile.ensureParentExists().sink().buffer().use {
                 it.write(myJson.encodeToString(result))
             }
         }
