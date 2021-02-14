@@ -144,15 +144,6 @@ private fun ParameterHolder.scenariosSeedOption() =
         metavar = "<int>"
     ).int()
 
-private fun ParameterHolder.solverNameOption() =
-    option(
-        "--solver",
-        help = "SAT solver"
-    ).choice(
-        "minisat",
-        "glucose"
-    )
-
 private class RandomExperimentInputOutputOptions : OptionGroup(INPUT_OUTPUT_OPTIONS) {
     val method: String? by methodOption()
     val outDir: File by outDirOption()
