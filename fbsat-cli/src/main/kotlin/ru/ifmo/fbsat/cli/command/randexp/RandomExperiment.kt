@@ -16,12 +16,20 @@ import com.github.ajalt.clikt.parameters.types.int
 import com.github.lipen.satlib.solver.GlucoseSolver
 import com.github.lipen.satlib.solver.MiniSatSolver
 import com.github.lipen.satlib.solver.Solver
-import com.soywiz.klock.DateTime
 import com.soywiz.klock.PerformanceCounter
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
+import okio.buffer
+import okio.sink
 import ru.ifmo.fbsat.cli.command.infer.options.AUTOMATON_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.INPUT_OUTPUT_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.SolverOptions
@@ -30,14 +38,17 @@ import ru.ifmo.fbsat.cli.command.infer.options.maxGuardSizeOption
 import ru.ifmo.fbsat.cli.command.infer.options.maxPlateauWidthOption
 import ru.ifmo.fbsat.cli.command.infer.options.numberOfStatesOption
 import ru.ifmo.fbsat.cli.command.infer.options.outDirOption
-import ru.ifmo.fbsat.cli.command.random.FileAsStringSerializer
-import ru.ifmo.fbsat.cli.command.random.generateRandomScenario
-import ru.ifmo.fbsat.cli.command.random.newRandomAutomaton
 import ru.ifmo.fbsat.core.automaton.Automaton
+import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
+import ru.ifmo.fbsat.core.automaton.BooleanExpressionGuard
 import ru.ifmo.fbsat.core.automaton.algorithmModule
 import ru.ifmo.fbsat.core.automaton.guardModule
+import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
+import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
@@ -48,9 +59,13 @@ import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
+import ru.ifmo.fbsat.core.utils.generateRandomBooleanExpression
+import ru.ifmo.fbsat.core.utils.randomBinaryString
 import ru.ifmo.fbsat.core.utils.scope
 import ru.ifmo.fbsat.core.utils.timeSince
+import ru.ifmo.fbsat.core.utils.toBooleanArray
 import ru.ifmo.fbsat.core.utils.withIndex
+import ru.ifmo.fbsat.core.utils.write
 import java.io.File
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -65,6 +80,19 @@ private val module = SerializersModule {
 private val myJson = Json {
     serializersModule = module
     prettyPrint = true
+}
+
+private object FileAsStringSerializer : KSerializer<File> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("File", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: File) {
+        encoder.encodeString(value.path)
+    }
+
+    override fun deserialize(decoder: Decoder): File {
+        return File(decoder.decodeString())
+    }
 }
 
 private fun ParameterHolder.numberOfInputVariablesOption() =
@@ -302,6 +330,98 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
             // inferredAutomaton.dump(outDir, name = "inferred-automaton")
         }
     }
+}
+
+fun newRandomAutomaton(
+    C: Int,
+    P: Int,
+    I: Int,
+    O: Int,
+    X: Int,
+    Z: Int,
+    random: Random = Random,
+): Automaton {
+    logger.debug { "Generating random automaton with C=$C, P=$P, I=$I, O=$O, X=$X, Z=$Z..." }
+    val inputEvents = if (I == 1) {
+        listOf(InputEvent("REQ"))
+    } else {
+        (1..I).map { InputEvent("I$it") }
+    }
+    val outputEvents = if (O == 1) {
+        listOf(OutputEvent("CNF"))
+    } else {
+        (1..O).map { OutputEvent("O$it") }
+    }
+    val inputNames = if (X == 1) {
+        listOf("x")
+    } else {
+        (1..X).map { "x$it" }
+    }
+    val outputNames = if (Z == 1) {
+        listOf("z")
+    } else {
+        (1..Z).map { "z$it" }
+    }
+    val automaton = Automaton(inputEvents, outputEvents, inputNames, outputNames)
+
+    for (c in 1..C) {
+        val outputEvent = outputEvents.random(random)
+        val algorithm = BinaryAlgorithm(
+            randomBinaryString(Z, random = random).toBooleanArray(),
+            randomBinaryString(Z, random = random).toBooleanArray()
+        )
+        automaton.addState(c, outputEvent, algorithm)
+    }
+
+    for (a in 1..C) {
+        for (b in 1..C) {
+            // No loops
+            if (a == b) continue
+
+            val inputEvent = inputEvents.random(random)
+            // val allInputs = (0 until 2.pow(X)).map { f ->
+            //     InputValues(f.toString(2).padStart(X, '0'))
+            // }
+            // val truthTable: Map<InputValues, Boolean> = allInputs.associateWith {
+            //     random.nextBoolean()
+            // }
+            // val guard = TruthTableGuard(truthTable)
+            val expr = generateRandomBooleanExpression(P, inputNames, random)
+            val guard = BooleanExpressionGuard(expr)
+            automaton.addTransition(a, b, inputEvent, guard)
+        }
+    }
+
+    return automaton
+}
+
+fun Automaton.randomWalk(random: Random = Random): Sequence<Automaton.EvalResult> {
+    val inputActions = sequence {
+        while (true) {
+            yield(InputAction(
+                event = inputEvents.random(random),
+                values = InputValues(randomBinaryString(inputNames.size, random = random))
+            ))
+        }
+    }
+    // for ((inputAction, evalResult) in inputActions.zip(eval(inputActions))) {
+    //     yield(ScenarioElement(inputAction, evalResult.outputAction))
+    // }
+    return eval(inputActions)
+}
+
+fun Automaton.generateRandomScenario(length: Int, random: Random = Random): PositiveScenario {
+    // logger.debug { "Generating random scenario of length $length..." }
+    Globals.INITIAL_OUTPUT_VALUES = OutputValues.zeros(outputNames.size)
+    val elements = randomWalk(random)
+        .take(length)
+        .map {
+            ScenarioElement(
+                inputAction = it.inputAction,
+                outputAction = it.outputAction
+            )
+        }
+    return PositiveScenario(elements.toList())
 }
 
 @Serializable
@@ -632,12 +752,18 @@ fun main() {
     Globals.IS_DEBUG = true
 
     scope {
-        val C = 8 // number of states
+        // val C = 8 // number of states
+        // val P = 5 // max guard size
+        // val I = 1 // number of input events
+        // val O = 1 // number of output events
+        // val X = 5 // number of input variables
+        // val Z = 7 // number of output variables
+        val C = 5 // number of states
         val P = 5 // max guard size
         val I = 1 // number of input events
         val O = 1 // number of output events
-        val X = 5 // number of input variables
-        val Z = 7 // number of output variables
+        val X = 3 // number of input variables
+        val Z = 2 // number of output variables
 
         // Sets:
         //  10x50
@@ -650,7 +776,8 @@ fun main() {
         // val method = InferenceMethod.BasicMin
         val method = InferenceMethod.ExtendedMin(P = P)
 
-        val outDir = File("out/${DateTime.nowLocal().format("yyyy-MM-dd_HH-mm-ss")}")
+        // val outDir = File("out/${DateTime.nowLocal().format("yyyy-MM-dd_HH-mm-ss")}")
+        val outDir = File("out/randexp")
 
         val dataSeed = 1
         val scenariosSeed = 1
@@ -668,6 +795,12 @@ fun main() {
             )
         )
 
+        outDir.mkdirs()
+        val dataFile = outDir.resolve("data.json")
+        dataFile.sink().buffer().use {
+            it.write(myJson.encodeToString(data))
+        }
+
         val inferenceParams = InferenceParams(
             scenariosParams = ScenariosParams(
                 n = n,
@@ -682,7 +815,15 @@ fun main() {
             outDir = outDir
         )
 
-        runExperiment(data, inferenceParams)
+        val result = runExperiment(data, inferenceParams)
+
+        if (result != null) {
+            outDir.mkdirs()
+            val resultFile = outDir.resolve("result.json")
+            resultFile.sink().buffer().use {
+                it.write(myJson.encodeToString(result))
+            }
+        }
     }
 
     logger.info("All done in %.3f s".format(timeSince(timeStart).seconds))

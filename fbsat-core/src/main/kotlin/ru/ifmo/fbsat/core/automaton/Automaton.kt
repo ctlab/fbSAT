@@ -10,7 +10,6 @@ import com.github.lipen.satlib.core.Model
 import com.soywiz.klock.DateTime
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
@@ -44,6 +43,7 @@ private val logger = MyLogger {}
 
 @Serializable
 data class AutomatonStats(
+    val hash: Int,
     val C: Int,
     val K: Int,
     val P: Int,
@@ -53,8 +53,13 @@ data class AutomatonStats(
     val O: Int,
     val X: Int,
     val Z: Int,
+    val inputEvents: List<InputEvent>,
+    val outputEvents: List<OutputEvent>,
+    val inputNames: List<String>,
+    val outputNames: List<String>,
 ) {
     constructor(automaton: Automaton) : this(
+        hash = automaton.calculateHashCode(),
         C = automaton.numberOfStates,
         K = automaton.maxOutgoingTransitions,
         P = automaton.maxGuardSize,
@@ -64,16 +69,17 @@ data class AutomatonStats(
         O = automaton.outputEvents.size,
         X = automaton.inputNames.size,
         Z = automaton.outputNames.size,
+        inputEvents = automaton.inputEvents,
+        outputEvents = automaton.outputEvents,
+        inputNames = automaton.inputNames,
+        outputNames = automaton.outputNames
     )
 }
 
 @Serializable
-data class AutomatonSurrogate(
+private class AutomatonSurrogate private constructor(
+    val stats: AutomatonStats,
     val states: List<State>,
-    val inputEvents: List<InputEvent>,
-    val outputEvents: List<OutputEvent>,
-    val inputNames: List<String>,
-    val outputNames: List<String>,
 ) {
     @Serializable
     data class State(
@@ -88,106 +94,24 @@ data class AutomatonSurrogate(
         val source: Int,
         val destination: Int,
         val inputEvent: InputEvent?,
-        var guard: Guard,
+        val guard: Guard,
     )
 
-    @Transient
-    val transitions: List<Transition> = states.flatMap { it.transitions }
-
-    val stats: AutomatonStats = AutomatonStats(
-        C = states.size,
-        K = states.maxOfOrNull { it.transitions.size } ?: 0,
-        P = transitions.maxOfOrNull { it.guard.size } ?: 0,
-        T = transitions.size,
-        N = transitions.sumOf { it.guard.size },
-        I = inputEvents.size,
-        O = outputEvents.size,
-        X = inputNames.size,
-        Z = outputNames.size,
-    )
-
-    // val numberOfStates: Int = states.size
-    // val numberOfTransitions: Int = transitions.size
-    // val maxOutgoingTransitions: Int = states.maxOfOrNull { it.transitions.size } ?: 0
-    // val maxGuardSize: Int = transitions.maxOfOrNull { it.guard.size } ?: 0
-
-    val hash: Int = run {
-        val codeOutputEvents =
-            states.map {
-                if (it.outputEvent != null) outputEvents.indexOf(it.outputEvent) + 1 else 0
-            }
-        val codeAlgorithms =
-            states.map {
-                with(it.algorithm as BinaryAlgorithm) {
-                    algorithm0.toBinaryString().toInt(2) + algorithm1.toBinaryString().toInt(2)
-                }
-            }
-        val codeTransitionDestination =
-            transitions.map {
-                it.destination
-            }
-        val codeTransitionEvents =
-            transitions.map {
-                if (it.inputEvent != null) inputEvents.indexOf(it.inputEvent) + 1 else 0
-            }
-        val codeTransitionGuards =
-            transitions.flatMap {
-                it.guard.truthTableString(inputNames)
-                    .windowed(8, step = 8, partialWindows = true)
-                    .map { s -> s.toInt(2) }
-            }
-        (codeOutputEvents +
-            codeAlgorithms +
-            codeTransitionDestination +
-            codeTransitionEvents +
-            codeTransitionGuards)
-            .fold(0) { acc, i ->
-                (31 * acc + i).rem(1_000_000)
-            }
-    }
-}
-
-object AutomatonSerializer : KSerializer<Automaton> {
-    override val descriptor: SerialDescriptor = AutomatonSurrogate.serializer().descriptor
-
-    override fun serialize(encoder: Encoder, value: Automaton) {
-        val states: List<AutomatonSurrogate.State> = value.states.map { s ->
-            AutomatonSurrogate.State(
-                id = s.id,
-                outputEvent = s.outputEvent,
-                algorithm = s.algorithm,
-                transitions = s.transitions.map { t ->
-                    AutomatonSurrogate.Transition(
-                        source = t.source.id,
-                        destination = t.destination.id,
-                        inputEvent = t.inputEvent,
-                        guard = t.guard
-                    )
-                }
-            )
-        }
-        val surrogate = AutomatonSurrogate(
-            states, value.inputEvents, value.outputEvents, value.inputNames, value.outputNames
-        )
-        encoder.encodeSerializableValue(serializer(), surrogate)
-    }
-
-    override fun deserialize(decoder: Decoder): Automaton {
-        val surrogate: AutomatonSurrogate = decoder.decodeSerializableValue(serializer())
+    fun toAutomaton(): Automaton {
         val automaton = Automaton(
-            inputEvents = surrogate.inputEvents,
-            outputEvents = surrogate.outputEvents,
-            inputNames = surrogate.inputNames,
-            outputNames = surrogate.outputNames
+            inputEvents = stats.inputEvents,
+            outputEvents = stats.outputEvents,
+            inputNames = stats.inputNames,
+            outputNames = stats.outputNames
         )
-        for (state in surrogate.states) {
+        for (state in states) {
             automaton.addState(
                 id = state.id,
                 outputEvent = state.outputEvent,
                 algorithm = state.algorithm
             )
         }
-        for (state in surrogate.states) {
+        for (state in states) {
             for (transition in state.transitions) {
                 automaton.addTransition(
                     sourceId = transition.source,
@@ -198,6 +122,95 @@ object AutomatonSerializer : KSerializer<Automaton> {
             }
         }
         return automaton
+    }
+
+    companion object {
+        fun from(automaton: Automaton): AutomatonSurrogate {
+            val states = automaton.states.map { s ->
+                State(
+                    id = s.id,
+                    outputEvent = s.outputEvent,
+                    algorithm = s.algorithm,
+                    transitions = s.transitions.map { t ->
+                        Transition(
+                            source = t.source.id,
+                            destination = t.destination.id,
+                            inputEvent = t.inputEvent,
+                            guard = t.guard
+                        )
+                    }
+                )
+            }
+            val transitions = states.flatMap { it.transitions }
+            val hash = run {
+                val codeOutputEvents =
+                    states.map {
+                        if (it.outputEvent != null) automaton.outputEvents.indexOf(it.outputEvent) + 1 else 0
+                    }
+                val codeAlgorithms =
+                    states.map {
+                        with(it.algorithm as BinaryAlgorithm) {
+                            algorithm0.toBinaryString().toInt(2) + algorithm1.toBinaryString().toInt(2)
+                        }
+                    }
+                val codeTransitionDestination =
+                    transitions.map {
+                        it.destination
+                    }
+                val codeTransitionEvents =
+                    transitions.map {
+                        if (it.inputEvent != null) automaton.inputEvents.indexOf(it.inputEvent) + 1 else 0
+                    }
+                val codeTransitionGuards =
+                    transitions.flatMap {
+                        it.guard.truthTableString(automaton.inputNames)
+                            .windowed(8, step = 8, partialWindows = true)
+                            .map { s -> s.toInt(2) }
+                    }
+                (codeOutputEvents +
+                    codeAlgorithms +
+                    codeTransitionDestination +
+                    codeTransitionEvents +
+                    codeTransitionGuards)
+                    .fold(0) { acc, i ->
+                        (31 * acc + i).rem(1_000_000)
+                    }
+            }
+            val stats = AutomatonStats(
+                hash = hash,
+                C = states.size,
+                K = states.maxOfOrNull { it.transitions.size } ?: 0,
+                P = transitions.maxOfOrNull { it.guard.size } ?: 0,
+                T = transitions.size,
+                N = transitions.sumOf { it.guard.size },
+                I = automaton.inputEvents.size,
+                O = automaton.outputEvents.size,
+                X = automaton.inputNames.size,
+                Z = automaton.outputNames.size,
+                inputEvents = automaton.inputEvents,
+                outputEvents = automaton.outputEvents,
+                inputNames = automaton.inputNames,
+                outputNames = automaton.outputNames
+            )
+            return AutomatonSurrogate(
+                stats = stats,
+                states = states
+            )
+        }
+    }
+}
+
+object AutomatonSerializer : KSerializer<Automaton> {
+    override val descriptor: SerialDescriptor = AutomatonSurrogate.serializer().descriptor
+
+    override fun serialize(encoder: Encoder, value: Automaton) {
+        val surrogate = AutomatonSurrogate.from(value)
+        encoder.encodeSerializableValue(serializer(), surrogate)
+    }
+
+    override fun deserialize(decoder: Decoder): Automaton {
+        val surrogate: AutomatonSurrogate = decoder.decodeSerializableValue(serializer())
+        return surrogate.toAutomaton()
     }
 }
 
