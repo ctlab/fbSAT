@@ -165,7 +165,7 @@ private class RandomExperimentAutomatonOptions : OptionGroup(AUTOMATON_OPTIONS) 
 }
 
 // Example usage:
-//  fbsat randexp -C 4 -X 3 -Z 2 --automaton-seed 1 --method extended-min -P 5 -n 10 -k 50 --scenarios-seed 1 --glucose --solver-seed 1 --solver-rnd-freq 0.1 --solver-rnd-pol --solver-rnd-init --debug
+//  fbsat randexp -C 4 -X 3 -Z 2 --automaton-seed 1 --method extended-min -P 5 -n 10 -k 50 --scenarios-seed 1 --glucose --solver-seed 1 --solver-rnd-freq 0.1 --solver-rnd-pol --solver-rnd-init --outdir out/randexp --debug
 
 class RandomExperimentCommand : CliktCommand(name = "randexp") {
     private val io by RandomExperimentInputOutputOptions()
