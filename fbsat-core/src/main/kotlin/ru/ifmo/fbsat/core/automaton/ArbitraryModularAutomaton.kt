@@ -613,7 +613,7 @@ fun buildExtendedArbitraryModularAutomaton(
             transitionDestination = { c, k -> transitionDestination[c, k] },
             transitionInputEvent = { _, _ -> InputEvent("REQ") },
             transitionGuard = { c, k ->
-                ParseTreeGuard(
+                BooleanExpressionGuard.from(
                     nodeType = MultiArray.new(P) { (p) -> nodeType[c, k, p] },
                     terminal = MultiArray.new(P) { (p) -> nodeInputVariable[c, k, p] },
                     parent = MultiArray.new(P) { (p) -> nodeParent[c, k, p] },

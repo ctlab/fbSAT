@@ -10,6 +10,7 @@ import com.github.lipen.satlib.core.Model
 import com.soywiz.klock.DateTime
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
@@ -42,6 +43,31 @@ import java.io.File
 private val logger = MyLogger {}
 
 @Serializable
+data class AutomatonStats(
+    val C: Int,
+    val K: Int,
+    val P: Int,
+    val T: Int,
+    val N: Int,
+    val I: Int,
+    val O: Int,
+    val X: Int,
+    val Z: Int,
+) {
+    constructor(automaton: Automaton) : this(
+        C = automaton.numberOfStates,
+        K = automaton.maxOutgoingTransitions,
+        P = automaton.maxGuardSize,
+        T = automaton.numberOfTransitions,
+        N = automaton.totalGuardsSize,
+        I = automaton.inputEvents.size,
+        O = automaton.outputEvents.size,
+        X = automaton.inputNames.size,
+        Z = automaton.outputNames.size,
+    )
+}
+
+@Serializable
 data class AutomatonSurrogate(
     val states: List<State>,
     val inputEvents: List<InputEvent>,
@@ -64,6 +90,61 @@ data class AutomatonSurrogate(
         val inputEvent: InputEvent?,
         var guard: Guard,
     )
+
+    @Transient
+    val transitions: List<Transition> = states.flatMap { it.transitions }
+
+    val stats: AutomatonStats = AutomatonStats(
+        C = states.size,
+        K = states.maxOfOrNull { it.transitions.size } ?: 0,
+        P = transitions.maxOfOrNull { it.guard.size } ?: 0,
+        T = transitions.size,
+        N = transitions.sumOf { it.guard.size },
+        I = inputEvents.size,
+        O = outputEvents.size,
+        X = inputNames.size,
+        Z = outputNames.size,
+    )
+
+    // val numberOfStates: Int = states.size
+    // val numberOfTransitions: Int = transitions.size
+    // val maxOutgoingTransitions: Int = states.maxOfOrNull { it.transitions.size } ?: 0
+    // val maxGuardSize: Int = transitions.maxOfOrNull { it.guard.size } ?: 0
+
+    val hash: Int = run {
+        val codeOutputEvents =
+            states.map {
+                if (it.outputEvent != null) outputEvents.indexOf(it.outputEvent) + 1 else 0
+            }
+        val codeAlgorithms =
+            states.map {
+                with(it.algorithm as BinaryAlgorithm) {
+                    algorithm0.toBinaryString().toInt(2) + algorithm1.toBinaryString().toInt(2)
+                }
+            }
+        val codeTransitionDestination =
+            transitions.map {
+                it.destination
+            }
+        val codeTransitionEvents =
+            transitions.map {
+                if (it.inputEvent != null) inputEvents.indexOf(it.inputEvent) + 1 else 0
+            }
+        val codeTransitionGuards =
+            transitions.flatMap {
+                it.guard.truthTableString(inputNames)
+                    .windowed(8, step = 8, partialWindows = true)
+                    .map { s -> s.toInt(2) }
+            }
+        (codeOutputEvents +
+            codeAlgorithms +
+            codeTransitionDestination +
+            codeTransitionEvents +
+            codeTransitionGuards)
+            .fold(0) { acc, i ->
+                (31 * acc + i).rem(1_000_000)
+            }
+    }
 }
 
 object AutomatonSerializer : KSerializer<Automaton> {
@@ -554,7 +635,7 @@ class Automaton(
             }
         val codeTransitionGuards =
             transitions.flatMap {
-                it.guard.truthTableString
+                it.guard.truthTableString(inputNames)
                     .windowed(8, step = 8, partialWindows = true)
                     .map { s -> s.toInt(2) }
             }
@@ -993,7 +1074,7 @@ fun buildExtendedAutomaton(
             scenarioTree.inputEvents[transitionInputEvent[c, k] - 1]
         },
         transitionGuard = { c, k ->
-            ParseTreeGuard(
+            BooleanExpressionGuard.from(
                 nodeType = MultiArray.new(P) { (p) -> nodeType[c, k, p] },
                 terminal = IntMultiArray.new(P) { (p) -> nodeInputVariable[c, k, p] },
                 parent = IntMultiArray.new(P) { (p) -> nodeParent[c, k, p] },

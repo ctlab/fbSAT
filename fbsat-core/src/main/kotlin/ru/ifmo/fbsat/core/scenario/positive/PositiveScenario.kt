@@ -1,6 +1,10 @@
 package ru.ifmo.fbsat.core.scenario.positive
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import okio.buffer
+import okio.source
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.InputValues
@@ -25,6 +29,11 @@ data class PositiveScenario(
     override val elements: List<ScenarioElement>,
 ) : Scenario {
     companion object {
+        fun fromJsonFile(file: File): List<PositiveScenario> {
+            val s = file.source().buffer().use { it.readUtf8() }
+            return Json.decodeFromString(s)
+        }
+
         fun fromFile(file: File, preprocess: Boolean = true): List<PositiveScenario> {
             return file.sourceAutoGzip().useLines { lines ->
                 val scenarios: MutableList<PositiveScenario> = mutableListOf()

@@ -36,6 +36,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isEncodeDisjunctiveTransitions: Boolean by isEncodeDisjunctiveTransitionsOption()
     val isReuseK: Boolean by isReuseKOption()
     val isUseAssumptions: Boolean by isUseAssumptionsOption()
+    val isDumpCnf: Boolean by isDumpCnfOption()
     val isDumpVarsInCnf: Boolean by isDumpVarsInCnfOption()
     val isDebug: Boolean by isDebugOption()
 }
@@ -206,6 +207,16 @@ fun ParameterHolder.isUseAssumptionsOption() =
         "--no-use-assumptions",
         default = Globals.IS_USE_ASSUMPTIONS
     )
+
+fun ParameterHolder.isDumpCnfOption() =
+    option(
+        "--dump-cnf",
+        help = "Dump CNFs to outDir"
+    ).flag(
+        "--no-dump-cnf",
+        default = Globals.IS_DUMP_CNF
+    )
+
 
 fun ParameterHolder.isDumpVarsInCnfOption() =
     option(

@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.cli.command.infer
 
 import ru.ifmo.fbsat.core.scenario.OutputValues
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.utils.Globals
@@ -23,7 +24,13 @@ abstract class AbstractInferCommandWithSetup<AutomatonType : Any>(name: String) 
         check(outDir.exists()) { "Output directory does not exist" }
 
         Globals.INITIAL_OUTPUT_VALUES = extraOptions.initialOutputValues ?: OutputValues.zeros(outputNames.size)
-        scenarioTree = PositiveScenarioTree.fromFile(scenariosFile, inputNames, outputNames)
+        val scenarios = if (scenariosFile.extension == "json") {
+            PositiveScenario.fromJsonFile(scenariosFile)
+        } else {
+            PositiveScenario.fromFile(scenariosFile)
+        }
+        // outDir.resolve("scenarios.json").writeText(Json { prettyPrint = true }.encodeToString(scenarios))
+        scenarioTree = PositiveScenarioTree.fromScenarios(scenarios, inputNames, outputNames)
         scenarioTree.printStats()
 
         inferrer = Inferrer(solverOptions.solver, outDir)

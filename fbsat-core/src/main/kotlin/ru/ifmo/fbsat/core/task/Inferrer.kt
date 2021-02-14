@@ -14,7 +14,7 @@ class Inferrer(
     // val context: SolverContext get() = solver.context
 
     init {
-        logger.info("Inferrer created with solver = $solver, outDir = $outDir")
+        logger.debug { "Inferrer created with solver = $solver, outDir = '$outDir'" }
     }
 
     fun reset() {

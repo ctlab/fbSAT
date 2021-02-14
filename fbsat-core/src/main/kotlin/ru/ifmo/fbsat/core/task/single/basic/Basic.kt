@@ -1,15 +1,20 @@
-@file:JvmName("BasicTaskKt")
-
 package ru.ifmo.fbsat.core.task.single.basic
 
+import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.buildBasicAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.isSupportStats
+import ru.ifmo.fbsat.core.solver.numberOfConflicts
+import ru.ifmo.fbsat.core.solver.numberOfDecisions
+import ru.ifmo.fbsat.core.solver.numberOfPropagations
 import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeT
+import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
+import ru.ifmo.fbsat.core.utils.timeSince
 
 private val logger = MyLogger {}
 
@@ -20,6 +25,7 @@ fun Inferrer.basic(
     maxTransitions: Int? = null, // T, unconstrained if null
     isEncodeReverseImplication: Boolean = true,
 ): Automaton? {
+    // val timeStart = PerformanceCounter.reference
     reset()
     declare(
         BasicTask(
@@ -30,7 +36,17 @@ fun Inferrer.basic(
             isEncodeReverseImplication = isEncodeReverseImplication
         )
     )
-    return inferBasic()
+    val automaton = inferBasic()
+    // logger.info("Task basic done in %.2f s".format(timeSince(timeStart).seconds))
+    // if (solver.isSupportStats()) {
+    //     logger.debug("Propagations: ${solver.numberOfPropagations()}")
+    //     logger.debug("Conflicts: ${solver.numberOfConflicts()}")
+    //     logger.debug("Decisions: ${solver.numberOfDecisions()}")
+    // }
+    if (Globals.IS_DUMP_CNF) {
+        solver.dumpDimacs(outDir.resolve("cnf_basic_C${numberOfStates}_K${maxOutgoingTransitions}_T${maxTransitions}.cnf"))
+    }
+    return automaton
 }
 
 // TODO: return nullable Automaton instead of checking here.
@@ -51,11 +67,21 @@ fun Inferrer.basicMinC(
         }
         if (result != null) {
             logger.info("BasicMin: C = $C -> SAT in %.3f s.".format(runningTime.seconds))
+            if (solver.isSupportStats()) {
+                logger.debug("Propagations: ${solver.numberOfPropagations()}")
+                logger.debug("Conflicts: ${solver.numberOfConflicts()}")
+                logger.debug("Decisions: ${solver.numberOfDecisions()}")
+            }
             logger.info("BasicMin: minimal C = $C")
             best = result
             break
         } else {
             logger.info("BasicMin: C = $C -> UNSAT in %.3f s.".format(runningTime.seconds))
+            if (solver.isSupportStats()) {
+                logger.debug("Propagations: ${solver.numberOfPropagations()}")
+                logger.debug("Conflicts: ${solver.numberOfConflicts()}")
+                logger.debug("Decisions: ${solver.numberOfDecisions()}")
+            }
         }
     }
     return checkNotNull(best) { "BasicMin: automaton not found." }
@@ -67,13 +93,24 @@ fun Inferrer.basicMin(
     end: Int = 20, // C_end
     isEncodeReverseImplication: Boolean = true,
 ): Automaton? {
+    val timeStart = PerformanceCounter.reference
     basicMinC(
         scenarioTree = scenarioTree,
         start = start,
         end = end,
         isEncodeReverseImplication = isEncodeReverseImplication
     )
-    return optimizeT()
+    val automaton = optimizeT()
+    logger.info("Task basic-min done in %.2f s".format(timeSince(timeStart).seconds))
+    if (solver.isSupportStats()) {
+        logger.debug("Propagations: ${solver.numberOfPropagations()}")
+        logger.debug("Conflicts: ${solver.numberOfConflicts()}")
+        logger.debug("Decisions: ${solver.numberOfDecisions()}")
+    }
+    if (Globals.IS_DUMP_CNF) {
+        solver.dumpDimacs(outDir.resolve("cnf_basic-min.cnf"))
+    }
+    return automaton
 }
 
 fun Inferrer.inferBasic(): Automaton? {

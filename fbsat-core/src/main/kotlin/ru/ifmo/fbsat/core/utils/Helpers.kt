@@ -16,9 +16,6 @@ import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import java.io.File
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.InvocationKind
-import kotlin.contracts.contract
 import kotlin.math.pow
 import kotlin.random.Random
 
@@ -132,6 +129,11 @@ fun File.sourceAutoGzip(): Source =
  * Forcibly get value from map.
  */
 fun <K, V, T> Map<K, V>.getForce(key: K): T {
+    @Suppress("UNCHECKED_CAST")
+    return this[key] as T
+}
+
+fun <T> Map<String, Any?>.getForce(key: String): T {
     @Suppress("UNCHECKED_CAST")
     return this[key] as T
 }

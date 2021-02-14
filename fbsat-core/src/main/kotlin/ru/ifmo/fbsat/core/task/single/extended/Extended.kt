@@ -1,8 +1,13 @@
 package ru.ifmo.fbsat.core.task.single.extended
 
+import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.buildExtendedAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.isSupportStats
+import ru.ifmo.fbsat.core.solver.numberOfConflicts
+import ru.ifmo.fbsat.core.solver.numberOfDecisions
+import ru.ifmo.fbsat.core.solver.numberOfPropagations
 import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeN
@@ -10,7 +15,9 @@ import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.task.single.basic.basic
 import ru.ifmo.fbsat.core.task.single.basic.basicMin
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
+import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
+import ru.ifmo.fbsat.core.utils.timeSince
 
 private val logger = MyLogger {}
 
@@ -23,6 +30,7 @@ fun Inferrer.extended(
     maxTotalGuardsSize: Int? = null, // N, unconstrained if null
     isEncodeReverseImplication: Boolean = true,
 ): Automaton? {
+    // val timeStart = PerformanceCounter.reference
     reset()
     declare(
         BasicTask(
@@ -39,7 +47,17 @@ fun Inferrer.extended(
             maxTotalGuardsSize = maxTotalGuardsSize
         )
     )
-    return inferExtended()
+    val automaton = inferExtended()
+    // logger.info("Task extended done in %.2f s".format(timeSince(timeStart).seconds))
+    // if (solver.isSupportStats()) {
+    //     logger.debug("Propagations: ${solver.numberOfPropagations()}")
+    //     logger.debug("Conflicts: ${solver.numberOfConflicts()}")
+    //     logger.debug("Decisions: ${solver.numberOfDecisions()}")
+    // }
+    if (Globals.IS_DUMP_CNF) {
+        solver.dumpDimacs(outDir.resolve("cnf_extended_C${numberOfStates}_K${maxOutgoingTransitions}_P${maxGuardSize}_T${maxTransitions}_N${maxTotalGuardsSize}.cnf"))
+    }
+    return automaton
 }
 
 fun Inferrer.extendedMin(
@@ -47,9 +65,20 @@ fun Inferrer.extendedMin(
     numberOfStates: Int? = null, // C_start
     maxGuardSize: Int, // P
 ): Automaton? {
+    val timeStart = PerformanceCounter.reference
     basicMinC(scenarioTree, start = numberOfStates ?: 1) // ?: return null
     declare(ExtendedTask(maxGuardSize = maxGuardSize))
-    return optimizeN()
+    val automaton = optimizeN()
+    logger.info("Task extended-min done in %.2f s".format(timeSince(timeStart).seconds))
+    if (solver.isSupportStats()) {
+        logger.debug("Propagations: ${solver.numberOfPropagations()}")
+        logger.debug("Conflicts: ${solver.numberOfConflicts()}")
+        logger.debug("Decisions: ${solver.numberOfDecisions()}")
+    }
+    if (Globals.IS_DUMP_CNF) {
+        solver.dumpDimacs(outDir.resolve("cnf_extended-min_P${maxGuardSize}.cnf"))
+    }
+    return automaton
 }
 
 @Suppress("LocalVariableName")
@@ -63,6 +92,8 @@ fun Inferrer.extendedMinUB(
     require(start >= 1)
     require(end >= 1)
     require(start <= end)
+
+    val timeStart = PerformanceCounter.reference
 
     val basicAutomaton =
         if (numberOfStates != null) {
@@ -99,6 +130,16 @@ fun Inferrer.extendedMinUB(
             Plow = P
             N = automaton.totalGuardsSize - 1
         }
+    }
+
+    logger.info("Task extended-min-ub done in %.2f s".format(timeSince(timeStart).seconds))
+    if (solver.isSupportStats()) {
+        logger.debug("Propagations: ${solver.numberOfPropagations()}")
+        logger.debug("Conflicts: ${solver.numberOfConflicts()}")
+        logger.debug("Decisions: ${solver.numberOfDecisions()}")
+    }
+    if (Globals.IS_DUMP_CNF) {
+        solver.dumpDimacs(outDir.resolve("cnf_extended-min-ub_w${maxPlateauWidth}.cnf"))
     }
 
     return best

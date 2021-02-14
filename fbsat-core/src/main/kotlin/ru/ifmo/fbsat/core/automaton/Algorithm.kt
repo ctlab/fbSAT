@@ -1,15 +1,22 @@
 package ru.ifmo.fbsat.core.automaton
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.encoding.decodeStructure
+import kotlinx.serialization.encoding.encodeStructure
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
-import kotlinx.serialization.serializer
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.toBooleanArray
@@ -27,22 +34,43 @@ interface Algorithm {
 }
 
 object BinaryAlgorithmSerializer : KSerializer<BinaryAlgorithm> {
-    override val descriptor: SerialDescriptor = serializer<Pair<String, String>>().descriptor
+    override val descriptor: SerialDescriptor =
+        buildClassSerialDescriptor("BinaryAlgorithm") {
+            element<String>("algorithm0")
+            element<String>("algorithm1")
+        }
 
     override fun serialize(encoder: Encoder, value: BinaryAlgorithm) {
         val a0 = value.algorithm0.toBinaryString()
         val a1 = value.algorithm1.toBinaryString()
-        encoder.encodeSerializableValue(serializer(), Pair(a0, a1))
+        encoder.encodeStructure(descriptor) {
+            encodeStringElement(descriptor, 0, a0)
+            encodeStringElement(descriptor, 1, a1)
+        }
     }
 
+    @ExperimentalSerializationApi
     override fun deserialize(decoder: Decoder): BinaryAlgorithm {
-        val (a0, a1) = decoder.decodeSerializableValue<Pair<String, String>>(serializer())
-        return BinaryAlgorithm(a0, a1)
+        return decoder.decodeStructure(descriptor) {
+            lateinit var a0: String
+            lateinit var a1: String
+            if (decodeSequentially()) {
+                a0 = decodeStringElement(descriptor, 0)
+                a1 = decodeStringElement(descriptor, 1)
+            } else while (true) {
+                when (val index = decodeElementIndex(descriptor)) {
+                    0 -> a0 = decodeStringElement(descriptor, 0)
+                    1 -> a1 = decodeStringElement(descriptor, 1)
+                    CompositeDecoder.DECODE_DONE -> break
+                    else -> error("Unexpected index: $index")
+                }
+            }
+            BinaryAlgorithm(a0, a1)
+        }
     }
 }
 
 @Serializable(with = BinaryAlgorithmSerializer::class)
-@SerialName("BinaryAlgorithm")
 class BinaryAlgorithm(val algorithm0: BooleanArray, val algorithm1: BooleanArray) : Algorithm {
     constructor(algorithm0: Collection<Boolean>, algorithm1: Collection<Boolean>) :
         this(algorithm0.toBooleanArray(), algorithm1.toBooleanArray())
@@ -86,4 +114,23 @@ class BinaryAlgorithm(val algorithm0: BooleanArray, val algorithm1: BooleanArray
     override fun toString(): String {
         return "BinaryAlgorithm(${this.toSimpleString()})"
     }
+}
+
+fun main() {
+    val format = Json {
+        serializersModule = SerializersModule {
+            include(algorithmModule)
+            include(guardModule)
+        }
+        prettyPrint = true
+    }
+
+    val a0 = "0101"
+    val a1 = "1110"
+    val a: Algorithm = BinaryAlgorithm(a0, a1)
+    println("a = $a")
+    val s = format.encodeToString(a)
+    println("s = $s")
+    val b: Algorithm = format.decodeFromString(s)
+    println("b = $b")
 }

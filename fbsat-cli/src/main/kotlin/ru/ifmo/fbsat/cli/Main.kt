@@ -8,6 +8,7 @@ import com.soywiz.klock.DateTime
 import com.soywiz.klock.measureTime
 import ru.ifmo.fbsat.cli.command.hello.HelloCommand
 import ru.ifmo.fbsat.cli.command.infer.InferCommand
+import ru.ifmo.fbsat.cli.command.randexp.RandomExperimentCommand
 import ru.ifmo.fbsat.core.utils.MyLogger
 
 private val logger = MyLogger {}
@@ -25,6 +26,7 @@ class FbSAT : NoOpCliktCommand(name = "fbsat") {
         subcommands(
             InferCommand(),
             HelloCommand(),
+            RandomExperimentCommand(),
         )
     }
 }

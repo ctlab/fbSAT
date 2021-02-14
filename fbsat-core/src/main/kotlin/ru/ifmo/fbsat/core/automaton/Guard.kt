@@ -2,19 +2,29 @@ package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.encoding.decodeStructure
+import kotlinx.serialization.encoding.encodeStructure
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import kotlinx.serialization.serializer
 import ru.ifmo.fbsat.core.scenario.InputValues
+import ru.ifmo.fbsat.core.utils.BinaryOperation
+import ru.ifmo.fbsat.core.utils.BooleanExpression
 import ru.ifmo.fbsat.core.utils.MyLogger
+import ru.ifmo.fbsat.core.utils.UnaryOperation
+import ru.ifmo.fbsat.core.utils.Variable
 import ru.ifmo.fbsat.core.utils.makeDnfString
 import ru.ifmo.fbsat.core.utils.pow
 import ru.ifmo.fbsat.core.utils.toBinaryString
@@ -29,17 +39,20 @@ val guardModule = SerializersModule {
         subclass(UnconditionalGuard::class)
         subclass(TruthTableGuard::class)
         subclass(ParseTreeGuard::class)
+        subclass(BooleanExpressionGuard::class)
     }
 }
 
 interface Guard {
     val size: Int
-    val truthTableString: String
     fun eval(inputValues: InputValues): Boolean
     fun toSimpleString(): String
     fun toGraphvizString(): String
     fun toFbtString(): String
     fun toSmvString(): String
+
+    // TODO: extract to extension method
+    fun truthTableString(inputNames: List<String>): String
 }
 
 @Serializable
@@ -51,8 +64,9 @@ class UnconditionalGuard : Guard {
             return 0
         }
 
-    @Transient
-    override val truthTableString: String = "1"
+    override fun truthTableString(inputNames: List<String>): String {
+        return "1"
+    }
 
     override fun eval(inputValues: InputValues): Boolean {
         return true
@@ -98,8 +112,12 @@ object TruthTableGuardSerializer : KSerializer<TruthTableGuard> {
 class TruthTableGuard(
     val truthTable: Map<InputValues, Boolean?>,
 ) : Guard {
-    override val truthTableString: String = truthTable.values.filterNotNull().toBinaryString()
     override val size: Int = 0
+
+    @Transient
+    private val truthTableString = truthTable.values.filterNotNull().toBinaryString()
+
+    override fun truthTableString(inputNames: List<String>): String = truthTableString
 
     override fun eval(inputValues: InputValues): Boolean {
         // return truthTable[uniqueInputs.indexOf(inputValues)] in "1x"
@@ -124,22 +142,38 @@ class TruthTableGuard(
     override fun toString(): String = "TruthTableGuard(truthTable = $truthTable)"
 }
 
-@Serializable
-class Box<T>(val value: T)
-
 object ParseTreeGuardSerializer : KSerializer<ParseTreeGuard> {
-    override val descriptor: SerialDescriptor = serializer<Box<String>>().descriptor
+    override val descriptor: SerialDescriptor =
+        buildClassSerialDescriptor("ParseTreeGuard") {
+            element<String>("expr")
+        }
 
     override fun serialize(encoder: Encoder, value: ParseTreeGuard) {
-        val box = Box(value.toSimpleString())
-        encoder.encodeSerializableValue(serializer(), box)
+        val s = value.toSimpleString()
+        encoder.encodeStructure(descriptor) {
+            encodeStringElement(descriptor, 0, s)
+        }
     }
 
+    @ExperimentalSerializationApi
     override fun deserialize(decoder: Decoder): ParseTreeGuard {
-        TODO("Deserialization of ParseTreeGuard from string")
+        return decoder.decodeStructure(descriptor) {
+            lateinit var s: String
+            if (decodeSequentially()) {
+                s = decodeStringElement(descriptor, 0)
+            } else while (true) {
+                when (val index = decodeElementIndex(descriptor)) {
+                    0 -> s = decodeStringElement(descriptor, 0)
+                    CompositeDecoder.DECODE_DONE -> break
+                    else -> error("Unexpected index: $index")
+                }
+            }
+            TODO("Create ParseTreeGuard from string")
+        }
     }
 }
 
+@Deprecated("Use BooleanExpressionGuard", ReplaceWith("BooleanExpressionGuard.from"))
 @Serializable(with = ParseTreeGuardSerializer::class)
 class ParseTreeGuard(
     nodeType: MultiArray<NodeType>,
@@ -172,8 +206,8 @@ class ParseTreeGuard(
         }
     }
 
-    override val truthTableString: String
-        get() = (0 until 2.pow(inputNames!!.size)).map { i ->
+    override fun truthTableString(inputNames: List<String>): String =
+        (0 until 2.pow(inputNames.size)).map { i ->
             eval(InputValues(i.toString(2).padStart(inputNames.size, '0').toBooleanList()))
         }.toBinaryString()
 
@@ -350,14 +384,161 @@ class ParseTreeGuard(
     }
 }
 
+fun BooleanExpression.size(): Int = when (this) {
+    is Variable -> 1
+    is UnaryOperation -> 1 + arg.size()
+    is BinaryOperation -> 1 + lhs.size() + rhs.size()
+}
+
+fun BooleanExpression.eval(inputValues: InputValues): Boolean = eval(inputValues.values)
+
+fun BooleanExpression.toSimpleString(): String = when (this) {
+    is Variable -> name
+    is UnaryOperation -> {
+        val s = arg.toSimpleString()
+        when (kind) {
+            UnaryOperation.Kind.Not -> "~$s"
+        }
+    }
+    is BinaryOperation -> {
+        val left = lhs.toSimpleString()
+        val right = rhs.toSimpleString()
+        when (kind) {
+            BinaryOperation.Kind.And -> "($left & $right)"
+            BinaryOperation.Kind.Or -> "($left | $right)"
+        }
+    }
+}
+
+fun BooleanExpression.toGraphvizString(): String = toSimpleString()
+
+fun BooleanExpression.toFbtString(): String = when (this) {
+    is Variable -> name
+    is UnaryOperation -> {
+        val s = arg.toFbtString()
+        when (kind) {
+            UnaryOperation.Kind.Not -> "NOT $s"
+        }
+    }
+    is BinaryOperation -> {
+        val left = lhs.toFbtString()
+        val right = rhs.toFbtString()
+        when (kind) {
+            BinaryOperation.Kind.And -> "($left AND $right)"
+            BinaryOperation.Kind.Or -> "($left OR $right)"
+        }
+    }
+}
+
+fun BooleanExpression.toSmvString(): String = when (this) {
+    is Variable -> name
+    is UnaryOperation -> {
+        val s = arg.toSmvString()
+        when (kind) {
+            UnaryOperation.Kind.Not -> "!$s"
+        }
+    }
+    is BinaryOperation -> {
+        val left = lhs.toSmvString()
+        val right = rhs.toSmvString()
+        when (kind) {
+            BinaryOperation.Kind.And -> "($left & $right)"
+            BinaryOperation.Kind.Or -> "($left | $right)"
+        }
+    }
+}
+
+@Serializable
+@SerialName("BooleanExpressionGuard")
+class BooleanExpressionGuard(
+    val expr: BooleanExpression,
+) : Guard {
+    override val size: Int = expr.size()
+
+    override fun truthTableString(inputNames: List<String>): String =
+        (0 until 2.pow(inputNames.size)).map { i ->
+            eval(InputValues(i.toString(2).padStart(inputNames.size, '0').toBooleanList()))
+        }.toBinaryString()
+
+    override fun eval(inputValues: InputValues): Boolean = expr.eval(inputValues)
+
+    override fun toSimpleString(): String = expr.toSimpleString()
+    override fun toGraphvizString(): String = expr.toGraphvizString()
+    override fun toFbtString(): String = expr.toFbtString()
+    override fun toSmvString(): String = expr.toSmvString()
+
+    companion object {
+        fun from(
+            nodeType: MultiArray<NodeType>,
+            terminal: IntMultiArray,
+            parent: IntMultiArray,
+            childLeft: IntMultiArray,
+            childRight: IntMultiArray,
+            inputNames: List<String>,
+        ): BooleanExpressionGuard {
+            val P = nodeType.shape.single()
+            val nodes: MutableMap<Int, BooleanExpression> = mutableMapOf()
+            for (p in P downTo 1) {
+                val node = when (val t = nodeType[p]) {
+                    NodeType.NONE -> {
+                        // TODO: maybe check(nodes.size == 0),
+                        //  because NONE-typed nodes are concentrated "in the end" of 1..P,
+                        //  so when iterating from P to 1, we should not encounter any NONE-type node
+                        //  after processing a not-NONE-typed one.
+                        null
+                    }
+                    NodeType.TERMINAL -> {
+                        val x = terminal[p]
+                        check(x > 0) { "Terminal number of TERMINAL node must be a positive number" }
+                        Variable(x - 1, inputNames[x - 1])
+                    }
+                    NodeType.AND, NodeType.OR -> {
+                        val l = childLeft[p]
+                        val r = childRight[p]
+                        check(parent[l] == p) {
+                            "Parent of left child mismatch (p=$p, parent[$l]=${parent[l]})"
+                        }
+                        check(parent[r] == p) {
+                            "Parent of right child mismatch (p=$p, parent[$r]=${parent[r]})"
+                        }
+                        val left = nodes[l]
+                            ?: error("Left child ($l) for p=$p is not created yet")
+                        val right = nodes[r]
+                            ?: error("Right child ($r) for p=$p is not created yet")
+                        val kind = when (t) {
+                            NodeType.AND -> BinaryOperation.Kind.And
+                            NodeType.OR -> BinaryOperation.Kind.Or
+                            else -> error("This should not happen")
+                        }
+                        BinaryOperation(kind, left, right)
+                    }
+                    NodeType.NOT -> {
+                        val c = childLeft[p]
+                        check(parent[c] == p) {
+                            "Parent of child mismatch (p=$p, parent[$c]=${parent[c]})"
+                        }
+                        val arg = nodes[c]
+                            ?: error("Child ($c) for p=$p is not created yet")
+                        UnaryOperation(UnaryOperation.Kind.Not, arg)
+                    }
+                }
+                if (node != null) nodes[p] = node
+            }
+            val expr = nodes[1] ?: error("Root (1) is not created yet")
+            return BooleanExpressionGuard(expr)
+        }
+    }
+}
+
 class StringGuard(val expr: String, val inputNames: List<String>) : Guard {
     private val literals = expr.splitToSequence('&').map(String::trim).toList()
 
     override val size: Int =
         2 * literals.size - 1 + literals.count { it.startsWith("!") || it.startsWith("~") }
 
-    override val truthTableString: String
-        get() = TODO()
+    override fun truthTableString(inputNames: List<String>): String {
+        TODO()
+    }
 
     override fun eval(inputValues: InputValues): Boolean {
         return literals.all {
@@ -410,8 +591,9 @@ class DnfGuard(
 
     override val size: Int = dnf.sumBy { it.size }
 
-    override val truthTableString: String
-        get() = TODO()
+    override fun truthTableString(inputNames: List<String>): String {
+        TODO()
+    }
 
     override fun eval(inputValues: InputValues): Boolean =
         if (_dnf.isEmpty()) {
