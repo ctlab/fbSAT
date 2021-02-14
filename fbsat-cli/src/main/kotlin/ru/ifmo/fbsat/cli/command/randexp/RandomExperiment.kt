@@ -530,8 +530,8 @@ fun runExperiment(
     val name = getExperimentName(data, params)
     logger.info { "Running '$name'..." }
 
-    logger.info { "Original (random generated) automaton:" }
-    data.automaton.pprint()
+    // logger.info { "Original (random generated) automaton:" }
+    // data.automaton.pprint()
 
     val n = params.scenariosParams.n
     val k = params.scenariosParams.k
