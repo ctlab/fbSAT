@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package ru.ifmo.fbsat.core.utils
 
 import kotlinx.serialization.KSerializer
@@ -14,10 +16,12 @@ import ru.ifmo.fbsat.core.automaton.Algorithm
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.AutomatonStats
 import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
+import ru.ifmo.fbsat.core.automaton.BooleanExpressionGuard
 import ru.ifmo.fbsat.core.automaton.Guard
 import ru.ifmo.fbsat.core.automaton.ParseTreeGuard
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
+import kotlin.random.Random
 
 @Suppress("PublicApiImplicitType")
 val surrogateModule = SerializersModule {
@@ -74,6 +78,7 @@ object AutomatonSerializer :
 private class AutomatonSurrogate private constructor(
     val stats: AutomatonStats,
     val states: List<State>,
+    val prettyString: String,
 ) : Surrogate<Automaton> {
     @Serializable
     data class State(
@@ -192,7 +197,8 @@ private class AutomatonSurrogate private constructor(
             )
             return AutomatonSurrogate(
                 stats = stats,
-                states = states
+                states = states,
+                prettyString = original.toSimpleString()
             )
         }
     }
@@ -206,7 +212,7 @@ object ParseTreeGuardSerializer :
     KSerializer<ParseTreeGuard> by serializerViaSurrogate(ParseTreeGuardSurrogate)
 
 @Serializable
-private class ParseTreeGuardSurrogate(
+private class ParseTreeGuardSurrogate private constructor(
     val expr: String,
 ) : Surrogate<ParseTreeGuard> {
     override fun toOriginal(): ParseTreeGuard = toParseTreeGuard()
@@ -236,7 +242,7 @@ object BinaryAlgorithmSerializer :
     KSerializer<BinaryAlgorithm> by serializerViaSurrogate(BinaryAlgorithmSurrogate)
 
 @Serializable
-private class BinaryAlgorithmSurrogate(
+private class BinaryAlgorithmSurrogate private constructor(
     val algorithm0: String,
     val algorithm1: String,
 ) : Surrogate<BinaryAlgorithm> {
@@ -257,18 +263,43 @@ private class BinaryAlgorithmSurrogate(
 
 //endregion
 
+//region BooleanExpressionGuard
+
+object BooleanExpressionGuardSerializer :
+    KSerializer<BooleanExpressionGuard> by serializerViaSurrogate(BooleanExpressionGuardSurrogate)
+
+@Serializable
+private class BooleanExpressionGuardSurrogate private constructor(
+    val expr: String,
+    val ast: BooleanExpression,
+) : Surrogate<BooleanExpressionGuard> {
+    override fun toOriginal(): BooleanExpressionGuard = toBooleanExpressionGuard()
+
+    fun toBooleanExpressionGuard(): BooleanExpressionGuard = BooleanExpressionGuard(ast)
+
+    companion object Factory : Surrogate.Factory<BooleanExpressionGuard, BooleanExpressionGuardSurrogate> {
+        override val surrogateSerializer: KSerializer<BooleanExpressionGuardSurrogate> = serializer()
+
+        override fun from(original: BooleanExpressionGuard): BooleanExpressionGuardSurrogate {
+            val expr = original.toSimpleString()
+            val ast = original.expr
+            return BooleanExpressionGuardSurrogate(expr, ast)
+        }
+    }
+}
+
+//endregion
+
 fun main() {
-    val algo1 = BinaryAlgorithm("1", "0")
-    val surr = BinaryAlgorithmSurrogate.from(algo1)
-    val algo2 = surr.toOriginal()
+    val X = 3
+    val inputNames = (1..X).map { "x$it" }
 
-    println("algo1 = $algo1")
-    println("surr = $surr")
-    println("algo2 = $algo2")
+    val guard = BooleanExpressionGuard(randomBooleanExpression(5, inputNames, Random(42)))
+    println("guard = ${guard.toSimpleString()}")
 
-    val s = fbsatJson.encodeToString(algo1)
-    println("algo1 -> json = $s")
+    val s = fbsatJson.encodeToString(guard)
+    println("guard -> json = $s")
 
-    val algo3: BinaryAlgorithm = fbsatJson.decodeFromString(s)
-    println("json -> $algo3")
+    val guard2: BooleanExpressionGuard = fbsatJson.decodeFromString(s)
+    println("json -> ${guard2.toSimpleString()}")
 }

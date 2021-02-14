@@ -71,7 +71,7 @@ data class BinaryOperation(
     }
 }
 
-fun generateRandomBooleanExpression(
+fun randomBooleanExpression(
     size: Int,
     inputNames: List<String>,
     random: Random = Random,

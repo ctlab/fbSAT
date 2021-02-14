@@ -11,6 +11,7 @@ import kotlinx.serialization.modules.subclass
 import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.utils.BinaryOperation
 import ru.ifmo.fbsat.core.utils.BooleanExpression
+import ru.ifmo.fbsat.core.utils.BooleanExpressionGuardSerializer
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.ParseTreeGuardSerializer
 import ru.ifmo.fbsat.core.utils.UnaryOperation
@@ -393,8 +394,7 @@ fun BooleanExpression.toSmvString(): String = when (this) {
     }
 }
 
-@Serializable
-@SerialName("BooleanExpressionGuard")
+@Serializable(with = BooleanExpressionGuardSerializer::class)
 class BooleanExpressionGuard(
     val expr: BooleanExpression,
 ) : Guard {

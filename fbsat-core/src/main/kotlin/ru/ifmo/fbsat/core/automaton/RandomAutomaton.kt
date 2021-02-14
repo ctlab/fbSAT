@@ -9,7 +9,7 @@ import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
-import ru.ifmo.fbsat.core.utils.generateRandomBooleanExpression
+import ru.ifmo.fbsat.core.utils.randomBooleanExpression
 import ru.ifmo.fbsat.core.utils.randomBinaryString
 import ru.ifmo.fbsat.core.utils.toBooleanArray
 import kotlin.random.Random
@@ -70,7 +70,7 @@ fun newRandomAutomaton(
             //     random.nextBoolean()
             // }
             // val guard = TruthTableGuard(truthTable)
-            val expr = generateRandomBooleanExpression(P, inputNames, random)
+            val expr = randomBooleanExpression(P, inputNames, random)
             val guard = BooleanExpressionGuard(expr)
             automaton.addTransition(a, b, inputEvent, guard)
         }
