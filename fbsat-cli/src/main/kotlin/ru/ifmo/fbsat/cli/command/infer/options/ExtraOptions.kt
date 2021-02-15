@@ -22,6 +22,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isForbidTransitionsToFirstState: Boolean by isForbidTransitionsToFirstStateOption()
     val isBfsAutomaton: Boolean by isBfsAutomatonOption()
     val isBfsGuard: Boolean by isBfsGuardOption()
+
     // val isOnlyC: Boolean by isOnlyCOption()
     // val failIfSTVerifyFailed: Boolean by getFailIfSTVerifyFailedOption()
     val initialOutputValues: OutputValues? by getInitialOutputValuesOption()
@@ -216,7 +217,6 @@ fun ParameterHolder.isDumpCnfOption() =
         "--no-dump-cnf",
         default = Globals.IS_DUMP_CNF
     )
-
 
 fun ParameterHolder.isDumpVarsInCnfOption() =
     option(

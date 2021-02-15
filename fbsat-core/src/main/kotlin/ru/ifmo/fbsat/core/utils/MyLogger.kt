@@ -92,9 +92,11 @@ fun setupLogFileAppender(
             setName(name)
             withAppend(append)
             withFileName(path)
-            setLayout(PatternLayout.newBuilder()
-                .withPattern(pattern)
-                .build())
+            setLayout(
+                PatternLayout.newBuilder()
+                    .withPattern(pattern)
+                    .build()
+            )
         }
         logFile.start()
         rootLogger.addAppender(logFile, Level.DEBUG, null)
