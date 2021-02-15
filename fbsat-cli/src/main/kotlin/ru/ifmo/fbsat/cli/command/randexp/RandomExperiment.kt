@@ -13,6 +13,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.int
+import com.github.lipen.satlib.solver.CadicalSolver
 import com.github.lipen.satlib.solver.GlucoseSolver
 import com.github.lipen.satlib.solver.MiniSatSolver
 import com.github.lipen.satlib.solver.Solver
@@ -571,6 +572,13 @@ fun runExperiment(
             solverStats["propagations"] = solver.backend.numberOfPropagations
             solverStats["conflicts"] = solver.backend.numberOfConflicts
             solverStats["decisions"] = solver.backend.numberOfDecisions
+        }
+        is CadicalSolver -> {
+            // TODO: fix type - properties are `Long`, but solverStats have to contain `Int`s
+            solverStats["conflicts"] = solver.backend.numberOfConflicts.toInt()
+            solverStats["decisions"] = solver.backend.numberOfDecisions.toInt()
+            solverStats["restarts"] = solver.backend.numberOfRestarts.toInt()
+            solverStats["propagations"] = solver.backend.numberOfPropagations.toInt()
         }
         else -> {
             logger.debug { "$solver does not support querying statistics" }

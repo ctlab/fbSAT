@@ -16,6 +16,7 @@ import com.github.lipen.satlib.core.SequenceScopeLit
 import com.github.lipen.satlib.core.convert
 import com.github.lipen.satlib.core.newContext
 import com.github.lipen.satlib.op.implyIff
+import com.github.lipen.satlib.solver.CadicalSolver
 import com.github.lipen.satlib.solver.GlucoseSolver
 import com.github.lipen.satlib.solver.MiniSatSolver
 import com.github.lipen.satlib.solver.Solver
@@ -158,17 +159,25 @@ fun Solver.isSupportStats(): Boolean =
 fun Solver.numberOfPropagations(): Int = when (this) {
     is MiniSatSolver -> backend.numberOfPropagations
     is GlucoseSolver -> backend.numberOfPropagations
+    is CadicalSolver -> backend.numberOfPropagations.toInt()
     else -> error("$this does not support querying the number of propagations")
 }
 
 fun Solver.numberOfConflicts(): Int = when (this) {
     is MiniSatSolver -> backend.numberOfConflicts
     is GlucoseSolver -> backend.numberOfConflicts
+    is CadicalSolver -> backend.numberOfConflicts.toInt()
     else -> error("$this does not support querying the number of conflicts")
 }
 
 fun Solver.numberOfDecisions(): Int = when (this) {
     is MiniSatSolver -> backend.numberOfDecisions
     is GlucoseSolver -> backend.numberOfDecisions
+    is CadicalSolver -> backend.numberOfDecisions.toInt()
     else -> error("$this does not support querying the number of decisions")
+}
+
+fun Solver.numberOfRestarts(): Int = when (this) {
+    is CadicalSolver -> backend.numberOfRestarts.toInt()
+    else -> error("$this does not support querying the number of restarts")
 }
