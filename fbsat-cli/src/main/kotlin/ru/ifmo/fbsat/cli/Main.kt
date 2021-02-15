@@ -73,7 +73,7 @@ class FbSAT(
 
         logger.info("Start time: ${DateTime.nowLocal().format(dateTimeFormat)}")
         logger.info("Args: ./fbsat " + args.joinToString(" ") {
-            if (it.contains(" ")) "\"$it\"" else it
+            if (it.contains(" ")) "\"${it.replace("\"", "\\\"")}\"" else it
         })
     }
 }
