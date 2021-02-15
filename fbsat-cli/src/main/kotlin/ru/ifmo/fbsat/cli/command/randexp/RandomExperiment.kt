@@ -293,9 +293,6 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
                 solverInit = { solver }
             )
 
-            if (result.result.automaton != null) {
-                result.result.automaton.dump(outDir, name = "inferred-automaton")
-            }
             val resultFile = outDir.resolve("result.json")
             resultFile.ensureParentExists().sink().buffer().use {
                 it.write(myJson.encodeToString(result))
