@@ -22,7 +22,7 @@ private val logger = MyLogger {}
 private const val dateTimeFormat = "yyyy-MM-dd HH:mm:ss"
 
 class FbSAT(
-    private val args: Array<String> = arrayOf("?")
+    private val args: Array<String> = arrayOf("?"),
 ) : CliktCommand(name = "fbsat") {
 
     private val isLog: Boolean by option(
