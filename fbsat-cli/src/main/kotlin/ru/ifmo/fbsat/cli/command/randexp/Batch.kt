@@ -35,7 +35,7 @@ fun runBatch(
     scenariosSeed: Int,
     solverSeed: Int,
     outBaseDir: File = File("out/randexp-batch"),
-    fbsatBin: String = "./fbsat-jar",
+    fbsatBin: String = "fbsat",
     sbatchBin: String = "sbatch",
     sbatchOptions: List<String> = emptyList(),
     runFileName: String = "run.sh",
