@@ -104,7 +104,9 @@ fun BufferedSource.readLine(): String? = readUtf8Line()
 
 fun BufferedSink.write(s: String): BufferedSink = writeUtf8(s)
 
-fun BufferedSink.writeln(s: String): BufferedSink = write(s).writeByte(10) // 10 is '\n'
+fun BufferedSink.writeln(s: String): BufferedSink = write(s).writeln()
+
+fun BufferedSink.writeln(): BufferedSink = writeByte(10) // 10 is '\n'
 
 inline fun <T : AutoCloseable?, R> T.useWith(block: T.() -> R): R = use(block)
 
