@@ -110,7 +110,6 @@ fun runBatch(
             if (sbatchOptions.isNotEmpty()) {
                 writeln("## Custom sbatch options. Note: they might override the default options above.")
                 for (opt in sbatchOptions) {
-                    require(!opt.contains('\n')) { "Custom sbatch option '$opt' contains newline" }
                     writeln("#SBATCH $opt")
                 }
             }
