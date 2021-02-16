@@ -413,11 +413,11 @@ class Automaton(
     /**
      * Dump automaton in Graphviz, FBT and SMV formats to the [dir] directory using [name] as the file basename.
      */
-    fun dump(dir: File, name: String = "automaton") {
+    fun dump(dir: File, name: String = "automaton", renderWithDot: Boolean = Globals.IS_RENDER_WITH_DOT) {
         logger.info("Dumping '$name' to <$dir>...")
         dir.mkdirs()
         dumpTxt(dir.resolve("$name.txt"))
-        dumpGv(dir.resolve("$name.gv"))
+        dumpGv(dir.resolve("$name.gv"), renderWithDot = renderWithDot)
         dumpFbt(dir.resolve("$name.fbt"), name)
         dumpSmv(dir.resolve("$name.smv"))
     }
@@ -434,12 +434,14 @@ class Automaton(
     /**
      * Dump automaton in Graphviz format to [file].
      */
-    fun dumpGv(file: File) {
+    fun dumpGv(file: File, renderWithDot: Boolean = Globals.IS_RENDER_WITH_DOT) {
         file.printWriter().use {
             it.println(toGraphvizString())
         }
-        Runtime.getRuntime().exec("dot -Tpdf -O $file")
-        // Runtime.getRuntime().exec("dot -Tpng -O $file")
+        if (renderWithDot) {
+            Runtime.getRuntime().exec("dot -Tpdf -O $file")
+            // Runtime.getRuntime().exec("dot -Tpng -O $file")
+        }
     }
 
     /**

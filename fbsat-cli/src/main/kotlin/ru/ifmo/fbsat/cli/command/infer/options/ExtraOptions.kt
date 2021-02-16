@@ -34,6 +34,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isEncodeDisjunctiveTransitions: Boolean by isEncodeDisjunctiveTransitionsOption()
     val isReuseK: Boolean by isReuseKOption()
     val isUseAssumptions: Boolean by isUseAssumptionsOption()
+    val isRenderWithDot: Boolean by isRenderWithDotOption()
     val isDumpCnf: Boolean by isDumpCnfOption()
     val isDumpVarsInCnf: Boolean by isDumpVarsInCnfOption()
     val isDebug: Boolean by isDebugOption()
@@ -189,6 +190,15 @@ fun ParameterHolder.isUseAssumptionsOption() =
     ).flag(
         "--no-use-assumptions",
         default = Globals.IS_USE_ASSUMPTIONS
+    )
+
+fun ParameterHolder.isRenderWithDotOption() =
+    option(
+        "--render-with-dot",
+        help = "Render GraphViz files with `dot`"
+    ).flag(
+        "--no-render-with-dot",
+        default = Globals.IS_RENDER_WITH_DOT
     )
 
 fun ParameterHolder.isDumpCnfOption() =
