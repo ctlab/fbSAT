@@ -104,23 +104,27 @@ fun runBatch(
         runFile.ensureParentExists().sink().buffer().useWith {
             writeln("#!/bin/bash")
             writeln("## Default sbatch options. Note: they might be overridden below.")
+            writeln("#SBATCH --job-name=fbsat-randexp")
+            writeln("#SBATCH --output=$outDir/slurm-%j.log")
             writeln("#SBATCH --mem=1G")
             writeln("#SBATCH --time=00:30:00")
-            writeln("#SBATCH --output=$outDir/slurm-%j.log")
+            writeln("#SBATCH --nodes=1")
+            writeln("#SBATCH --ntasks=1")
+            writeln("#SBATCH --cpus-per-task=1")
             if (sbatchOptions.isNotEmpty()) {
                 writeln("## Custom sbatch options. Note: they might override the default options above.")
                 for (opt in sbatchOptions) {
                     writeln("#SBATCH $opt")
                 }
             }
-            writeln("echo pwd: $(pwd); echo hostname: $(hostname); date -Iseconds").writeln()
+            writeln("echo pwd: $(pwd); echo hostname: $(hostname); echo date: $(date -Iseconds)").writeln()
 
             writeln(fbsatCmd)
 
             // Remove lock file after execution
             writeln().writeln("rm -f $batchLockFile")
 
-            writeln().writeln("date -Iseconds")
+            writeln().writeln("echo date: $(date -Iseconds)")
         }
 
         val sbatchCmd = "$sbatchBin $runFile"
