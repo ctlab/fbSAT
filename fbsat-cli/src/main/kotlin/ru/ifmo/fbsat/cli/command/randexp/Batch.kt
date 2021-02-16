@@ -106,7 +106,7 @@ fun runBatch(
             writeln("## Default sbatch options. Note: they might be overridden below.")
             writeln("#SBATCH --mem=1G")
             writeln("#SBATCH --time=00:30:00")
-            writeln("#SBATCH --output=slurm-%j.log")
+            writeln("#SBATCH --output=$outDir/slurm-%j.log")
             if (sbatchOptions.isNotEmpty()) {
                 writeln("## Custom sbatch options. Note: they might override the default options above.")
                 for (opt in sbatchOptions) {
