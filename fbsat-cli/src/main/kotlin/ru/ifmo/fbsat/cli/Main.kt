@@ -12,6 +12,7 @@ import com.soywiz.klock.DateTime
 import com.soywiz.klock.measureTime
 import ru.ifmo.fbsat.cli.command.hello.HelloCommand
 import ru.ifmo.fbsat.cli.command.infer.InferCommand
+import ru.ifmo.fbsat.cli.command.randexp.BatchRandomExperimentCommand
 import ru.ifmo.fbsat.cli.command.randexp.RandomExperimentCommand
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.setupLogFileAppender
@@ -59,6 +60,7 @@ class FbSAT(
             InferCommand(),
             HelloCommand(),
             RandomExperimentCommand(),
+            BatchRandomExperimentCommand(),
         )
     }
 
