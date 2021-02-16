@@ -22,9 +22,6 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isForbidTransitionsToFirstState: Boolean by isForbidTransitionsToFirstStateOption()
     val isBfsAutomaton: Boolean by isBfsAutomatonOption()
     val isBfsGuard: Boolean by isBfsGuardOption()
-
-    // val isOnlyC: Boolean by isOnlyCOption()
-    // val failIfSTVerifyFailed: Boolean by getFailIfSTVerifyFailedOption()
     val initialOutputValues: OutputValues? by getInitialOutputValuesOption()
     val epsilonOutputEvents: EpsilonOutputEvents by getEpsilonOutputEventsOption()
     val startStateAlgorithms: StartStateAlgorithms by getStartStateAlgorithmsOption()
@@ -72,21 +69,6 @@ fun ParameterHolder.isBfsGuardOption() =
     ).flag(
         "--no-bfs-guard",
         default = Globals.IS_BFS_GUARD
-    )
-
-fun ParameterHolder.isOnlyCOption() =
-    option(
-        "--only-C",
-        help = "[basic-min] Minimize only C, without T"
-    ).flag()
-
-fun ParameterHolder.getFailIfSTVerifyFailedOption() =
-    option(
-        "--fail-verify-st",
-        help = "Halt if verification of scenario tree has failed"
-    ).flag(
-        "--no-fail-verify-st",
-        default = true
     )
 
 fun ParameterHolder.getInitialOutputValuesOption() =
