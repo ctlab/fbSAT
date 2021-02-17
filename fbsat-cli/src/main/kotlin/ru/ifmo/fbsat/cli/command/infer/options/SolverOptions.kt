@@ -48,6 +48,16 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
         )) {
             "supported only by MiniSat, Glucose and Cadical"
         }
+        if (solverBackend in listOf(SolverBackend.MINISAT, SolverBackend.GLUCOSE)) {
+            val rndFreq = solverRndFreq
+            val rndPol = solverRndPol
+            val rndInit = solverRndInit
+            require((rndFreq != null && rndFreq > 0) || rndPol == true || rndInit == true) {
+                "in order to use random seed with MiniSat/Glucose," +
+                    " you have to pass at least one of --solver-rnd-* options" +
+                    " (rnd-freq>0, rnd-pol, rnd-init)"
+            }
+        }
     }
 
     // MiniSat/Glucose options:
@@ -55,6 +65,7 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
         require(solverBackend in listOf(SolverBackend.MINISAT, SolverBackend.GLUCOSE)) {
             "supported only by MiniSat/Glucose"
         }
+        require(it >= 0) { "value must be non-negative" }
     }
     val solverRndPol: Boolean? by solverRndPolOption().validate {
         require(solverBackend in listOf(SolverBackend.MINISAT, SolverBackend.GLUCOSE)) {
