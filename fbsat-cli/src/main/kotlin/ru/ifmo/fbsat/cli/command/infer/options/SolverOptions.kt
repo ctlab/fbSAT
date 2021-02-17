@@ -31,7 +31,7 @@ private val logger = MyLogger {}
 internal const val SOLVER_OPTIONS = "Solver Options"
 
 private fun <T : Any> FlagOption<T?>.validate(
-    validator: OptionValidator<T?>,
+    validator: OptionValidator<T>,
 ): OptionDelegate<T?> = copy({ if (it != null) validator(it) })
 
 @Suppress("MemberVisibilityCanBePrivate")
