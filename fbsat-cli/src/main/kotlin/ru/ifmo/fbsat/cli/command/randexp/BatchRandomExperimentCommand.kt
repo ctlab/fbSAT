@@ -184,9 +184,7 @@ private class BatchRandomExperimentSolverOptions : OptionGroup(BATCH_SOLVER_OPTI
 
 private class BatchRandomExperimentOptions : OptionGroup(BATCH_OPTIONS) {
     val fbsatBin: String by fbsatBinOption()
-    val slurmFile: File by slurmFileOption().required().validate {
-        require(!it.exists()) { "file already exists" }
-    }
+    val slurmFile: File by slurmFileOption().required()
     val maxSimultaneousTasks: Int? by maxSimultaneousTasksOption().validate {
         require(it > 0) { "must be > 0" }
     }
