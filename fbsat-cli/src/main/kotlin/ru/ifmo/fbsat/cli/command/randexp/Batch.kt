@@ -104,9 +104,9 @@ fun generateBatch(
 
     val outDir = outBaseDir.resolve(
         "exp" +
-            "_C${C}_X${X}_Z${Z}_a\$automatonSeed" +
-            "_n${n}_k${k}_s\$scenariosSeed" +
-            "_${solver}_r\$solverSeed"
+            "_C${C}_X${X}_Z${Z}_a\${automatonSeed}" +
+            "_n${n}_k${k}_s\${scenariosSeed}" +
+            "_${solver}_r\${solverSeed}"
     )
     val runFile = outDir.resolve("run.sh")
 
