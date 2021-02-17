@@ -6,11 +6,11 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.ParameterHolder
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
-import com.github.ajalt.clikt.parameters.options.check
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.defaultLazy
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
+import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.int
 import kotlinx.serialization.encodeToString
@@ -24,8 +24,6 @@ import ru.ifmo.fbsat.cli.command.infer.options.maxGuardSizeOption
 import ru.ifmo.fbsat.cli.command.infer.options.maxPlateauWidthOption
 import ru.ifmo.fbsat.cli.command.infer.options.numberOfStatesOption
 import ru.ifmo.fbsat.cli.command.infer.options.outDirOption
-import ru.ifmo.fbsat.core.scenario.InputEvent
-import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.ensureParentExists
@@ -86,8 +84,6 @@ private fun ParameterHolder.numberOfScenariosOption() =
         help = "Number of random scenarios to generate",
         metavar = "<int>"
     ).int()
-        .default(0)
-        .check("value must be non-negative") { it >= 0 }
 
 private fun ParameterHolder.scenarioLengthOption() =
     option(
@@ -95,8 +91,6 @@ private fun ParameterHolder.scenarioLengthOption() =
         help = "Length of each scenario",
         metavar = "<int>"
     ).int()
-        .default(0)
-        .check("value must be non-negative") { it >= 0 }
 
 private fun ParameterHolder.scenariosSeedOption() =
     option(
@@ -121,15 +115,27 @@ private class RandomExperimentDataOptions : OptionGroup(DATA_OPTIONS) {
     val numberOfInputVariables: Int by numberOfInputVariablesOption().required()
     val numberOfOutputVariables: Int by numberOfOutputVariablesOption().required()
     val maxGuardSize: Int by maxGuardSizeGenOption().default(5)
-    val automatonSeed: Int by automatonSeedOption().default(0)
+    val automatonSeed: Int by automatonSeedOption().required()
     val validationScenariosSeed: Int by validationScenariosSeedOption()
         .defaultLazy(defaultForHelp = "automatonSeed+10000") { automatonSeed + 10000 }
 }
 
 private class RandomExperimentInferenceOptions : OptionGroup(INFERENCE_OPTIONS) {
-    val numberOfScenarios: Int by numberOfScenariosOption()
-    val scenarioLength: Int by scenarioLengthOption()
-    val scenariosSeed: Int by scenariosSeedOption().default(0)
+    val numberOfScenarios: Int by numberOfScenariosOption().default(0).validate {
+        if (method != null) {
+            require(it > 0) { "must be > 0" }
+        } else {
+            require(it >= 0) { "must be non-negative" }
+        }
+    }
+    val scenarioLength: Int by scenarioLengthOption().default(0).validate {
+        if (method != null) {
+            require(it > 0) { "must be > 0" }
+        } else {
+            require(it >= 0) { "must be non-negative" }
+        }
+    }
+    val scenariosSeed: Int by scenariosSeedOption().required()
     val method: String? by methodOption()
     val maxGuardSize: Int? by maxGuardSizeOption()
     val maxPlateauWidth: Int? by maxPlateauWidthOption()
@@ -154,61 +160,44 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
 
         logger.debug { "Running $commandName..." }
 
+        // Data options
         val C = dataOptions.numberOfStates
+        val Pgen = dataOptions.maxGuardSize
+        val I = 1
+        val O = 1
         val X = dataOptions.numberOfInputVariables
         val Z = dataOptions.numberOfOutputVariables
-        val Pgen = dataOptions.maxGuardSize
-        val P = inferenceOptions.maxGuardSize
-        val w = inferenceOptions.maxPlateauWidth
+
+        // Inference options
         val n = inferenceOptions.numberOfScenarios
         val k = inferenceOptions.scenarioLength
         val method = inferenceOptions.method
+        val P = inferenceOptions.maxGuardSize
+        val w = inferenceOptions.maxPlateauWidth
         val outDir = inferenceOptions.outDir
 
-        outDir.mkdirs()
-
+        // Seeds
         val automatonSeed = dataOptions.automatonSeed
         val validationScenariosSeed = dataOptions.validationScenariosSeed
         val scenariosSeed = inferenceOptions.scenariosSeed
         val solverSeed = solverOptions.solverSeed
 
-        // val solverInfo = when (val backend = solverOptions.solverBackend) {
-        //     SolverBackend.MINISAT -> SolverInfo(
-        //         name = "minisat",
-        //         // seed = requireNotNull(solverSeed) { "You must specify --solver-seed" }
-        //         seed = solverSeed ?: 0
-        //     )
-        //     SolverBackend.GLUCOSE -> SolverInfo(
-        //         name = "glucose",
-        //         // seed = requireNotNull(solverSeed) { "You must specify --solver-seed" }
-        //         seed = solverSeed ?: 0
-        //     )
-        //     else -> SolverInfo(
-        //         name = backend.name.toLowerCase(),
-        //         seed = solverSeed ?: 0
-        //     )
-        // }
-
-        val inputEvents = listOf(InputEvent("REQ"))
-        val outputEvents = listOf(OutputEvent("CNF"))
-        val inputNames = (1..X).map { "x$it" }
-        val outputNames = (1..Z).map { "z$it" }
-
-        val I = inputEvents.size
-        val O = outputEvents.size
-
-        logger.info { "outDir = $outDir" }
-        logger.info { "inputEvents = $inputEvents" }
-        logger.info { "outputEvents = $outputEvents" }
-        logger.info { "inputNames = $inputNames" }
-        logger.info { "outputNames = $outputNames" }
-        logger.info { "numberOfStates = $C" }
-        logger.info { "numberOfScenarios = $n" }
-        logger.info { "scenarioLength = $k" }
-        logger.info { "automatonSeed = $automatonSeed" }
-        logger.info { "validationScenariosSeed = $validationScenariosSeed" }
-        logger.info { "scenariosSeed = $scenariosSeed" }
-        logger.info { "solverSeed = $solverSeed" }
+        // logger.debug { "C = $C" }
+        // logger.debug { "Pgen = $Pgen" }
+        // logger.debug { "I = $I" }
+        // logger.debug { "O = $O" }
+        // logger.debug { "X = $X" }
+        // logger.debug { "Z = $Z" }
+        // logger.debug { "n = $n" }
+        // logger.debug { "k = $k" }
+        // logger.debug { "method = $method" }
+        // logger.debug { "P = $P" }
+        // logger.debug { "w = $w" }
+        // logger.debug { "outDir = $outDir" }
+        // logger.debug { "automatonSeed = $automatonSeed" }
+        // logger.debug { "validationScenariosSeed = $validationScenariosSeed" }
+        // logger.debug { "scenariosSeed = $scenariosSeed" }
+        // logger.debug { "solverSeed = $solverSeed" }
 
         val data = generateExperimentData(
             automatonParams = ExperimentData.AutomatonParams(
@@ -230,47 +219,48 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
         }
 
         if (method != null) {
-            check(n > 0) { "n must be > 0" }
-            check(k > 0) { "k must be > 0" }
-
-            val inferenceMethod = when (method) {
-                "basic-min" -> {
-                    InferenceMethod.BasicMin
-                }
-                "extended-min" -> {
-                    requireNotNull(P) { "Parameter P must be specified" }
-                    InferenceMethod.ExtendedMin(P)
-                }
-                "extended-min-ub" -> {
-                    InferenceMethod.ExtendedMinUB(w)
-                }
-                else -> error("Method '$method' is not supported")
-            }
-            val solverInfo = SolverInfo(
-                name = solverOptions.solverBackend.name.toLowerCase(),
-                seed = solverSeed ?: 0
-            )
-            val solver = solverOptions.solver
-
-            val inferenceParams = InferenceParams(
-                scenariosParams = ScenariosParams(
-                    n = n,
-                    k = k,
-                    seed = scenariosSeed
-                ),
-                method = inferenceMethod,
-                solverInfo = solverInfo,
-                outDir = outDir
-            )
-            val result = runExperiment(
-                data = data,
-                params = inferenceParams,
-                solverInit = { solver }
-            )
-
             val resultFile = outDir.resolve("result.json")
-            resultFile.ensureParentExists().sink().buffer().use {
-                it.write(myJson.encodeToString(result))
+            if (resultFile.exists()) {
+                logger.info { "result.json already exists in '$outDir' => not running" }
+            } else {
+                val inferenceMethod = when (method) {
+                    "basic-min" -> {
+                        InferenceMethod.BasicMin
+                    }
+                    "extended-min" -> {
+                        requireNotNull(P) { "Parameter P must be specified" }
+                        InferenceMethod.ExtendedMin(P)
+                    }
+                    "extended-min-ub" -> {
+                        InferenceMethod.ExtendedMinUB(w)
+                    }
+                    else -> error("Method '$method' is not supported")
+                }
+                val solverInfo = SolverInfo(
+                    name = solverOptions.solverBackend.name.toLowerCase(),
+                    seed = solverSeed ?: 0
+                )
+                val solver = solverOptions.solver
+
+                val inferenceParams = InferenceParams(
+                    scenariosParams = ScenariosParams(
+                        n = n,
+                        k = k,
+                        seed = scenariosSeed
+                    ),
+                    method = inferenceMethod,
+                    solverInfo = solverInfo,
+                    outDir = outDir
+                )
+                val result = runExperiment(
+                    data = data,
+                    params = inferenceParams,
+                    solverInit = { solver }
+                )
+
+                resultFile.ensureParentExists().sink().buffer().use {
+                    it.write(myJson.encodeToString(result))
+                }
             }
         }
     }

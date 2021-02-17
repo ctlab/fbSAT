@@ -249,16 +249,15 @@ private fun getExperimentName(
 fun runExperiment(
     data: ExperimentData,
     params: InferenceParams,
+    name: String = getExperimentName(data, params),
     // Note: if you want to run the experiment with an existing solver,
     //  pass some representative SolverInfo in `params`,
     //  and also pass the existing `solver` via lambda (e.g. `solverInit = { solver }`)
     solverInit: (SolverInfo) -> Solver = { it.instantiate() },
 ): ExperimentResult {
-    val name = getExperimentName(data, params)
-    logger.info { "Running '$name'..." }
+    logger.info { "Running experiment '$name'..." }
 
-    // logger.info { "Original (random generated) automaton:" }
-    // data.automaton.pprint()
+    // TODO: log params
 
     val n = params.scenariosParams.n
     val k = params.scenariosParams.k

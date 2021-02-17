@@ -9,8 +9,6 @@ import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.github.ajalt.clikt.parameters.options.check
 import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.flag
-import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.validate
@@ -82,8 +80,6 @@ private fun ParameterHolder.numberOfScenariosOption() =
         help = "Number of random scenarios to generate",
         metavar = "<int>"
     ).int()
-        .required()
-        .check("value must be non-negative") { it >= 0 }
 
 private fun ParameterHolder.scenarioLengthOption() =
     option(
@@ -91,8 +87,6 @@ private fun ParameterHolder.scenarioLengthOption() =
         help = "Length of each scenario",
         metavar = "<int>"
     ).int()
-        .required()
-        .check("value must be non-negative") { it >= 0 }
 
 private fun ParameterHolder.scenariosSeedsOption() =
     option(
@@ -146,35 +140,19 @@ private fun ParameterHolder.fbsatBinOption() =
         metavar = "<cmd>"
     ).default("fbsat")
 
-private fun ParameterHolder.sbatchBinOption() =
+private fun ParameterHolder.slurmFileOption() =
     option(
-        "--sbatch-bin",
-        help = "sbatch binary",
-        metavar = "<cmd>"
-    ).default("sbatch")
+        "--slurm-file",
+        help = "Path to generated slurm file",
+        metavar = "<path>"
+    ).file()
 
-private fun ParameterHolder.sbatchOptionsOption() =
+private fun ParameterHolder.maxSimultaneousTasksOption() =
     option(
-        "--opt", "--sbatch-option",
-        help = "Custom sbatch option (`#SBATCH <opt>`). Can be passed multiple times",
-        metavar = "<str>"
-    ).multiple().validate {
-        for (opt in it) {
-            require(!opt.contains('\n')) { "'$opt' contains newline" }
-        }
-    }
-
-private fun ParameterHolder.isIgnoreLockOption() =
-    option(
-        "--ignore-lock",
-        help = "Ignore lock files"
-    ).flag()
-
-private fun ParameterHolder.isDryRunOption() =
-    option(
-        "--dry-run",
-        help = "Do not run sbatch"
-    ).flag()
+        "--max-simultaneous-tasks",
+        help = "Maximum number of simultaneously running tasks",
+        metavar = "<int>"
+    ).int()
 
 private class BatchRandomExperimentDataOptions : OptionGroup(BATCH_DATA_OPTIONS) {
     val numberOfStates: Int by numberOfStatesOption().required()
@@ -186,7 +164,11 @@ private class BatchRandomExperimentDataOptions : OptionGroup(BATCH_DATA_OPTIONS)
 
 private class BatchRandomExperimentInferenceOptions : OptionGroup(BATCH_INFERENCE_OPTIONS) {
     val numberOfScenarios: Int by numberOfScenariosOption()
+        .required()
+        .check("value must > 0") { it > 0 }
     val scenarioLength: Int by scenarioLengthOption()
+        .required()
+        .check("value must > 0") { it > 0 }
     val scenariosSeeds: IntRange by scenariosSeedsOption().required()
 
     // val method: String? by methodOption()
@@ -202,10 +184,12 @@ private class BatchRandomExperimentSolverOptions : OptionGroup(BATCH_SOLVER_OPTI
 
 private class BatchRandomExperimentOptions : OptionGroup(BATCH_OPTIONS) {
     val fbsatBin: String by fbsatBinOption()
-    val sbatchBin: String by sbatchBinOption()
-    val sbatchOptions: List<String> by sbatchOptionsOption()
-    val isIgnoreLock: Boolean by isIgnoreLockOption()
-    val isDryRun: Boolean by isDryRunOption()
+    val slurmFile: File by slurmFileOption().required().validate {
+        require(!it.exists()) { "file already exists" }
+    }
+    val maxSimultaneousTasks: Int? by maxSimultaneousTasksOption().validate {
+        require(it > 0) { "must be > 0" }
+    }
 }
 
 class BatchRandomExperimentCommand : CliktCommand(name = "randexp-batch") {
@@ -239,10 +223,8 @@ class BatchRandomExperimentCommand : CliktCommand(name = "randexp-batch") {
 
         // Batch options
         val fbsatBin = batchOptions.fbsatBin
-        val sbatchBin = batchOptions.sbatchBin
-        val sbatchOptions = batchOptions.sbatchOptions
-        val isIgnoreLock = batchOptions.isIgnoreLock
-        val isDryRun = batchOptions.isDryRun
+        val slurmFile = batchOptions.slurmFile
+        val maxSimultaneousTasks = batchOptions.maxSimultaneousTasks
 
         // Seeds
         val automatonSeeds = dataOptions.automatonSeeds
@@ -253,22 +235,17 @@ class BatchRandomExperimentCommand : CliktCommand(name = "randexp-batch") {
 
         outBaseDir.mkdirs()
 
-        for (automatonSeed in automatonSeeds)
-            for (scenariosSeed in scenariosSeeds)
-                for (solverSeed in solverSeeds)
-                    runBatch(
-                        C = C, X = X, Z = Z,
-                        n = n, k = k,
-                        solver = solverName,
-                        automatonSeed = automatonSeed,
-                        scenariosSeed = scenariosSeed,
-                        solverSeed = solverSeed,
-                        outBaseDir = outBaseDir,
-                        fbsatBin = fbsatBin,
-                        sbatchBin = sbatchBin,
-                        sbatchOptions = sbatchOptions,
-                        ignoreLock = isIgnoreLock,
-                        dryRun = isDryRun,
-                    )
+        generateBatch(
+            C = C, X = X, Z = Z,
+            n = n, k = k,
+            solver = solverName,
+            automatonSeeds = automatonSeeds,
+            scenariosSeeds = scenariosSeeds,
+            solverSeeds = solverSeeds,
+            outBaseDir = outBaseDir,
+            fbsatBin = fbsatBin,
+            slurmFile = slurmFile,
+            maxSimultaneousTasks = maxSimultaneousTasks
+        )
     }
 }
