@@ -139,7 +139,7 @@ fun generateBatch(
             solverSeed=${'$'}{SOLVER_SEEDS[${'$'}SLURM_ARRAY_TASK_ID]}
             outDir="$outDir"
             runFile="${'$'}{outDir}/run.sh"
-        """.trimIndent()).writeln()
+        """.trimIndent())
 
         // print params
         writeln().writeln("""
