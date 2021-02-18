@@ -102,13 +102,11 @@ fun generateBatch(
                 }
             }
 
-    val outDir = outBaseDir.resolve(
-        "exp" +
-            "_C${C}_X${X}_Z${Z}_a\${automatonSeed}" +
-            "_n${n}_k${k}_s\${scenariosSeed}" +
-            "_${solver}_r\${solverSeed}"
-    )
-    val runFile = outDir.resolve("run.sh")
+    val outDir = "exp" +
+        "_C${C}_X${X}_Z${Z}_a\${automatonSeed}" +
+        "_n${n}_k${k}_s\${scenariosSeed}" +
+        "_${solver}_r\${solverSeed}"
+    val runFile = "\$outDir/run.sh"
 
     slurmFile.sink().buffer().useWith {
         // sbatch header
@@ -137,10 +135,13 @@ fun generateBatch(
             automatonSeed=${'$'}{AUTOMATON_SEEDS[${'$'}SLURM_ARRAY_TASK_ID]}
             scenariosSeed=${'$'}{SCENARIOS_SEEDS[${'$'}SLURM_ARRAY_TASK_ID]}
             solverSeed=${'$'}{SOLVER_SEEDS[${'$'}SLURM_ARRAY_TASK_ID]}
-        """.trimIndent())
+            outDir="$outDir"
+            runFile="$runFile"
+        """.trimIndent()).writeln()
 
         // run experiment
-        writeln().writeln("srun $runFile")
+        writeln("chmod +x \$runFile")
+        writeln("srun \$runFile")
 
         // general info
         writeln().writeln("echo date: $(date -Iseconds)")
