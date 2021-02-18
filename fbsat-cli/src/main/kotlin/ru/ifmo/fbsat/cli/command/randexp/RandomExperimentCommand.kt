@@ -8,6 +8,7 @@ import com.github.ajalt.clikt.parameters.groups.OptionGroup
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.defaultLazy
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.validate
@@ -110,6 +111,12 @@ private fun ParameterHolder.methodOption() =
         "extended-min-ub",
     )
 
+private fun ParameterHolder.isOverwriteOption() =
+    option(
+        "--overwrite",
+        help = "Ignore existing results"
+    ).flag()
+
 private class RandomExperimentDataOptions : OptionGroup(DATA_OPTIONS) {
     val numberOfStates: Int by numberOfStatesOption().required()
     val numberOfInputVariables: Int by numberOfInputVariablesOption().required()
@@ -152,6 +159,7 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
 
     private val isDebug: Boolean by isDebugOption()
     private val isRenderWithDot: Boolean by isRenderWithDotOption()
+    private val isOverwrite: Boolean by isOverwriteOption()
 
     @Suppress("LocalVariableName")
     override fun run() {
@@ -161,13 +169,22 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
         logger.debug { "Running $commandName..." }
 
         val outDir = inferenceOptions.outDir
-
-        // TODO: add --overwrite flag to ignore existing results
-
         val resultFile = outDir.resolve("result.json")
-        if (resultFile.exists()) {
-            logger.info { "'$resultFile' already exists => not running" }
-        } else {
+
+        val needRun = when {
+            resultFile.exists() -> {
+                if (isOverwrite) {
+                    logger.info { "'$resultFile' already exists, but we overwrite it" }
+                    true
+                } else {
+                    logger.info { "'$resultFile' already exists => not running" }
+                    false
+                }
+            }
+            else -> true
+        }
+
+        if (needRun) {
             // Data options
             val C = dataOptions.numberOfStates
             val Pgen = dataOptions.maxGuardSize
