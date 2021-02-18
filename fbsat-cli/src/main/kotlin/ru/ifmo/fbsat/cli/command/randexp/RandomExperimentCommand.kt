@@ -160,69 +160,73 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
 
         logger.debug { "Running $commandName..." }
 
-        // Data options
-        val C = dataOptions.numberOfStates
-        val Pgen = dataOptions.maxGuardSize
-        val I = 1
-        val O = 1
-        val X = dataOptions.numberOfInputVariables
-        val Z = dataOptions.numberOfOutputVariables
-
-        // Inference options
-        val n = inferenceOptions.numberOfScenarios
-        val k = inferenceOptions.scenarioLength
-        val method = inferenceOptions.method
-        val P = inferenceOptions.maxGuardSize
-        val w = inferenceOptions.maxPlateauWidth
         val outDir = inferenceOptions.outDir
 
-        // Seeds
-        val automatonSeed = dataOptions.automatonSeed
-        val validationScenariosSeed = dataOptions.validationScenariosSeed
-        val scenariosSeed = inferenceOptions.scenariosSeed
-        val solverSeed = solverOptions.solverSeed
+        // TODO: add --overwrite flag to ignore existing results
 
-        // logger.debug { "C = $C" }
-        // logger.debug { "Pgen = $Pgen" }
-        // logger.debug { "I = $I" }
-        // logger.debug { "O = $O" }
-        // logger.debug { "X = $X" }
-        // logger.debug { "Z = $Z" }
-        // logger.debug { "n = $n" }
-        // logger.debug { "k = $k" }
-        // logger.debug { "method = $method" }
-        // logger.debug { "P = $P" }
-        // logger.debug { "w = $w" }
-        // logger.debug { "outDir = $outDir" }
-        // logger.debug { "automatonSeed = $automatonSeed" }
-        // logger.debug { "validationScenariosSeed = $validationScenariosSeed" }
-        // logger.debug { "scenariosSeed = $scenariosSeed" }
-        // logger.debug { "solverSeed = $solverSeed" }
+        val resultFile = outDir.resolve("result.json")
+        if (resultFile.exists()) {
+            logger.info { "'$resultFile' already exists => not running" }
+        } else {
+            // Data options
+            val C = dataOptions.numberOfStates
+            val Pgen = dataOptions.maxGuardSize
+            val I = 1
+            val O = 1
+            val X = dataOptions.numberOfInputVariables
+            val Z = dataOptions.numberOfOutputVariables
 
-        val data = generateExperimentData(
-            automatonParams = ExperimentData.AutomatonParams(
-                C = C, P = Pgen, I = I, O = O, X = X, Z = Z,
-                seed = automatonSeed
-            ),
-            validationScenariosParams = ExperimentData.ValidationScenariosParams(
-                n = 100,
-                k = 100,
-                seed = validationScenariosSeed
+            // Inference options
+            val n = inferenceOptions.numberOfScenarios
+            val k = inferenceOptions.scenarioLength
+            val method = inferenceOptions.method
+            val P = inferenceOptions.maxGuardSize
+            val w = inferenceOptions.maxPlateauWidth
+
+            // Seeds
+            val automatonSeed = dataOptions.automatonSeed
+            val validationScenariosSeed = dataOptions.validationScenariosSeed
+            val scenariosSeed = inferenceOptions.scenariosSeed
+            val solverSeed = solverOptions.solverSeed
+
+            // logger.debug { "C = $C" }
+            // logger.debug { "Pgen = $Pgen" }
+            // logger.debug { "I = $I" }
+            // logger.debug { "O = $O" }
+            // logger.debug { "X = $X" }
+            // logger.debug { "Z = $Z" }
+            // logger.debug { "n = $n" }
+            // logger.debug { "k = $k" }
+            // logger.debug { "method = $method" }
+            // logger.debug { "P = $P" }
+            // logger.debug { "w = $w" }
+            // logger.debug { "outDir = $outDir" }
+            // logger.debug { "automatonSeed = $automatonSeed" }
+            // logger.debug { "validationScenariosSeed = $validationScenariosSeed" }
+            // logger.debug { "scenariosSeed = $scenariosSeed" }
+            // logger.debug { "solverSeed = $solverSeed" }
+
+            val data = generateExperimentData(
+                automatonParams = ExperimentData.AutomatonParams(
+                    C = C, P = Pgen, I = I, O = O, X = X, Z = Z,
+                    seed = automatonSeed
+                ),
+                validationScenariosParams = ExperimentData.ValidationScenariosParams(
+                    n = 100,
+                    k = 100,
+                    seed = validationScenariosSeed
+                )
             )
-        )
 
-        data.automaton.dump(outDir, name = "generated-automaton")
+            data.automaton.dump(outDir, name = "generated-automaton")
 
-        val dataFile = outDir.resolve("data.json")
-        dataFile.ensureParentExists().sink().buffer().use {
-            it.write(myJson.encodeToString(data))
-        }
+            val dataFile = outDir.resolve("data.json")
+            logger.debug { "Saving data to '$dataFile'..." }
+            dataFile.ensureParentExists().sink().buffer().use {
+                it.write(myJson.encodeToString(data))
+            }
 
-        if (method != null) {
-            val resultFile = outDir.resolve("result.json")
-            if (resultFile.exists()) {
-                logger.info { "result.json already exists in '$outDir' => not running" }
-            } else {
+            if (method != null) {
                 val inferenceMethod = when (method) {
                     "basic-min" -> {
                         InferenceMethod.BasicMin
@@ -258,6 +262,7 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
                     solverInit = { solver }
                 )
 
+                logger.debug { "Saving results to '$resultFile'..." }
                 resultFile.ensureParentExists().sink().buffer().use {
                     it.write(myJson.encodeToString(result))
                 }
