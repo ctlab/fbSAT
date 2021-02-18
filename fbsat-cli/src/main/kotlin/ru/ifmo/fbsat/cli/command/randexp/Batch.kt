@@ -55,6 +55,7 @@ fun generateBatch(
                 )
                 val lockFile = outDir.resolve("lock")
                 val runFile = outDir.resolve("run.sh")
+                logger.debug { "runFile = $runFile" }
 
                 val fbsatCmd = buildString {
                     append(fbsatBin)
