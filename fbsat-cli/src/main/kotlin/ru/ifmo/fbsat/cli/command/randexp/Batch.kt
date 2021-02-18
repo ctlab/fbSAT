@@ -94,7 +94,7 @@ fun generateBatch(
                     writeln().writeln("touch $lockFile")
 
                     // run experiment
-                    writeln().writeln("srun $fbsatCmd")
+                    writeln().writeln(fbsatCmd)
 
                     // remove lock file
                     writeln().writeln("rm -f $lockFile")
@@ -150,9 +150,10 @@ fun generateBatch(
         """.trimIndent())
 
         // run experiment
-        writeln()
-        writeln("chmod +x \${runFile}")
-        writeln("srun \$runFile")
+        writeln().writeln("""
+            chmod +x ${'$'}{runFile}
+            srun --output=${'$'}{outDir}/output-%j.log ${'$'}{runFile}
+        """.trimIndent())
 
         // general info
         writeln().writeln("echo date: $(date -Iseconds)")
