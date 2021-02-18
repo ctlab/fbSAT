@@ -140,7 +140,16 @@ fun generateBatch(
             runFile="${'$'}{outDir}/run.sh"
         """.trimIndent()).writeln()
 
+        // print params
+        writeln().writeln("""
+            echo automatonSeed=${'$'}automatonSeed
+            echo scenariosSeed=${'$'}scenariosSeed
+            echo solverSeed=${'$'}solverSeed
+            echo outDir=${'$'}outDir
+        """.trimIndent())
+
         // run experiment
+        writeln()
         writeln("chmod +x \${runFile}")
         writeln("srun \$runFile")
 
