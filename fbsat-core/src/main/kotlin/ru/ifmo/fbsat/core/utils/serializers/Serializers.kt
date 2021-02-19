@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.core.utils
+package ru.ifmo.fbsat.core.utils.serializers
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -14,6 +14,7 @@ import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
+import ru.ifmo.fbsat.core.utils.toBinaryString
 import java.io.File
 
 @Suppress("PublicApiImplicitType")
@@ -21,7 +22,6 @@ val fbsatSerializersModule by lazy {
     SerializersModule {
         include(algorithmModule)
         include(guardModule)
-        include(surrogateModule)
     }
 }
 

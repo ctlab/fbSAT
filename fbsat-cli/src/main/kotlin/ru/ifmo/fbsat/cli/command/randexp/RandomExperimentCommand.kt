@@ -28,7 +28,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.outDirOption
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.ensureParentExists
-import ru.ifmo.fbsat.core.utils.fbsatSerializersModule
+import ru.ifmo.fbsat.core.utils.serializers.fbsatSerializersModule
 import ru.ifmo.fbsat.core.utils.write
 import java.io.File
 

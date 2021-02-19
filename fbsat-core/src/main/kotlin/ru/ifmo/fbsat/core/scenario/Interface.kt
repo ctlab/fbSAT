@@ -1,10 +1,10 @@
 package ru.ifmo.fbsat.core.scenario
 
 import kotlinx.serialization.Serializable
-import ru.ifmo.fbsat.core.utils.InputEventSerializer
-import ru.ifmo.fbsat.core.utils.InputValuesSerializer
-import ru.ifmo.fbsat.core.utils.OutputEventSerializer
-import ru.ifmo.fbsat.core.utils.OutputValuesSerializer
+import ru.ifmo.fbsat.core.utils.serializers.InputEventSerializer
+import ru.ifmo.fbsat.core.utils.serializers.InputValuesSerializer
+import ru.ifmo.fbsat.core.utils.serializers.OutputEventSerializer
+import ru.ifmo.fbsat.core.utils.serializers.OutputValuesSerializer
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.toBooleanList
 

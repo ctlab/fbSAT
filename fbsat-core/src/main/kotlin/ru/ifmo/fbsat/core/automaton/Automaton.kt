@@ -25,7 +25,7 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.convertBoolVarArray
 import ru.ifmo.fbsat.core.solver.convertDomainVarArray
 import ru.ifmo.fbsat.core.solver.convertIntVarArray
-import ru.ifmo.fbsat.core.utils.AutomatonSerializer
+import ru.ifmo.fbsat.core.utils.serializers.AutomatonSerializer
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.graph

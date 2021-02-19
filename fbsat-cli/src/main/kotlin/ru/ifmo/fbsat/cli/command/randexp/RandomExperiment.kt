@@ -23,12 +23,12 @@ import ru.ifmo.fbsat.core.task.single.basic.basicMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
-import ru.ifmo.fbsat.core.utils.FileAsStringSerializer
+import ru.ifmo.fbsat.core.utils.serializers.FileAsStringSerializer
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.ensureParentExists
-import ru.ifmo.fbsat.core.utils.fbsatSerializersModule
+import ru.ifmo.fbsat.core.utils.serializers.fbsatSerializersModule
 import ru.ifmo.fbsat.core.utils.scope
 import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.withIndex

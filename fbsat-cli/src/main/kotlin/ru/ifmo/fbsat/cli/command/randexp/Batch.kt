@@ -7,7 +7,7 @@ import okio.buffer
 import okio.sink
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.ensureParentExists
-import ru.ifmo.fbsat.core.utils.fbsatSerializersModule
+import ru.ifmo.fbsat.core.utils.serializers.fbsatSerializersModule
 import ru.ifmo.fbsat.core.utils.useWith
 import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
