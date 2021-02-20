@@ -432,19 +432,19 @@ fun main() {
         // val outDir = File("out/${DateTime.nowLocal().format("yyyy-MM-dd_HH-mm-ss")}")
         val outDir = File("out/randexp")
 
-        val dataSeed = 1
+        val automatonSeed = 1
         val scenariosSeed = 1
         val solverSeed = 1
 
         val data = ExperimentData.generate(
             automatonParams = ExperimentData.AutomatonParams(
                 C = C, P = P, I = I, O = O, X = X, Z = Z,
-                seed = dataSeed
+                seed = automatonSeed
             ),
             validationScenariosParams = ExperimentData.ValidationScenariosParams(
                 n = 100,
                 k = 100,
-                seed = dataSeed + 10000
+                seed = automatonSeed + 10000
             ),
             scenariosParams = ExperimentData.ScenariosParams(
                 n = n,
