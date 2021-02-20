@@ -16,10 +16,11 @@ import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.double
 import com.github.ajalt.clikt.parameters.types.int
-import kotlinx.serialization.encodeToString
+import com.mongodb.client.MongoDatabase
 import kotlinx.serialization.json.Json
-import okio.buffer
-import okio.sink
+import org.litote.kmongo.KMongo
+import org.litote.kmongo.serialization.registerModule
+import ru.ifmo.fbsat.cli.command.infer.options.EXTRA_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.SolverOptions
 import ru.ifmo.fbsat.cli.command.infer.options.isDebugOption
 import ru.ifmo.fbsat.cli.command.infer.options.isRenderWithDotOption
@@ -29,9 +30,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.numberOfStatesOption
 import ru.ifmo.fbsat.cli.command.infer.options.outDirOption
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
-import ru.ifmo.fbsat.core.utils.ensureParentExists
 import ru.ifmo.fbsat.core.utils.serializers.fbsatSerializersModule
-import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
 
 private val logger = MyLogger {}
@@ -43,6 +42,7 @@ private val myJson = Json {
 
 internal const val DATA_OPTIONS = "Data Options"
 internal const val INFERENCE_OPTIONS = "Inference Options"
+internal const val DB_OPTIONS = "DB Options"
 
 private fun ParameterHolder.numberOfInputVariablesOption() =
     option(
@@ -119,6 +119,24 @@ private fun ParameterHolder.isOverwriteOption() =
         help = "Ignore existing results"
     ).flag()
 
+private fun ParameterHolder.isSaveToDbOption() =
+    option(
+        "--save-to-db",
+        help = "Save results to database (MongoDB)"
+    ).flag()
+
+private fun ParameterHolder.connectionStringOption() =
+    option(
+        "--db-addr",
+        help = "MongoDB connection string"
+    ).default("mongodb://localhost")
+
+private fun ParameterHolder.databaseNameOption() =
+    option(
+        "--db-name",
+        help = "MongoDB database name"
+    ).default("test")
+
 private class RandomExperimentDataOptions : OptionGroup(DATA_OPTIONS) {
     val numberOfStates: Int by numberOfStatesOption().required()
     val numberOfInputVariables: Int by numberOfInputVariablesOption().required()
@@ -151,6 +169,25 @@ private class RandomExperimentInferenceOptions : OptionGroup(INFERENCE_OPTIONS) 
     val outDir: File by outDirOption()
 }
 
+private class RandomExperimentExtraOptions : OptionGroup(EXTRA_OPTIONS) {
+    val isDebug: Boolean by isDebugOption()
+    val isRenderWithDot: Boolean by isRenderWithDotOption()
+    val isOverwrite: Boolean by isOverwriteOption()
+
+    // Note: timeout is in milliseconds, but in CLI we expect seconds.
+    val timeout: Long? by option(
+        "-t", "--timeout",
+        help = "Timeout",
+        metavar = "<sec>"
+    ).double().convert { (it * 1000).toLong() }
+}
+
+private class RandomExperimentDbOptions : OptionGroup(DB_OPTIONS) {
+    val isSaveToDb: Boolean by isSaveToDbOption()
+    val connectionString: String by connectionStringOption()
+    val databaseName: String by databaseNameOption()
+}
+
 // Example usage:
 //  fbsat randexp -C 4 -X 3 -Z 2 --automaton-seed 1 --method extended-min -P 5 -n 10 -k 50 --scenarios-seed 1 --glucose --solver-seed 1 --solver-rnd-freq 0.1 --solver-rnd-pol --solver-rnd-init --outdir out/randexp --debug
 
@@ -158,20 +195,16 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
     private val dataOptions by RandomExperimentDataOptions()
     private val inferenceOptions by RandomExperimentInferenceOptions()
     private val solverOptions by SolverOptions()
-
-    // Note: timeout is in milliseconds, but in CLI we expect seconds.
-    private val timeout: Long? by option(
-        "-t", "--timeout",
-        help = "Timeout",
-        metavar = "<sec>"
-    ).double().convert { (it * 1000).toLong() }
-
-    private val isDebug: Boolean by isDebugOption()
-    private val isRenderWithDot: Boolean by isRenderWithDotOption()
-    private val isOverwrite: Boolean by isOverwriteOption()
+    private val extraOptions by RandomExperimentExtraOptions()
+    private val dbOptions by RandomExperimentDbOptions()
 
     @Suppress("LocalVariableName")
     override fun run() {
+        val isDebug = extraOptions.isDebug
+        val isRenderWithDot = extraOptions.isRenderWithDot
+        val isOverwrite = extraOptions.isOverwrite
+        val timeout = extraOptions.timeout
+
         Globals.IS_DEBUG = isDebug
         Globals.IS_RENDER_WITH_DOT = isRenderWithDot
 
@@ -215,6 +248,20 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
             val scenariosSeed = inferenceOptions.scenariosSeed
             val solverSeed = solverOptions.solverSeed
 
+            // DB options
+            val isSaveToDb = dbOptions.isSaveToDb
+            val connectionString = dbOptions.connectionString
+            val databaseName = dbOptions.databaseName
+
+            lateinit var database: MongoDatabase
+            if (isSaveToDb) {
+                logger.debug { "Connecting to MongoDB on '$connectionString'..." }
+                val client = KMongo.createClient(connectionString)
+                database = client.getDatabase(databaseName)
+
+                registerModule(fbsatSerializersModule)
+            }
+
             // logger.debug { "C = $C" }
             // logger.debug { "Pgen = $Pgen" }
             // logger.debug { "I = $I" }
@@ -248,14 +295,12 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
                     seed = scenariosSeed
                 )
             )
-
-            data.automaton.dump(outDir, name = "generated-automaton")
-
             val dataFile = outDir.resolve("data.json")
-            logger.debug { "Saving data to '$dataFile'..." }
-            dataFile.ensureParentExists().sink().buffer().use {
-                it.writeln(myJson.encodeToString(data))
+            data.saveTo(dataFile)
+            if (isSaveToDb) {
+                data.saveTo(database)
             }
+            data.automaton.dump(outDir, name = "generated-automaton")
 
             if (method != null) {
                 val inferenceMethod = when (method) {
@@ -289,9 +334,9 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
                     timeout = timeout
                 )
 
-                logger.debug { "Saving results to '$resultFile'..." }
-                resultFile.ensureParentExists().sink().buffer().use {
-                    it.writeln(myJson.encodeToString(result))
+                result.saveTo(resultFile)
+                if (isSaveToDb) {
+                    result.saveTo(database)
                 }
             }
         }

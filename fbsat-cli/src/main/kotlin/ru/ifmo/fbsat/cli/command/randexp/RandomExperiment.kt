@@ -6,6 +6,8 @@ import com.github.lipen.satlib.solver.CadicalSolver
 import com.github.lipen.satlib.solver.GlucoseSolver
 import com.github.lipen.satlib.solver.MiniSatSolver
 import com.github.lipen.satlib.solver.Solver
+import com.mongodb.client.MongoDatabase
+import com.mongodb.client.model.CountOptions
 import com.soywiz.klock.PerformanceCounter
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -13,6 +15,10 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okio.buffer
 import okio.sink
+import org.litote.kmongo.KMongo
+import org.litote.kmongo.eq
+import org.litote.kmongo.getCollection
+import org.litote.kmongo.replaceUpsert
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.generateRandomScenario
 import ru.ifmo.fbsat.core.automaton.newRandomAutomaton
@@ -83,6 +89,31 @@ data class ExperimentData(
         val k: Int,
         val seed: Int,
     )
+
+    fun saveTo(file: File) {
+        logger.debug { "Saving experiment data to '$file'..." }
+        file.ensureParentExists().sink().buffer().use {
+            it.writeln(myJson.encodeToString(this))
+        }
+    }
+
+    fun saveTo(database: MongoDatabase) {
+        val col = database.getCollection<ExperimentData>()
+        if (col.countDocuments(::name eq name, CountOptions().limit(1)) > 0) {
+            logger.debug { "Experiment data already exists in MongoDB collection '${col.namespace}'" }
+            // Note: we do not replace existing data
+        } else {
+            logger.debug { "Saving experiment data to MongoDB collection '${col.namespace}'..." }
+            col.insertOne(this)
+        }
+    }
+
+    fun saveToDb(connectionString: String, databaseName: String = "test") {
+        logger.debug { "Connecting to MongoDB on '$connectionString'..." }
+        val client = KMongo.createClient(connectionString)
+        val database = client.getDatabase(databaseName)
+        saveTo(database)
+    }
 
     companion object {
         fun generate(
@@ -260,6 +291,27 @@ data class ExperimentResult(
         enum class Status {
             SAT, UNSAT, TIMEOUT
         }
+    }
+
+    fun saveTo(file: File) {
+        logger.debug { "Saving experiment result to '$file'..." }
+        file.ensureParentExists().sink().buffer().use {
+            it.writeln(myJson.encodeToString(this))
+        }
+    }
+
+    fun saveTo(database: MongoDatabase) {
+        val col = database.getCollection<ExperimentResult>()
+        logger.debug { "Saving experiment result to MongoDB collection '${col.namespace}'..." }
+        // Note: existing result have to be replaced
+        col.replaceOne(::name eq name, this, replaceUpsert())
+    }
+
+    fun saveToDb(connectionString: String, databaseName: String = "test") {
+        logger.debug { "Connecting to MongoDB on '$connectionString'..." }
+        val client = KMongo.createClient(connectionString)
+        val database = client.getDatabase(databaseName)
+        saveTo(database)
     }
 }
 

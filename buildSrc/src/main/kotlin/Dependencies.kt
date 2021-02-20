@@ -9,6 +9,7 @@ object Versions {
     const val junit = "5.7.0"
     const val klock = "1.12.1"
     const val kluent = "1.63"
+    const val kmongo = "4.2.4"
     const val kotlin = "1.4.30"
     const val kotlin_logging = "2.0.3"
     const val kotlinx_coroutines = "1.4.1"
@@ -140,6 +141,13 @@ object Libs {
         const val arrow_core = "io.arrow-kt:arrow-core:$version"
         const val arrow_syntax = "io.arrow-kt:arrow-syntax:$version"
         const val arrow_meta = "io.arrow-kt:arrow-meta:$version"
+    }
+
+    // https://github.com/Litote/kmongo
+    object KMongo {
+        const val version = Versions.kmongo
+        const val kmongo_serialization = "org.litote.kmongo:kmongo-serialization:$version"
+        const val kmongo_id = "org.litote.kmongo:kmongo-id:$version"
     }
 }
 
