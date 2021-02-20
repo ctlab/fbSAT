@@ -90,7 +90,7 @@ data class ExperimentData(
             validationScenariosParams: ValidationScenariosParams,
             scenariosParams: ScenariosParams,
         ): ExperimentData {
-            val name = "data_" + getDataName(automatonParams, scenariosParams)
+            val name = getDataName(automatonParams, scenariosParams)
             logger.info("Generating '$name'...")
 
             logger.info { "Generating random automaton with ${automatonParams}..." }
@@ -145,7 +145,7 @@ private fun newRandomAutomaton(
 private fun getDataName(
     automatonParams: ExperimentData.AutomatonParams,
     scenariosParams: ExperimentData.ScenariosParams,
-): String = "" +
+): String = "data" +
     "_C${automatonParams.C}" +
     "_P${automatonParams.P}" +
     "_I${automatonParams.I}" +
@@ -267,16 +267,17 @@ private fun getExperimentName(
     data: ExperimentData,
     params: InferenceParams,
 ): String {
-    return data.name +
-        "__${params.method.toNameString()}" +
-        "__${params.solverInfo.toNameString()}"
+    return "exp" +
+        "_${params.method.toNameString()}" +
+        "_${params.solverInfo.toNameString()}" +
+        "__${data.name}"
 }
 
 @Suppress("LocalVariableName")
 fun runExperiment(
     data: ExperimentData,
     params: InferenceParams,
-    name: String = "exp_" + getExperimentName(data, params),
+    name: String = getExperimentName(data, params),
     // Note: if you want to run the experiment with an existing solver,
     //  pass some representative SolverInfo in `params`,
     //  and also pass the existing `solver` via lambda (e.g. `solverInit = { solver }`)
