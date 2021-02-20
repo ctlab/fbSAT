@@ -11,12 +11,14 @@ import ru.ifmo.fbsat.core.utils.Globals
 data class ExtendedTask(
     val maxGuardSize: Int, // P
     val maxTotalGuardsSize: Int? = null, // N, unconstrained if null
+    val useAssumptions: Boolean = false,
 ) : Task() {
     override fun Solver.declare_() {
         /* Variables */
         comment("$name: Variables")
         declareExtendedVariables(
-            P = maxGuardSize
+            P = maxGuardSize,
+            useAssumptions = useAssumptions,
         )
 
         /* Constraints */

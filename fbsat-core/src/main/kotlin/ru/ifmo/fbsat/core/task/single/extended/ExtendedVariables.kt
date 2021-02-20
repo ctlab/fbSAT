@@ -13,6 +13,7 @@ import ru.ifmo.fbsat.core.utils.Globals
 @Suppress("LocalVariableName")
 fun Solver.declareExtendedVariables(
     P: Int,
+    useAssumptions: Boolean = false,
 ) {
     val C: Int = context["C"]
     val K: Int = context["K"]
@@ -45,12 +46,12 @@ fun Solver.declareExtendedVariables(
     /* Cardinality */
     comment("Cardinality (N)")
     val cardinalityN = context("cardinalityN") {
-        declareCardinality {
+        declareCardinality({
             for (c in 1..C)
                 for (k in 1..K)
                     for (p in 1..P)
                         yield(nodeType[c, k, p] neq NodeType.NONE)
-        }
+        }, useAssumptions)
     }
 
     if (Globals.IS_DUMP_VARS_IN_CNF) {

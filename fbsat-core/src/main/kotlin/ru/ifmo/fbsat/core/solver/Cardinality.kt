@@ -1,24 +1,34 @@
 package ru.ifmo.fbsat.core.solver
 
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.log
 import java.util.ArrayDeque
 import java.util.Deque
 
 class Cardinality(
     val totalizer: BoolVarArray,
     private val solver: Solver,
+    private val useAssumptions: Boolean = false,
 ) {
+    init { check(!useAssumptions || solver is AssumptionSupportable) { "Solver doesnt' support assumptions" } }
     var upperBound: Int? = null // sum(totalizer) <= upperBound
         private set
 
     fun updateUpperBoundLessThanOrEqual(newUpperBound: Int?) {
+        // new bound should be less than previous or we use assumptions and they were reset in solver
         upperBound?.let { curUpperBound ->
-            check(newUpperBound != null && newUpperBound <= curUpperBound) { "Cannot soften UB" }
+            check(newUpperBound != null &&
+                (newUpperBound <= curUpperBound ||
+                    (useAssumptions && solver is AssumptionSupportable && solver.getAssumptions().isEmpty()))) { "Cannot soften UB" }
         }
 
         if (newUpperBound == null) return
 
-        solver.declareComparatorLessThanOrEqual(totalizer, newUpperBound, upperBound)
+        if (solver is AssumptionSupportable && solver.getAssumptions().isEmpty()) {
+            upperBound = null
+        }
+
+        solver.declareComparatorLessThanOrEqual(totalizer, newUpperBound, upperBound, useAssumptions)
         upperBound = newUpperBound
     }
 
@@ -27,17 +37,31 @@ class Cardinality(
     }
 }
 
-fun Solver.declareCardinality(variables: Iterable<Literal>): Cardinality =
+fun Solver.declareCardinality(
+    variables: Iterable<Literal>,
+    useAssumptions: Boolean = false
+): Cardinality =
     Cardinality(
         totalizer = declareTotalizer(variables),
-        solver = this
+        solver = this,
+        useAssumptions = useAssumptions,
     )
 
-fun Solver.declareCardinality(variables: Sequence<Literal>): Cardinality =
-    declareCardinality(variables.asIterable())
+fun Solver.declareCardinality(
+    variables: Sequence<Literal>,
+    useAssumptions: Boolean = false,
+): Cardinality =
+    declareCardinality(variables.asIterable(), useAssumptions)
 
-fun Solver.declareCardinality(variables: SequenceScopeLiteral): Cardinality =
-    declareCardinality(sequence(variables).constrainOnce())
+fun Solver.declareCardinality(
+    variables: SequenceScopeLiteral,
+    useAssumptions: Boolean = false,
+): Cardinality =
+    declareCardinality(sequence(variables).constrainOnce(), useAssumptions)
+
+fun Solver.declareCardinality(
+    variables: SequenceScopeLiteral,
+): Cardinality = declareCardinality(variables, false)
 
 fun Solver.declareTotalizer(variables: Iterable<Literal>): BoolVarArray {
     val queue: Deque<List<Int>> = ArrayDeque()
@@ -94,12 +118,17 @@ fun Solver.declareTotalizer(variables: SequenceScopeLiteral): BoolVarArray =
  * Declares cardinality constraint `sum(totalizer) <= x`
  * @param[declared] previously declared upper bound.
  */
-fun Solver.declareComparatorLessThanOrEqual(totalizer: BoolVarArray, x: Int, declared: Int? = null) {
+fun Solver.declareComparatorLessThanOrEqual(
+    totalizer: BoolVarArray,
+    x: Int,
+    declared: Int? = null,
+    useAssumptions: Boolean = false,
+) {
     require(totalizer.shape.size == 1) { "Totalizer must be 1-dimensional." }
     val max = declared ?: totalizer.values.size
     comment("Comparator(<=$x up to $max)")
     for (i in max downTo x + 1) {
-        when (Globals.USE_ASSUMPTIONS && this is AssumptionSupportable) {
+        when (useAssumptions && this is AssumptionSupportable) {
             true -> addAssumptions(-totalizer[i])
             false -> clause(-totalizer[i])
         }
