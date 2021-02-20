@@ -23,16 +23,16 @@ import ru.ifmo.fbsat.core.task.single.basic.basicMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
-import ru.ifmo.fbsat.core.utils.serializers.FileAsStringSerializer
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.ensureParentExists
-import ru.ifmo.fbsat.core.utils.serializers.fbsatSerializersModule
 import ru.ifmo.fbsat.core.utils.scope
+import ru.ifmo.fbsat.core.utils.serializers.FileAsStringSerializer
+import ru.ifmo.fbsat.core.utils.serializers.fbsatSerializersModule
 import ru.ifmo.fbsat.core.utils.timeSince
 import ru.ifmo.fbsat.core.utils.withIndex
-import ru.ifmo.fbsat.core.utils.write
+import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -47,11 +47,18 @@ private val myJson = Json {
 @Serializable
 data class ExperimentData(
     val name: String,
-    val automatonParams: AutomatonParams,
+    val params: DataParams,
     val automaton: Automaton, // generated
-    val validationScenariosParams: ValidationScenariosParams,
     val validationScenarios: List<PositiveScenario>,
+    val scenarios: List<PositiveScenario>,
 ) {
+    @Serializable
+    data class DataParams(
+        val automatonParams: AutomatonParams,
+        val validationScenariosParams: ValidationScenariosParams,
+        val scenariosParams: ScenariosParams,
+    )
+
     @Serializable
     data class AutomatonParams(
         val C: Int,
@@ -69,75 +76,94 @@ data class ExperimentData(
         val k: Int,
         val seed: Int,
     )
+
+    @Serializable
+    data class ScenariosParams(
+        val n: Int,
+        val k: Int,
+        val seed: Int,
+    )
+
+    companion object {
+        fun generate(
+            automatonParams: AutomatonParams,
+            validationScenariosParams: ValidationScenariosParams,
+            scenariosParams: ScenariosParams,
+        ): ExperimentData {
+            val name = "data_" + getDataName(automatonParams, scenariosParams)
+            logger.info("Generating '$name'...")
+
+            logger.info { "Generating random automaton with ${automatonParams}..." }
+            val randomAutomaton = newRandomAutomaton(automatonParams)
+            logger.info { "Generated random automaton:" }
+            randomAutomaton.pprint()
+
+            val nVal = validationScenariosParams.n
+            val kVal = validationScenariosParams.k
+            val validationScenariosSeed = validationScenariosParams.seed
+
+            logger.info { "Generating $nVal validation scenarios (each of length $kVal) with seed=$validationScenariosSeed..." }
+            val validationScenariosRandom = Random(validationScenariosSeed)
+            val validationScenarios = List(nVal) {
+                randomAutomaton.generateRandomScenario(kVal, random = validationScenariosRandom)
+            }
+
+            val n = scenariosParams.n
+            val k = scenariosParams.k
+            val scenariosSeed = scenariosParams.seed
+
+            logger.info { "Generating $n random scenario (each of length $k) with seed=$scenariosSeed..." }
+            val scenariosRandom = Random(scenariosSeed)
+            val scenarios = List(n) {
+                randomAutomaton.generateRandomScenario(k, random = scenariosRandom)
+            }
+
+            return ExperimentData(
+                name = name,
+                params = DataParams(
+                    automatonParams = automatonParams,
+                    validationScenariosParams = validationScenariosParams,
+                    scenariosParams = scenariosParams,
+                ),
+                automaton = randomAutomaton,
+                validationScenarios = validationScenarios,
+                scenarios = scenarios,
+            )
+        }
+    }
+}
+
+private fun newRandomAutomaton(
+    automatonParams: ExperimentData.AutomatonParams,
+): Automaton = with(automatonParams) {
+    newRandomAutomaton(
+        C = C, P = P, I = I, O = O, X = X, Z = Z,
+        random = Random(seed)
+    )
 }
 
 private fun getDataName(
     automatonParams: ExperimentData.AutomatonParams,
-): String {
-    return "data" +
-        "_C${automatonParams.C}" +
-        "_P${automatonParams.P}" +
-        "_I${automatonParams.I}" +
-        "_O${automatonParams.O}" +
-        "_X${automatonParams.X}" +
-        "_Z${automatonParams.Z}" +
-        "_seed${automatonParams.seed}"
-}
-
-fun generateExperimentData(
-    automatonParams: ExperimentData.AutomatonParams,
-    validationScenariosParams: ExperimentData.ValidationScenariosParams,
-): ExperimentData {
-    val name = getDataName(automatonParams)
-    logger.info("Generating '$name'...")
-
-    logger.info { "Generating random automaton with seed=${automatonParams.seed}..." }
-    val automaton = newRandomAutomaton(
-        C = automatonParams.C,
-        P = automatonParams.P,
-        I = automatonParams.I,
-        O = automatonParams.O,
-        X = automatonParams.X,
-        Z = automatonParams.Z,
-        random = Random(automatonParams.seed)
-    )
-    logger.info { "Generated random automaton:" }
-    automaton.pprint()
-
-    val nVal = validationScenariosParams.n
-    val kVal = validationScenariosParams.k
-    val validationScenariosSeed = validationScenariosParams.seed
-
-    logger.info { "Generating $nVal validation scenarios (each of length $kVal) with seed=$validationScenariosSeed..." }
-    val validationScenariosRandom = Random(validationScenariosSeed)
-    val validationScenarios = List(nVal) {
-        automaton.generateRandomScenario(kVal, random = validationScenariosRandom)
-    }
-
-    return ExperimentData(
-        name = name,
-        automatonParams = automatonParams,
-        automaton = automaton,
-        validationScenariosParams = validationScenariosParams,
-        validationScenarios = validationScenarios
-    )
-}
+    scenariosParams: ExperimentData.ScenariosParams,
+): String = "" +
+    "_C${automatonParams.C}" +
+    "_P${automatonParams.P}" +
+    "_I${automatonParams.I}" +
+    "_O${automatonParams.O}" +
+    "_X${automatonParams.X}" +
+    "_Z${automatonParams.Z}" +
+    "_a${automatonParams.seed}" +
+    "_n${scenariosParams.n}" +
+    "_k${scenariosParams.k}" +
+    "_s${scenariosParams.seed}"
 
 @Serializable
 data class InferenceParams(
-    val scenariosParams: ScenariosParams,
     val method: InferenceMethod,
     @SerialName("solver")
     val solverInfo: SolverInfo,
     @Serializable(with = FileAsStringSerializer::class)
     val outDir: File,
-)
-
-@Serializable
-data class ScenariosParams(
-    val n: Int,
-    val k: Int,
-    val seed: Int,
 )
 
 @Serializable
@@ -182,7 +208,7 @@ data class SolverInfo(
 fun SolverInfo.instantiate(): Solver {
     logger.info { "Creating solver '$name' with seed=$seed..." }
     // MiniSat/Glucose options to enable randomization (to some extent):
-    val initialRandomVarFreq = 0.1
+    val initialRandomVarFreq = 0.01
     val initialRandomPolarities = true
     val initialRandomInitialActivities = true
     return when (name) {
@@ -218,60 +244,52 @@ fun SolverInfo.instantiate(): Solver {
 @Serializable
 data class ExperimentResult(
     val name: String,
-    val dataName: String,
-    val params: InferenceParams,
-    val result: InferenceResult,
+    val dataParams: ExperimentData.DataParams,
+    val inferenceParams: InferenceParams,
+    val inferenceResult: InferenceResult,
 ) {
     @Serializable
     data class InferenceResult(
-        val scenarios: List<PositiveScenario>,
+        val status: Status,
         val automaton: Automaton?, // inferred
-        val forwardCheck: Int,
+        val forwardCheck: Int, // 0 if automaton is null
         val time: Double,
         val solverStats: Map<String, Int>,
-    )
+    ) {
+        @Serializable
+        enum class Status {
+            SAT, UNSAT, TIMEOUT
+        }
+    }
 }
 
 private fun getExperimentName(
     data: ExperimentData,
     params: InferenceParams,
 ): String {
-    return "exp" +
-        "_n${params.scenariosParams.n}" +
-        "_k${params.scenariosParams.k}" +
-        "_seed${params.scenariosParams.seed}" +
+    return data.name +
         "__${params.method.toNameString()}" +
-        "__${params.solverInfo.toNameString()}" +
-        "__${data.name}"
+        "__${params.solverInfo.toNameString()}"
 }
 
 @Suppress("LocalVariableName")
 fun runExperiment(
     data: ExperimentData,
     params: InferenceParams,
-    name: String = getExperimentName(data, params),
+    name: String = "exp_" + getExperimentName(data, params),
     // Note: if you want to run the experiment with an existing solver,
     //  pass some representative SolverInfo in `params`,
     //  and also pass the existing `solver` via lambda (e.g. `solverInit = { solver }`)
     solverInit: (SolverInfo) -> Solver = { it.instantiate() },
+    timeout: Long? = null, // milliseconds
 ): ExperimentResult {
     logger.info { "Running experiment '$name'..." }
 
     // TODO: log params
 
-    val n = params.scenariosParams.n
-    val k = params.scenariosParams.k
-    val scenariosSeed = params.scenariosParams.seed
-
-    logger.info { "Generating $n random scenario (each of length $k) with seed=$scenariosSeed..." }
-    val scenariosRandom = Random(scenariosSeed)
-    val scenarios = List(n) {
-        data.automaton.generateRandomScenario(k, random = scenariosRandom)
-    }
-
     logger.info { "Building scenario tree..." }
     val tree = PositiveScenarioTree.fromScenarios(
-        scenarios = scenarios,
+        scenarios = data.scenarios,
         inputNames = data.automaton.inputNames,
         outputNames = data.automaton.outputNames,
         inputEvents = data.automaton.inputEvents,
@@ -281,7 +299,7 @@ fun runExperiment(
 
     val solver = solverInit(params.solverInfo)
     val outDir = params.outDir
-    val inferrer = Inferrer(solver, outDir)
+    val inferrer = Inferrer(solver, outDir, timeout = timeout)
 
     // Globals.START_STATE_ALGORITHMS = StartStateAlgorithms.ZERONOTHING
     Globals.START_STATE_ALGORITHMS = StartStateAlgorithms.ANY
@@ -329,7 +347,7 @@ fun runExperiment(
         }
     }
 
-    var forwardCheck: Int = 0
+    var forwardCheck = 0
 
     if (inferredAutomaton != null) {
         // logger.info { "Original (random generated) automaton:" }
@@ -359,12 +377,18 @@ fun runExperiment(
         logger.error { "Could not infer an automaton after %.2f s".format(timeInfer.seconds) }
     }
 
+    val status = when {
+        inferrer.isTimeout() -> ExperimentResult.InferenceResult.Status.TIMEOUT
+        inferredAutomaton == null -> ExperimentResult.InferenceResult.Status.UNSAT
+        else -> ExperimentResult.InferenceResult.Status.SAT
+    }
+
     return ExperimentResult(
         name = name,
-        dataName = data.name,
-        params = params,
-        result = ExperimentResult.InferenceResult(
-            scenarios = scenarios,
+        dataParams = data.params,
+        inferenceParams = params,
+        inferenceResult = ExperimentResult.InferenceResult(
+            status = status,
             automaton = inferredAutomaton,
             forwardCheck = forwardCheck,
             time = timeInfer.seconds,
@@ -373,6 +397,7 @@ fun runExperiment(
     )
 }
 
+@Suppress("LocalVariableName")
 fun main() {
     val timeStart = PerformanceCounter.reference
 
@@ -410,7 +435,7 @@ fun main() {
         val scenariosSeed = 1
         val solverSeed = 1
 
-        val data = generateExperimentData(
+        val data = ExperimentData.generate(
             automatonParams = ExperimentData.AutomatonParams(
                 C = C, P = P, I = I, O = O, X = X, Z = Z,
                 seed = dataSeed
@@ -419,20 +444,20 @@ fun main() {
                 n = 100,
                 k = 100,
                 seed = dataSeed + 10000
+            ),
+            scenariosParams = ExperimentData.ScenariosParams(
+                n = n,
+                k = k,
+                seed = scenariosSeed
             )
         )
 
         val dataFile = outDir.resolve("data.json")
         dataFile.ensureParentExists().sink().buffer().use {
-            it.write(myJson.encodeToString(data))
+            it.writeln(myJson.encodeToString(data))
         }
 
         val inferenceParams = InferenceParams(
-            scenariosParams = ScenariosParams(
-                n = n,
-                k = k,
-                seed = scenariosSeed
-            ),
             method = method,
             solverInfo = SolverInfo(
                 name = solverName,
@@ -445,7 +470,7 @@ fun main() {
 
         val resultFile = outDir.resolve("result.json")
         resultFile.ensureParentExists().sink().buffer().use {
-            it.write(myJson.encodeToString(result))
+            it.writeln(myJson.encodeToString(result))
         }
     }
 

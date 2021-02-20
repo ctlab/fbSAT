@@ -6,6 +6,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.ParameterHolder
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
+import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.defaultLazy
 import com.github.ajalt.clikt.parameters.options.flag
@@ -13,6 +14,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.choice
+import com.github.ajalt.clikt.parameters.types.double
 import com.github.ajalt.clikt.parameters.types.int
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -29,7 +31,7 @@ import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.ensureParentExists
 import ru.ifmo.fbsat.core.utils.serializers.fbsatSerializersModule
-import ru.ifmo.fbsat.core.utils.write
+import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
 
 private val logger = MyLogger {}
@@ -157,6 +159,13 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
     private val inferenceOptions by RandomExperimentInferenceOptions()
     private val solverOptions by SolverOptions()
 
+    // Note: timeout is in milliseconds, but in CLI we expect seconds.
+    private val timeout: Long? by option(
+        "-t", "--timeout",
+        help = "Timeout",
+        metavar = "<sec>"
+    ).double().convert { (it * 1000).toLong() }
+
     private val isDebug: Boolean by isDebugOption()
     private val isRenderWithDot: Boolean by isRenderWithDotOption()
     private val isOverwrite: Boolean by isOverwriteOption()
@@ -192,10 +201,10 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
             val O = 1
             val X = dataOptions.numberOfInputVariables
             val Z = dataOptions.numberOfOutputVariables
-
-            // Inference options
             val n = inferenceOptions.numberOfScenarios
             val k = inferenceOptions.scenarioLength
+
+            // Inference options
             val method = inferenceOptions.method
             val P = inferenceOptions.maxGuardSize
             val w = inferenceOptions.maxPlateauWidth
@@ -223,7 +232,7 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
             // logger.debug { "scenariosSeed = $scenariosSeed" }
             // logger.debug { "solverSeed = $solverSeed" }
 
-            val data = generateExperimentData(
+            val data = ExperimentData.generate(
                 automatonParams = ExperimentData.AutomatonParams(
                     C = C, P = Pgen, I = I, O = O, X = X, Z = Z,
                     seed = automatonSeed
@@ -232,6 +241,11 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
                     n = 100,
                     k = 100,
                     seed = validationScenariosSeed
+                ),
+                scenariosParams = ExperimentData.ScenariosParams(
+                    n = n,
+                    k = k,
+                    seed = scenariosSeed
                 )
             )
 
@@ -240,7 +254,7 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
             val dataFile = outDir.resolve("data.json")
             logger.debug { "Saving data to '$dataFile'..." }
             dataFile.ensureParentExists().sink().buffer().use {
-                it.write(myJson.encodeToString(data))
+                it.writeln(myJson.encodeToString(data))
             }
 
             if (method != null) {
@@ -264,11 +278,6 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
                 val solver = solverOptions.solver
 
                 val inferenceParams = InferenceParams(
-                    scenariosParams = ScenariosParams(
-                        n = n,
-                        k = k,
-                        seed = scenariosSeed
-                    ),
                     method = inferenceMethod,
                     solverInfo = solverInfo,
                     outDir = outDir
@@ -276,12 +285,13 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
                 val result = runExperiment(
                     data = data,
                     params = inferenceParams,
-                    solverInit = { solver }
+                    solverInit = { solver },
+                    timeout = timeout
                 )
 
                 logger.debug { "Saving results to '$resultFile'..." }
                 resultFile.ensureParentExists().sink().buffer().use {
-                    it.write(myJson.encodeToString(result))
+                    it.writeln(myJson.encodeToString(result))
                 }
             }
         }

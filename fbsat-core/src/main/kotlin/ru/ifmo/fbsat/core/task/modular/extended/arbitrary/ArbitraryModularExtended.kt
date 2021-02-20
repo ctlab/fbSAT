@@ -3,7 +3,6 @@ package ru.ifmo.fbsat.core.task.modular.extended.arbitrary
 import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.automaton.buildExtendedArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.ArbitraryModularBasicTask
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.arbitraryModularBasicMinC
@@ -56,7 +55,7 @@ fun Inferrer.arbitraryModularExtendedMin(
 }
 
 fun Inferrer.inferArbitraryModularExtended(): ArbitraryModularAutomaton? {
-    val model = solver.solveAndGetModel() ?: return null
+    val model = solveAndGetModel() ?: return null
     val automaton = buildExtendedArbitraryModularAutomaton(solver.context, model)
 
     // TODO: check automaton

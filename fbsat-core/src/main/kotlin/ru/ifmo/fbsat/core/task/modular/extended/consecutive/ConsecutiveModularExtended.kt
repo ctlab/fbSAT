@@ -3,7 +3,6 @@ package ru.ifmo.fbsat.core.task.modular.extended.consecutive
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.automaton.buildExtendedConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.ConsecutiveModularBasicTask
 import ru.ifmo.fbsat.core.task.modular.basic.consecutive.consecutiveModularBasicMinC
@@ -51,7 +50,7 @@ fun Inferrer.consecutiveModularExtendedMin(
 }
 
 fun Inferrer.inferConsecutiveModularExtended(): ConsecutiveModularAutomaton? {
-    val model = solver.solveAndGetModel() ?: return null
+    val model = solveAndGetModel() ?: return null
     val automaton = buildExtendedConsecutiveModularAutomaton(solver.context, model)
 
     // TODO: check automaton

@@ -9,7 +9,6 @@ import ru.ifmo.fbsat.core.solver.isSupportStats
 import ru.ifmo.fbsat.core.solver.numberOfConflicts
 import ru.ifmo.fbsat.core.solver.numberOfDecisions
 import ru.ifmo.fbsat.core.solver.numberOfPropagations
-import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeT
 import ru.ifmo.fbsat.core.utils.Globals
@@ -25,7 +24,7 @@ fun Inferrer.basic(
     maxTransitions: Int? = null, // T, unconstrained if null
     isEncodeReverseImplication: Boolean = true,
 ): Automaton? {
-    // val timeStart = PerformanceCounter.reference
+    val timeStart = PerformanceCounter.reference
     reset()
     declare(
         BasicTask(
@@ -55,7 +54,7 @@ fun Inferrer.basicMinC(
     start: Int = 1, // C_start
     end: Int = 20, // C_end
     isEncodeReverseImplication: Boolean = true,
-): Automaton {
+): Automaton? {
     var best: Automaton? = null
     for (C in start..end) {
         val (result, runningTime) = measureTimeWithResult {
@@ -82,9 +81,10 @@ fun Inferrer.basicMinC(
                 logger.debug("Conflicts: ${solver.numberOfConflicts()}")
                 logger.debug("Decisions: ${solver.numberOfDecisions()}")
             }
+            if (isTimeout()) break
         }
     }
-    return checkNotNull(best) { "BasicMin: automaton not found." }
+    return best
 }
 
 fun Inferrer.basicMin(
@@ -94,13 +94,15 @@ fun Inferrer.basicMin(
     isEncodeReverseImplication: Boolean = true,
 ): Automaton? {
     val timeStart = PerformanceCounter.reference
-    basicMinC(
-        scenarioTree = scenarioTree,
-        start = start,
-        end = end,
-        isEncodeReverseImplication = isEncodeReverseImplication
-    )
-    val automaton = optimizeT()
+    val automaton = run {
+        basicMinC(
+            scenarioTree = scenarioTree,
+            start = start,
+            end = end,
+            isEncodeReverseImplication = isEncodeReverseImplication
+        ) ?: return@run null
+        optimizeT()
+    }
     logger.info("Task basic-min done in %.2f s".format(timeSince(timeStart).seconds))
     if (solver.isSupportStats()) {
         logger.debug("Propagations: ${solver.numberOfPropagations()}")
@@ -114,7 +116,7 @@ fun Inferrer.basicMin(
 }
 
 fun Inferrer.inferBasic(): Automaton? {
-    val model = solver.solveAndGetModel() ?: return null
+    val model = solveAndGetModel() ?: return null
     val automaton = buildBasicAutomaton(solver.context, model)
 
     // TODO: refactor mapping check

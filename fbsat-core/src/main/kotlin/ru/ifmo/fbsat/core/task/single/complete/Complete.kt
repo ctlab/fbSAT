@@ -61,21 +61,23 @@ fun Inferrer.completeMin(
     maxGuardSize: Int, // P
 ): Automaton? {
     val timeStart = PerformanceCounter.reference
-    val basicAutomaton = basicMinC(scenarioTree)
-    // Note: we have to reset because basicMinC uses isEncodeReverseImplication = true,
-    //  which is incompatible with negative reduction
-    // TODO: check whether isEncodeReverseImplication is actually true in current basicVars
-    reset()
-    declare(
-        BasicTask(
-            scenarioTree = scenarioTree,
-            numberOfStates = basicAutomaton.numberOfStates,
-            isEncodeReverseImplication = false
+    val automaton = run {
+        val basicAutomaton = basicMinC(scenarioTree) ?: return@run null
+        // Note: we have to reset because basicMinC uses isEncodeReverseImplication = true,
+        //  which is incompatible with negative reduction
+        // TODO: check whether isEncodeReverseImplication is actually true in current basicVars
+        reset()
+        declare(
+            BasicTask(
+                scenarioTree = scenarioTree,
+                numberOfStates = basicAutomaton.numberOfStates,
+                isEncodeReverseImplication = false
+            )
         )
-    )
-    declare(ExtendedTask(maxGuardSize = maxGuardSize))
-    declare(CompleteTask(negativeScenarioTree))
-    val automaton = optimizeN()
+        declare(ExtendedTask(maxGuardSize = maxGuardSize))
+        declare(CompleteTask(negativeScenarioTree))
+        optimizeN()
+    }
     logger.info("Task complete-min done in %.2f s".format(timeSince(timeStart).seconds))
     if (solver.isSupportStats()) {
         logger.debug("Propagations: ${solver.numberOfPropagations()}")

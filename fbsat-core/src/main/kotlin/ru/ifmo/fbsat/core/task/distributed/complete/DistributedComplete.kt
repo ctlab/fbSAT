@@ -7,7 +7,6 @@ import ru.ifmo.fbsat.core.automaton.buildExtendedDistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask
 import ru.ifmo.fbsat.core.task.distributed.extended.DistributedExtendedTask
@@ -174,7 +173,7 @@ fun Inferrer.completeMin__(
 }
 
 fun Inferrer.inferDistributedComplete(): DistributedAutomaton? {
-    val model = solver.solveAndGetModel() ?: return null
+    val model = solveAndGetModel() ?: return null
     // val vars = solver.context.distributedExtendedVars
     // val assignment = DistributedExtendedAssignment.frommodel(model, vars)
     // val automaton = assignment.toAutomaton()

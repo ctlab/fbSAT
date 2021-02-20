@@ -8,7 +8,6 @@ import ru.ifmo.fbsat.core.solver.isSupportStats
 import ru.ifmo.fbsat.core.solver.numberOfConflicts
 import ru.ifmo.fbsat.core.solver.numberOfDecisions
 import ru.ifmo.fbsat.core.solver.numberOfPropagations
-import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeN
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
@@ -66,9 +65,11 @@ fun Inferrer.extendedMin(
     maxGuardSize: Int, // P
 ): Automaton? {
     val timeStart = PerformanceCounter.reference
-    basicMinC(scenarioTree, start = numberOfStates ?: 1) // ?: return null
-    declare(ExtendedTask(maxGuardSize = maxGuardSize))
-    val automaton = optimizeN()
+    val automaton = run {
+        basicMinC(scenarioTree, start = numberOfStates ?: 1) ?: return@run null
+        declare(ExtendedTask(maxGuardSize = maxGuardSize))
+        optimizeN()
+    }
     logger.info("Task extended-min done in %.2f s".format(timeSince(timeStart).seconds))
     if (solver.isSupportStats()) {
         logger.debug("Propagations: ${solver.numberOfPropagations()}")
@@ -95,41 +96,45 @@ fun Inferrer.extendedMinUB(
 
     val timeStart = PerformanceCounter.reference
 
-    val basicAutomaton =
-        if (numberOfStates != null) {
-            basic(scenarioTree, numberOfStates)
-        } else {
-            basicMin(scenarioTree)
-        } ?: return null
-    val C = basicAutomaton.numberOfStates
-    val Tmin = basicAutomaton.numberOfTransitions
-    var best: Automaton? = null
-    var Plow: Int? = null
-    var N: Int? = null // <=
+    val answer = run {
+        val basicAutomaton =
+            if (numberOfStates != null) {
+                basic(scenarioTree, numberOfStates)
+            } else {
+                basicMin(scenarioTree)
+            } ?: return@run null
+        val C = basicAutomaton.numberOfStates
+        val Tmin = basicAutomaton.numberOfTransitions
+        var best: Automaton? = null
+        var Plow: Int? = null
+        var N: Int? = null // <=
 
-    logger.info("Tmin = $Tmin")
+        logger.info("Tmin = $Tmin")
 
-    for (P in start..end) {
-        logger.info("Trying P = $P, N = $N")
+        for (P in start..end) {
+            logger.info("Trying P = $P, N = $N")
 
-        if (best != null && P > (best.totalGuardsSize - Tmin)) {
-            logger.info("Reached upper bound: P = $P, Plow = $Plow, Nbest = ${best.totalGuardsSize}, Tmin = $Tmin")
-            break
+            if (best != null && P > (best.totalGuardsSize - Tmin)) {
+                logger.info("Reached upper bound: P = $P, Plow = $Plow, Nbest = ${best.totalGuardsSize}, Tmin = $Tmin")
+                break
+            }
+            if (Plow != null && maxPlateauWidth != null && (P - Plow) > maxPlateauWidth) {
+                logger.info("Reached maximum plateau width: P = $P, Plow = $Plow, w = $maxPlateauWidth")
+                break
+            }
+
+            reset()
+            declare(BasicTask(scenarioTree, numberOfStates = C))
+            declare(ExtendedTask(maxGuardSize = P))
+            val automaton = optimizeN(start = N)
+            if (automaton != null) {
+                best = automaton
+                Plow = P
+                N = automaton.totalGuardsSize - 1
+            }
         }
-        if (Plow != null && maxPlateauWidth != null && (P - Plow) > maxPlateauWidth) {
-            logger.info("Reached maximum plateau width: P = $P, Plow = $Plow, w = $maxPlateauWidth")
-            break
-        }
 
-        reset()
-        declare(BasicTask(scenarioTree, numberOfStates = C))
-        declare(ExtendedTask(maxGuardSize = P))
-        val automaton = optimizeN(start = N)
-        if (automaton != null) {
-            best = automaton
-            Plow = P
-            N = automaton.totalGuardsSize - 1
-        }
+        best
     }
 
     logger.info("Task extended-min-ub done in %.2f s".format(timeSince(timeStart).seconds))
@@ -142,11 +147,11 @@ fun Inferrer.extendedMinUB(
         solver.dumpDimacs(outDir.resolve("cnf_extended-min-ub_w${maxPlateauWidth}.cnf"))
     }
 
-    return best
+    return answer
 }
 
 fun Inferrer.inferExtended(): Automaton? {
-    val model = solver.solveAndGetModel() ?: return null
+    val model = solveAndGetModel() ?: return null
     val automaton = buildExtendedAutomaton(solver.context, model)
 
     // with(vars) {

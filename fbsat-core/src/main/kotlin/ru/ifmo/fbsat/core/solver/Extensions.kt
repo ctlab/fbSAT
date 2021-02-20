@@ -16,6 +16,7 @@ import com.github.lipen.satlib.core.SequenceScopeLit
 import com.github.lipen.satlib.core.convert
 import com.github.lipen.satlib.core.newContext
 import com.github.lipen.satlib.op.implyIff
+import com.github.lipen.satlib.op.runWithTimeout
 import com.github.lipen.satlib.solver.CadicalSolver
 import com.github.lipen.satlib.solver.GlucoseSolver
 import com.github.lipen.satlib.solver.MiniSatSolver
@@ -70,6 +71,13 @@ fun Solver.clause(literals: Iterable<Lit>) {
 
 fun Solver.solveAndGetModel(): Model? =
     if (solve()) getModel() else null
+
+fun Solver.solveAndGetModel(timeout: Long?): Model? =
+    runWithTimeout(timeout) { solveAndGetModel() }
+
+fun <T> Solver.runWithTimeout(timeMillis: Long?, block: Solver.() -> T): T =
+    if (timeMillis == null) block()
+    else runWithTimeout(timeMillis, block)
 
 fun Solver.declareModularContext(M: Int): ModularContext =
     context("modularContext") {
