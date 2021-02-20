@@ -32,3 +32,4 @@ target/
 !/fbsat.bat
 # Specific scripts
 !/scripts/runner.py
+.Rproj.user
