@@ -219,7 +219,7 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
                     logger.info { "'$resultFile' already exists, but we overwrite it" }
                     true
                 } else {
-                    logger.info { "'$resultFile' already exists => not running" }
+                    logger.info { "'$resultFile' already exists => not running. Use --overwrite flag to force overwriting existing results." }
                     false
                 }
             }
