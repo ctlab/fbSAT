@@ -28,6 +28,13 @@ data class ExtendedTask(
         /* Initial cardinality constraints */
         comment("$name: Initial cardinality (N) constraints")
         val cardinalityN: Cardinality = context["cardinalityN"]
-        cardinalityN.declareUpperBoundLessThanOrEqual(maxTotalGuardsSize)
+        // old
+        // cardinalityN.declareUpperBoundLessThanOrEqual(maxTotalGuardsSize)
+        // adhoc
+        if (Globals.IS_USE_ASSUMPTIONS) {
+            cardinalityN.assumeUpperBoundLessThanOrEqual(maxTotalGuardsSize)
+        } else {
+            cardinalityN.declareUpperBoundLessThanOrEqual(maxTotalGuardsSize)
+        }
     }
 }

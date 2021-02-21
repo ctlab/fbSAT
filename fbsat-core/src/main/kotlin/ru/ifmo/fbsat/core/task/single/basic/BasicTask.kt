@@ -34,6 +34,14 @@ data class BasicTask(
         /* Initial cardinality constraints */
         comment("$name: Initial cardinality (T) constraints")
         val cardinalityT: Cardinality = context["cardinalityT"]
-        cardinalityT.declareUpperBoundLessThanOrEqual(maxTransitions)
+        // old
+        // cardinalityT.declareUpperBoundLessThanOrEqual(maxTransitions)
+        // adhoc
+        if (Globals.IS_USE_ASSUMPTIONS) {
+            cardinalityT.assumeUpperBoundLessThanOrEqual(maxTransitions)
+        } else {
+            cardinalityT.declareUpperBoundLessThanOrEqual(maxTransitions)
+        }
+
     }
 }

@@ -22,6 +22,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isForbidTransitionsToFirstState: Boolean by isForbidTransitionsToFirstStateOption()
     val isBfsAutomaton: Boolean by isBfsAutomatonOption()
     val isBfsGuard: Boolean by isBfsGuardOption()
+
     // val isOnlyC: Boolean by isOnlyCOption()
     // val failIfSTVerifyFailed: Boolean by getFailIfSTVerifyFailedOption()
     val initialOutputValues: OutputValues? by getInitialOutputValuesOption()
@@ -223,4 +224,13 @@ fun ParameterHolder.isDebugOption() =
     ).flag(
         "--no-debug",
         default = Globals.IS_DEBUG
+    )
+
+fun ParameterHolder.useAssumptions() =
+    option(
+        "--use-assumptions",
+        help = "Assumptions mode"
+    ).flag(
+        "--no-use-assumptions",
+        default = false
     )

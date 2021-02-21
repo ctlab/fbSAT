@@ -18,6 +18,7 @@ class Inferrer(
     }
 
     fun reset() {
+        logger.debug { "Resetting solver..." }
         solver.reset()
     }
 

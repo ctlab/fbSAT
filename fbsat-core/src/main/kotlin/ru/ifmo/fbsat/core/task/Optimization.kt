@@ -69,7 +69,7 @@ fun <T : Any> Cardinality.optimizeTopDown(
     start = start,
     end = end,
     nextInitial = { bound ->
-        if (useAssumptions) assumeLowerBoundGreaterThanOrEqual(bound)
+        if (useAssumptions) assumeUpperBoundLessThanOrEqual(bound)
         else declareUpperBoundLessThanOrEqual(bound)
         infer()
     },
@@ -86,7 +86,7 @@ fun Inferrer.optimizeT(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): Automaton? {
-    logger.info("Optimizing T...")
+    logger.info("Optimizing T (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
     val cardinality: Cardinality = solver.context["cardinalityT"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -102,7 +102,7 @@ fun Inferrer.optimizeN(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): Automaton? {
-    logger.info("Optimizing N...")
+    logger.info("Optimizing N (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
     val cardinality: Cardinality = solver.context["cardinalityN"]
     return cardinality.optimizeTopDown(
         start = start,

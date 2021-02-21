@@ -103,15 +103,28 @@ class PositiveScenarioTree(
             inputEvents: List<InputEvent>? = null,
             outputEvents: List<OutputEvent>? = null,
             isTrie: Boolean = true,
-        ): PositiveScenarioTree =
-            fromScenarios(
-                scenarios = PositiveScenario.fromFile(file),
+        ): PositiveScenarioTree {
+            val scenarios =
+                if (file.extension == "smvout") {
+                    PositiveScenario.fromSmv(
+                        file = file,
+                        inputEvents = inputEvents ?: listOf(InputEvent("REQ")),
+                        outputEvents = outputEvents ?: listOf(OutputEvent("CNF")),
+                        inputNames = inputNames,
+                        outputNames = outputNames
+                    )
+                } else {
+                    PositiveScenario.fromFile(file)
+                }
+            return fromScenarios(
+                scenarios = scenarios,
                 inputNames = inputNames,
                 outputNames = outputNames,
                 inputEvents = inputEvents,
                 outputEvents = outputEvents,
                 isTrie = isTrie
             )
+        }
 
         fun fromOld(oldTree: OldPositiveScenarioTree): PositiveScenarioTree =
             PositiveScenarioTree(
