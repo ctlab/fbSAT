@@ -8,6 +8,8 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
+import ru.ifmo.fbsat.core.scenario.negative.Counterexample
+import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.preprocessed
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.log
@@ -95,5 +97,32 @@ data class PositiveScenario(
             else
                 PositiveScenario(elements)
         }
+
+        fun fromSmv(
+            file: File,
+            inputEvents: List<InputEvent>,
+            outputEvents: List<OutputEvent>,
+            inputNames: List<String>,
+            outputNames: List<String>,
+            preprocess: Boolean = true,
+        ): List<PositiveScenario> =
+            Counterexample.from(file).map { counterexample ->
+                val elements = counterexample.states.zipWithNext { first, second ->
+                    ScenarioElement(
+                        InputAction(
+                            InputEvent.of(first.getFirstTrue(inputEvents.map { it.name })),
+                            InputValues(first.getBooleanValues(inputNames))
+                        ),
+                        OutputAction(
+                            OutputEvent.of(second.getFirstTrue(outputEvents.map { it.name })),
+                            OutputValues(second.getBooleanValues(outputNames))
+                        )
+                    )
+                }
+                if (preprocess)
+                    PositiveScenario(elements.preprocessed)
+                else
+                    PositiveScenario(elements)
+            }
     }
 }

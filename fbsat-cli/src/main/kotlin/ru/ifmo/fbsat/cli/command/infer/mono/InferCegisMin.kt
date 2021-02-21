@@ -18,6 +18,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.scenariosFileOption
 import ru.ifmo.fbsat.cli.command.infer.options.smvDirOption
 import ru.ifmo.fbsat.cli.command.infer.options.startNumberOfStatesOption
 import ru.ifmo.fbsat.core.automaton.Automaton
+import ru.ifmo.fbsat.core.task.single.complete.cegisAssumptionsMin
 import ru.ifmo.fbsat.core.task.single.complete.cegisMin
 import java.io.File
 
@@ -49,6 +50,29 @@ class InferCegisMinCommand : AbstractInferMonoCommand("cegis-min") {
 
     override fun infer(): Automaton? =
         inferrer.cegisMin(
+            scenarioTree = scenarioTree,
+            initialNegativeScenarioTree = null,
+            numberOfStates = params.numberOfStates,
+            startNumberOfStates = params.startNumberOfStates,
+            maxGuardSize = params.maxGuardSize,
+            maxPlateauWidth = params.maxPlateauWidth,
+            smvDir = io.smvDir
+        )
+}
+
+class InferCegisAssumptionsCommand : AbstractInferMonoCommand("cegis-assumptions") {
+    private val io by CegisMinInputOutputOptions()
+    private val params by CegisMinAutomatonOptions()
+    override val solverOptions by SolverOptions()
+    override val extraOptions by ExtraOptions()
+
+    override val scenariosFile: File get() = io.scenariosFile
+    override val inputNames: List<String> get() = io.inputNames
+    override val outputNames: List<String> get() = io.outputNames
+    override val outDir: File get() = io.outDir
+
+    override fun infer(): Automaton? =
+        inferrer.cegisAssumptionsMin(
             scenarioTree = scenarioTree,
             initialNegativeScenarioTree = null,
             numberOfStates = params.numberOfStates,

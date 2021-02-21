@@ -6,6 +6,7 @@ import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.addGenericScenario
 import ru.ifmo.fbsat.core.scenario.auxScenarioElement
+import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.utils.log
 import java.io.File
 
@@ -103,7 +104,13 @@ class PositiveScenarioTree(
             isTrie: Boolean = true,
         ): PositiveScenarioTree =
             fromScenarios(
-                scenarios = PositiveScenario.fromFile(file),
+                scenarios =
+                if (file.name.endsWith("smvout"))
+                    PositiveScenario.fromSmv(file,
+                        inputEvents ?: listOf(InputEvent("REQ")),
+                        outputEvents ?: listOf(OutputEvent("CNF")),
+                        inputNames, outputNames)
+                else PositiveScenario.fromFile(file),
                 inputNames = inputNames,
                 outputNames = outputNames,
                 inputEvents = inputEvents,
