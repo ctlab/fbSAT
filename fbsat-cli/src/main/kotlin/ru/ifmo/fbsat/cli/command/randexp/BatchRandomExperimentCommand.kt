@@ -25,15 +25,10 @@ import java.io.File
 
 private val logger = MyLogger {}
 
-private val myJson = Json {
-    serializersModule = fbsatSerializersModule
-    prettyPrint = true
-}
-
-internal const val BATCH_DATA_OPTIONS = "Batch Data Options"
-internal const val BATCH_INFERENCE_OPTIONS = "Batch Inference Options"
-internal const val BATCH_SOLVER_OPTIONS = "Batch Solver Options"
-internal const val BATCH_OPTIONS = "Batch Options"
+private const val BATCH_DATA_OPTIONS = "Batch Data Options"
+private const val BATCH_INFERENCE_OPTIONS = "Batch Inference Options"
+private const val BATCH_SOLVER_OPTIONS = "Batch Solver Options"
+private const val BATCH_OPTIONS = "Batch Options"
 
 private fun parseRange(s: String): IntRange =
     if (s.contains("-")) {

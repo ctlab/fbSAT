@@ -328,13 +328,14 @@ private fun getExperimentName(
 @Suppress("LocalVariableName")
 fun runExperiment(
     data: ExperimentData,
-    params: InferenceParams,
-    name: String = getExperimentName(data, params),
+    inferenceParams: InferenceParams,
+    name: String = getExperimentName(data, inferenceParams),
     // Note: if you want to run the experiment with an existing solver,
-    //  pass some representative SolverInfo in `params`,
+    //  pass some representative SolverInfo inside `inferenceParams`,
     //  and also pass the existing `solver` via lambda (e.g. `solverInit = { solver }`)
     solverInit: (SolverInfo) -> Solver = { it.instantiate() },
     timeout: Long? = null, // milliseconds
+    outDir: File = inferenceParams.outDir,
 ): ExperimentResult {
     logger.info { "Running experiment '$name'..." }
 
@@ -350,16 +351,15 @@ fun runExperiment(
     )
     logger.info { "Tree size: ${tree.size}" }
 
-    val solver = solverInit(params.solverInfo)
-    val outDir = params.outDir
-    val inferrer = Inferrer(solver, outDir, timeout = timeout)
+    val solver = solverInit(inferenceParams.solverInfo)
+    val inferrer = Inferrer(solver, inferenceParams.outDir, timeout = timeout)
 
     // Globals.START_STATE_ALGORITHMS = StartStateAlgorithms.ZERONOTHING
     Globals.START_STATE_ALGORITHMS = StartStateAlgorithms.ANY
     Globals.EPSILON_OUTPUT_EVENTS = EpsilonOutputEvents.NONE
     Globals.IS_FORBID_TRANSITIONS_TO_FIRST_STATE = false
 
-    val method = params.method
+    val method = inferenceParams.method
 
     logger.info { "Performing synthesis of an automaton using $method..." }
     val timeInferStart = PerformanceCounter.reference
@@ -439,7 +439,7 @@ fun runExperiment(
     return ExperimentResult(
         name = name,
         dataParams = data.params,
-        inferenceParams = params,
+        inferenceParams = inferenceParams,
         inferenceResult = ExperimentResult.InferenceResult(
             status = status,
             automaton = inferredAutomaton,
@@ -482,7 +482,7 @@ fun main() {
         val method = InferenceMethod.ExtendedMin(P = P)
 
         // val outDir = File("out/${DateTime.nowLocal().format("yyyy-MM-dd_HH-mm-ss")}")
-        val outDir = File("out/randexp")
+        val outDir = File("out/randexp/t")
 
         val automatonSeed = 1
         val scenariosSeed = 1

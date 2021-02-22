@@ -17,7 +17,6 @@ import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.double
 import com.github.ajalt.clikt.parameters.types.int
 import com.mongodb.client.MongoDatabase
-import kotlinx.serialization.json.Json
 import org.litote.kmongo.KMongo
 import org.litote.kmongo.serialization.registerModule
 import ru.ifmo.fbsat.cli.command.infer.options.EXTRA_OPTIONS
@@ -35,14 +34,23 @@ import java.io.File
 
 private val logger = MyLogger {}
 
-private val myJson = Json {
-    serializersModule = fbsatSerializersModule
-    prettyPrint = true
-}
-
 internal const val DATA_OPTIONS = "Data Options"
 internal const val INFERENCE_OPTIONS = "Inference Options"
 internal const val DB_OPTIONS = "DB Options"
+
+private fun ParameterHolder.numberOfInputEventsOption() =
+    option(
+        "-I",
+        help = "Number of input events",
+        metavar = "<int>"
+    ).int()
+
+private fun ParameterHolder.numberOfOutputEventsOption() =
+    option(
+        "-O",
+        help = "Number of output events",
+        metavar = "<int>"
+    ).int()
 
 private fun ParameterHolder.numberOfInputVariablesOption() =
     option(
@@ -139,6 +147,8 @@ private fun ParameterHolder.databaseNameOption() =
 
 private class RandomExperimentDataOptions : OptionGroup(DATA_OPTIONS) {
     val numberOfStates: Int by numberOfStatesOption().required()
+    val numberOfInputEvents: Int by numberOfInputEventsOption().default(1)
+    val numberOfOutputEvents: Int by numberOfOutputEventsOption().default(1)
     val numberOfInputVariables: Int by numberOfInputVariablesOption().required()
     val numberOfOutputVariables: Int by numberOfOutputVariablesOption().required()
     val maxGuardSize: Int by maxGuardSizeGenOption().default(5)
@@ -166,13 +176,13 @@ private class RandomExperimentInferenceOptions : OptionGroup(INFERENCE_OPTIONS) 
     val method: String? by methodOption()
     val maxGuardSize: Int? by maxGuardSizeOption()
     val maxPlateauWidth: Int? by maxPlateauWidthOption()
-    val outDir: File by outDirOption()
 }
 
 private class RandomExperimentExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isDebug: Boolean by isDebugOption()
     val isRenderWithDot: Boolean by isRenderWithDotOption()
     val isOverwrite: Boolean by isOverwriteOption()
+    val outDir: File by outDirOption()
 
     // Note: timeout is in milliseconds, but in CLI we expect seconds.
     val timeout: Long? by option(
@@ -195,31 +205,29 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
     private val dataOptions by RandomExperimentDataOptions()
     private val inferenceOptions by RandomExperimentInferenceOptions()
     private val solverOptions by SolverOptions()
-    private val extraOptions by RandomExperimentExtraOptions()
     private val dbOptions by RandomExperimentDbOptions()
+    private val extraOptions by RandomExperimentExtraOptions()
 
     @Suppress("LocalVariableName")
     override fun run() {
-        val isDebug = extraOptions.isDebug
-        val isRenderWithDot = extraOptions.isRenderWithDot
-        val isOverwrite = extraOptions.isOverwrite
-        val timeout = extraOptions.timeout
-
-        Globals.IS_DEBUG = isDebug
-        Globals.IS_RENDER_WITH_DOT = isRenderWithDot
+        Globals.IS_DEBUG = extraOptions.isDebug
+        Globals.IS_RENDER_WITH_DOT = extraOptions.isRenderWithDot
 
         logger.debug { "Running $commandName..." }
 
-        val outDir = inferenceOptions.outDir
-        val resultFile = outDir.resolve("result.json")
+        // Extra options
+        val isOverwrite = extraOptions.isOverwrite
+        val timeout = extraOptions.timeout
+        val outDir = extraOptions.outDir
 
+        val resultFile = outDir.resolve("result.json")
         val needRun = when {
             resultFile.exists() -> {
                 if (isOverwrite) {
-                    logger.info { "'$resultFile' already exists, but we overwrite it" }
+                    logger.info { "'$resultFile' already exists, but we overwrite it." }
                     true
                 } else {
-                    logger.info { "'$resultFile' already exists => not running. Use --overwrite flag to force overwriting existing results." }
+                    logger.info { "'$resultFile' already exists => not running. Use '--overwrite' flag to force overwriting existing results." }
                     false
                 }
             }
@@ -230,8 +238,8 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
             // Data options
             val C = dataOptions.numberOfStates
             val Pgen = dataOptions.maxGuardSize
-            val I = 1
-            val O = 1
+            val I = dataOptions.numberOfInputEvents
+            val O = dataOptions.numberOfOutputEvents
             val X = dataOptions.numberOfInputVariables
             val Z = dataOptions.numberOfOutputVariables
             val n = inferenceOptions.numberOfScenarios
@@ -253,6 +261,8 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
             val connectionString = dbOptions.connectionString
             val databaseName = dbOptions.databaseName
 
+            // TODO: log all options
+
             lateinit var database: MongoDatabase
             if (isSaveToDb) {
                 logger.debug { "Connecting to MongoDB on '$connectionString'..." }
@@ -261,23 +271,6 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
 
                 registerModule(fbsatSerializersModule)
             }
-
-            // logger.debug { "C = $C" }
-            // logger.debug { "Pgen = $Pgen" }
-            // logger.debug { "I = $I" }
-            // logger.debug { "O = $O" }
-            // logger.debug { "X = $X" }
-            // logger.debug { "Z = $Z" }
-            // logger.debug { "n = $n" }
-            // logger.debug { "k = $k" }
-            // logger.debug { "method = $method" }
-            // logger.debug { "P = $P" }
-            // logger.debug { "w = $w" }
-            // logger.debug { "outDir = $outDir" }
-            // logger.debug { "automatonSeed = $automatonSeed" }
-            // logger.debug { "validationScenariosSeed = $validationScenariosSeed" }
-            // logger.debug { "scenariosSeed = $scenariosSeed" }
-            // logger.debug { "solverSeed = $solverSeed" }
 
             val data = ExperimentData.generate(
                 automatonParams = ExperimentData.AutomatonParams(
@@ -321,19 +314,19 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
                     seed = solverSeed ?: 0
                 )
                 val solver = solverOptions.solver
-
                 val inferenceParams = InferenceParams(
                     method = inferenceMethod,
                     solverInfo = solverInfo,
                     outDir = outDir
                 )
+
                 val result = runExperiment(
                     data = data,
-                    params = inferenceParams,
+                    inferenceParams = inferenceParams,
                     solverInit = { solver },
-                    timeout = timeout
+                    timeout = timeout,
+                    outDir = outDir
                 )
-
                 result.saveTo(resultFile)
                 if (isSaveToDb) {
                     result.saveTo(database)
