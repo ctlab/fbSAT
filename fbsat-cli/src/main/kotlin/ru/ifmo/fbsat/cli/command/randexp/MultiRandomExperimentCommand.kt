@@ -312,7 +312,7 @@ class MultiRandomExperimentCommand : CliktCommand(name = "randexp-multi") {
                 for (solverSeed in solverSeeds) {
                     val expName = "exp" +
                         "_C${C}" +
-                        "_P${P}" +
+                        "_P${Pgen}" +
                         "_I${I}" +
                         "_O${O}" +
                         "_X${X}" +
