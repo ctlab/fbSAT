@@ -275,6 +275,7 @@ fun SolverInfo.instantiate(): Solver {
 @Serializable
 data class ExperimentResult(
     val name: String,
+    val dataName: String,
     val dataParams: ExperimentData.DataParams,
     val inferenceParams: InferenceParams,
     val inferenceResult: InferenceResult,
@@ -444,6 +445,7 @@ fun runExperiment(
 
     return ExperimentResult(
         name = name,
+        dataName = data.name,
         dataParams = data.params,
         inferenceParams = inferenceParams,
         inferenceResult = ExperimentResult.InferenceResult(
