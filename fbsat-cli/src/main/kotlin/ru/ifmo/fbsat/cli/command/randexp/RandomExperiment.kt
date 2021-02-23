@@ -377,11 +377,6 @@ fun runExperiment(
     }
     val timeInfer = timeSince(timeInferStart)
 
-    // Close the solver to avoid memory leaks
-    if (autoClose) {
-        inferrer.solver.close()
-    }
-
     val solverStats: MutableMap<String, Int> = mutableMapOf()
     when (solver) {
         is MiniSatSolver -> {
@@ -404,6 +399,11 @@ fun runExperiment(
         else -> {
             logger.debug { "$solver does not support querying statistics" }
         }
+    }
+
+    // Close the solver to avoid memory leaks
+    if (autoClose) {
+        inferrer.solver.close()
     }
 
     var forwardCheck = 0
