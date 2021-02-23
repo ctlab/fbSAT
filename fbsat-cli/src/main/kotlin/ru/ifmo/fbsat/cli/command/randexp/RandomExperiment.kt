@@ -336,6 +336,7 @@ fun runExperiment(
     solverInit: (SolverInfo) -> Solver = { it.instantiate() },
     timeout: Long? = null, // milliseconds
     outDir: File = inferenceParams.outDir,
+    autoClose: Boolean = false,
 ): ExperimentResult {
     logger.info { "Running experiment '$name'..." }
 
@@ -375,6 +376,11 @@ fun runExperiment(
         }
     }
     val timeInfer = timeSince(timeInferStart)
+
+    // Close the solver to avoid memory leaks
+    if (autoClose) {
+        inferrer.solver.close()
+    }
 
     val solverStats: MutableMap<String, Int> = mutableMapOf()
     when (solver) {

@@ -370,7 +370,8 @@ class MultiRandomExperimentCommand : CliktCommand(name = "randexp-multi") {
                             data = data,
                             inferenceParams = inferenceParams,
                             timeout = timeout,
-                            outDir = outDir
+                            outDir = outDir,
+                            autoClose = true
                         )
                         result.saveTo(resultFile)
                         if (isSaveToDb) {
