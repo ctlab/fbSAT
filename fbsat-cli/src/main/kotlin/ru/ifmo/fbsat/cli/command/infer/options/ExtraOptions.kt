@@ -12,6 +12,7 @@ import com.github.ajalt.clikt.parameters.types.choice
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.NegativeTreeOptimizations
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 
 internal const val EXTRA_OPTIONS = "Extra Options"
@@ -39,6 +40,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isUseAssumptions: Boolean by isUseAssumptionsOption()
     val isDumpVarsInCnf: Boolean by isDumpVarsInCnfOption()
     val isDebug: Boolean by isDebugOption()
+    val negativeTreeOptimizations: NegativeTreeOptimizations by negativeTreeOptimizationsOption()
 }
 
 fun ParameterHolder.isForbidOrOption() =
@@ -226,11 +228,14 @@ fun ParameterHolder.isDebugOption() =
         default = Globals.IS_DEBUG
     )
 
-fun ParameterHolder.useAssumptions() =
+fun ParameterHolder.negativeTreeOptimizationsOption() =
     option(
-        "--use-assumptions",
-        help = "Assumptions mode"
-    ).flag(
-        "--no-use-assumptions",
-        default = false
+        "--negative-tree-optimizations",
+        help = "Negative tree optimizations"
+    ).choice(
+        "nothing" to NegativeTreeOptimizations.NOTHING,
+        "opt1" to NegativeTreeOptimizations.OPT1,
+        "opt2" to NegativeTreeOptimizations.OPT2,
+    ).default(
+        NegativeTreeOptimizations.NOTHING
     )

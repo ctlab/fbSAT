@@ -41,16 +41,17 @@ class NegativeScenarioTree(
     fun loopBacks(v: Int): List<Int> = nodes[v - 1].loopBacks.map { it.id }
 
     @Suppress("DuplicatedCode")
-    fun addScenario(scenario: NegativeScenario) {
+    fun addScenario(scenario: NegativeScenario, label: Int = 0) {
         require(scenario.elements.isNotEmpty())
 
         lateinit var last: Node
         var loopBack: Node? = null
 
+        root.label = label
         addGenericScenario(
             scenario,
             sameNode = { index, _, child ->
-                child.also { newNode ->
+                child.apply { this.label = label }.also { newNode ->
                     if (index + 1 == scenario.loopPosition) {
                         check(loopBack == null) { "Cannot override loopBack = $loopBack to $newNode" }
                         loopBack = newNode
@@ -60,7 +61,7 @@ class NegativeScenarioTree(
                 }
             },
             newNode = { index, element, current ->
-                Node(element, parent = current).also { newNode ->
+                Node(element, parent = current, label).also { newNode ->
                     element.nodeId = newNode.id
                     if (index + 1 == scenario.loopPosition) {
                         check(loopBack == null) { "Cannot override loopBack = $loopBack to $newNode" }
@@ -86,6 +87,7 @@ class NegativeScenarioTree(
     inner class Node(
         override val element: ScenarioElement,
         override val parent: Node?,
+        var label: Int = 0,
     ) : ScenarioTree.Node<Node> {
         private val _children: MutableList<Node> = mutableListOf()
 

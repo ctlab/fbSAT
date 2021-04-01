@@ -12,9 +12,7 @@ import ru.ifmo.fbsat.core.task.single.extended.ExtendedTask
 import ru.ifmo.fbsat.core.task.single.extended.extendedMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
 import ru.ifmo.fbsat.core.task.single.extended.inferExtended
-import ru.ifmo.fbsat.core.utils.Globals
-import ru.ifmo.fbsat.core.utils.MyLogger
-import ru.ifmo.fbsat.core.utils.timeSince
+import ru.ifmo.fbsat.core.utils.*
 import java.io.File
 
 private val logger = MyLogger {}
@@ -113,7 +111,7 @@ fun Inferrer.performCegis(smvDir: File, loopNumber: Int): Automaton? {
     val negativeScenarioTree: NegativeScenarioTree = solver.context["negativeScenarioTree"]
     lateinit var lastNegativeScenarios: List<NegativeScenario>
 
-    for (iterationNumber in 1 until 10000) {
+    mainLoop@for (iterationNumber in 1 until 10000) {
         // log.info("CEGIS iteration #$iterationNumber")
         logger.debug("CEGIS iteration #$iterationNumber on loop $loopNumber")
         val timeStart = PerformanceCounter.reference
@@ -129,6 +127,51 @@ fun Inferrer.performCegis(smvDir: File, loopNumber: Int): Automaton? {
             )
             return null
         }
+
+        val maxLabel = if (
+            Globals.NEGATIVE_TREE_OPTIMIZATIONS == NegativeTreeOptimizations.OPT1 ||
+            Globals.NEGATIVE_TREE_OPTIMIZATIONS == NegativeTreeOptimizations.OPT2) {
+            val prevMaxLabel = negativeScenarioTree.nodes.maxOfOrNull { it.label }
+            if (prevMaxLabel != null) {
+                val visitedNodes = mutableSetOf<NegativeScenarioTree.Node>()
+                val visitedFullScenarios = negativeScenarioTree.scenarios.filter { scenario ->
+                    val path = automaton.eval(scenario).toList()
+                    for ((scenarioElement, pathElement) in scenario.elements zip path) {
+                        val node = negativeScenarioTree.nodes[scenarioElement.nodeId!! - 1]
+                        check(scenarioElement.nodeId == node.id) { "Non-equal node ids" }
+                        visitedNodes += node
+                        if (scenarioElement.outputAction != pathElement.outputAction) {
+                            return@filter false
+                        }
+                    }
+                    scenario.loopPosition == null || path[scenario.loopPosition - 1].destination == path.last().destination
+                }
+                val iterationStep: MutableMap<Int, Int> = solver.context["iterationStep"]
+                val visitedUnusedNodes = visitedFullScenarios.flatMap { scenario ->
+                    scenario.elements
+                        .map { negativeScenarioTree.nodes[it.nodeId!! - 1] }
+                        .filter { prevMaxLabel - it.label > iterationStep[it.id] ?: 50 }
+                        .map { it.id }
+                }
+                for (id in visitedUnusedNodes) {
+                    iterationStep[id] = 2 * (iterationStep[id] ?: 50)
+                }
+                val maxLabel = prevMaxLabel + 1
+                for (node in visitedNodes) {
+                    node.label = maxLabel
+                }
+                if (visitedFullScenarios.isNotEmpty()) {
+                    /*logger.warn("Visited full negative-scenarios:\n------------\n${(visitedFullScenarios zip visitedFullScenarios.map { automaton.eval(it).toList() }).joinToString("\n\t\t") {
+                        "${it.first.elements}->${it.first.loopPosition}\n${it.second}"
+                    }}\n-------------\n")*/
+                    //logger.warn("Visited full nodes = ${visitedFullScenarios.flatMap { it.elements.map { node -> node.nodeId } } }")
+                    logger.warn("Visited unused nodes = $visitedUnusedNodes")
+                    continue@mainLoop
+                }
+                maxLabel
+            } else 0
+        } else 0
+
         // ==============
         // Dump intermediate automaton
         automaton.dump(outDir, "_automaton_loop%d_iter%04d".format(loopNumber, iterationNumber))
@@ -153,7 +196,7 @@ fun Inferrer.performCegis(smvDir: File, loopNumber: Int): Automaton? {
         // Populate negTree with new negative scenarios
         val treeSize = negativeScenarioTree.size
         for (scenario in negativeScenarios) {
-            negativeScenarioTree.addScenario(scenario)
+            negativeScenarioTree.addScenario(scenario, maxLabel)
         }
         val treeSizeDiff = negativeScenarioTree.size - treeSize
         // Note: it is suffice to check just `negSc == lastNegSc`, but it may be costly,

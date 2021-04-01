@@ -6,19 +6,7 @@ import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.satlib.core.BoolVarArray
 import com.github.lipen.satlib.core.IntVarArray
 import com.github.lipen.satlib.core.sign
-import com.github.lipen.satlib.op.atLeastOne
-import com.github.lipen.satlib.op.atMostOne
-import com.github.lipen.satlib.op.iff
-import com.github.lipen.satlib.op.iffAnd
-import com.github.lipen.satlib.op.iffImply
-import com.github.lipen.satlib.op.iffOr
-import com.github.lipen.satlib.op.imply
-import com.github.lipen.satlib.op.implyAnd
-import com.github.lipen.satlib.op.implyIff
-import com.github.lipen.satlib.op.implyIffAnd
-import com.github.lipen.satlib.op.implyIffIte
-import com.github.lipen.satlib.op.implyImply
-import com.github.lipen.satlib.op.implyImplyImply
+import com.github.lipen.satlib.op.*
 import com.github.lipen.satlib.op.implyOr
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
@@ -28,10 +16,7 @@ import ru.ifmo.fbsat.core.solver.autoneg
 import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.modular.basic.arbitrary.Pins
-import ru.ifmo.fbsat.core.utils.MyLogger
-import ru.ifmo.fbsat.core.utils.algorithmChoice
-import ru.ifmo.fbsat.core.utils.exhaustive
-import ru.ifmo.fbsat.core.utils.withIndex
+import ru.ifmo.fbsat.core.utils.*
 
 private val logger = MyLogger {}
 
@@ -789,6 +774,29 @@ private fun Solver.declareMappingConstraintsForActiveNode(
                         )
                     )
             }
+    } else if (Globals.NEGATIVE_TREE_OPTIMIZATIONS == NegativeTreeOptimizations.OPT2) {
+        val isEnabledNegativeTreeVertices: BoolVarArray = context["isEnabledNegativeTreeVertices"]
+        comment("Negative mapping definition for active node v = $v")
+        // (mapping[v]=c) <=> (actualTransition[mapping[tp(v)],tie(v),tin(v)]=c) & (stateOutputEvent[c]=toe(v)) & AND_{z}(stateAlgorithm{tov(tp(v),z)}(c,z) = tov(v,z))
+        for (i in 1..C)
+            for (j in 1..C)
+                implyImplyIffAnd(
+                    isEnabledNegativeTreeVertices[v],
+                    mapping[p] eq i,
+                    mapping[v] eq j
+                ) {
+                    yield(actualTransitionFunction[i, e, u] eq j)
+                    yield(stateOutputEvent[j] eq o)
+                    for (z in 1..Z)
+                        yield(
+                            algorithmChoice(
+                                tree = tree,
+                                v = v, c = j, z = z,
+                                algorithmTop = stateAlgorithmTop,
+                                algorithmBot = stateAlgorithmBot
+                            )
+                        )
+                }
     } else {
         comment("Negative mapping definition for active node v = $v")
         // (mapping[v]=c) <=> (actualTransition[mapping[tp(v)],tie(v),tin(v)]=c) & (stateOutputEvent[c]=toe(v)) & AND_{z}(stateAlgorithm{tov(tp(v),z)}(c,z) = tov(v,z))
@@ -854,6 +862,34 @@ private fun Solver.declareMappingConstraintsForPassiveNode(
             imply(
                 mapping[p] eq c,
                 actualTransitionFunction[c, e, u] eq 0
+            )
+    } else if (Globals.NEGATIVE_TREE_OPTIMIZATIONS == NegativeTreeOptimizations.OPT2) {
+        val isEnabledNegativeTreeVertices: BoolVarArray = context["isEnabledNegativeTreeVertices"]
+        comment("Negative mapping propagation for passive node v = $v")
+        // (negMapping[v] = negMapping[tp(v)]) | (negMapping[v] = 0)
+        for (c in 1..C)
+            implyImplyOr(
+                isEnabledNegativeTreeVertices[v],
+                mapping[p] eq c,
+                mapping[v] eq c,
+                mapping[v] eq 0
+            )
+
+        comment("Constraining negActualTransitionFunction for passive node v = $v")
+        // (negMapping[v] = c) => (negActualTransition[c,tie(v),tin(v)] = 0)
+        for (c in 1..C)
+            implyImply(
+                isEnabledNegativeTreeVertices[v],
+                mapping[v] eq c,
+                actualTransitionFunction[c, e, u] eq 0
+            )
+        // (negMapping[v] = 0) => (negActualTransition[mapping[tp(v)],tie(v),tin(v)] != 0)
+        for (c in 1..C)
+            implyImplyImply(
+                isEnabledNegativeTreeVertices[v],
+                mapping[p] eq c,
+                mapping[v] eq 0,
+                actualTransitionFunction[c, e, u] neq 0
             )
     } else {
         comment("Negative mapping propagation for passive node v = $v")

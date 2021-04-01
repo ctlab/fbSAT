@@ -15,6 +15,10 @@ enum class StartStateAlgorithms {
     NOTHING, ZERO, ZERONOTHING, ANY, INIT, INITNOTHING;
 }
 
+enum class NegativeTreeOptimizations {
+    NOTHING, OPT1, OPT2
+}
+
 object Globals {
     var INITIAL_OUTPUT_VALUES: OutputValues by Delegates.notNull()
     var EPSILON_OUTPUT_EVENTS: EpsilonOutputEvents = EpsilonOutputEvents.ONLYSTART
@@ -40,4 +44,5 @@ object Globals {
     var ICMS_CMD: String = "incremental-cryptominisat"
     var MINISAT_SIMP_STRATEGY: MiniSatSolver.Companion.SimpStrategy? = null
     var GLUCOSE_SIMP_STRATEGY: GlucoseSolver.Companion.SimpStrategy? = null
+    var NEGATIVE_TREE_OPTIMIZATIONS: NegativeTreeOptimizations = NegativeTreeOptimizations.NOTHING
 }

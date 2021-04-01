@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.task.single.complete
 
+import com.github.lipen.satlib.core.AssumptionsProvider
 import com.github.lipen.satlib.core.BoolVarArray
 import com.github.lipen.satlib.core.IntVar
 import com.github.lipen.satlib.core.IntVarArray
@@ -17,7 +18,9 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
+import ru.ifmo.fbsat.core.utils.NegativeTreeOptimizations
 import ru.ifmo.fbsat.core.utils.timeSince
+import kotlin.reflect.jvm.internal.impl.util.ValueParameterCountCheck
 
 private val logger = MyLogger {}
 
@@ -169,6 +172,66 @@ fun Solver.updateNegativeReduction(
 
     if (Globals.IS_DUMP_VARS_IN_CNF) {
         logger.warn("Dumping of CompleteVariables to CNF is not implemented yet")
+    }
+
+    if (Globals.NEGATIVE_TREE_OPTIMIZATIONS == NegativeTreeOptimizations.OPT1) {
+        logger.info("Applying first negative-tree-optimization-1")
+        val iterationStep: MutableMap<Int, Int> = context["iterationStep"]
+        val oldObserver: (() -> List<Lit>)? = context.getOrNull("observer")
+        if (oldObserver != null) {
+            assumptionsObservable.unregister(oldObserver)
+        }
+        val observer = context("observer") {
+            {
+                negativeScenarioTree.nodes.maxOfOrNull { it.label }?.let { lastIteration ->
+                    negativeScenarioTree.nodes
+                        .filter {
+                            val step = iterationStep[it.id] ?: 50
+                            lastIteration - it.label > step
+                        }
+                        .map { negMapping[it.id] eq 0 }
+                        .also { logger.info("Amount of nodes mapped to 0: ${it.size}") }
+                } ?: listOf()
+            }
+        }
+        assumptionsObservable.register(observer)
+    }
+    if (Globals.NEGATIVE_TREE_OPTIMIZATIONS == NegativeTreeOptimizations.OPT2) {
+        logger.info("Applying first negative-tree-optimization-2")
+        val oldIsEnabledNegativeTreeVertices: BoolVarArray = context["isEnabledNegativeTreeVertices"]
+        val isEnabledNegativeTreeVertices: BoolVarArray = context("isEnabledNegativeTreeVertices") {
+            BoolVarArray.new(negV) { (v) ->
+                if (v in newNegVs) newLiteral()
+                else oldIsEnabledNegativeTreeVertices[v]
+            }
+        }
+        val iterationStep: MutableMap<Int, Int> = context["iterationStep"]
+        //logger.info("Nodes.labels = ${negativeScenarioTree.nodes.map { it.label }}")
+        val oldObserver: (() -> List<Lit>)? = context.getOrNull("observer")
+        if (oldObserver != null) {
+            assumptionsObservable.unregister(oldObserver)
+        }
+        val observer = context("observer") {
+            {
+                negativeScenarioTree.nodes.maxOfOrNull { it.label }?.let { lastIteration ->
+                    /*logger.info("Unused nodes: ${negativeScenarioTree.nodes
+                        .filter { lastIteration - it.label > iterationStep[it.id] ?: 50 }
+                        .map { it.id }
+                    }")*/
+                    negativeScenarioTree.nodes
+                        .map {
+                            val lit = isEnabledNegativeTreeVertices[it.id]
+                            val step = iterationStep[it.id] ?: 50
+                            //logger.warn("step: $step, iterationStep[it.id]: ${iterationStep[it.id]}")
+                            if (lastIteration - it.label > step) -lit else lit
+                        }
+                        .also {
+                            logger.info("Amount of unused nodes: ${it.filter { lit -> lit < 0 }.size}")
+                        }
+                } ?: listOf()
+            }
+        }
+        assumptionsObservable.register(observer)
     }
 
     /* Constraints */

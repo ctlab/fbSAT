@@ -164,7 +164,7 @@ class Automaton(
 
     /** Maximal guard size **P**. */
     val maxGuardSize: Int by lazyCache {
-        transitions.map { it.guard.size }.maxOrNull()!!
+        transitions.map { it.guard.size }.maxOrNull() ?: 0
     }
 
     /** Number of automaton transitions **T**. */
