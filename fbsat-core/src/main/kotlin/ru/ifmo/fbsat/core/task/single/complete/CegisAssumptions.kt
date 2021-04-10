@@ -84,7 +84,7 @@ fun Inferrer.cegisMinAssumptions(
     extendedAutomaton.pprint()
     logger.info("extendedAutomaton has C = $C, P = $P, N = $N")
 
-    val negativeScenarioTree = initialNegativeScenarioTree ?: NegativeScenarioTree(scenarioTree)
+    val negativeScenarioTree = initialNegativeScenarioTree ?: NegativeScenarioTree(scenarioTree, true)
 
     for (loopNumber in 1..100) {
         logger.just("===== Loop number #$loopNumber, N = $N =====")

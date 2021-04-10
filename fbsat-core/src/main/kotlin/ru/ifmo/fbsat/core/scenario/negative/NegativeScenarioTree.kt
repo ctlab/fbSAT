@@ -6,6 +6,8 @@ import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.addGenericScenario
 import ru.ifmo.fbsat.core.scenario.auxScenarioElement
+import ru.ifmo.fbsat.core.utils.NegativeTreeOptimizations
+import java.io.File
 
 class NegativeScenarioTree(
     override val inputEvents: List<InputEvent>,
@@ -25,6 +27,67 @@ class NegativeScenarioTree(
     init {
         // Create the root (auto-added to _nodes)
         Node(element = auxScenarioElement, parent = null)
+    }
+
+    fun toGraphvizString(heat: Map<Int, Set<Int>> = mapOf()) =
+"""digraph L {
+${ run {
+    val max = heat.mapNotNull { it.value.maxOrNull() }.maxOrNull() ?: 0
+    val color = heat
+        .mapNotNull { it.value.minOrNull()?.let { min -> it.key to (min to it.value.size) } }
+        .map {
+            val (min, count) = it.second
+            it.first to 100 - 100 * count / (max - min + 1)
+        }
+        .onEach { check(it.second in 0..100) }
+        .toMap()
+    nodes.joinToString("\n") {
+        "qq${it.id}[label=\"${
+            it.element.outputEvent?.name ?: "ε"
+        }[${
+            it.element.outputValues.values.joinToString("") { b ->
+                if (b) "1" else "0"
+            }
+        }]\", style=filled, fillcolor=\"grey${
+            color[it.id] ?: 100
+        }\", fontcolor=\"${
+            if (color[it.id] ?: 100 > 51) "black" else "white"
+        }\"]"
+    }
+}
+}
+${
+    nodes.mapNotNull { node ->
+        node.parent?.let { it to node }
+    }.joinToString("\n") {
+        "qq${it.first.id}->qq${it.second.id}[label=\"${
+            it.second.element.inputEvent?.name ?: "ε"
+        }[${
+            it.second.element.inputValues.values.joinToString("") { b ->
+                if (b) "1" else "0"
+            }
+        }]\"]"
+    }
+}
+${
+    nodes.flatMap { node ->
+        node.loopBacks.map { node to it }
+    }.joinToString("\n") {
+        "qq${it.first.id}->qq${it.second.id}[style=dashed]"
+    }
+}
+}""".trimIndent()
+
+    fun dump(dir: File, name: String = "negative_tree", heat: Map<Int, Set<Int>> = mapOf()) {
+        dir.mkdirs()
+        dumpGv(dir.resolve("$name.dot"), heat)
+    }
+
+    fun dumpGv(file: File, heat: Map<Int, Set<Int>> = mapOf()) {
+        file.printWriter().use {
+            it.println(toGraphvizString(heat))
+        }
+        Runtime.getRuntime().exec("dot -Tpdf -O $file")
     }
 
     constructor(

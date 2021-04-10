@@ -70,7 +70,7 @@ fun Inferrer.cegisMin(
     extendedAutomaton.pprint()
     logger.info("extendedAutomaton has C = $C, P = $P, N = $N")
 
-    val negativeScenarioTree = initialNegativeScenarioTree ?: NegativeScenarioTree(scenarioTree)
+    val negativeScenarioTree = initialNegativeScenarioTree ?: NegativeScenarioTree(scenarioTree, true)
 
     for (loopNumber in 1..100) {
         logger.just("===== Loop number #$loopNumber, N = $N =====")
@@ -110,6 +110,7 @@ fun Inferrer.performCegis(smvDir: File, loopNumber: Int): Automaton? {
     val scenarioTree: PositiveScenarioTree = solver.context["scenarioTree"]
     val negativeScenarioTree: NegativeScenarioTree = solver.context["negativeScenarioTree"]
     lateinit var lastNegativeScenarios: List<NegativeScenario>
+    val heat = mutableMapOf<Int, MutableSet<Int>>()
 
     mainLoop@for (iterationNumber in 1 until 10000) {
         // log.info("CEGIS iteration #$iterationNumber")
@@ -175,12 +176,14 @@ fun Inferrer.performCegis(smvDir: File, loopNumber: Int): Automaton? {
         // ==============
         // Dump intermediate automaton
         automaton.dump(outDir, "_automaton_loop%d_iter%04d".format(loopNumber, iterationNumber))
+        //negativeScenarioTree.dump(outDir, "_negative_tree%d_iter%04d".format(loopNumber, iterationNumber))
         // ==============
         // Verify automaton with NuSMV
         val counterexamples = automaton.verifyWithNuSMV(outDir)
         if (counterexamples.isEmpty()) {
             logger.info("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
             logger.info("No counterexamples!")
+            negativeScenarioTree.dump(outDir, "_negative_tree%d_iter%04d".format(loopNumber, iterationNumber), heat)
             return automaton
         }
         // Convert counterexamples to negative scenarios
@@ -198,6 +201,17 @@ fun Inferrer.performCegis(smvDir: File, loopNumber: Int): Automaton? {
         for (scenario in negativeScenarios) {
             negativeScenarioTree.addScenario(scenario, maxLabel)
         }
+
+        for (scenario in negativeScenarioTree.scenarios) {
+            val path = automaton.eval(scenario).toList()
+            for ((scenarioElement, pathElement) in scenario.elements zip path) {
+                if (scenarioElement.outputAction != pathElement.outputAction) {
+                    break
+                }
+                heat.getOrPut(scenarioElement.nodeId!!) { mutableSetOf() } += iterationNumber
+            }
+        }
+
         val treeSizeDiff = negativeScenarioTree.size - treeSize
         // Note: it is suffice to check just `negSc == lastNegSc`, but it may be costly,
         // so check it only in a specific case - when negative tree does not change its size

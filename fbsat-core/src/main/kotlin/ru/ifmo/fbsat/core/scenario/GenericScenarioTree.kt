@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.scenario
 
+import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.utils.MyLogger
 
 private val logger = MyLogger {}
@@ -34,7 +35,10 @@ internal inline fun <N, E> GenericScenarioTree<*, N>.addGenericScenario(
     meow@ for ((index, element) in scenario.elements.withIndex()) {
         if (isTrie) {
             for (child in current.children) {
-                if (child.element.inputAction == element.inputAction) {
+                if (when (this) {
+                        is NegativeScenarioTree -> child.element == element
+                        else -> child.element.inputAction == element.inputAction
+                    }) {
                     if (child.element != element) {
                         logger.error("${this::class.java.simpleName} is not deterministic!")
                         logger.error("  - current = $current")
