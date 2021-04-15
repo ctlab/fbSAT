@@ -1,0 +1,48 @@
+MODULE main()
+VAR
+    REQ : boolean;
+    pp1 : boolean;
+    pp2 : boolean;
+    pp3 : boolean;
+    vac : boolean;
+    p1 : boolean;
+    p2 : boolean;
+    p3 : boolean;
+    lifted : boolean;
+
+    C : CONTROL(REQ, P.c1Home, P.c1End, P.c2Home, P.c2End, P.vcHome, P.vcEnd, pp1, pp2, pp3, vac);
+    P : PLANT(C.CNF, C.c1Extend, C.c1Retract, C.c2Extend, C.c2Retract, C.vcExtend, C.vacuum_on, C.vacuum_off);
+ASSIGN
+    REQ := TRUE;
+    next(p2) := p2;
+    next(p3) := p3;
+
+    init(pp1) := FALSE;
+    next(pp1) := case
+        C.vp1 : FALSE;
+        pp1 : TRUE;
+        TRUE : p1;
+    esac;
+
+    init(pp2) := FALSE;
+    next(pp2) := case
+        C.vp2 : FALSE;
+        pp2 : TRUE;
+        TRUE : p2;
+    esac;
+
+    init(pp3) := FALSE;
+    next(pp3) := case
+        C.vp3 : FALSE;
+        pp3 : TRUE;
+        TRUE : p3;
+    esac;
+
+    init(lifted) := FALSE;
+    next(lifted) := case
+        C.vp1 : TRUE;
+        dropped : FALSE;
+        TRUE : lifted;
+    esac;
+DEFINE
+    dropped := lifted & P.c1Home & P.c2Home & P.vcEnd & !C.vacuum_on & C.vacuum_off;

@@ -1,0 +1,1 @@
+for i in `ls`; do if [ -n "$(gzip -cd $i | grep CNF)" ]; then echo $i; fi; done | sort > ../../good_files

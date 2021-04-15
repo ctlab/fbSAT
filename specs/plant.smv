@@ -1,0 +1,55 @@
+MODULE PLANT(CNF, c1Extend, c1Retract, c2Extend, c2Retract, vcExtend, vacuum_on, vacuum_off)
+VAR
+    c1Home : boolean;
+    c1End : boolean;
+    c2Home : boolean;
+    c2End : boolean;
+    vcHome : boolean;
+    vcEnd : boolean;
+    st1 : { st1_1, st1_2, st1_3, st1_4, st1_5, st1_6};
+    st2 : { st2_1, st2_2, st2_3, st2_4, st2_5, st2_6};
+    st3 : { st3_1, st3_2, st3_3, st3_4, st3_5, st3_6};
+ASSIGN
+    init(st1) := st1_1;
+    next(st1) := case
+        st1 = st1_1 & next(CNF & c1Extend) : st1_2;
+        st1 = st1_2 & next(CNF & c1Retract) : st1_1;
+        st1 = st1_2 & next(c1Extend) : st1_3;
+        st1 = st1_3 & next(CNF & c1Retract) : st1_4;
+        st1 = st1_4 & next(CNF & c1Extend) : st1_3;
+        st1 = st1_4 & next(c1Retract) : st1_1;
+        TRUE : st1;
+    esac;
+
+    c1Home := st1 = st1_1;
+    c1End := st1 = st1_3;
+
+    init(st2) := st2_1;
+    next(st2) := case
+        st2 = st2_1 & next(CNF & c2Extend) : st2_2;
+        st2 = st2_2 & next(CNF & c2Retract) : st2_1;
+        st2 = st2_2 & next(c2Extend) : st2_3;
+        st2 = st2_3 & next(CNF & c2Retract) : st2_4;
+        st2 = st2_4 & next(CNF & c2Extend) : st2_3;
+        st2 = st2_4 & next(c2Retract) : st2_1;
+        TRUE : st2;
+    esac;
+
+    c2Home := st2 = st2_1;
+    c2End := st2 = st2_3;
+
+    init(st3) := st3_1;
+    next(st3) := case
+        st3 = st3_1 & next(CNF & vcExtend) : st3_2;
+        st3 = st3_2 & next(vcExtend) : st3_5;
+        st3 = st3_5 & next(vcExtend) : st3_4;
+        st3 = st3_3 & next(CNF & vcExtend) : st3_4;
+        st3 = st3_2 & next(CNF & !vcExtend) : st3_1;
+        st3 = st3_3 & next(!vcExtend) : st3_6;
+        st3 = st3_6 & next(!vcExtend) : st3_1;
+        st3 = st3_4 & next(CNF & !vcExtend) : st3_3;
+        TRUE : st3;
+    esac;
+
+    vcHome := st3 = st3_1 | st3 = st3_2;
+    vcEnd := st3 = st3_3 | st3 = st3_4;

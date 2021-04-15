@@ -1,0 +1,275 @@
+-- control.smv
+MODULE CONTROL(REQ, c1Home, c1End, c2Home, c2End, vcHome, vcEnd, pp1, pp2, pp3, vac)
+VAR
+	c1Extend: boolean;
+	c2Extend: boolean;
+	c1Retract: boolean;
+	c2Retract: boolean;
+	vcExtend: boolean;
+	vacuum_on: boolean;
+	vacuum_off: boolean;
+
+	state: {GoDown, Wait, Piece1, Piece2, Piece3, Vacuum_On, GoUp, VacuumOff, Retract};
+	algo: {extendvc, Wait, extend1, extend2, extend1and2, TurnOnVac, Retractvc, TurnOffvac, RetracAll, eps};
+
+	CNF: boolean;
+DEFINE
+	guard_GoUp_Wait := state = GoUp & REQ & vcHome & c1Home & c2Home;
+	guard_Retract_GoDown := state = Retract & REQ & vac & c1Home & c2Home;
+	guard_Wait_Piece1 := state = Wait & REQ & pp1 & vcHome;
+	guard_Wait_Piece2 := state = Wait & REQ & !pp1 & pp2 & vcHome;
+	guard_Wait_Piece3 := state = Wait & REQ & !pp1 & !pp2 & pp3 & vcHome;
+	guard_Piece1_GoDown := state = Piece1 & REQ & c1End;
+	guard_Piece2_GoDown := state = Piece2 & REQ & c2End;
+	guard_Piece3_GoDown := state = Piece3 & REQ & c1End & c2End;
+	guard_GoDown_Vacuum_On := state = GoDown & REQ & vcEnd & !(c1Home & c2Home);
+	guard_Vacuum_On_GoUp := state = Vacuum_On & REQ & vac;
+	guard_VacuumOff_GoUp := state = VacuumOff & REQ & !vac;
+	guard_GoDown_VacuumOff := state = GoDown & REQ & vcEnd & c1Home & c2Home;
+	guard_GoUp_Retract := state = GoUp & REQ & vcHome & (!c1Home | !c2Home);
+
+ASSIGN
+	init(state) := Wait;
+	next(state) := case
+		guard_GoUp_Wait : Wait;
+		guard_Retract_GoDown : GoDown;
+		guard_Wait_Piece1 : Piece1;
+		guard_Wait_Piece2 : Piece2;
+		guard_Wait_Piece3 : Piece3;
+		guard_Piece1_GoDown : GoDown;
+		guard_Piece2_GoDown : GoDown;
+		guard_Piece3_GoDown : GoDown;
+		guard_GoDown_Vacuum_On : Vacuum_On;
+		guard_Vacuum_On_GoUp : GoUp;
+		guard_VacuumOff_GoUp : GoUp;
+		guard_GoDown_VacuumOff : VacuumOff;
+		guard_GoUp_Retract : Retract;
+		TRUE: state;
+	esac;
+
+	algo := case
+		guard_GoUp_Wait : Wait;
+		guard_Retract_GoDown : extendvc;
+		guard_Wait_Piece1 : extend1;
+		guard_Wait_Piece2 : extend2;
+		guard_Wait_Piece3 : extend1and2;
+		guard_Piece1_GoDown : extendvc;
+		guard_Piece2_GoDown : extendvc;
+		guard_Piece3_GoDown : extendvc;
+		guard_GoDown_Vacuum_On : TurnOnVac;
+		guard_Vacuum_On_GoUp : Retractvc;
+		guard_VacuumOff_GoUp : Retractvc;
+		guard_GoDown_VacuumOff : TurnOffvac;
+		guard_GoUp_Retract : RetracAll;
+		TRUE: eps;
+	esac;
+
+	init(CNF) := FALSE;
+	next(CNF) := case
+		algo = extendvc: TRUE;
+		algo = Wait: TRUE;
+		algo = extend1: TRUE;
+		algo = extend2: TRUE;
+		algo = extend1and2: TRUE;
+		algo = TurnOnVac: TRUE;
+		algo = Retractvc: TRUE;
+		algo = TurnOffvac: TRUE;
+		algo = RetracAll: TRUE;
+		TRUE: FALSE;
+	esac;
+	
+	init(c1Extend) := FALSE;
+	init(c2Extend) := FALSE;
+	init(c1Retract) := FALSE;
+	init(c2Retract) := FALSE;
+	init(vcExtend) := FALSE;
+	init(vacuum_on) := FALSE;
+	init(vacuum_off) := FALSE;
+
+	next(c1Extend) := case
+		algo = extend1: TRUE;
+		algo = extend1and2: TRUE;
+		algo = RetracAll: FALSE;
+		algo = Wait: FALSE;
+		TRUE: c1Extend;
+	esac;
+	next(c2Extend) := case
+		algo = extend2: TRUE;
+		algo = extend1and2: TRUE;
+		algo = RetracAll: FALSE;
+		algo = Wait: FALSE;
+		TRUE: c2Extend;
+	esac;
+	next(c1Retract) := case
+		algo = RetracAll: TRUE;
+		algo = Wait: FALSE;
+		TRUE: c1Retract;
+	esac;
+	next(c2Retract) := case
+		algo = RetracAll: TRUE;
+		algo = Wait: FALSE;
+		TRUE: c2Retract;
+	esac;
+	next(vcExtend) := case
+		algo = extendvc: TRUE;
+		algo = Retractvc: FALSE;
+		algo = Wait: FALSE;
+		TRUE: vcExtend;
+	esac;
+	next(vacuum_on) := case
+		algo = TurnOnVac: TRUE;
+		algo = TurnOffvac: FALSE;
+		algo = Wait: FALSE;
+		TRUE: vacuum_on;
+	esac;
+	next(vacuum_off) := case
+		algo = TurnOnVac: FALSE;
+		algo = TurnOffvac: TRUE;
+		algo = Wait: FALSE;
+		TRUE: vacuum_off;
+	esac;
+-- extra.smv
+VAR
+    -- vac : boolean;
+    vs : boolean;
+ASSIGN
+    init(vac) := FALSE;
+    next(vac) := case
+        next(vp1) | next(vp2) | next(vp3) : TRUE;
+        !next(vs) : FALSE;
+        TRUE : vac;
+    esac;
+
+    init(vs) := FALSE;
+    next(vs) := case
+        next(CNF) & next(vacuum_on) : TRUE;
+        next(CNF) & next(vacuum_off) : FALSE;
+        next(CNF) & !next(vacuum_on) : FALSE;
+        TRUE : vs;
+    esac;
+DEFINE
+    vp1 := c1End & c2Home & vcEnd & vs & pp1;
+    vp2 := c1Home & c2End & vcEnd & vs & pp2;
+    vp3 := c1End & c2End & vcEnd & vs & pp3;
+--JUSTICE CNF
+
+
+-- plant.smv
+MODULE PLANT(CNF, c1Extend, c1Retract, c2Extend, c2Retract, vcExtend, vacuum_on, vacuum_off)
+VAR
+    c1Home : boolean;
+    c1End : boolean;
+    c2Home : boolean;
+    c2End : boolean;
+    vcHome : boolean;
+    vcEnd : boolean;
+    st1 : { st1_1, st1_2, st1_3, st1_4, st1_5, st1_6};
+    st2 : { st2_1, st2_2, st2_3, st2_4, st2_5, st2_6};
+    st3 : { st3_1, st3_2, st3_3, st3_4, st3_5, st3_6};
+ASSIGN
+    init(st1) := st1_1;
+    next(st1) := case
+        st1 = st1_1 & next(CNF & c1Extend) : st1_2;
+        st1 = st1_2 & next(CNF & c1Retract) : st1_1;
+        st1 = st1_2 & next(c1Extend) : st1_3;
+        st1 = st1_3 & next(CNF & c1Retract) : st1_4;
+        st1 = st1_4 & next(CNF & c1Extend) : st1_3;
+        st1 = st1_4 & next(c1Retract) : st1_1;
+        TRUE : st1;
+    esac;
+
+    c1Home := st1 = st1_1;
+    c1End := st1 = st1_3;
+
+    init(st2) := st2_1;
+    next(st2) := case
+        st2 = st2_1 & next(CNF & c2Extend) : st2_2;
+        st2 = st2_2 & next(CNF & c2Retract) : st2_1;
+        st2 = st2_2 & next(c2Extend) : st2_3;
+        st2 = st2_3 & next(CNF & c2Retract) : st2_4;
+        st2 = st2_4 & next(CNF & c2Extend) : st2_3;
+        st2 = st2_4 & next(c2Retract) : st2_1;
+        TRUE : st2;
+    esac;
+
+    c2Home := st2 = st2_1;
+    c2End := st2 = st2_3;
+
+    init(st3) := st3_1;
+    next(st3) := case
+        st3 = st3_1 & next(CNF & vcExtend) : st3_2;
+        st3 = st3_2 & next(vcExtend) : st3_5;
+        st3 = st3_5 & next(vcExtend) : st3_4;
+        st3 = st3_3 & next(CNF & vcExtend) : st3_4;
+        st3 = st3_2 & next(CNF & !vcExtend) : st3_1;
+        st3 = st3_3 & next(!vcExtend) : st3_6;
+        st3 = st3_6 & next(!vcExtend) : st3_1;
+        st3 = st3_4 & next(CNF & !vcExtend) : st3_3;
+        TRUE : st3;
+    esac;
+
+    vcHome := st3 = st3_1 | st3 = st3_2;
+    vcEnd := st3 = st3_3 | st3 = st3_4;
+
+
+-- main.smv
+MODULE main()
+VAR
+    REQ : boolean;
+    pp1 : boolean;
+    pp2 : boolean;
+    pp3 : boolean;
+    vac : boolean;
+    p1 : boolean;
+    p2 : boolean;
+    p3 : boolean;
+    lifted : boolean;
+
+    C : CONTROL(REQ, P.c1Home, P.c1End, P.c2Home, P.c2End, P.vcHome, P.vcEnd, pp1, pp2, pp3, vac);
+    P : PLANT(C.CNF, C.c1Extend, C.c1Retract, C.c2Extend, C.c2Retract, C.vcExtend, C.vacuum_on, C.vacuum_off);
+ASSIGN
+    REQ := TRUE;
+    next(p2) := p2;
+    next(p3) := p3;
+
+    init(pp1) := FALSE;
+    next(pp1) := case
+        C.vp1 : FALSE;
+        pp1 : TRUE;
+        TRUE : p1;
+    esac;
+
+    init(pp2) := FALSE;
+    next(pp2) := case
+        C.vp2 : FALSE;
+        pp2 : TRUE;
+        TRUE : p2;
+    esac;
+
+    init(pp3) := FALSE;
+    next(pp3) := case
+        C.vp3 : FALSE;
+        pp3 : TRUE;
+        TRUE : p3;
+    esac;
+
+    init(lifted) := FALSE;
+    next(lifted) := case
+        C.vp1 : TRUE;
+        dropped : FALSE;
+        TRUE : lifted;
+    esac;
+DEFINE
+    dropped := lifted & P.c1Home & P.c2Home & P.vcEnd & !C.vacuum_on & C.vacuum_off;
+
+
+-- spec.smv
+LTLSPEC G!(C.c1Extend & C.c1Retract)
+LTLSPEC G!(C.c2Extend & C.c2Retract)
+LTLSPEC G!(C.vacuum_on & C.vacuum_off)
+LTLSPEC G (!P.vcHome & !P.vcEnd -> P.c1Home | P.c1End)
+LTLSPEC G (!P.c1Home & !P.c1End -> P.vcHome | P.vcEnd)
+LTLSPEC G (P.c1Home & P.c2Home & P.vcHome & !pp1 & !lifted -> X(!C.c1Extend & !C.c2Extend & !C.vcExtend))
+LTLSPEC G (pp1 -> F(C.vp1))
+LTLSPEC G!(!P.c1Home & !P.c1End & !P.vcHome & !P.vcEnd)
+LTLSPEC G (lifted -> F(dropped))
