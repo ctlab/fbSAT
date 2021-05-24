@@ -41,6 +41,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isDumpVarsInCnf: Boolean by isDumpVarsInCnfOption()
     val isDebug: Boolean by isDebugOption()
     val negativeTreeOptimizations: NegativeTreeOptimizations by negativeTreeOptimizationsOption()
+    val looplessCounterExamples: Boolean by looplessCounterExamples()
 }
 
 fun ParameterHolder.isForbidOrOption() =
@@ -238,4 +239,13 @@ fun ParameterHolder.negativeTreeOptimizationsOption() =
         "opt2" to NegativeTreeOptimizations.OPT2,
     ).default(
         NegativeTreeOptimizations.NOTHING
+    )
+
+fun ParameterHolder.looplessCounterExamples() =
+    option(
+        "--loopless-counter-examples",
+        help = "Allow loopless counter-examples"
+    ).flag(
+        "--no-loopless-counter-examples",
+        default = Globals.LOOPLESS_COUNTER_EXAMPLES
     )

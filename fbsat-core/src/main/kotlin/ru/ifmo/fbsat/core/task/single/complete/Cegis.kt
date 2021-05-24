@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.task.single.complete
 
 import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.automaton.Automaton
+import ru.ifmo.fbsat.core.constraints.IncrementalCardinality
 import ru.ifmo.fbsat.core.scenario.negative.Counterexample
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
@@ -14,6 +15,7 @@ import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
 import ru.ifmo.fbsat.core.task.single.extended.inferExtended
 import ru.ifmo.fbsat.core.utils.*
 import java.io.File
+import kotlin.math.max
 
 private val logger = MyLogger {}
 
@@ -110,9 +112,9 @@ fun Inferrer.performCegis(smvDir: File, loopNumber: Int): Automaton? {
     val scenarioTree: PositiveScenarioTree = solver.context["scenarioTree"]
     val negativeScenarioTree: NegativeScenarioTree = solver.context["negativeScenarioTree"]
     lateinit var lastNegativeScenarios: List<NegativeScenario>
-    val heat = mutableMapOf<Int, MutableSet<Int>>()
+    val heat = solver.context("heat") { mutableMapOf<Int, MutableSet<Int>>() }
 
-    mainLoop@for (iterationNumber in 1 until 10000) {
+    mainLoop@ for (iterationNumber in 1 until 10000) {
         // log.info("CEGIS iteration #$iterationNumber")
         logger.debug("CEGIS iteration #$iterationNumber on loop $loopNumber")
         val timeStart = PerformanceCounter.reference
@@ -129,54 +131,40 @@ fun Inferrer.performCegis(smvDir: File, loopNumber: Int): Automaton? {
             return null
         }
 
-        val maxLabel = if (
-            Globals.NEGATIVE_TREE_OPTIMIZATIONS == NegativeTreeOptimizations.OPT1 ||
-            Globals.NEGATIVE_TREE_OPTIMIZATIONS == NegativeTreeOptimizations.OPT2) {
-            val prevMaxLabel = negativeScenarioTree.nodes.maxOfOrNull { it.label }
-            if (prevMaxLabel != null) {
-                val visitedNodes = mutableSetOf<NegativeScenarioTree.Node>()
-                val visitedFullScenarios = negativeScenarioTree.scenarios.filter { scenario ->
-                    val path = automaton.eval(scenario).toList()
-                    for ((scenarioElement, pathElement) in scenario.elements zip path) {
-                        val node = negativeScenarioTree.nodes[scenarioElement.nodeId!! - 1]
-                        check(scenarioElement.nodeId == node.id) { "Non-equal node ids" }
-                        visitedNodes += node
-                        if (scenarioElement.outputAction != pathElement.outputAction) {
-                            return@filter false
-                        }
-                    }
-                    scenario.loopPosition == null || path[scenario.loopPosition - 1].destination == path.last().destination
-                }
-                val iterationStep: MutableMap<Int, Int> = solver.context["iterationStep"]
-                val visitedUnusedNodes = visitedFullScenarios.flatMap { scenario ->
-                    scenario.elements
-                        .map { negativeScenarioTree.nodes[it.nodeId!! - 1] }
-                        .filter { prevMaxLabel - it.label > iterationStep[it.id] ?: 50 }
-                        .map { it.id }
-                }
-                for (id in visitedUnusedNodes) {
-                    iterationStep[id] = 2 * (iterationStep[id] ?: 50)
-                }
-                val maxLabel = prevMaxLabel + 1
-                for (node in visitedNodes) {
-                    node.label = maxLabel
-                }
-                if (visitedFullScenarios.isNotEmpty()) {
-                    /*logger.warn("Visited full negative-scenarios:\n------------\n${(visitedFullScenarios zip visitedFullScenarios.map { automaton.eval(it).toList() }).joinToString("\n\t\t") {
-                        "${it.first.elements}->${it.first.loopPosition}\n${it.second}"
-                    }}\n-------------\n")*/
-                    //logger.warn("Visited full nodes = ${visitedFullScenarios.flatMap { it.elements.map { node -> node.nodeId } } }")
-                    logger.warn("Visited unused nodes = $visitedUnusedNodes")
-                    continue@mainLoop
-                }
-                maxLabel
-            } else 0
-        } else 0
-
         // ==============
         // Dump intermediate automaton
         automaton.dump(outDir, "_automaton_loop%d_iter%04d".format(loopNumber, iterationNumber))
-        //negativeScenarioTree.dump(outDir, "_negative_tree%d_iter%04d".format(loopNumber, iterationNumber))
+
+        if (solver.context.getOrNull<CutTreeMarker>("isCutTree") != null || solver.context.getOrNull<Cegisic>("cegisic") != null) {
+            val set = mutableSetOf<Int>()
+            for (scenario in negativeScenarioTree.scenarios) {
+                val path = automaton.eval(scenario).toList()
+                for ((scenarioElement, pathElement) in scenario.elements zip path) {
+                    if (scenarioElement.outputAction != pathElement.outputAction) {
+                        break
+                    }
+                    set += scenarioElement.nodeId!!
+                }
+            }
+            logger.info("Current good vertices = ${set.size + 1}, negative_scenario_tree.size = ${negativeScenarioTree.size}, " +
+                "native_negative_tree.size = ${solver.context.get<NegativeScenarioTree>("nativeNegativeTree").size}")
+        }
+        if (solver.context.getOrNull<CutTreeMarker>("heightTree") != null) {
+            var height = 0
+            for (scenario in negativeScenarioTree.scenarios) {
+                val path = automaton.eval(scenario).toList()
+                for ((index, elements) in (scenario.elements zip path).withIndex()) {
+                    val (scenarioElement, pathElement) = elements
+                    if (scenarioElement.outputAction != pathElement.outputAction) {
+                        break
+                    }
+                    height = max(height, index + 1)
+                }
+            }
+            logger.info("Current height = ${height}, negative_scenario_tree.size = ${negativeScenarioTree.size}, " +
+                "native_negative_tree.size = ${solver.context.get<NegativeScenarioTree>("nativeNegativeTree").size}")
+        }
+
         // ==============
         // Verify automaton with NuSMV
         val counterexamples = automaton.verifyWithNuSMV(outDir)
@@ -198,19 +186,61 @@ fun Inferrer.performCegis(smvDir: File, loopNumber: Int): Automaton? {
         }
         // Populate negTree with new negative scenarios
         val treeSize = negativeScenarioTree.size
-        for (scenario in negativeScenarios) {
-            negativeScenarioTree.addScenario(scenario, maxLabel)
+        if (solver.context.getOrNull<CutTreeMarker>("isCutTree") == null &&
+            solver.context.getOrNull<heightMarker>("heightTree") == null &&
+            solver.context.getOrNull<Cegisic>("cegisic") == null) {
+            for (scenario in negativeScenarios) {
+                negativeScenarioTree.addScenario(scenario)
+            }
+        } else {
+            val nativeNegativeTree: NegativeScenarioTree = solver.context["nativeNegativeTree"]
+            val length: Int? = solver.context.getOrNull("goodNodesCount")
+                ?: solver.context.getOrNull<Int>("height")?.let { it + 1 }
+                ?: solver.context.getOrNull<IncrementalCardinality>("negMappingCardinality")?.let { it.border }
+            for (scenario in negativeScenarios) {
+                nativeNegativeTree.addScenario(scenario)
+                if (length != null) {
+                    negativeScenarioTree.addScenario(scenario.subScenario(length))
+                } else {
+                    negativeScenarioTree.addScenario(scenario)
+                }
+            }
         }
 
+        var curHeight = 0
         for (scenario in negativeScenarioTree.scenarios) {
             val path = automaton.eval(scenario).toList()
-            for ((scenarioElement, pathElement) in scenario.elements zip path) {
+            for ((index, elements) in (scenario.elements zip path).withIndex()) {
+                val (scenarioElement, pathElement) = elements
                 if (scenarioElement.outputAction != pathElement.outputAction) {
                     break
                 }
                 heat.getOrPut(scenarioElement.nodeId!!) { mutableSetOf() } += iterationNumber
+                curHeight = max(curHeight, index + 1)
             }
         }
+        solver.context["curHeight"] = curHeight
+
+        if (Globals.NEGATIVE_TREE_OPTIMIZATIONS == NegativeTreeOptimizations.OPT1 && iterationNumber > 50) {
+            val needRegenerateNullVertex: Boolean = solver.context["needRegenerateNullVertex"]
+            val doNotUseThisVertices: MutableSet<NegativeScenarioTree.Node> = solver.context["doNotUseThisVertices"]
+            if (needRegenerateNullVertex) {
+                solver.context("nullVertex") {
+                    negativeScenarioTree.nodes
+                        .associateWith { heat[it.id]?.size ?: 0 }
+                        .filter { it.key !in doNotUseThisVertices }
+                        .filter { it.value < iterationNumber * 0.95 }
+                        .maxByOrNull { it.value }!!.key
+                        .also { logger.info { "Null vertex = ${it.id}" } }
+                }
+                solver.context["needRegenerateNullVertex"] = false
+            }
+        }
+
+        //if (iterationNumber % 20 == 0) {
+        //    val nullVertex: NegativeScenarioTree.Node? = solver.context.getOrNull("nullVertex")
+        //    negativeScenarioTree.dump(outDir, "_negative_tree%d_iter%04d".format(loopNumber, iterationNumber), heat, nullVertex?.id)
+        //}
 
         val treeSizeDiff = negativeScenarioTree.size - treeSize
         // Note: it is suffice to check just `negSc == lastNegSc`, but it may be costly,

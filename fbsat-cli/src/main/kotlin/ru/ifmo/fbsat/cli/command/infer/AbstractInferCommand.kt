@@ -3,6 +3,7 @@ package ru.ifmo.fbsat.cli.command.infer
 import com.github.ajalt.clikt.core.CliktCommand
 import ru.ifmo.fbsat.cli.command.infer.options.ExtraOptions
 import ru.ifmo.fbsat.cli.command.infer.options.SolverOptions
+import ru.ifmo.fbsat.cli.command.infer.options.looplessCounterExamples
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
@@ -40,7 +41,8 @@ abstract class AbstractInferCommand<AutomatonType : Any>(name: String) : CliktCo
             Globals.IS_USE_ASSUMPTIONS = isUseAssumptions
             Globals.IS_DUMP_VARS_IN_CNF = isDumpVarsInCnf
             Globals.IS_DEBUG = isDebug
-            Globals.NEGATIVE_TREE_OPTIMIZATIONS = negativeTreeOptimizations.also {
+            Globals.LOOPLESS_COUNTER_EXAMPLES = looplessCounterExamples
+                Globals.NEGATIVE_TREE_OPTIMIZATIONS = negativeTreeOptimizations.also {
                 if (it == NegativeTreeOptimizations.OPT1 || it == NegativeTreeOptimizations.OPT2) {
                     check(Globals.IS_FORBID_TRANSITIONS_TO_FIRST_STATE) {
                         "You should forbid transitions to first state to use negative-tree-optimization-{1/2}"

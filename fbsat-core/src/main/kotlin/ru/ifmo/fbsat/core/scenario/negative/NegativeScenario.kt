@@ -8,6 +8,7 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
+import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import java.io.File
 
@@ -29,7 +30,7 @@ data class NegativeScenario(
                 "Mismatch of output values (loopBack: ${loop.outputValues}, last: ${last.outputValues})"
             }
         }
-        require(loopPosition != null) {
+        require(loopPosition != null || Globals.LOOPLESS_COUNTER_EXAMPLES) {
             "Loopless counter-examples are not supported yet"
         }
 
@@ -37,6 +38,12 @@ data class NegativeScenario(
         // elements.forEachIndexed { index, elem ->
         //     println("[${index + 1}/${elements.size}] $elem")
         // }
+    }
+
+    fun subScenario(length: Int): NegativeScenario {
+        if (length >= elements.size)
+            return this
+        return NegativeScenario(elements.subList(0, length), null)
     }
 
     override fun toString(): String {

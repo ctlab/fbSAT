@@ -1,0 +1,9 @@
+-- specification  G !(C.c1Extend & C.c1Retract)  is true
+-- specification  G !(C.c2Extend & C.c2Retract)  is true
+-- specification  G !(C.vacuum_on & C.vacuum_off)  is true
+-- specification  G ((!P.vcHome & !P.vcEnd) -> (P.c1Home | P.c1End))  is true
+-- specification  G ((!P.c1Home & !P.c1End) -> (P.vcHome | P.vcEnd))  is true
+-- specification  G (pp1 ->  F C.vp1)  is true
+-- specification  G !(((!P.c1Home & !P.c1End) & !P.vcHome) & !P.vcEnd)  is true
+-- specification  G (((((P.c1Home & P.c2Home) & P.vcHome) & !pp1) & !lifted) ->  X ((!C.c1Extend & !C.c2Extend) & !C.vcExtend))  is true
+-- specification  G (lifted ->  F dropped)  is true

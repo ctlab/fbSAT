@@ -45,4 +45,5 @@ object Globals {
     var MINISAT_SIMP_STRATEGY: MiniSatSolver.Companion.SimpStrategy? = null
     var GLUCOSE_SIMP_STRATEGY: GlucoseSolver.Companion.SimpStrategy? = null
     var NEGATIVE_TREE_OPTIMIZATIONS: NegativeTreeOptimizations = NegativeTreeOptimizations.NOTHING
+    var LOOPLESS_COUNTER_EXAMPLES: Boolean = false
 }

@@ -20,6 +20,10 @@ import ru.ifmo.fbsat.cli.command.infer.options.startNumberOfStatesOption
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.task.single.complete.cegisMin
 import ru.ifmo.fbsat.core.task.single.complete.cegisMinAssumptions
+import ru.ifmo.fbsat.core.task.single.complete.cegisMinNikita
+import ru.ifmo.fbsat.core.task.single.complete.cegisMinCutTree
+import ru.ifmo.fbsat.core.task.single.complete.cegisMinHeight
+import ru.ifmo.fbsat.core.task.single.complete.cegisicMin
 import java.io.File
 
 private class CegisMinInputOutputOptions : OptionGroup(INPUT_OUTPUT_OPTIONS) {
@@ -73,6 +77,98 @@ class InferCegisMinAssumptionsCommand : AbstractInferMonoCommand("cegis-min-assu
 
     override fun infer(): Automaton? =
         inferrer.cegisMinAssumptions(
+            scenarioTree = scenarioTree,
+            initialNegativeScenarioTree = null,
+            numberOfStates = params.numberOfStates,
+            startNumberOfStates = params.startNumberOfStates,
+            maxGuardSize = params.maxGuardSize,
+            maxPlateauWidth = params.maxPlateauWidth,
+            smvDir = io.smvDir
+        )
+}
+
+class InferCegisMinNikitaCommand : AbstractInferMonoCommand("cegis-min-nikita") {
+    private val io by CegisMinInputOutputOptions()
+    private val params by CegisMinAutomatonOptions()
+    override val solverOptions by SolverOptions()
+    override val extraOptions by ExtraOptions()
+
+    override val scenariosFile: File get() = io.scenariosFile
+    override val inputNames: List<String> get() = io.inputNames
+    override val outputNames: List<String> get() = io.outputNames
+    override val outDir: File get() = io.outDir
+
+    override fun infer(): Automaton? =
+        inferrer.cegisMinNikita(
+            scenarioTree = scenarioTree,
+            initialNegativeScenarioTree = null,
+            numberOfStates = params.numberOfStates,
+            startNumberOfStates = params.startNumberOfStates,
+            maxGuardSize = params.maxGuardSize,
+            maxPlateauWidth = params.maxPlateauWidth,
+            smvDir = io.smvDir
+        )
+}
+
+class InferCegisMinCutTreeCommand : AbstractInferMonoCommand("cegis-min-cut-tree") {
+    private val io by CegisMinInputOutputOptions()
+    private val params by CegisMinAutomatonOptions()
+    override val solverOptions by SolverOptions()
+    override val extraOptions by ExtraOptions()
+
+    override val scenariosFile: File get() = io.scenariosFile
+    override val inputNames: List<String> get() = io.inputNames
+    override val outputNames: List<String> get() = io.outputNames
+    override val outDir: File get() = io.outDir
+
+    override fun infer(): Automaton? =
+        inferrer.cegisMinCutTree(
+            scenarioTree = scenarioTree,
+            initialNegativeScenarioTree = null,
+            numberOfStates = params.numberOfStates,
+            startNumberOfStates = params.startNumberOfStates,
+            maxGuardSize = params.maxGuardSize,
+            maxPlateauWidth = params.maxPlateauWidth,
+            smvDir = io.smvDir
+        )
+}
+
+class InferCegisMinHeightCommand : AbstractInferMonoCommand("cegis-min-height") {
+    private val io by CegisMinInputOutputOptions()
+    private val params by CegisMinAutomatonOptions()
+    override val solverOptions by SolverOptions()
+    override val extraOptions by ExtraOptions()
+
+    override val scenariosFile: File get() = io.scenariosFile
+    override val inputNames: List<String> get() = io.inputNames
+    override val outputNames: List<String> get() = io.outputNames
+    override val outDir: File get() = io.outDir
+
+    override fun infer(): Automaton? =
+        inferrer.cegisMinHeight(
+            scenarioTree = scenarioTree,
+            initialNegativeScenarioTree = null,
+            numberOfStates = params.numberOfStates,
+            startNumberOfStates = params.startNumberOfStates,
+            maxGuardSize = params.maxGuardSize,
+            maxPlateauWidth = params.maxPlateauWidth,
+            smvDir = io.smvDir
+        )
+}
+
+class InferCegisicMinCommand : AbstractInferMonoCommand("cegisic-min") {
+    private val io by CegisMinInputOutputOptions()
+    private val params by CegisMinAutomatonOptions()
+    override val solverOptions by SolverOptions()
+    override val extraOptions by ExtraOptions()
+
+    override val scenariosFile: File get() = io.scenariosFile
+    override val inputNames: List<String> get() = io.inputNames
+    override val outputNames: List<String> get() = io.outputNames
+    override val outDir: File get() = io.outDir
+
+    override fun infer(): Automaton? =
+        inferrer.cegisicMin(
             scenarioTree = scenarioTree,
             initialNegativeScenarioTree = null,
             numberOfStates = params.numberOfStates,
