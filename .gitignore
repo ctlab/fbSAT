@@ -1,6 +1,7 @@
 # Hidden folders
 .idea/
 .gradle/
+.Rproj.user/
 
 # Build folders
 build/
@@ -24,6 +25,8 @@ target/
 *.so
 /logs/
 /data/
+/analysis/
+docker-compose.yml
 
 # Gradle
 !/gradle/wrapper/gradle-wrapper.jar
