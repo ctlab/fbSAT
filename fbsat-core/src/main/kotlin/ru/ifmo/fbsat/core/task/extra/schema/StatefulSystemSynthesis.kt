@@ -18,10 +18,11 @@ import com.github.lipen.satlib.op.imply
 import com.github.lipen.satlib.op.implyIff
 import com.github.lipen.satlib.op.implyIffAnd
 import com.github.lipen.satlib.op.implyIffOr
+import com.github.lipen.satlib.op.implyImply
 import com.github.lipen.satlib.op.implyImplyIff
 import com.github.lipen.satlib.op.implyImplyImply
 import com.github.lipen.satlib.op.implyImplyImplyAnd
-import com.github.lipen.satlib.solver.MiniSatSolver
+import com.github.lipen.satlib.solver.GlucoseSolver
 import com.soywiz.klock.PerformanceCounter
 import okio.buffer
 import okio.sink
@@ -54,7 +55,7 @@ fun synthesizeStatefulSystem(
 ): Boolean {
     // TODO: input should be a list of traces (in SMV sense)
 
-    val solver = MiniSatSolver()
+    val solver = GlucoseSolver()
     val outDir = File("out/system-synthesis")
     outDir.mkdirs()
 
@@ -211,8 +212,6 @@ fun synthesizeStatefulSystem(
         logger.info("Declaring constraints...")
         val timeStartConstraints = PerformanceCounter.reference
         val nClausesStart = numberOfClauses
-
-        // comment("ADHOCs")
 
         comment("Inbound pins have the same value as their parents")
         for (pin in allInboundVarPins)
@@ -470,19 +469,24 @@ fun synthesizeStatefulSystem(
         comment("Half adder block semantics")
         for (m in 1..M)
             for (v in 1..V) {
+                val A = 1
+                val B = 2
+                val SUM = 1
+                val CARRY = 2
+
                 // sum := a xor b;
                 implyIffXor(
                     blockType[m] eq SystemBlockType.HA,
-                    modularOutputVarValue[m, 1, v],
-                    modularInputVarValue[m, 1, v],
-                    modularInputVarValue[m, 2, v]
+                    modularOutputVarValue[m, SUM, v],
+                    modularInputVarValue[m, A, v],
+                    modularInputVarValue[m, B, v]
                 )
                 // carry := a & b;
                 implyIffAnd(
                     blockType[m] eq SystemBlockType.HA,
-                    modularOutputVarValue[m, 2, v],
-                    modularInputVarValue[m, 1, v],
-                    modularInputVarValue[m, 2, v]
+                    modularOutputVarValue[m, CARRY, v],
+                    modularInputVarValue[m, A, v],
+                    modularInputVarValue[m, B, v]
                 )
             }
 
@@ -500,43 +504,59 @@ fun synthesizeStatefulSystem(
         for (m in 1..M)
             for (v in 2..V) {
                 val p = tree.parent(v)
+
+                val S1 = 1
+                val S2 = 2
+                val VALUE = 1
+                val CARRY_OUT = 2
+
+                // =========
+                //  INPUT=1
+                // =========
                 // (prevState=1) & (input=1) => (nextState=2) & (value=1) & (carry_out=0)
                 implyImplyImplyAnd(
                     blockType[m] eq SystemBlockType.CNT,
-                    modularState[m, p] eq 1,
-                    modularInputVarValue[m, 1, v],
-                    modularState[m, v] eq 2,
-                    modularOutputVarValue[m, 1, v],
-                    -modularOutputVarValue[m, 2, v]
+                    modularState[m, p] eq S1,
+                    modularInputVarValue[m, VALUE, v],
+                    modularState[m, v] eq S2,
+                    modularOutputVarValue[m, VALUE, v],
+                    -modularOutputVarValue[m, CARRY_OUT, v]
                 )
                 // (prevState=2) & (input=1) => (nextState=1) & (value=0) & (carry_out=1)
                 implyImplyImplyAnd(
                     blockType[m] eq SystemBlockType.CNT,
-                    modularState[m, p] eq 2,
-                    modularInputVarValue[m, 1, v],
-                    modularState[m, v] eq 1,
-                    -modularOutputVarValue[m, 1, v],
-                    modularOutputVarValue[m, 2, v]
+                    modularState[m, p] eq S2,
+                    modularInputVarValue[m, VALUE, v],
+                    modularState[m, v] eq S1,
+                    -modularOutputVarValue[m, VALUE, v],
+                    modularOutputVarValue[m, CARRY_OUT, v]
                 )
 
-                // (prevState=s) & (input=0) => (nextState=s)
+                // =========
+                //  INPUT=0
+                // =========
+                // (input=0) => (nextState=prevState)
                 for (s in 1..2) {
                     implyImplyImply(
                         blockType[m] eq SystemBlockType.CNT,
+                        -modularInputVarValue[m, VALUE, v],
                         modularState[m, p] eq s,
-                        -modularInputVarValue[m, 1, v],
                         modularState[m, v] eq s
                     )
                 }
-                for (z in 1..2) {
-                    // (input=0) => (z=z)
-                    implyImplyIff(
-                        blockType[m] eq SystemBlockType.CNT,
-                        -modularInputVarValue[m, 1, v],
-                        modularOutputVarValue[m, z, p],
-                        modularOutputVarValue[m, z, v]
-                    )
-                }
+                // (input=0) => (value=value)
+                implyImplyIff(
+                    blockType[m] eq SystemBlockType.CNT,
+                    -modularInputVarValue[m, VALUE, v],
+                    modularOutputVarValue[m, VALUE, p],
+                    modularOutputVarValue[m, VALUE, v]
+                )
+                // (input=0) => (carry_out=0)
+                implyImply(
+                    blockType[m] eq SystemBlockType.CNT,
+                    -modularInputVarValue[m, VALUE, v],
+                    -modularOutputVarValue[m, CARRY_OUT, v]
+                )
 
                 // forbid 3+ states
                 @Suppress("EmptyRange")
@@ -596,6 +616,74 @@ fun synthesizeStatefulSystem(
         //     clause(-externalOutputVarValue[z, 1])
         // }
 
+        // =================
+
+        comment("ADHOCs")
+
+        // // Minor hardcode: only first CNTs
+        // if (M >= 3) {
+        //     clause(blockType[1] eq SystemBlockType.CNT)
+        //     clause(blockType[3] eq SystemBlockType.CNT)
+        //     clause(modularInputVarParent[1, 1] eq externalOutputVarPin[1])
+        //     clause(modularInputVarParent[3, 1] eq externalOutputVarPin[2])
+        // }
+        // // Hardcode CNTs (2-bit counters for each of two inputs)
+        // if (M >= 4) {
+        //     clause(blockType[1] eq SystemBlockType.CNT)
+        //     clause(blockType[2] eq SystemBlockType.CNT)
+        //     clause(blockType[3] eq SystemBlockType.CNT)
+        //     clause(blockType[4] eq SystemBlockType.CNT)
+        //     clause(modularInputVarParent[1, 1] eq externalOutputVarPin[1])
+        //     clause(modularInputVarParent[2, 1] eq modularOutputVarPin[1, 2])
+        //     clause(modularInputVarParent[3, 1] eq externalOutputVarPin[2])
+        //     clause(modularInputVarParent[4, 1] eq modularOutputVarPin[3, 2])
+        // }
+        // // Hardcode FAs (HA+HA+OR + HA+HA)
+        // if (M >= 9) {
+        //     clause(blockType[5] eq SystemBlockType.HA)
+        //     clause(blockType[6] eq SystemBlockType.HA)
+        //     clause(blockType[7] eq SystemBlockType.OR)
+        //     clause(blockType[8] eq SystemBlockType.HA)
+        //     clause(blockType[9] eq SystemBlockType.HA)
+        //     // First HA for bit0
+        //     clause(modularInputVarParent[5, 1] eq modularOutputVarPin[1, 1])
+        //     clause(modularInputVarParent[5, 2] eq modularOutputVarPin[3, 1])
+        //     // Second HA for bit0
+        //     clause(modularInputVarParent[6, 1] eq modularOutputVarPin[5, 1])
+        //     clause(modularInputVarParent[6, 2] eq 0)
+        //     // OR for bit0
+        //     clause(modularInputVarParent[7, 1] eq modularOutputVarPin[5, 2])
+        //     clause(modularInputVarParent[7, 2] eq modularOutputVarPin[6, 2])
+        //     // First HA for bit1
+        //     clause(modularInputVarParent[8, 1] eq modularOutputVarPin[2, 1])
+        //     clause(modularInputVarParent[8, 2] eq modularOutputVarPin[4, 1])
+        //     // Second HA for bit1
+        //     clause(modularInputVarParent[9, 1] eq modularOutputVarPin[8, 1])
+        //     clause(modularInputVarParent[9, 2] eq modularOutputVarPin[7, 1])
+        //     // Z1 is from second HA for bit0
+        //     clause(externalOutputVarParent[1] eq modularOutputVarPin[6, 1])
+        //     // Z2 is from second HA for bit1
+        //     clause(externalOutputVarParent[2] eq modularOutputVarPin[9, 1])
+        // }
+
+        comment("Outputs of stateless blocks are always connected")
+        for (t in SystemBlockType.values().filter { !it.hasState })
+            for (z in 1..t.numberOfOutputs)
+                for (m in 1..M)
+                    imply(
+                        blockType[m] eq t,
+                        outboundVarPinChild[modularOutputVarPin[m, z]] neq 0
+                    )
+
+        comment("Value-outputs of CNT blocks are always connected")
+        for (m in 1..M)
+            imply(
+                blockType[m] eq SystemBlockType.CNT,
+                outboundVarPinChild[modularOutputVarPin[m, 1]] neq 0
+            )
+
+        // =================
+
         val nClausesDiff = numberOfClauses - nClausesStart
         logger.debug {
             "Done declaring $nClausesDiff constraints (total $numberOfClauses) in %.2f s."
@@ -622,19 +710,25 @@ fun synthesizeStatefulSystem(
 
             val inboundValue = inboundVarPinValue.convert(model)
             val outboundValue = outboundVarPinValue.convert(model)
-            logger.just("  v   tree.input -> tree.output :: input > input modular > output modular > output ext")
+            val modularState = modularState.convert(model)
+            logger.just("        v   tree.input -> tree.output(rev) :: input > [input modular] > [state modular] > [output modular] > output ext")
             for (v in 1..V) {
                 logger.just(
-                    "  v=$v" +
+                    "[fold]  v=$v" +
                         " ${
                             if (v == 1) "-".repeat(X)
                             else (1..X).map { x -> tree.inputValue(v, x) }.toBinaryString()
                         }" +
-                        " -> ${(1..Z).map { z -> tree.outputValue(v, z) }.toBinaryString()}" +
+                        " -> ${(1..Z).reversed().map { z -> tree.outputValue(v, z) }.toBinaryString()}" +
                         " :: ${externalInputVarPins.map { outboundValue[it, v] }.toBinaryString()}" +
                         " >> ${
                             modularInputVarPins.values.map { pins ->
                                 pins.map { inboundValue[it, v] }.toBinaryString()
+                            }
+                        }" +
+                        " >> ${
+                            (1..M).map { m ->
+                                modularState[m, v]
                             }
                         }" +
                         " >> ${
@@ -724,17 +818,19 @@ fun synthesizeStatefulSystemIterativelyBottomUp(
     tree: PositiveScenarioTree,
     X: Int,
     Z: Int,
+    minM: Int = 1,
     maxM: Int = 30,
 ) {
-    for (M in 1..maxM) {
+    for (M in minM..maxM) {
         logger.just("brrr...")
         logger.info("Trying M = $M...")
+        val timeStart = PerformanceCounter.reference
 
         if (synthesizeStatefulSystem(tree, M = M, X = X, Z = Z)) {
-            logger.info("M = $M: Success")
+            logger.info("M = $M: Success after %.2f s!".format(timeSince(timeStart).seconds))
             break
         } else {
-            logger.info("M = $M: Could not infer system.")
+            logger.info("M = $M: Could not infer system after %.2f s.".format(timeSince(timeStart).seconds))
         }
     }
 }
@@ -746,10 +842,19 @@ private fun main() {
     // val X = 5
     // val Z = 1
 
-    val inputNames = listOf("in_x", "in_y")
+    // val inputNames = listOf("in_x", "in_y")
     // val outputNames = listOf("out0", "out1", "out2")
     // val outputNames = listOf("out0", "out1", "out2", "out3")
-    val outputNames = listOf("counter_x_bit0", "counter_x_bit1", "counter_x_bit2")
+    // val outputNames = listOf("counter_x_bit0", "counter_x_bit1", "counter_x_bit2")
+
+    // val inputNames = listOf("in_x")
+    // val outputNames = listOf("counter_x_bit0", "counter_x_bit1")
+    // val outputNames = listOf("counter_x_bit0", "counter_x_bit1", "counter_x_bit2")
+
+    val inputNames = listOf("in_x", "in_y")
+    val outputNames = listOf("out0", "out1")
+    // val outputNames = listOf("out0", "out1", "out2")
+    // val outputNames = listOf("out0", "out1", "out2", "out3")
     val X = inputNames.size
     val Z = outputNames.size
 
@@ -766,13 +871,16 @@ private fun main() {
         isTrie = false
     )
 
-    // 10x20 adder4
-    // 10x30 adder3
-    // 10x50 cnt
+    // val traceFilename = "data/counter/trace_counter2_10x30.xml"
+    // val traceFilename = "data/counter/trace_counter3_10x30.xml"
 
-    // val traceFilename = "data/counter/trace_100x50.xml"
-    // val traceFilename = "data/counter/trace_10x20.xml"
-    val traceFilename = "data/counter/trace_10x50.xml"
+    // val traceFilename = "data/counter/trace_half-adding2_10x30.xml"
+    // val traceFilename = "data/counter/trace_half-adding2_20x50.xml"
+    // val traceFilename = "data/counter/trace_half-adding2_100x20.xml"
+
+    val traceFilename = "data/counter/trace_adding2_10x30.xml"
+    // val traceFilename = "data/counter/trace_adding2_20x50.xml"
+    // val traceFilename = "data/counter/trace_adding2_100x20.xml"
     val traces = readCounterexamplesFromFile(File(traceFilename))
     logger.info("Traces: ${traces.size}")
     val scenarios = traces.map { trace ->
@@ -781,6 +889,11 @@ private fun main() {
     for (scenario in scenarios) {
         logger.info("Adding scenario of length ${scenario.elements.size}")
         tree.addScenario(scenario)
+        if (tree.scenarios.size == 1) {
+            for (element in scenario.elements) {
+                println("[fold] $element")
+            }
+        }
     }
     logger.info("Tree size: ${tree.size}")
     logger.info("Tree input names: ${tree.inputNames}")
@@ -793,7 +906,11 @@ private fun main() {
     //     logger.failure("M = $M: UNSAT")
     // }
 
-    synthesizeStatefulSystemIterativelyBottomUp(tree, X = X, Z = Z, maxM = 15)
+    synthesizeStatefulSystemIterativelyBottomUp(tree, X = X, Z = Z, minM = 1, maxM = 10)
+    // synthesizeStatefulSystemIterativelyBottomUp(tree, X = X, Z = Z, minM = 8, maxM = 10)
+    // synthesizeStatefulSystemIterativelyBottomUp(tree, X = X, Z = Z, minM = 9, maxM = 9)
+    // synthesizeStatefulSystemIterativelyBottomUp(tree, X = X, Z = Z, minM = 10, maxM = 10)
+    // synthesizeStatefulSystem(tree, M = 10, X = X, Z = Z)
 
     logger.info("All done in %.3f s.".format(timeSince(timeStart).seconds))
 }
