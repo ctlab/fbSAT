@@ -1,11 +1,10 @@
-package ru.ifmo.fbsat.core.utils
+package ru.ifmo.fbsat.core.utils.serializers
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.ifmo.fbsat.core.automaton.BooleanExpressionGuard
-import ru.ifmo.fbsat.core.utils.serializers.SerializerViaSurrogate
-import ru.ifmo.fbsat.core.utils.serializers.Surrogate
+import ru.ifmo.fbsat.core.utils.BooleanExpression
 
 object BooleanExpressionGuardSerializer :
     KSerializer<BooleanExpressionGuard> by SerializerViaSurrogate(BooleanExpressionGuardSurrogate)

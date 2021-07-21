@@ -8,7 +8,7 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import ru.ifmo.fbsat.core.scenario.OutputValues
-import ru.ifmo.fbsat.core.utils.BinaryAlgorithmSerializer
+import ru.ifmo.fbsat.core.utils.serializers.BinaryAlgorithmSerializer
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.toBooleanArray
 

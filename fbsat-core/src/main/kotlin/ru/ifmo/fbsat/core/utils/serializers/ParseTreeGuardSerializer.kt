@@ -1,11 +1,9 @@
-package ru.ifmo.fbsat.core.utils
+package ru.ifmo.fbsat.core.utils.serializers
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.ifmo.fbsat.core.automaton.ParseTreeGuard
-import ru.ifmo.fbsat.core.utils.serializers.SerializerViaSurrogate
-import ru.ifmo.fbsat.core.utils.serializers.Surrogate
 
 object ParseTreeGuardSerializer :
     KSerializer<ParseTreeGuard> by SerializerViaSurrogate(ParseTreeGuardSurrogate)
