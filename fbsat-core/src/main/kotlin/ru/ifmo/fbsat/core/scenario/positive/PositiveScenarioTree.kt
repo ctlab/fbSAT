@@ -69,6 +69,9 @@ class PositiveScenarioTree(
         logger.info("Scenarios: ${scenarios.size}")
         logger.info("Elements: ${scenarios.sumBy { it.elements.size }}")
         logger.info("Tree size: $size")
+
+        logger.info("Unique inputs: ${uniqueInputs.size}")
+        logger.info("Unique outputs: ${uniqueOutputs.size}")
     }
 
     companion object {

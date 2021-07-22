@@ -19,6 +19,7 @@ import ru.ifmo.fbsat.core.task.modular.extended.parallel.inferParallelModularExt
 import ru.ifmo.fbsat.core.task.single.basic.inferBasic
 import ru.ifmo.fbsat.core.task.single.extended.inferExtended
 import ru.ifmo.fbsat.core.task.single.extforest.inferExtForest
+import ru.ifmo.fbsat.core.task.single.extprecomp.inferExtPreComp
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 
@@ -126,6 +127,23 @@ fun Inferrer.optimizeN_Forest(
         end = end,
         useAssumptions = useAssumptions,
         infer = { inferExtForest() },
+        query = { it.totalGuardsSize }
+    )
+}
+
+@Suppress("FunctionName")
+fun Inferrer.optimizeN_PreComp(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): Automaton? {
+    logger.info("Optimizing N...")
+    val cardinality: Cardinality = solver.context["cardinalityN"]
+    return cardinality.optimizeTopDown(
+        start = start,
+        end = end,
+        useAssumptions = useAssumptions,
+        infer = { inferExtPreComp() },
         query = { it.totalGuardsSize }
     )
 }
