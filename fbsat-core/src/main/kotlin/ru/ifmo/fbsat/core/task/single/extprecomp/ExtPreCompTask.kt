@@ -60,6 +60,7 @@ fun Solver.declareExtPreCompGuardConditionsConstraints() {
         }
     }
 
+    comment("Formulae encodings")
     for (c in 1..C) {
         for (k in 1..K) {
             for (u in 1..U) {
@@ -167,6 +168,7 @@ fun Solver.declareExtPreCompGuardConditionsConstraints() {
         }
     }
 
+    comment("Formula size encoding (used nodes)")
     for (c in 1..C) {
         for (k in 1..K) {
             // 0
