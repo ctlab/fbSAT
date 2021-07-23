@@ -2,18 +2,24 @@ package ru.ifmo.fbsat.core.task.single.extprecomp
 
 import com.github.lipen.satlib.card.Cardinality
 import com.github.lipen.satlib.core.BoolVarArray
+import com.github.lipen.satlib.core.DomainVarArray
 import com.github.lipen.satlib.core.IntVarArray
 import com.github.lipen.satlib.core.sign
 import com.github.lipen.satlib.op.iff
 import com.github.lipen.satlib.op.imply
 import com.github.lipen.satlib.op.implyAnd
+import com.github.lipen.satlib.op.implyIff
+import com.github.lipen.satlib.op.implyIffAnd
+import com.github.lipen.satlib.op.implyIffOr
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.pairs
 import ru.ifmo.fbsat.core.utils.triples
 
+// TODO: consider renaming to 'extended-nnf'
 data class ExtPreCompTask(
     val maxTotalGuardsSize: Int? = null, // N, unconstrained if null
 ) : Task() {
@@ -38,6 +44,306 @@ data class ExtPreCompTask(
 }
 
 fun Solver.declareExtPreCompGuardConditionsConstraints() {
+    comment("ExtPreComp guard conditions constraints")
+    val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
+    val uniqueInputs = scenarioTree.uniqueInputs
+    val C: Int = context["C"]
+    val K: Int = context["K"]
+    val X: Int = context["X"]
+    val U: Int = context["U"]
+    val transitionDestination: IntVarArray = context["transitionDestination"]
+    val transitionTruthTable: BoolVarArray = context["transitionTruthTable"]
+    val guardType: DomainVarArray<GuardType> = context["guardType"]
+    val guardTerminalInputVariable: IntVarArray = context["guardTerminalInputVariable"]
+    val guardTerminalValue: BoolVarArray = context["guardTerminalValue"]
+    val guardTerminalNegation: BoolVarArray = context["guardTerminalNegation"]
+    val guardNode: BoolVarArray = context["guardNode"]
+
+    comment("Only null-transitions have no guard")
+    for (c in 1..C)
+        for (k in 1..K)
+            iff(
+                transitionDestination[c, k] eq 0,
+                guardType[c, k] eq GuardType.NoGuard
+            )
+
+    comment("No-var terminal propagation")
+    for (c in 1..C)
+        for (k in 1..K)
+            for (i in 1 until 3)
+                imply(
+                    guardTerminalInputVariable[c, k, i] eq 0,
+                    guardTerminalInputVariable[c, k, i + 1] eq 0,
+                )
+
+    comment("No-var terminals are not negated [deterministic constraint]")
+    // for (c in 1..C)
+    //     for (k in 1..K)
+    //         for (i in 1..3)
+    //             imply(
+    //                 guardTerminalInputVariable[c, k, i] eq 0,
+    //                 -guardTerminalNegation[c, k, i],
+    //             )
+
+    comment("No-var terminal value is false [deterministic constraint]")
+    // for (c in 1..C)
+    //     for (k in 1..K)
+    //         for (i in 1..3)
+    //             for (u in 1..U)
+    //                 imply(
+    //                     guardTerminalInputVariable[c, k, i] eq 0,
+    //                     -guardTerminalValue[c, k, i, u]
+    //                 )
+
+    comment("Terminal value")
+    // (guardVar[c,k]=x) & guardTerminalNegation[c,k,i] => (guardTerminalValue[c,k,i,u] == ~u[x])
+    // (guardVar[c,k]=x) & ~guardTerminalNegation[c,k,i] => (guardTerminalValue[c,k,i,u] == u[x])
+    for (c in 1..C)
+        for (k in 1..K)
+            for (x in 1..X)
+                for (i in 1..3)
+                    for (u in 1..U) {
+                        clause(
+                            -(guardTerminalInputVariable[c, k, i] eq x),
+                            -(guardTerminalNegation[c, k, i]),
+                            guardTerminalValue[c, k, i, u] sign !uniqueInputs[u - 1][x - 1]
+                        )
+                        clause(
+                            -(guardTerminalInputVariable[c, k, i] eq x),
+                            -(-guardTerminalNegation[c, k, i]),
+                            guardTerminalValue[c, k, i, u] sign uniqueInputs[u - 1][x - 1]
+                        )
+                    }
+
+    comment("GuardType::arity encoding")
+    for (c in 1..C)
+        for (k in 1..K)
+            for (t in GuardType.values())
+                when (t.arity) {
+                    0 -> imply(
+                        guardType[c, k] eq t,
+                        guardTerminalInputVariable[c, k, 1] eq 0
+                    )
+                    1 -> implyAnd(
+                        guardType[c, k] eq t,
+                        guardTerminalInputVariable[c, k, 1] neq 0,
+                        guardTerminalInputVariable[c, k, 2] eq 0
+                    )
+                    2 -> implyAnd(
+                        guardType[c, k] eq t,
+                        guardTerminalInputVariable[c, k, 1] neq 0,
+                        guardTerminalInputVariable[c, k, 2] neq 0,
+                        guardTerminalInputVariable[c, k, 3] eq 0,
+                    )
+                    3 -> implyAnd(
+                        guardType[c, k] eq t,
+                        guardTerminalInputVariable[c, k, 1] neq 0,
+                        guardTerminalInputVariable[c, k, 2] neq 0,
+                        guardTerminalInputVariable[c, k, 3] neq 0
+                        // FIXME: When >3 arities are supported, do not forget to add:
+                        //  guardTerminalInputVariable[c, k, 4] eq 0
+                    )
+                    else -> TODO("other arities")
+                }
+
+    comment("GuardType.NoGuard encoding")
+    for (c in 1..C)
+        for (k in 1..K)
+            for (u in 1..U)
+                imply(
+                    guardType[c, k] eq GuardType.NoGuard,
+                    -transitionTruthTable[c, k, u]
+                )
+
+    comment("GuardType.True encoding")
+    for (c in 1..C)
+        for (k in 1..K)
+            for (u in 1..U)
+                imply(
+                    guardType[c, k] eq GuardType.True,
+                    transitionTruthTable[c, k, u]
+                )
+
+    comment("GuardType.Var encoding")
+    // (guardType[c,k]=Var) => (truthTable[c,k,u] == guardTerminalValue[c,k,1,u])
+    for (c in 1..C)
+        for (k in 1..K)
+            for (u in 1..U)
+                implyIff(
+                    guardType[c, k] eq GuardType.Var,
+                    transitionTruthTable[c, k, u],
+                    guardTerminalValue[c, k, 1, u]
+                )
+
+    comment("GuardType.And2 encoding")
+    // (guardType[c,k]=And2) => (truthTable[c,k,u] == guardTerminalValue[c,k,1,u] /\ ...[2])
+    for (c in 1..C)
+        for (k in 1..K)
+            for (u in 1..U)
+                implyIffAnd(
+                    guardType[c, k] eq GuardType.And2,
+                    transitionTruthTable[c, k, u],
+                    guardTerminalValue[c, k, 1, u],
+                    guardTerminalValue[c, k, 2, u]
+                )
+
+    comment("GuardType.Or2 encoding")
+    // (guardType[c,k]=Or2) => (truthTable[c,k,u] == guardTerminalValue[c,k,1,u] \/ ...[2])
+    for (c in 1..C)
+        for (k in 1..K)
+            for (u in 1..U)
+                implyIffOr(
+                    guardType[c, k] eq GuardType.Or2,
+                    transitionTruthTable[c, k, u],
+                    guardTerminalValue[c, k, 1, u],
+                    guardTerminalValue[c, k, 2, u]
+                )
+
+    comment("GuardType.And3 encoding")
+    // (guardType[c,k]=And3) => (truthTable[c,k,u] == guardTerminalValue[c,k,1,u] /\ ...[2] /\ ...[3])
+    for (c in 1..C)
+        for (k in 1..K)
+            for (u in 1..U)
+                implyIffAnd(
+                    guardType[c, k] eq GuardType.And3,
+                    transitionTruthTable[c, k, u],
+                    guardTerminalValue[c, k, 1, u],
+                    guardTerminalValue[c, k, 2, u],
+                    guardTerminalValue[c, k, 3, u]
+                )
+
+    comment("ADHOC: And3 cannot have negated terminals")
+    for (c in 1..C)
+        for (k in 1..K)
+            implyAnd(
+                guardType[c, k] eq GuardType.And3,
+                -guardTerminalNegation[c, k, 1],
+                -guardTerminalNegation[c, k, 2],
+                -guardTerminalNegation[c, k, 3],
+            )
+
+    comment("Formula size encoding")
+    for (c in 1..C)
+        for (k in 1..K) {
+            // Propagation
+            for (i in 1 until 5)
+                imply(
+                    -guardNode[c, k, i],
+                    -guardNode[c, k, i + 1]
+                )
+
+            // NoGuard
+            implyAnd(
+                guardType[c, k] eq GuardType.NoGuard,
+                -guardNode[c, k, 1]
+            )
+
+            // True
+            imply(
+                guardType[c, k] eq GuardType.True,
+                guardNode[c, k, 1]
+            )
+            imply(
+                guardType[c, k] eq GuardType.True,
+                -guardNode[c, k, 2]
+            )
+
+            // Var
+            imply(
+                guardType[c, k] eq GuardType.Var,
+                guardNode[c, k, 1]
+            )
+            // (positive var)
+            clause(
+                -(guardType[c, k] eq GuardType.Var),
+                -(-guardTerminalNegation[c, k, 1]),
+                -guardNode[c, k, 2]
+            )
+            // (negative var)
+            clause(
+                -(guardType[c, k] eq GuardType.Var),
+                -(guardTerminalNegation[c, k, 1]),
+                guardNode[c, k, 2]
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.Var),
+                -(guardTerminalNegation[c, k, 1]),
+                -guardNode[c, k, 3]
+            )
+
+            // And2
+            implyAnd(
+                guardType[c, k] eq GuardType.And2,
+                guardNode[c, k, 1],
+                guardNode[c, k, 2],
+                guardNode[c, k, 3],
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.And2),
+                -(guardTerminalNegation[c, k, 1]),
+                guardNode[c, k, 4]
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.And2),
+                -(guardTerminalNegation[c, k, 2]),
+                guardNode[c, k, 4]
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.And2),
+                -(guardTerminalNegation[c, k, 1]),
+                -(guardTerminalNegation[c, k, 2]),
+                guardNode[c, k, 5]
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.And2),
+                -(-guardTerminalNegation[c, k, 1]),
+                -(-guardTerminalNegation[c, k, 2]),
+                -guardNode[c, k, 4]
+            )
+
+            // Or2
+            implyAnd(
+                guardType[c, k] eq GuardType.Or2,
+                guardNode[c, k, 1],
+                guardNode[c, k, 2],
+                guardNode[c, k, 3],
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.Or2),
+                -(guardTerminalNegation[c, k, 1]),
+                guardNode[c, k, 4]
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.Or2),
+                -(guardTerminalNegation[c, k, 2]),
+                guardNode[c, k, 4]
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.Or2),
+                -(guardTerminalNegation[c, k, 1]),
+                -(guardTerminalNegation[c, k, 2]),
+                guardNode[c, k, 5]
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.Or2),
+                -(-guardTerminalNegation[c, k, 1]),
+                -(-guardTerminalNegation[c, k, 2]),
+                -guardNode[c, k, 4]
+            )
+
+            // And3
+            implyAnd(
+                guardType[c, k] eq GuardType.And3,
+                guardNode[c, k, 1],
+                guardNode[c, k, 2],
+                guardNode[c, k, 3],
+                guardNode[c, k, 4],
+                guardNode[c, k, 5]
+            )
+        }
+}
+
+fun Solver.declareExtPreCompGuardConditionsConstraints_OLD() {
     comment("ExtPreComp guard conditions constraints")
     val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
     val uniqueInputs = scenarioTree.uniqueInputs

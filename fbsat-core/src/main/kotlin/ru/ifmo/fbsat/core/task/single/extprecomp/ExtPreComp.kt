@@ -10,6 +10,7 @@ import ru.ifmo.fbsat.core.automaton.UnconditionalGuard
 import ru.ifmo.fbsat.core.automaton.endow
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.convertBoolVarArray
+import ru.ifmo.fbsat.core.solver.convertDomainVarArray
 import ru.ifmo.fbsat.core.solver.convertIntVarArray
 import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
@@ -21,9 +22,8 @@ import ru.ifmo.fbsat.core.utils.BooleanExpression
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.UnaryOperation
 import ru.ifmo.fbsat.core.utils.Variable
+import ru.ifmo.fbsat.core.utils.exhaustive
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
-import ru.ifmo.fbsat.core.utils.pairs
-import ru.ifmo.fbsat.core.utils.triples
 
 private val logger = MyLogger {}
 
@@ -92,10 +92,24 @@ fun buildExtPreCompAutomaton(
     val Z: Int = context["Z"]
     val transitionDestination = context.convertIntVarArray("transitionDestination", model)
     val transitionInputEvent = context.convertIntVarArray("transitionInputEvent", model)
-    val transitionGuardFormula = context.convertIntVarArray("transitionGuardFormula", model)
+    // val transitionGuardFormula = context.convertIntVarArray("transitionGuardFormula", model)
+    val guardType = context.convertDomainVarArray<GuardType>("guardType", model)
+    val guardTerminalInputVariable = context.convertIntVarArray("guardTerminalInputVariable", model)
+    val guardTerminalNegation = context.convertBoolVarArray("guardTerminalNegation", model)
     val stateOutputEvent = context.convertIntVarArray("stateOutputEvent", model)
     val stateAlgorithmTop = context.convertBoolVarArray("stateAlgorithmTop", model)
     val stateAlgorithmBot = context.convertBoolVarArray("stateAlgorithmBot", model)
+
+    val vars =
+        if (X == inputNamesPnP.size) {
+            MultiArray.new(X) { (i) ->
+                Variable(i - 1, inputNamesPnP[i - 1])
+            }
+        } else {
+            MultiArray.new(X) { (i) ->
+                Variable(i - 1, "x$i")
+            }
+        }
 
     return Automaton(scenarioTree).endow(
         C = C, K = K,
@@ -118,139 +132,196 @@ fun buildExtPreCompAutomaton(
             scenarioTree.inputEvents[transitionInputEvent[c, k] - 1]
         },
         transitionGuard = { c, k ->
-            when (val f = transitionGuardFormula[c, k]) {
-                0 -> error("transitionGuardFormula should not be zero here")
-                1 -> UnconditionalGuard()
-                else -> {
-                    fun getFun(): BooleanExpression {
-                        var fff = 1
-
-                        val vars = MultiArray.new(10) { (i) ->
-                            Variable(i - 1, inputNamesPnP[i - 1])
-                        }
-
-                        // next X formulae: positive variable
-                        for (x in 1..X) {
-                            fff++
-                            if (fff == f) {
-                                return vars[x]
-                            }
-                        }
-                        check(fff == 1 + X)
-
-                        // next X formulae: negative variable
-                        for (x in 1..X) {
-                            fff++
-                            if (fff == f) {
-                                return UnaryOperation(
-                                    UnaryOperation.Kind.Not,
-                                    vars[x]
-                                )
-                            }
-                        }
-                        check(fff == 1 + 2 * X)
-
-                        // next (X*(X-1)/2) formulae: conjunction of 2 positive variables
-                        for ((x1, x2) in (1..X).pairs()) {
-                            fff++
-                            if (fff == f) {
-                                return BinaryOperation(
-                                    BinaryOperation.Kind.And,
-                                    vars[x1],
-                                    vars[x2],
-                                )
-                            }
-                        }
-                        check(fff == 1 + 2 * X + (X * (X - 1) / 2))
-
-                        // next (X*(X-1)/2) formulae: conjunction of 2 negative variables
-                        for ((x1, x2) in (1..X).pairs()) {
-                            fff++
-                            if (fff == f) {
-                                return BinaryOperation(
-                                    BinaryOperation.Kind.And,
-                                    UnaryOperation(
-                                        UnaryOperation.Kind.Not,
-                                        vars[x1],
-                                    ),
-                                    UnaryOperation(
-                                        UnaryOperation.Kind.Not,
-                                        vars[x2],
-                                    )
-                                )
-                            }
-                        }
-                        check(fff == 1 + 2 * X + 2 * (X * (X - 1) / 2))
-
-                        // next (X*(X-1)/2) formulae: conjunction of 1 positive and 1 negative variable
-                        for ((x1, x2) in (1..X).pairs()) {
-                            fff++
-                            if (fff == f) {
-                                return BinaryOperation(
-                                    BinaryOperation.Kind.And,
-                                    vars[x1],
-                                    UnaryOperation(
-                                        UnaryOperation.Kind.Not,
-                                        vars[x2],
-                                    )
-                                )
-                            }
-                        }
-                        check(fff == 1 + 2 * X + 3 * (X * (X - 1) / 2))
-
-                        // next (X*(X-1)/2) formulae: conjunction of 1 negative and 1 positive variable
-                        for ((x1, x2) in (1..X).pairs()) {
-                            fff++
-                            if (fff == f) {
-                                return BinaryOperation(
-                                    BinaryOperation.Kind.And,
-                                    UnaryOperation(
-                                        UnaryOperation.Kind.Not,
-                                        vars[x1],
-                                    ),
-                                    vars[x2],
-                                )
-                            }
-                        }
-                        check(fff == 1 + 2 * X + 4 * (X * (X - 1) / 2))
-
-                        // next (X*(X-1)/2) formulae: disjunction of 2 positive variables
-                        for ((x1, x2) in (1..X).pairs()) {
-                            fff++
-                            if (fff == f) {
-                                return BinaryOperation(
-                                    BinaryOperation.Kind.Or,
-                                    vars[x1],
-                                    vars[x2],
-                                )
-                            }
-                        }
-                        check(fff == 1 + 2 * X + 5 * (X * (X - 1) / 2))
-
-                        // next (X*(X-1)*(X-2)/6) formulae: conjunction of 3 positive variables
-                        for ((x1, x2, x3) in (1..X).triples()) {
-                            fff++
-                            if (fff == f) {
-                                return BinaryOperation(
-                                    BinaryOperation.Kind.And,
-                                    vars[x1],
-                                    BinaryOperation(
-                                        BinaryOperation.Kind.And,
-                                        vars[x2],
-                                        vars[x3],
-                                    )
-                                )
-                            }
-                        }
-                        check(fff == 1 + 2 * X + 5 * (X * (X - 1) / 2) + (X * (X - 1) * (X - 2) / 6))
-
-                        error("reached F")
-                    }
-
-                    val expr = getFun()
-                    BooleanExpressionGuard(expr)
+            fun getVarExpr(i: Int): BooleanExpression {
+                val x = guardTerminalInputVariable[c, k, i]
+                check(x != 0)
+                return if (guardTerminalNegation[c, k, i]) {
+                    UnaryOperation(
+                        UnaryOperation.Kind.Not,
+                        vars[x]
+                    )
+                } else {
+                    vars[x]
                 }
             }
+
+            when (val t = guardType[c, k]) {
+                GuardType.NoGuard -> error("there must be a guard")
+                GuardType.True -> UnconditionalGuard()
+                GuardType.Var -> {
+                    val expr = getVarExpr(1)
+                    BooleanExpressionGuard(expr)
+                }
+                GuardType.And2 -> {
+                    val e1 = getVarExpr(1)
+                    val e2 = getVarExpr(2)
+                    val expr = BinaryOperation(
+                        BinaryOperation.Kind.And,
+                        e1,
+                        e2
+                    )
+                    BooleanExpressionGuard(expr)
+                }
+                GuardType.Or2 -> {
+                    val e1 = getVarExpr(1)
+                    val e2 = getVarExpr(2)
+                    val expr = BinaryOperation(
+                        BinaryOperation.Kind.Or,
+                        e1,
+                        e2
+                    )
+                    BooleanExpressionGuard(expr)
+                }
+                GuardType.And3 -> {
+                    val e1 = getVarExpr(1)
+                    val e2 = getVarExpr(2)
+                    val e3 = getVarExpr(3)
+                    val expr = BinaryOperation(
+                        BinaryOperation.Kind.And,
+                        e1,
+                        BinaryOperation(
+                            BinaryOperation.Kind.And,
+                            e2,
+                            e3
+                        )
+                    )
+                    BooleanExpressionGuard(expr)
+                }
+                else -> TODO()
+            }.exhaustive
+            // when (val f = transitionGuardFormula[c, k]) {
+            //     0 -> error("transitionGuardFormula should not be zero here")
+            //     1 -> UnconditionalGuard()
+            //     else -> {
+            //         fun getFun(): BooleanExpression {
+            //             var fff = 1
+            //
+            //             val vars = MultiArray.new(10) { (i) ->
+            //                 Variable(i - 1, inputNamesPnP[i - 1])
+            //             }
+            //
+            //             // next X formulae: positive variable
+            //             for (x in 1..X) {
+            //                 fff++
+            //                 if (fff == f) {
+            //                     return vars[x]
+            //                 }
+            //             }
+            //             check(fff == 1 + X)
+            //
+            //             // next X formulae: negative variable
+            //             for (x in 1..X) {
+            //                 fff++
+            //                 if (fff == f) {
+            //                     return UnaryOperation(
+            //                         UnaryOperation.Kind.Not,
+            //                         vars[x]
+            //                     )
+            //                 }
+            //             }
+            //             check(fff == 1 + 2 * X)
+            //
+            //             // next (X*(X-1)/2) formulae: conjunction of 2 positive variables
+            //             for ((x1, x2) in (1..X).pairs()) {
+            //                 fff++
+            //                 if (fff == f) {
+            //                     return BinaryOperation(
+            //                         BinaryOperation.Kind.And,
+            //                         vars[x1],
+            //                         vars[x2],
+            //                     )
+            //                 }
+            //             }
+            //             check(fff == 1 + 2 * X + (X * (X - 1) / 2))
+            //
+            //             // next (X*(X-1)/2) formulae: conjunction of 2 negative variables
+            //             for ((x1, x2) in (1..X).pairs()) {
+            //                 fff++
+            //                 if (fff == f) {
+            //                     return BinaryOperation(
+            //                         BinaryOperation.Kind.And,
+            //                         UnaryOperation(
+            //                             UnaryOperation.Kind.Not,
+            //                             vars[x1],
+            //                         ),
+            //                         UnaryOperation(
+            //                             UnaryOperation.Kind.Not,
+            //                             vars[x2],
+            //                         )
+            //                     )
+            //                 }
+            //             }
+            //             check(fff == 1 + 2 * X + 2 * (X * (X - 1) / 2))
+            //
+            //             // next (X*(X-1)/2) formulae: conjunction of 1 positive and 1 negative variable
+            //             for ((x1, x2) in (1..X).pairs()) {
+            //                 fff++
+            //                 if (fff == f) {
+            //                     return BinaryOperation(
+            //                         BinaryOperation.Kind.And,
+            //                         vars[x1],
+            //                         UnaryOperation(
+            //                             UnaryOperation.Kind.Not,
+            //                             vars[x2],
+            //                         )
+            //                     )
+            //                 }
+            //             }
+            //             check(fff == 1 + 2 * X + 3 * (X * (X - 1) / 2))
+            //
+            //             // next (X*(X-1)/2) formulae: conjunction of 1 negative and 1 positive variable
+            //             for ((x1, x2) in (1..X).pairs()) {
+            //                 fff++
+            //                 if (fff == f) {
+            //                     return BinaryOperation(
+            //                         BinaryOperation.Kind.And,
+            //                         UnaryOperation(
+            //                             UnaryOperation.Kind.Not,
+            //                             vars[x1],
+            //                         ),
+            //                         vars[x2],
+            //                     )
+            //                 }
+            //             }
+            //             check(fff == 1 + 2 * X + 4 * (X * (X - 1) / 2))
+            //
+            //             // next (X*(X-1)/2) formulae: disjunction of 2 positive variables
+            //             for ((x1, x2) in (1..X).pairs()) {
+            //                 fff++
+            //                 if (fff == f) {
+            //                     return BinaryOperation(
+            //                         BinaryOperation.Kind.Or,
+            //                         vars[x1],
+            //                         vars[x2],
+            //                     )
+            //                 }
+            //             }
+            //             check(fff == 1 + 2 * X + 5 * (X * (X - 1) / 2))
+            //
+            //             // next (X*(X-1)*(X-2)/6) formulae: conjunction of 3 positive variables
+            //             for ((x1, x2, x3) in (1..X).triples()) {
+            //                 fff++
+            //                 if (fff == f) {
+            //                     return BinaryOperation(
+            //                         BinaryOperation.Kind.And,
+            //                         vars[x1],
+            //                         BinaryOperation(
+            //                             BinaryOperation.Kind.And,
+            //                             vars[x2],
+            //                             vars[x3],
+            //                         )
+            //                     )
+            //                 }
+            //             }
+            //             check(fff == 1 + 2 * X + 5 * (X * (X - 1) / 2) + (X * (X - 1) * (X - 2) / 6))
+            //
+            //             error("reached F")
+            //         }
+            //
+            //         val expr = getFun()
+            //         BooleanExpressionGuard(expr)
+            //     }
+            // }
         }
     )
 }
