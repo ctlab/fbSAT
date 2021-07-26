@@ -14,12 +14,12 @@ import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import kotlinx.serialization.serializer
 import ru.ifmo.fbsat.core.scenario.InputValues
-import ru.ifmo.fbsat.core.utils.BinaryOperation
-import ru.ifmo.fbsat.core.utils.BooleanExpression
-import ru.ifmo.fbsat.core.utils.Constant
 import ru.ifmo.fbsat.core.utils.MyLogger
-import ru.ifmo.fbsat.core.utils.UnaryOperation
-import ru.ifmo.fbsat.core.utils.Variable
+import ru.ifmo.fbsat.core.utils.boolexpr.BinaryOperation
+import ru.ifmo.fbsat.core.utils.boolexpr.BooleanExpression
+import ru.ifmo.fbsat.core.utils.boolexpr.Constant
+import ru.ifmo.fbsat.core.utils.boolexpr.UnaryOperation
+import ru.ifmo.fbsat.core.utils.boolexpr.Variable
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
 import ru.ifmo.fbsat.core.utils.makeDnfString
 import ru.ifmo.fbsat.core.utils.pow

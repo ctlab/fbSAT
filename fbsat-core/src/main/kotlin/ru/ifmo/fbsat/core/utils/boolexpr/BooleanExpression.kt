@@ -1,24 +1,10 @@
-package ru.ifmo.fbsat.core.utils
+package ru.ifmo.fbsat.core.utils.boolexpr
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
-import kotlinx.serialization.modules.subclass
 import kotlin.random.Random
 import kotlin.random.nextInt
-
-@Suppress("PublicApiImplicitType")
-val booleanExpressionModule = SerializersModule {
-    polymorphic(BooleanExpression::class) {
-        subclass(Variable::class)
-        subclass(UnaryOperation::class)
-        subclass(BinaryOperation::class)
-    }
-}
 
 sealed interface BooleanExpression {
     fun eval(inputs: List<Boolean>): Boolean
@@ -55,82 +41,6 @@ sealed interface BooleanExpression {
         fun or(vararg args: BooleanExpression): BooleanExpression {
             return args.reduce { acc, expr -> or(acc, expr) }
         }
-    }
-}
-
-@Serializable
-@SerialName("Constant")
-sealed class Constant : BooleanExpression {
-    object True : Constant() {
-        override fun eval(inputs: List<Boolean>): Boolean = true
-        override fun stringify(): String = "⊤"
-    }
-
-    object False : Constant() {
-        override fun eval(inputs: List<Boolean>): Boolean = false
-        override fun stringify(): String = "⊥"
-    }
-}
-
-@Serializable
-@SerialName("Variable")
-data class Variable(
-    val index: Int, // 0-based
-    val name: String,
-) : BooleanExpression {
-    override fun eval(inputs: List<Boolean>): Boolean = inputs[index]
-    override fun stringify(): String = name
-}
-
-@Serializable
-@SerialName("UnaryOperation")
-data class UnaryOperation(
-    val kind: Kind,
-    val arg: BooleanExpression,
-) : BooleanExpression {
-    override fun eval(inputs: List<Boolean>): Boolean {
-        val value = arg.eval(inputs)
-        return when (kind) {
-            Kind.Not -> !value
-        }
-    }
-
-    override fun stringify(): String {
-        val s = arg.stringify()
-        return when (kind) {
-            Kind.Not -> "NOT $s"
-        }
-    }
-
-    enum class Kind {
-        Not
-    }
-}
-
-@Serializable
-@SerialName("BinaryOperation")
-data class BinaryOperation(
-    val kind: Kind,
-    val lhs: BooleanExpression,
-    val rhs: BooleanExpression,
-) : BooleanExpression {
-    override fun eval(inputs: List<Boolean>): Boolean {
-        val left = lhs.eval(inputs)
-        val right = rhs.eval(inputs)
-        return when (kind) {
-            Kind.And -> left && right
-            Kind.Or -> left || right
-        }
-    }
-
-    override fun stringify(): String {
-        val left = lhs.stringify()
-        val right = rhs.stringify()
-        return "($left ${kind.name.uppercase()} $right)"
-    }
-
-    enum class Kind {
-        And, Or
     }
 }
 

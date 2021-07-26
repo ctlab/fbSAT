@@ -17,7 +17,7 @@ import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeN_PreComp
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
-import ru.ifmo.fbsat.core.utils.BooleanExpression
+import ru.ifmo.fbsat.core.utils.boolexpr.BooleanExpression
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.exhaustive
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
