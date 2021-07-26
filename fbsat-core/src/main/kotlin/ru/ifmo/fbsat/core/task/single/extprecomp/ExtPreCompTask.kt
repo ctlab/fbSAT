@@ -77,23 +77,23 @@ fun Solver.declareExtPreCompGuardConditionsConstraints() {
                 )
 
     comment("No-var terminals are not negated [deterministic constraint]")
-    // for (c in 1..C)
-    //     for (k in 1..K)
-    //         for (i in 1..3)
-    //             imply(
-    //                 guardTerminalInputVariable[c, k, i] eq 0,
-    //                 -guardTerminalNegation[c, k, i],
-    //             )
+    for (c in 1..C)
+        for (k in 1..K)
+            for (i in 1..3)
+                imply(
+                    guardTerminalInputVariable[c, k, i] eq 0,
+                    -guardTerminalNegation[c, k, i],
+                )
 
     comment("No-var terminal value is false [deterministic constraint]")
-    // for (c in 1..C)
-    //     for (k in 1..K)
-    //         for (i in 1..3)
-    //             for (u in 1..U)
-    //                 imply(
-    //                     guardTerminalInputVariable[c, k, i] eq 0,
-    //                     -guardTerminalValue[c, k, i, u]
-    //                 )
+    for (c in 1..C)
+        for (k in 1..K)
+            for (i in 1..3)
+                for (u in 1..U)
+                    imply(
+                        guardTerminalInputVariable[c, k, i] eq 0,
+                        -guardTerminalValue[c, k, i, u]
+                    )
 
     comment("Terminal value")
     // (guardVar[c,k]=x) & guardTerminalNegation[c,k,i] => (guardTerminalValue[c,k,i,u] == ~u[x])
