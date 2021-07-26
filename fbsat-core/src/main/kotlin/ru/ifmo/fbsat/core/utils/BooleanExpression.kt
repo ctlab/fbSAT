@@ -23,6 +23,39 @@ val booleanExpressionModule = SerializersModule {
 sealed interface BooleanExpression {
     fun eval(inputs: List<Boolean>): Boolean
     fun stringify(): String
+
+    companion object {
+        fun constant(value: Boolean): Constant {
+            return when (value) {
+                true -> Constant.True
+                false -> Constant.False
+            }
+        }
+
+        fun variable(index: Int, name: String): Variable {
+            return Variable(index, name)
+        }
+
+        fun not(arg: BooleanExpression): UnaryOperation {
+            return UnaryOperation(UnaryOperation.Kind.Not, arg)
+        }
+
+        fun and(lhs: BooleanExpression, rhs: BooleanExpression): BinaryOperation {
+            return BinaryOperation(BinaryOperation.Kind.And, lhs, rhs)
+        }
+
+        fun or(lhs: BooleanExpression, rhs: BooleanExpression): BinaryOperation {
+            return BinaryOperation(BinaryOperation.Kind.Or, lhs, rhs)
+        }
+
+        fun and(vararg args: BooleanExpression): BooleanExpression {
+            return args.reduce { acc, expr -> and(acc, expr) }
+        }
+
+        fun or(vararg args: BooleanExpression): BooleanExpression {
+            return args.reduce { acc, expr -> or(acc, expr) }
+        }
+    }
 }
 
 @Serializable
@@ -106,7 +139,7 @@ fun randomBooleanExpression(
     inputNames: List<String>,
     random: Random = Random,
 ): BooleanExpression {
-    fun randomBooleanExpressionHelper(size: Int): BooleanExpression {
+    fun helper(size: Int): BooleanExpression {
         require(size > 0) { "Size must be > 0." }
         return when (size) {
             1 -> {
@@ -114,12 +147,12 @@ fun randomBooleanExpression(
                 Variable(i, inputNames[i])
             }
             2 -> {
-                val child = randomBooleanExpressionHelper(1)
+                val child = helper(1)
                 UnaryOperation(UnaryOperation.Kind.Not, child)
             }
             else -> when (val t = listOf("Not", "And", "Or").random(random)) {
                 "Not" -> {
-                    val child = randomBooleanExpressionHelper(size - 1)
+                    val child = helper(size - 1)
                     UnaryOperation(UnaryOperation.Kind.Not, child)
                 }
                 "And", "Or" -> {
@@ -127,8 +160,8 @@ fun randomBooleanExpression(
                     //  subtract 1 for the current (BinaryOperation) node, and
                     //  subtract 1 more to ensure that rhs is at least of size 1
                     val leftSize = random.nextInt(1..(size - 2))
-                    val lhs = randomBooleanExpressionHelper(leftSize)
-                    val rhs = randomBooleanExpressionHelper(size - 1 - leftSize)
+                    val lhs = helper(leftSize)
+                    val rhs = helper(size - 1 - leftSize)
                     val kind = BinaryOperation.Kind.valueOf(t)
                     BinaryOperation(kind, lhs, rhs)
                 }
@@ -136,7 +169,7 @@ fun randomBooleanExpression(
             }
         }
     }
-    return randomBooleanExpressionHelper(size)
+    return helper(size)
 }
 
 fun main() {

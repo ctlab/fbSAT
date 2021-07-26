@@ -17,11 +17,8 @@ import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeN_PreComp
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
-import ru.ifmo.fbsat.core.utils.BinaryOperation
 import ru.ifmo.fbsat.core.utils.BooleanExpression
 import ru.ifmo.fbsat.core.utils.MyLogger
-import ru.ifmo.fbsat.core.utils.UnaryOperation
-import ru.ifmo.fbsat.core.utils.Variable
 import ru.ifmo.fbsat.core.utils.exhaustive
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
 
@@ -103,11 +100,11 @@ fun buildExtPreCompAutomaton(
     val vars =
         if (X == inputNamesPnP.size) {
             MultiArray.new(X) { (i) ->
-                Variable(i - 1, inputNamesPnP[i - 1])
+                BooleanExpression.variable(i - 1, inputNamesPnP[i - 1])
             }
         } else {
             MultiArray.new(X) { (i) ->
-                Variable(i - 1, "x$i")
+                BooleanExpression.variable(i - 1, "x$i")
             }
         }
 
@@ -136,10 +133,7 @@ fun buildExtPreCompAutomaton(
                 val x = guardTerminalInputVariable[c, k, i]
                 check(x != 0)
                 return if (guardTerminalNegation[c, k, i]) {
-                    UnaryOperation(
-                        UnaryOperation.Kind.Not,
-                        vars[x]
-                    )
+                    BooleanExpression.not(vars[x])
                 } else {
                     vars[x]
                 }
@@ -155,36 +149,20 @@ fun buildExtPreCompAutomaton(
                 GuardType.And2 -> {
                     val e1 = getVarExpr(1)
                     val e2 = getVarExpr(2)
-                    val expr = BinaryOperation(
-                        BinaryOperation.Kind.And,
-                        e1,
-                        e2
-                    )
+                    val expr = BooleanExpression.and(e1, e2)
                     BooleanExpressionGuard(expr)
                 }
                 GuardType.Or2 -> {
                     val e1 = getVarExpr(1)
                     val e2 = getVarExpr(2)
-                    val expr = BinaryOperation(
-                        BinaryOperation.Kind.Or,
-                        e1,
-                        e2
-                    )
+                    val expr = BooleanExpression.or(e1, e2)
                     BooleanExpressionGuard(expr)
                 }
                 GuardType.And3 -> {
                     val e1 = getVarExpr(1)
                     val e2 = getVarExpr(2)
                     val e3 = getVarExpr(3)
-                    val expr = BinaryOperation(
-                        BinaryOperation.Kind.And,
-                        e1,
-                        BinaryOperation(
-                            BinaryOperation.Kind.And,
-                            e2,
-                            e3
-                        )
-                    )
+                    val expr = BooleanExpression.and(e1, e2, e3)
                     BooleanExpressionGuard(expr)
                 }
                 else -> TODO()
