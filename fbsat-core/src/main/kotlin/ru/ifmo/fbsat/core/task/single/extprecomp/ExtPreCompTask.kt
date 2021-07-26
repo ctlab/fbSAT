@@ -118,33 +118,20 @@ fun Solver.declareExtPreCompGuardConditionsConstraints() {
     comment("GuardType::arity encoding")
     for (c in 1..C)
         for (k in 1..K)
-            for (t in GuardType.values())
-                when (t.arity) {
-                    0 -> imply(
+            for (t in GuardType.values()) {
+                for (i in 1..t.arity) {
+                    imply(
                         guardType[c, k] eq t,
-                        guardTerminalInputVariable[c, k, 1] eq 0
+                        guardTerminalInputVariable[c, k, i] neq 0,
                     )
-                    1 -> implyAnd(
-                        guardType[c, k] eq t,
-                        guardTerminalInputVariable[c, k, 1] neq 0,
-                        guardTerminalInputVariable[c, k, 2] eq 0
-                    )
-                    2 -> implyAnd(
-                        guardType[c, k] eq t,
-                        guardTerminalInputVariable[c, k, 1] neq 0,
-                        guardTerminalInputVariable[c, k, 2] neq 0,
-                        guardTerminalInputVariable[c, k, 3] eq 0,
-                    )
-                    3 -> implyAnd(
-                        guardType[c, k] eq t,
-                        guardTerminalInputVariable[c, k, 1] neq 0,
-                        guardTerminalInputVariable[c, k, 2] neq 0,
-                        guardTerminalInputVariable[c, k, 3] neq 0
-                        // FIXME: When >3 arities are supported, do not forget to add:
-                        //  guardTerminalInputVariable[c, k, 4] eq 0
-                    )
-                    else -> TODO("other arities")
                 }
+                if (t.arity + 1 <= guardTerminalInputVariable.shape[2]) {
+                    imply(
+                        guardType[c, k] eq t,
+                        guardTerminalInputVariable[c, k, t.arity + 1] eq 0
+                    )
+                }
+            }
 
     comment("GuardType.NoGuard encoding")
     for (c in 1..C)
