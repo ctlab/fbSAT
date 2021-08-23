@@ -174,7 +174,7 @@ class Automaton(
 
     /** Total guards size **N**. */
     val totalGuardsSize: Int by lazyCache {
-        transitions.sumBy { it.guard.size }
+        transitions.sumOf { it.guard.size }
     }
 
     constructor(scenarioTree: PositiveScenarioTree) : this(
@@ -818,8 +818,8 @@ class Automaton(
                     val condition = it.toSmvString()
                     val algo = it.destination.algorithm as BinaryAlgorithm
                     listOf(
-                        "$condition & !$outputName" to algo.algorithm0[z - 1].toString().toUpperCase(),
-                        "$condition & $outputName" to algo.algorithm1[z - 1].toString().toUpperCase()
+                        "$condition & !$outputName" to algo.algorithm0[z - 1].toString().uppercase(),
+                        "$condition & $outputName" to algo.algorithm1[z - 1].toString().uppercase()
                     )
                 }
             declarations[outputName] = "FALSE" to buildCase(outputVariableNextCases, default = outputName)

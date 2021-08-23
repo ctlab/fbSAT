@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.task.single.extended
 
 import com.github.lipen.satlib.card.declareCardinality
 import com.github.lipen.satlib.core.BoolVarArray
+import com.github.lipen.satlib.core.neq
 import com.github.lipen.satlib.core.newBoolVarArray
 import com.github.lipen.satlib.core.newDomainVarArray
 import com.github.lipen.satlib.core.newIntVarArray

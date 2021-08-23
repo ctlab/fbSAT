@@ -97,7 +97,7 @@ tasks.register("downloadLibs") {
                     "libjminisat.so",
                     "libjglucose.so",
                     "libjcms.so",
-                    "libjcadical.so"
+                    "libjcadical.so",
                 )
                 downloadLibs(jLibs, libResDir)
 
@@ -105,7 +105,7 @@ tasks.register("downloadLibs") {
                     "libminisat.so",
                     "libglucose.so",
                     "libcryptominisat5.so",
-                    "libcadical.so"
+                    "libcadical.so",
                 )
                 val solverLibDir = rootDir.resolve("libs")
                 downloadLibs(solverLibs, solverLibDir)
@@ -113,13 +113,17 @@ tasks.register("downloadLibs") {
             "win64" -> {
                 val jLibs = listOf(
                     "jminisat.dll",
-                    "jglucose.dll"
+                    "jglucose.dll",
+                    "jcadical.dll",
+                    "jcms.dll",
                 )
                 downloadLibs(jLibs, libResDir)
 
                 val solverLibs = listOf(
-                    "minisat.dll",
-                    "glucose.dll"
+                    "libminisat.dll",
+                    "glucose.dll",
+                    "cadical.dll",
+                    "libcryptominisat5win.dll",
                 )
                 downloadLibs(solverLibs, rootDir)
             }

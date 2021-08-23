@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.task.modular.extended
 
 import com.github.lipen.satlib.card.declareCardinality
 import com.github.lipen.satlib.core.DomainVarArray
+import com.github.lipen.satlib.core.neq
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.automaton.NodeType
 import ru.ifmo.fbsat.core.solver.forEachModularContext

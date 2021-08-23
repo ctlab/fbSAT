@@ -17,8 +17,8 @@ import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeN_PreComp
 import ru.ifmo.fbsat.core.task.single.basic.BasicTask
 import ru.ifmo.fbsat.core.task.single.basic.basicMinC
-import ru.ifmo.fbsat.core.utils.boolexpr.BooleanExpression
 import ru.ifmo.fbsat.core.utils.MyLogger
+import ru.ifmo.fbsat.core.utils.boolexpr.BooleanExpression
 import ru.ifmo.fbsat.core.utils.exhaustive
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
 
@@ -77,6 +77,7 @@ fun Inferrer.inferExtPreComp(): Automaton? {
     return automaton
 }
 
+@Suppress("LocalVariableName")
 fun buildExtPreCompAutomaton(
     context: Context,
     model: Model,
@@ -165,7 +166,7 @@ fun buildExtPreCompAutomaton(
                     val expr = BooleanExpression.and(e1, e2, e3)
                     BooleanExpressionGuard(expr)
                 }
-                else -> TODO()
+                else -> TODO("handle $t")
             }.exhaustive
         }
     )

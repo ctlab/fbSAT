@@ -575,7 +575,7 @@ class DnfGuard(
             }
         }
 
-    override val size: Int = dnf.sumBy { it.size }
+    override val size: Int = dnf.sumOf { it.size }
 
     override val truthTableString: String
         get() = TODO()

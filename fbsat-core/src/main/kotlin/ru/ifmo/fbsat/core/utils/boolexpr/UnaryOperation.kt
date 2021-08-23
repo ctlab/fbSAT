@@ -28,7 +28,7 @@ data class UnaryOperation(
     }
 }
 
-fun BooleanExpression.not() : UnaryOperation {
+fun BooleanExpression.not(): UnaryOperation {
     // return UnaryOperation(UnaryOperation.Kind.Not, this)
     return BooleanExpression.not(this)
 }

@@ -4,6 +4,8 @@ import com.github.lipen.satlib.card.Cardinality
 import com.github.lipen.satlib.core.BoolVarArray
 import com.github.lipen.satlib.core.DomainVarArray
 import com.github.lipen.satlib.core.IntVarArray
+import com.github.lipen.satlib.core.eq
+import com.github.lipen.satlib.core.neq
 import com.github.lipen.satlib.core.sign
 import com.github.lipen.satlib.op.iff
 import com.github.lipen.satlib.op.imply
@@ -57,7 +59,7 @@ fun Solver.declareExtPreCompGuardConditionsConstraints() {
     val guardTerminalInputVariable: IntVarArray = context["guardTerminalInputVariable"]
     val guardTerminalValue: BoolVarArray = context["guardTerminalValue"]
     val guardTerminalNegation: BoolVarArray = context["guardTerminalNegation"]
-    val guardNode: BoolVarArray = context["guardNode"]
+    val guardSize: IntVarArray = context["guardSize"]
 
     comment("Only null-transitions have no guard")
     for (c in 1..C)
@@ -212,120 +214,87 @@ fun Solver.declareExtPreCompGuardConditionsConstraints() {
     comment("Formula size encoding")
     for (c in 1..C)
         for (k in 1..K) {
-            // Propagation
-            for (i in 1 until 5)
-                imply(
-                    -guardNode[c, k, i],
-                    -guardNode[c, k, i + 1]
-                )
-
             // NoGuard
-            implyAnd(
+            imply(
                 guardType[c, k] eq GuardType.NoGuard,
-                -guardNode[c, k, 1]
+                guardSize[c, k] eq 0
             )
 
             // True
             imply(
                 guardType[c, k] eq GuardType.True,
-                guardNode[c, k, 1]
-            )
-            imply(
-                guardType[c, k] eq GuardType.True,
-                -guardNode[c, k, 2]
+                guardSize[c, k] eq 1
             )
 
-            // Var
-            imply(
-                guardType[c, k] eq GuardType.Var,
-                guardNode[c, k, 1]
-            )
-            // (positive var)
+            // Var (positive)
             clause(
                 -(guardType[c, k] eq GuardType.Var),
                 -(-guardTerminalNegation[c, k, 1]),
-                -guardNode[c, k, 2]
+                guardSize[c, k] eq 1
             )
-            // (negative var)
+            // Var (negative)
             clause(
                 -(guardType[c, k] eq GuardType.Var),
                 -(guardTerminalNegation[c, k, 1]),
-                guardNode[c, k, 2]
-            )
-            clause(
-                -(guardType[c, k] eq GuardType.Var),
-                -(guardTerminalNegation[c, k, 1]),
-                -guardNode[c, k, 3]
+                guardSize[c, k] eq 2
             )
 
             // And2
-            implyAnd(
-                guardType[c, k] eq GuardType.And2,
-                guardNode[c, k, 1],
-                guardNode[c, k, 2],
-                guardNode[c, k, 3],
-            )
-            clause(
-                -(guardType[c, k] eq GuardType.And2),
-                -(guardTerminalNegation[c, k, 1]),
-                guardNode[c, k, 4]
-            )
-            clause(
-                -(guardType[c, k] eq GuardType.And2),
-                -(guardTerminalNegation[c, k, 2]),
-                guardNode[c, k, 4]
-            )
-            clause(
-                -(guardType[c, k] eq GuardType.And2),
-                -(guardTerminalNegation[c, k, 1]),
-                -(guardTerminalNegation[c, k, 2]),
-                guardNode[c, k, 5]
-            )
             clause(
                 -(guardType[c, k] eq GuardType.And2),
                 -(-guardTerminalNegation[c, k, 1]),
                 -(-guardTerminalNegation[c, k, 2]),
-                -guardNode[c, k, 4]
+                guardSize[c, k] eq 3
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.And2),
+                -(-guardTerminalNegation[c, k, 1]),
+                -(guardTerminalNegation[c, k, 2]),
+                guardSize[c, k] eq 4
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.And2),
+                -(guardTerminalNegation[c, k, 1]),
+                -(-guardTerminalNegation[c, k, 2]),
+                guardSize[c, k] eq 4
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.And2),
+                -(guardTerminalNegation[c, k, 1]),
+                -(guardTerminalNegation[c, k, 2]),
+                guardSize[c, k] eq 5
             )
 
             // Or2
-            implyAnd(
-                guardType[c, k] eq GuardType.Or2,
-                guardNode[c, k, 1],
-                guardNode[c, k, 2],
-                guardNode[c, k, 3],
-            )
-            clause(
-                -(guardType[c, k] eq GuardType.Or2),
-                -(guardTerminalNegation[c, k, 1]),
-                guardNode[c, k, 4]
-            )
-            clause(
-                -(guardType[c, k] eq GuardType.Or2),
-                -(guardTerminalNegation[c, k, 2]),
-                guardNode[c, k, 4]
-            )
-            clause(
-                -(guardType[c, k] eq GuardType.Or2),
-                -(guardTerminalNegation[c, k, 1]),
-                -(guardTerminalNegation[c, k, 2]),
-                guardNode[c, k, 5]
-            )
             clause(
                 -(guardType[c, k] eq GuardType.Or2),
                 -(-guardTerminalNegation[c, k, 1]),
                 -(-guardTerminalNegation[c, k, 2]),
-                -guardNode[c, k, 4]
+                guardSize[c, k] eq 3
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.Or2),
+                -(-guardTerminalNegation[c, k, 1]),
+                -(guardTerminalNegation[c, k, 2]),
+                guardSize[c, k] eq 4
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.Or2),
+                -(guardTerminalNegation[c, k, 1]),
+                -(-guardTerminalNegation[c, k, 2]),
+                guardSize[c, k] eq 4
+            )
+            clause(
+                -(guardType[c, k] eq GuardType.Or2),
+                -(guardTerminalNegation[c, k, 1]),
+                -(guardTerminalNegation[c, k, 2]),
+                guardSize[c, k] eq 5
             )
 
             // And3
             implyAnd(
                 guardType[c, k] eq GuardType.And3,
-                guardNode[c, k, 1],
-                guardNode[c, k, 2],
-                guardNode[c, k, 3],
-                guardNode[c, k, 4],
-                guardNode[c, k, 5]
+                guardSize[c, k] eq 5
             )
         }
 }
