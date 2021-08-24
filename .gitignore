@@ -35,3 +35,4 @@ docker-compose.yml
 !/fbsat.bat
 # Specific scripts
 !/scripts/runner.py
+.Rproj.user

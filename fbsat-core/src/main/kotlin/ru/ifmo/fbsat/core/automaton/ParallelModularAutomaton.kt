@@ -410,7 +410,7 @@ fun buildExtendedParallelModularAutomaton(
                 scenarioTree.inputEvents[transitionInputEvent[c, k] - 1]
             },
             transitionGuard = { c, k ->
-                ParseTreeGuard(
+                BooleanExpressionGuard.from(
                     nodeType = MultiArray.new(P) { (p) -> nodeType[c, k, p] },
                     terminal = IntMultiArray.new(P) { (p) -> nodeInputVariable[c, k, p] },
                     parent = IntMultiArray.new(P) { (p) -> nodeParent[c, k, p] },

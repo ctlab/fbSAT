@@ -37,6 +37,8 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isEncodeDisjunctiveTransitions: Boolean by isEncodeDisjunctiveTransitionsOption()
     val isReuseK: Boolean by isReuseKOption()
     val isUseAssumptions: Boolean by isUseAssumptionsOption()
+    val isRenderWithDot: Boolean by isRenderWithDotOption()
+    val isDumpCnf: Boolean by isDumpCnfOption()
     val isDumpVarsInCnf: Boolean by isDumpVarsInCnfOption()
     val isDebug: Boolean by isDebugOption()
 }
@@ -71,21 +73,6 @@ fun ParameterHolder.isBfsGuardOption() =
     ).flag(
         "--no-bfs-guard",
         default = Globals.IS_BFS_GUARD
-    )
-
-fun ParameterHolder.isOnlyCOption() =
-    option(
-        "--only-C",
-        help = "[basic-min] Minimize only C, without T"
-    ).flag()
-
-fun ParameterHolder.getFailIfSTVerifyFailedOption() =
-    option(
-        "--fail-verify-st",
-        help = "Halt if verification of scenario tree has failed"
-    ).flag(
-        "--no-fail-verify-st",
-        default = true
     )
 
 fun ParameterHolder.getInitialOutputValuesOption() =
@@ -206,6 +193,24 @@ fun ParameterHolder.isUseAssumptionsOption() =
     ).flag(
         "--no-use-assumptions",
         default = Globals.IS_USE_ASSUMPTIONS
+    )
+
+fun ParameterHolder.isRenderWithDotOption() =
+    option(
+        "--render-with-dot",
+        help = "Render GraphViz files with `dot`"
+    ).flag(
+        "--no-render-with-dot",
+        default = Globals.IS_RENDER_WITH_DOT
+    )
+
+fun ParameterHolder.isDumpCnfOption() =
+    option(
+        "--dump-cnf",
+        help = "Dump CNFs to outDir"
+    ).flag(
+        "--no-dump-cnf",
+        default = Globals.IS_DUMP_CNF
     )
 
 fun ParameterHolder.isDumpVarsInCnfOption() =

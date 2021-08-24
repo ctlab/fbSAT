@@ -4,7 +4,6 @@ import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.automaton.buildBasicArbitraryModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeArbitraryModularT
 import ru.ifmo.fbsat.core.utils.MyLogger
@@ -71,7 +70,7 @@ fun Inferrer.arbitraryModularBasicMin(
 }
 
 fun Inferrer.inferArbitraryModularBasic(): ArbitraryModularAutomaton? {
-    val model = solver.solveAndGetModel() ?: return null
+    val model = solveAndGetModel() ?: return null
     val automaton = buildBasicArbitraryModularAutomaton(solver.context, model)
 
     // TODO: check automaton

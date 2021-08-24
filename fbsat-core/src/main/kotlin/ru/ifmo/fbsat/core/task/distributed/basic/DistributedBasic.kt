@@ -7,7 +7,6 @@ import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.buildBasicDistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumC
 import ru.ifmo.fbsat.core.utils.MyLogger
@@ -90,7 +89,7 @@ fun Inferrer.distributedBasicMinC(
 }
 
 fun Inferrer.inferDistributedBasic(): DistributedAutomaton? {
-    val model = solver.solveAndGetModel() ?: return null
+    val model = solveAndGetModel() ?: return null
     val automaton = buildBasicDistributedAutomaton(
         context = solver.context,
         model = model

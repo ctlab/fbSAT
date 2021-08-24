@@ -2,27 +2,23 @@ package ru.ifmo.fbsat.core.automaton
 
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
-import kotlinx.serialization.serializer
 import ru.ifmo.fbsat.core.scenario.InputValues
-import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.boolexpr.BinaryOperation
 import ru.ifmo.fbsat.core.utils.boolexpr.BooleanExpression
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.boolexpr.Constant
 import ru.ifmo.fbsat.core.utils.boolexpr.UnaryOperation
 import ru.ifmo.fbsat.core.utils.boolexpr.Variable
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
 import ru.ifmo.fbsat.core.utils.makeDnfString
 import ru.ifmo.fbsat.core.utils.pow
+import ru.ifmo.fbsat.core.utils.serializers.ParseTreeGuardSerializer
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.toBooleanList
 import kotlin.math.absoluteValue
@@ -35,17 +31,20 @@ val guardModule = SerializersModule {
         subclass(UnconditionalGuard::class)
         subclass(TruthTableGuard::class)
         subclass(ParseTreeGuard::class)
+        subclass(BooleanExpressionGuard::class)
     }
 }
 
 interface Guard {
     val size: Int
-    val truthTableString: String
     fun eval(inputValues: InputValues): Boolean
     fun toSimpleString(): String
     fun toGraphvizString(): String
     fun toFbtString(): String
     fun toSmvString(): String
+
+    // TODO: extract to extension method
+    fun truthTableString(inputNames: List<String>): String
 }
 
 @Serializable
@@ -58,8 +57,9 @@ class UnconditionalGuard : Guard {
             return 1
         }
 
-    @Transient
-    override val truthTableString: String = "1"
+    override fun truthTableString(inputNames: List<String>): String {
+        return "1"
+    }
 
     override fun eval(inputValues: InputValues): Boolean {
         return true
@@ -86,27 +86,17 @@ class UnconditionalGuard : Guard {
     }
 }
 
-@Deprecated("old unused code")
-object TruthTableGuardSerializer : KSerializer<TruthTableGuard> {
-    override val descriptor: SerialDescriptor = serializer<Map<InputValues, Boolean?>>().descriptor
-
-    override fun serialize(encoder: Encoder, value: TruthTableGuard) {
-        encoder.encodeSerializableValue(serializer(), value.truthTable)
-    }
-
-    override fun deserialize(decoder: Decoder): TruthTableGuard {
-        val truthTable: Map<InputValues, Boolean?> = decoder.decodeSerializableValue(serializer())
-        return TruthTableGuard(truthTable)
-    }
-}
-
 @Serializable
 @SerialName("TruthTableGuard")
 class TruthTableGuard(
     val truthTable: Map<InputValues, Boolean?>,
 ) : Guard {
-    override val truthTableString: String = truthTable.values.filterNotNull().toBinaryString()
     override val size: Int = 0
+
+    @Transient
+    private val truthTableString = truthTable.values.filterNotNull().toBinaryString()
+
+    override fun truthTableString(inputNames: List<String>): String = truthTableString
 
     override fun eval(inputValues: InputValues): Boolean {
         // return truthTable[uniqueInputs.indexOf(inputValues)] in "1x"
@@ -131,22 +121,7 @@ class TruthTableGuard(
     override fun toString(): String = "TruthTableGuard(truthTable = $truthTable)"
 }
 
-@Serializable
-class Box<T>(val value: T)
-
-object ParseTreeGuardSerializer : KSerializer<ParseTreeGuard> {
-    override val descriptor: SerialDescriptor = serializer<Box<String>>().descriptor
-
-    override fun serialize(encoder: Encoder, value: ParseTreeGuard) {
-        val box = Box(value.toSimpleString())
-        encoder.encodeSerializableValue(serializer(), box)
-    }
-
-    override fun deserialize(decoder: Decoder): ParseTreeGuard {
-        TODO("Deserialization of ParseTreeGuard from string")
-    }
-}
-
+@Deprecated("Use BooleanExpressionGuard", ReplaceWith("BooleanExpressionGuard.from"))
 @Serializable(with = ParseTreeGuardSerializer::class)
 class ParseTreeGuard(
     nodeType: MultiArray<NodeType>,
@@ -179,8 +154,8 @@ class ParseTreeGuard(
         }
     }
 
-    override val truthTableString: String
-        get() = (0 until 2.pow(inputNames!!.size)).map { i ->
+    override fun truthTableString(inputNames: List<String>): String =
+        (0 until 2.pow(inputNames.size)).map { i ->
             eval(InputValues(i.toString(2).padStart(inputNames.size, '0').toBooleanList()))
         }.toBinaryString()
 
@@ -438,11 +413,11 @@ class BooleanExpressionGuard(
 
     // FIXME: adhoc 10
     // FIXME: adhoc inputNamesPnP
-    override val truthTableString: String
+    /*override*/ val truthTableString: String
         // get() = truthTableString((1..10).map { "x$it" })
         get() = truthTableString(inputNamesPnP)
 
-    /*override*/ fun truthTableString(inputNames: List<String>): String =
+    override fun truthTableString(inputNames: List<String>): String =
         (0 until 2.pow(inputNames.size)).map { i ->
             eval(InputValues(i.toString(2).padStart(inputNames.size, '0').toBooleanList()))
         }.toBinaryString()
@@ -523,8 +498,9 @@ class StringGuard(val expr: String, val inputNames: List<String>) : Guard {
     override val size: Int =
         2 * literals.size - 1 + literals.count { it.startsWith("!") || it.startsWith("~") }
 
-    override val truthTableString: String
-        get() = TODO()
+    override fun truthTableString(inputNames: List<String>): String {
+        TODO()
+    }
 
     override fun eval(inputValues: InputValues): Boolean {
         return literals.all {
@@ -577,8 +553,9 @@ class DnfGuard(
 
     override val size: Int = dnf.sumOf { it.size }
 
-    override val truthTableString: String
-        get() = TODO()
+    override fun truthTableString(inputNames: List<String>): String {
+        TODO()
+    }
 
     override fun eval(inputValues: InputValues): Boolean =
         if (_dnf.isEmpty()) {

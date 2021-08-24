@@ -104,7 +104,9 @@ fun BufferedSource.readLine(): String? = readUtf8Line()
 
 fun BufferedSink.write(s: String): BufferedSink = writeUtf8(s)
 
-fun BufferedSink.writeln(s: String): BufferedSink = write(s).writeByte(10) // 10 is '\n'
+fun BufferedSink.writeln(s: String): BufferedSink = write(s).writeln()
+
+fun BufferedSink.writeln(): BufferedSink = writeByte(10) // 10 is '\n'
 
 inline fun <T : AutoCloseable?, R> T.useWith(block: T.() -> R): R = use(block)
 
@@ -129,6 +131,11 @@ fun File.sourceAutoGzip(): Source =
  * Forcibly get value from map.
  */
 fun <K, V, T> Map<K, V>.getForce(key: K): T {
+    @Suppress("UNCHECKED_CAST")
+    return this[key] as T
+}
+
+fun <T> Map<String, Any?>.getForce(key: String): T {
     @Suppress("UNCHECKED_CAST")
     return this[key] as T
 }
@@ -281,3 +288,5 @@ inline fun <reified T : Any> mutableMultiArrayOfNulls(vararg shape: Int): Mutabl
 inline fun scope(block: () -> Unit) {
     block()
 }
+
+fun File.ensureParentExists(): File = apply { parentFile.mkdirs() }

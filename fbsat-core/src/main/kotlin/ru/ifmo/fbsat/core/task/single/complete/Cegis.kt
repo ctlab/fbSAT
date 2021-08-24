@@ -30,6 +30,7 @@ fun Inferrer.cegis(
     smvDir: File,
     loopNumber: Int = 0,
 ): Automaton? {
+    // val timeStart = PerformanceCounter.reference
     reset()
     declare(
         BasicTask(
@@ -42,7 +43,17 @@ fun Inferrer.cegis(
     )
     declare(ExtendedTask(maxGuardSize = maxGuardSize, maxTotalGuardsSize = maxTotalGuardsSize))
     declare(CompleteTask(negativeScenarioTree))
-    return performCegis(smvDir, loopNumber)
+    val automaton = performCegis(smvDir, loopNumber)
+    // logger.info("Task cegis done in %.2f s".format(timeSince(timeStart).seconds))
+    // if (solver.isSupportStats()) {
+    //     logger.debug("Propagations: ${solver.numberOfPropagations()}")
+    //     logger.debug("Conflicts: ${solver.numberOfConflicts()}")
+    //     logger.debug("Decisions: ${solver.numberOfDecisions()}")
+    // }
+    if (Globals.IS_DUMP_CNF) {
+        solver.dumpDimacs(outDir.resolve("cnf_cegis_C${numberOfStates}_K${maxOutgoingTransitions}_P${maxGuardSize}_T${maxTransitions}_N${maxTotalGuardsSize}_loop${loopNumber}.cnf"))
+    }
+    return automaton
 }
 
 @Suppress("LocalVariableName")
@@ -114,17 +125,19 @@ fun Inferrer.performCegis(smvDir: File, loopNumber: Int): Automaton? {
     lateinit var lastNegativeScenarios: List<NegativeScenario>
 
     for (iterationNumber in 1 until 10000) {
-        // log.info("CEGIS iteration #$iterationNumber")
-        logger.debug("CEGIS iteration #$iterationNumber on loop $loopNumber")
+        logger.debug("CEGIS iteration #$iterationNumber on loop $loopNumber...")
         val timeStart = PerformanceCounter.reference
 
         // Update to take into account possible extension of the negative scenario tree
         solver.updateNegativeReduction()
         // Infer update
         val automaton = inferExtended()
+        if (Globals.IS_DUMP_CNF) {
+            solver.dumpDimacs(outDir.resolve("cnf_cegis_loop${loopNumber}_iter${iterationNumber}.cnf"))
+        }
         if (automaton == null) {
             logger.error(
-                "CEGIS iteration #$iterationNumber failed to infer an automaton after %.3f s"
+                "CEGIS iteration #$iterationNumber on loop $loopNumber failed to infer an automaton after %.3f s"
                     .format(timeSince(timeStart).seconds)
             )
             return null
@@ -187,8 +200,8 @@ fun Automaton.verifyWithNuSMV(dir: File): List<Counterexample> {
         val counterexamples: List<Counterexample> = Counterexample.from(fileCounterexamples)
 
         // [DEBUG] Append new counterexamples to 'ce'
-        logger.debug { "Dumping ${counterexamples.size} counterexample(s)..." }
-        dir.resolve("ce").appendText(fileCounterexamples.readText())
+        // logger.debug { "Dumping ${counterexamples.size} counterexample(s)..." }
+        // dir.resolve("ce").appendText(fileCounterexamples.readText())
 
         counterexamples
     } else {

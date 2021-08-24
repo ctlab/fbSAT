@@ -3,7 +3,6 @@ package ru.ifmo.fbsat.core.task.modular.extended.parallel
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
 import ru.ifmo.fbsat.core.automaton.buildExtendedParallelModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicTask
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasicMinC
@@ -51,7 +50,7 @@ fun Inferrer.parallelModularExtendedMin(
 }
 
 fun Inferrer.inferParallelModularExtended(): ParallelModularAutomaton? {
-    val model = solver.solveAndGetModel() ?: return null
+    val model = solveAndGetModel() ?: return null
     val automaton = buildExtendedParallelModularAutomaton(solver.context, model)
 
     // TODO: check automaton

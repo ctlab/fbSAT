@@ -8,12 +8,7 @@ import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.satlib.core.Context
 import com.github.lipen.satlib.core.Model
 import com.soywiz.klock.DateTime
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.serializer
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
@@ -35,90 +30,12 @@ import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.graph
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.random
+import ru.ifmo.fbsat.core.utils.serializers.AutomatonSerializer
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.withIndex
 import java.io.File
 
 private val logger = MyLogger {}
-
-@Serializable
-data class AutomatonSurrogate(
-    val states: List<State>,
-    val inputEvents: List<InputEvent>,
-    val outputEvents: List<OutputEvent>,
-    val inputNames: List<String>,
-    val outputNames: List<String>,
-) {
-    @Serializable
-    data class State(
-        val id: Int,
-        val outputEvent: OutputEvent?,
-        val algorithm: Algorithm,
-        val transitions: List<Transition>,
-    )
-
-    @Serializable
-    data class Transition(
-        val source: Int,
-        val destination: Int,
-        val inputEvent: InputEvent?,
-        var guard: Guard,
-    )
-}
-
-object AutomatonSerializer : KSerializer<Automaton> {
-    override val descriptor: SerialDescriptor = AutomatonSurrogate.serializer().descriptor
-
-    override fun serialize(encoder: Encoder, value: Automaton) {
-        val states: List<AutomatonSurrogate.State> = value.states.map { s ->
-            AutomatonSurrogate.State(
-                id = s.id,
-                outputEvent = s.outputEvent,
-                algorithm = s.algorithm,
-                transitions = s.transitions.map { t ->
-                    AutomatonSurrogate.Transition(
-                        source = t.source.id,
-                        destination = t.destination.id,
-                        inputEvent = t.inputEvent,
-                        guard = t.guard
-                    )
-                }
-            )
-        }
-        val surrogate = AutomatonSurrogate(
-            states, value.inputEvents, value.outputEvents, value.inputNames, value.outputNames
-        )
-        encoder.encodeSerializableValue(serializer(), surrogate)
-    }
-
-    override fun deserialize(decoder: Decoder): Automaton {
-        val surrogate: AutomatonSurrogate = decoder.decodeSerializableValue(serializer())
-        val automaton = Automaton(
-            inputEvents = surrogate.inputEvents,
-            outputEvents = surrogate.outputEvents,
-            inputNames = surrogate.inputNames,
-            outputNames = surrogate.outputNames
-        )
-        for (state in surrogate.states) {
-            automaton.addState(
-                id = state.id,
-                outputEvent = state.outputEvent,
-                algorithm = state.algorithm
-            )
-        }
-        for (state in surrogate.states) {
-            for (transition in state.transitions) {
-                automaton.addTransition(
-                    sourceId = transition.source,
-                    destinationId = transition.destination,
-                    inputEvent = transition.inputEvent,
-                    guard = transition.guard
-                )
-            }
-        }
-        return automaton
-    }
-}
 
 @Serializable(with = AutomatonSerializer::class)
 class Automaton(
@@ -496,23 +413,35 @@ class Automaton(
     /**
      * Dump automaton in Graphviz, FBT and SMV formats to the [dir] directory using [name] as the file basename.
      */
-    fun dump(dir: File, name: String = "automaton") {
+    fun dump(dir: File, name: String = "automaton", renderWithDot: Boolean = Globals.IS_RENDER_WITH_DOT) {
         logger.info("Dumping '$name' to <$dir>...")
         dir.mkdirs()
-        dumpGv(dir.resolve("$name.gv"))
+        dumpTxt(dir.resolve("$name.txt"))
+        dumpGv(dir.resolve("$name.gv"), renderWithDot = renderWithDot)
         dumpFbt(dir.resolve("$name.fbt"), name)
         dumpSmv(dir.resolve("$name.smv"))
     }
 
     /**
+     * Dump automaton in text format to [file].
+     */
+    fun dumpTxt(file: File) {
+        file.printWriter().use {
+            it.println(toSimpleString())
+        }
+    }
+
+    /**
      * Dump automaton in Graphviz format to [file].
      */
-    fun dumpGv(file: File) {
+    fun dumpGv(file: File, renderWithDot: Boolean = Globals.IS_RENDER_WITH_DOT) {
         file.printWriter().use {
             it.println(toGraphvizString())
         }
-        Runtime.getRuntime().exec("dot -Tpdf -O $file")
-        // Runtime.getRuntime().exec("dot -Tpng -O $file")
+        if (renderWithDot) {
+            Runtime.getRuntime().exec("dot -Tpdf -O $file")
+            // Runtime.getRuntime().exec("dot -Tpng -O $file")
+        }
     }
 
     /**
@@ -554,7 +483,7 @@ class Automaton(
             }
         val codeTransitionGuards =
             transitions.flatMap {
-                it.guard.truthTableString
+                it.guard.truthTableString(inputNames)
                     .windowed(8, step = 8, partialWindows = true)
                     .map { s -> s.toInt(2) }
             }
@@ -993,7 +922,7 @@ fun buildExtendedAutomaton(
             scenarioTree.inputEvents[transitionInputEvent[c, k] - 1]
         },
         transitionGuard = { c, k ->
-            ParseTreeGuard(
+            BooleanExpressionGuard.from(
                 nodeType = MultiArray.new(P) { (p) -> nodeType[c, k, p] },
                 terminal = IntMultiArray.new(P) { (p) -> nodeInputVariable[c, k, p] },
                 parent = IntMultiArray.new(P) { (p) -> nodeParent[c, k, p] },

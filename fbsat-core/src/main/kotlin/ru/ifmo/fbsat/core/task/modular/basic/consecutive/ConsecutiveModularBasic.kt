@@ -4,7 +4,6 @@ import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.automaton.buildBasicConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.solveAndGetModel
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeConsecutiveModularT
 import ru.ifmo.fbsat.core.utils.MyLogger
@@ -70,7 +69,7 @@ fun Inferrer.consecutiveModularBasicMin(
 }
 
 fun Inferrer.inferConsecutiveModularBasic(): ConsecutiveModularAutomaton? {
-    val model = solver.solveAndGetModel() ?: return null
+    val model = solveAndGetModel() ?: return null
     val automaton = buildBasicConsecutiveModularAutomaton(solver.context, model)
 
     // TODO: check automaton

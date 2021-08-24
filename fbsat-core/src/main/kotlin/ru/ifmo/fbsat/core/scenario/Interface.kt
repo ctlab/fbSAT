@@ -1,12 +1,10 @@
 package ru.ifmo.fbsat.core.scenario
 
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
+import ru.ifmo.fbsat.core.utils.serializers.InputEventSerializer
+import ru.ifmo.fbsat.core.utils.serializers.InputValuesSerializer
+import ru.ifmo.fbsat.core.utils.serializers.OutputEventSerializer
+import ru.ifmo.fbsat.core.utils.serializers.OutputValuesSerializer
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.toBooleanList
 
@@ -19,19 +17,6 @@ sealed class Event : GenericEvent {
     final override fun toString(): String = name
 }
 
-object InputEventSerializer : KSerializer<InputEvent> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("InputEvent", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: InputEvent) {
-        encoder.encodeString(value.name)
-    }
-
-    override fun deserialize(decoder: Decoder): InputEvent {
-        return InputEvent(decoder.decodeString())
-    }
-}
-
 @Serializable(with = InputEventSerializer::class)
 data class InputEvent(override val name: String) : Event(), GenericInputEvent {
     // override fun toString(): String = super.toString()
@@ -39,19 +24,6 @@ data class InputEvent(override val name: String) : Event(), GenericInputEvent {
     companion object {
         @JvmStatic
         fun of(name: String?): InputEvent? = name?.let { InputEvent(it) }
-    }
-}
-
-object OutputEventSerializer : KSerializer<OutputEvent> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("OutputEvent", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: OutputEvent) {
-        encoder.encodeString(value.name)
-    }
-
-    override fun deserialize(decoder: Decoder): OutputEvent {
-        return OutputEvent(decoder.decodeString())
     }
 }
 
@@ -76,19 +48,6 @@ sealed class Values : GenericValues {
     final override fun toString(): String = values.toBinaryString()
 }
 
-object InputValuesSerializer : KSerializer<InputValues> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("InputValues", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: InputValues) {
-        encoder.encodeString(value.values.toBinaryString())
-    }
-
-    override fun deserialize(decoder: Decoder): InputValues {
-        return InputValues(decoder.decodeString())
-    }
-}
-
 @Serializable(with = InputValuesSerializer::class)
 data class InputValues(override val values: List<Boolean>) : Values(), GenericInputValues {
     constructor(values: BooleanArray) : this(values.asList())
@@ -97,19 +56,6 @@ data class InputValues(override val values: List<Boolean>) : Values(), GenericIn
     companion object {
         fun empty(): InputValues = InputValues(emptyList())
         fun zeros(size: Int): InputValues = InputValues(List(size) { false })
-    }
-}
-
-object OutputValuesSerializer : KSerializer<OutputValues> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("OutputValues", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: OutputValues) {
-        encoder.encodeString(value.values.toBinaryString())
-    }
-
-    override fun deserialize(decoder: Decoder): OutputValues {
-        return OutputValues(decoder.decodeString())
     }
 }
 
@@ -126,6 +72,7 @@ data class OutputValues(override val values: List<Boolean>) : Values(), GenericO
 
 // Action
 
+@Serializable
 sealed class ScenarioAction<E, V> : GenericScenarioAction<E, V>
     where E : Event,
           V : Values {

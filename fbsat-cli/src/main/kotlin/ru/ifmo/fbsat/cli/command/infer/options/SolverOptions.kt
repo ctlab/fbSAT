@@ -48,6 +48,7 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
         require(solverBackend in listOf(SolverBackend.MINISAT, SolverBackend.GLUCOSE)) {
             "supported only by MiniSat/Glucose"
         }
+        require(it >= 0) { "value must be non-negative" }
     }
     val solverRndPol: Boolean? by solverRndPolOption()
     val solverRndInit: Boolean? by solverRndInitOption()

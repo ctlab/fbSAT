@@ -3,6 +3,7 @@
     <Properties>
         <Property name="logDir">logs</Property>
         <Property name="baseName">fbsat</Property>
+        <Property name="dateTime">${date:yyyy-MM-dd_HH-mm-ss}</Property>
     </Properties>
 
     <Appenders>
@@ -24,46 +25,31 @@
             </Filters>
         </Console>
 
-        <RollingFile name="rollingFile"
-                     fileName="${logDir}/${baseName}.log"
-                     filePattern="${logDir}/${baseName}_%date{yyyyMMdd}_%i.log.gz">
-            <PatternLayout pattern="[%date{yyyy-MM-dd HH:mm:ss,SSS}] [%level] %logger: %message%n%throwable"/>
+        <File name="file"
+              createOnDemand="true"
+              fileName="${logDir}/${baseName}_${date:yyyy-MM-dd_HH-mm-ss}.log">
+            <PatternLayout pattern="[%date{yyyy-MM-dd HH:mm:ss}] [%level] %logger: %message%n%throwable"/>
             <Filters>
                 <RegexFilter regex="(?s)^// .*" onMatch="DENY" onMismatch="NEUTRAL"/>
                 <!--<RegexFilter regex="(?s)^solve\(assumptions" onMatch="DENY" onMismatch="NEUTRAL"/>-->
             </Filters>
-            <Policies>
-                <OnStartupTriggeringPolicy/>
-            </Policies>
-            <DefaultRolloverStrategy fileIndex="nomax">
-                <Delete basePath="${logDir}" maxDepth="1">
-                    <IfFileName glob="*/${baseName}_*.log.gz">
-                        <IfLastModified age="30d">
-                            <IfAny>
-                                <IfAccumulatedFileSize exceeds="1 GB"/>
-                                <IfAccumulatedFileCount exceeds="10"/>
-                            </IfAny>
-                        </IfLastModified>
-                    </IfFileName>
-                </Delete>
-            </DefaultRolloverStrategy>
-        </RollingFile>
+        </File>
     </Appenders>
 
     <Loggers>
-        <!-- fbSAT: log (DEBUG to stdout, excluding NO_CONSOLE marker] and (DEBUG to rollingFile) -->
+        <!-- fbSAT: log (DEBUG to stdout, excluding NO_CONSOLE marker] and (DEBUG to file) -->
         <Logger name="ru.ifmo.fbsat" level="debug" additivity="false">
             <AppenderRef ref="STDOUT-fbsat" level="debug"/>
-            <AppenderRef ref="rollingFile" level="debug"/>
+            <AppenderRef ref="file" level="debug"/>
         </Logger>
 
         <!-- Mongo: log only INFO+ -->
         <Logger name="org.mongodb.driver" level="info"/>
 
-        <!-- Others: log (WARN to stdout) and (DEBUG to rollingFile) -->
+        <!-- Others: log (WARN to stdout) and (DEBUG to file) -->
         <Root level="debug">
             <AppenderRef ref="STDOUT" level="warn"/>
-            <AppenderRef ref="rollingFile" level="debug"/>
+            <AppenderRef ref="file" level="debug"/>
         </Root>
     </Loggers>
 </Configuration>

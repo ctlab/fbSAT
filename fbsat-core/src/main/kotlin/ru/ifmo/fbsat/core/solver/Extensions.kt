@@ -16,6 +16,10 @@ import com.github.lipen.satlib.core.SequenceScopeLit
 import com.github.lipen.satlib.core.convert
 import com.github.lipen.satlib.core.newContext
 import com.github.lipen.satlib.op.implyIff
+import com.github.lipen.satlib.op.runWithTimeout
+import com.github.lipen.satlib.solver.CadicalSolver
+import com.github.lipen.satlib.solver.GlucoseSolver
+import com.github.lipen.satlib.solver.MiniSatSolver
 import com.github.lipen.satlib.solver.Solver
 import com.github.lipen.satlib.solver.switchContext
 import ru.ifmo.fbsat.core.utils.ModularContext
@@ -67,6 +71,13 @@ fun Solver.clause(literals: Iterable<Lit>) {
 
 fun Solver.solveAndGetModel(): Model? =
     if (solve()) getModel() else null
+
+fun Solver.solveAndGetModel(timeout: Long?): Model? =
+    runWithTimeout(timeout) { solveAndGetModel() }
+
+fun <T> Solver.runWithTimeout(timeMillis: Long?, block: Solver.() -> T): T =
+    if (timeMillis == null) block()
+    else runWithTimeout(timeMillis, block)
 
 fun Solver.declareModularContext(M: Int): ModularContext =
     context("modularContext") {
@@ -148,4 +159,33 @@ fun Solver.implyIffXor(x1: Lit, x2: Lit, xs: SequenceScopeLit) {
 /** [x1] => ([x2] <=> `XOR`([xs])) */
 fun Solver.implyIffXor(x1: Lit, x2: Lit, vararg xs: Lit) {
     implyIffXor(x1, x2, xs.asIterable())
+}
+
+fun Solver.isSupportStats(): Boolean =
+    this is MiniSatSolver || this is GlucoseSolver
+
+fun Solver.numberOfPropagations(): Int = when (this) {
+    is MiniSatSolver -> backend.numberOfPropagations
+    is GlucoseSolver -> backend.numberOfPropagations
+    is CadicalSolver -> backend.numberOfPropagations.toInt()
+    else -> error("$this does not support querying the number of propagations")
+}
+
+fun Solver.numberOfConflicts(): Int = when (this) {
+    is MiniSatSolver -> backend.numberOfConflicts
+    is GlucoseSolver -> backend.numberOfConflicts
+    is CadicalSolver -> backend.numberOfConflicts.toInt()
+    else -> error("$this does not support querying the number of conflicts")
+}
+
+fun Solver.numberOfDecisions(): Int = when (this) {
+    is MiniSatSolver -> backend.numberOfDecisions
+    is GlucoseSolver -> backend.numberOfDecisions
+    is CadicalSolver -> backend.numberOfDecisions.toInt()
+    else -> error("$this does not support querying the number of decisions")
+}
+
+fun Solver.numberOfRestarts(): Int = when (this) {
+    is CadicalSolver -> backend.numberOfRestarts.toInt()
+    else -> error("$this does not support querying the number of restarts")
 }
