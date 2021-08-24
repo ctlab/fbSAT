@@ -5,6 +5,8 @@ package ru.ifmo.fbsat.core.constraints
 import com.github.lipen.satlib.core.BoolVarArray
 import com.github.lipen.satlib.core.DomainVarArray
 import com.github.lipen.satlib.core.IntVarArray
+import com.github.lipen.satlib.core.eq
+import com.github.lipen.satlib.core.neq
 import com.github.lipen.satlib.core.sign
 import com.github.lipen.satlib.op.iff
 import com.github.lipen.satlib.op.imply

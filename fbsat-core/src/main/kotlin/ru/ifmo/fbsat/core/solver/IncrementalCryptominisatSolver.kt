@@ -12,6 +12,7 @@ import okio.source
 import ru.ifmo.fbsat.core.utils.readLine
 import ru.ifmo.fbsat.core.utils.write
 import ru.ifmo.fbsat.core.utils.writeln
+import java.io.File
 
 class IncrementalCryptominisatSolver(
     val command: () -> String = { "incremental-cryptominisat" },
@@ -45,6 +46,10 @@ class IncrementalCryptominisatSolver(
         for (line in comment.lineSequence()) {
             processInput.write("c ").writeln(line)
         }
+    }
+
+    override fun _dumpDimacs(file: File) {
+        TODO("IncrementalCryptominisatSolver does not support `dumpDimacs`")
     }
 
     override fun _newLiteral(outerNumberOfVariables: Int): Lit {

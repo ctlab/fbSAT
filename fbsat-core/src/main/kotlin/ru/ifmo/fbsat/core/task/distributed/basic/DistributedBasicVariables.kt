@@ -5,6 +5,7 @@ import com.github.lipen.multiarray.map
 import com.github.lipen.satlib.card.declareCardinality
 import com.github.lipen.satlib.core.BoolVarArray
 import com.github.lipen.satlib.core.IntVarArray
+import com.github.lipen.satlib.core.neq
 import com.github.lipen.satlib.core.newBoolVarArray
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree

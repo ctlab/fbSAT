@@ -26,6 +26,8 @@ import ru.ifmo.fbsat.cli.command.infer.mono.InferCegisMinAssumptionsCommand
 import ru.ifmo.fbsat.cli.command.infer.mono.InferCegisMinCommand
 import ru.ifmo.fbsat.cli.command.infer.mono.InferCompleteCommand
 import ru.ifmo.fbsat.cli.command.infer.mono.InferCompleteMinCommand
+import ru.ifmo.fbsat.cli.command.infer.mono.InferExpPreCompCommand
+import ru.ifmo.fbsat.cli.command.infer.mono.InferExtPreCompMinCommand
 import ru.ifmo.fbsat.cli.command.infer.mono.InferExtendedCommand
 import ru.ifmo.fbsat.cli.command.infer.mono.InferExtendedMinCommand
 import ru.ifmo.fbsat.cli.command.infer.mono.InferExtendedMinUBCommand
@@ -39,6 +41,8 @@ class InferCommand : NoOpCliktCommand() {
             InferExtendedCommand(),
             InferExtendedMinCommand(),
             InferExtendedMinUBCommand(),
+            InferExpPreCompCommand(),
+            InferExtPreCompMinCommand(),
             InferCompleteCommand(),
             InferCompleteMinCommand(),
             InferCegisCommand(),

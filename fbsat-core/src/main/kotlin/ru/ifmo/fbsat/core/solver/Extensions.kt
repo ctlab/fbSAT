@@ -85,7 +85,7 @@ inline fun Solver.forEachModularContext(block: (m: Int) -> Unit) {
 fun <T> Context.autoneg(name: String, isPositive: Boolean): T =
     get(
         if (isPositive) name
-        else "neg" + name.capitalize()
+        else "neg" + name.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     )
 
 fun Context.convertLiteral(name: String, model: Model): Boolean =

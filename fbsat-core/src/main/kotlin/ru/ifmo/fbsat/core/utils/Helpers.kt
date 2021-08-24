@@ -168,6 +168,18 @@ fun <T> Iterable<T>.pairsWithReplacement(): Sequence<Pair<T, T>> = sequence {
     }
 }
 
+fun <T> Iterable<T>.triples(): Sequence<Triple<T, T, T>> = sequence {
+    val pool = this@triples.toList()
+    for (i in pool.indices) {
+        for (j in pool.indices) {
+            for (k in pool.indices) {
+                if (i >= j || j >= k) continue
+                yield(Triple(pool[i], pool[j], pool[k]))
+            }
+        }
+    }
+}
+
 fun algorithmChoice(
     tree: ScenarioTree<*, *>,
     v: Int,

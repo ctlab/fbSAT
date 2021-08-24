@@ -43,10 +43,10 @@ class DistributedAutomaton(
     val modularOutputNames: MultiArray<List<String>> = modules.map { it.outputNames }
 
     val numberOfModules: Int = M
-    val numberOfStates: Int = modules.values.sumBy { it.numberOfStates }
-    val numberOfReachableStates: Int = modules.values.sumBy { it.numberOfReachableStates }
-    val numberOfTransitions: Int = modules.values.sumBy { it.numberOfTransitions }
-    val totalGuardsSize: Int = modules.values.sumBy { it.totalGuardsSize }
+    val numberOfStates: Int = modules.values.sumOf { it.numberOfStates }
+    val numberOfReachableStates: Int = modules.values.sumOf { it.numberOfReachableStates }
+    val numberOfTransitions: Int = modules.values.sumOf { it.numberOfTransitions }
+    val totalGuardsSize: Int = modules.values.sumOf { it.totalGuardsSize }
 
     class CompoundEvalState private constructor(
         val modularState: ModularState,

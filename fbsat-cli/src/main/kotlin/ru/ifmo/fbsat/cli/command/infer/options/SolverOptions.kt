@@ -4,9 +4,6 @@ package ru.ifmo.fbsat.cli.command.infer.options
 
 import com.github.ajalt.clikt.core.ParameterHolder
 import com.github.ajalt.clikt.parameters.groups.OptionGroup
-import com.github.ajalt.clikt.parameters.options.FlagOption
-import com.github.ajalt.clikt.parameters.options.OptionDelegate
-import com.github.ajalt.clikt.parameters.options.OptionValidator
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.switch
@@ -30,8 +27,6 @@ private val logger = MyLogger {}
 
 internal const val SOLVER_OPTIONS = "Solver Options"
 
-private fun <T> FlagOption<T>.validate(validator: OptionValidator<T>): OptionDelegate<T> = copy(validator)
-
 @Suppress("MemberVisibilityCanBePrivate")
 class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
     val solverBackend: SolverBackend by solverBackendOption()
@@ -39,13 +34,13 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
     val fileSolverFile: File by fileSolverFileOption()
     val streamSolverCmd: String by streamSolverCmdOption()
     val solverSeed: Int? by solverSeedOption().validate {
-        require(solverBackend in listOf(
-            SolverBackend.MINISAT,
-            SolverBackend.GLUCOSE,
-            SolverBackend.CADICAL,
-        )) {
-            "supported only by MiniSat, Glucose and Cadical"
-        }
+        require(
+            solverBackend in listOf(
+                SolverBackend.MINISAT,
+                SolverBackend.GLUCOSE,
+                SolverBackend.CADICAL
+            )
+        ) { "supported only by MiniSat, Glucose and Cadical" }
     }
 
     // MiniSat/Glucose options:
@@ -54,16 +49,8 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
             "supported only by MiniSat/Glucose"
         }
     }
-    val solverRndPol: Boolean? by solverRndPolOption().validate {
-        require(solverBackend in listOf(SolverBackend.MINISAT, SolverBackend.GLUCOSE)) {
-            "supported only by MiniSat/Glucose"
-        }
-    }
-    val solverRndInit: Boolean? by solverRndInitOption().validate {
-        require(solverBackend in listOf(SolverBackend.MINISAT, SolverBackend.GLUCOSE)) {
-            "supported only by MiniSat/Glucose"
-        }
-    }
+    val solverRndPol: Boolean? by solverRndPolOption()
+    val solverRndInit: Boolean? by solverRndInitOption()
 
     val solver: Solver by lazy {
         when (solverBackend) {
