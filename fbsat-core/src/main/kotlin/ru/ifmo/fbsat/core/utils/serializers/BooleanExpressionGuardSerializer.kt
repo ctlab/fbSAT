@@ -3,7 +3,7 @@ package ru.ifmo.fbsat.core.utils.serializers
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import ru.ifmo.fbsat.core.automaton.BooleanExpressionGuard
+import ru.ifmo.fbsat.core.automaton.guard.BooleanExpressionGuard
 import ru.ifmo.fbsat.core.utils.boolexpr.BooleanExpression
 
 object BooleanExpressionGuardSerializer :

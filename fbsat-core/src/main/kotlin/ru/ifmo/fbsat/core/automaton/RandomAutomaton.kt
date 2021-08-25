@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.automaton
 
+import ru.ifmo.fbsat.core.automaton.guard.BooleanExpressionGuard
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.InputValues

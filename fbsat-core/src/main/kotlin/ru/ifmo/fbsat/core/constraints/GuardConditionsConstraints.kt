@@ -16,7 +16,7 @@ import com.github.lipen.satlib.op.implyImplyIff
 import com.github.lipen.satlib.op.implyImplyIffAnd
 import com.github.lipen.satlib.op.implyImplyIffOr
 import com.github.lipen.satlib.solver.Solver
-import ru.ifmo.fbsat.core.automaton.NodeType
+import ru.ifmo.fbsat.core.automaton.guard.NodeType
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.autoneg

@@ -74,7 +74,7 @@ fun main() {
     val format = Json {
         serializersModule = SerializersModule {
             include(algorithmModule)
-            include(guardModule)
+            include(ru.ifmo.fbsat.core.automaton.guard.guardModule)
         }
         prettyPrint = true
     }

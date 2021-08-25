@@ -59,13 +59,15 @@ class InferArbitraryModularExtendedMinCommand :
 private object `infer modular-arbitrary-extended-min` {
     @JvmStatic
     fun main(args: Array<String>) {
-        InferArbitraryModularExtendedMinCommand().main(listOf(
-            "-i", "data/tests-1.gz",
-            "-M", "2",
-            "-P", "5",
-            "--epsilon-output-events", "none",
-            "--debug",
-            "--minisat",
-        ))
+        InferArbitraryModularExtendedMinCommand().main(
+            listOf(
+                "-i", "data/tests-1.gz",
+                "-M", "2",
+                "-P", "5",
+                "--epsilon-output-events", "none",
+                "--debug",
+                "--minisat",
+            )
+        )
     }
 }

@@ -5,9 +5,9 @@ import com.github.lipen.satlib.core.Context
 import com.github.lipen.satlib.core.Model
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
-import ru.ifmo.fbsat.core.automaton.BooleanExpressionGuard
-import ru.ifmo.fbsat.core.automaton.UnconditionalGuard
 import ru.ifmo.fbsat.core.automaton.endow
+import ru.ifmo.fbsat.core.automaton.guard.BooleanExpressionGuard
+import ru.ifmo.fbsat.core.automaton.guard.UnconditionalGuard
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.convertBoolVarArray
 import ru.ifmo.fbsat.core.solver.convertDomainVarArray

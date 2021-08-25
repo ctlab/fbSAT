@@ -10,6 +10,10 @@ import com.soywiz.klock.DateTime
 import okio.buffer
 import okio.sink
 import org.redundent.kotlin.xml.xml
+import ru.ifmo.fbsat.core.automaton.guard.BooleanExpressionGuard
+import ru.ifmo.fbsat.core.automaton.guard.DnfGuard
+import ru.ifmo.fbsat.core.automaton.guard.NodeType
+import ru.ifmo.fbsat.core.automaton.guard.TruthTableGuard
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.InputValues
@@ -482,7 +486,7 @@ fun ArbitraryModularAutomaton.minimizeTruthTableGuards(scenarioTree: OldPositive
         logger.debug { "Executing '$command'..." }
         val process = Runtime.getRuntime().exec(command)
 
-        val guardProducts: List<MutableList<List<String>>> = List(T) { mutableListOf<List<String>>() }
+        val guardProducts: List<MutableList<List<String>>> = List(T) { mutableListOf() }
         process.inputStream.bufferedReader().useLines { lines ->
             for (line in lines) {
                 if (line.startsWith('.')) continue

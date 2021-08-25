@@ -29,6 +29,7 @@ subprojects {
     apply(plugin = Plugins.Ktlint.id)
 
     dependencies {
+        implementation(platform(kotlin("bom")))
         implementation(kotlin("stdlib-jdk8"))
         implementation(Libs.KotlinLogging.kotlin_logging)
         implementation(Libs.Log4j.log4j_slf4j_impl)
@@ -142,7 +143,7 @@ idea {
 }
 
 tasks.wrapper {
-    gradleVersion = "7.0.2"
+    gradleVersion = "7.2"
     distributionType = Wrapper.DistributionType.ALL
 }
 

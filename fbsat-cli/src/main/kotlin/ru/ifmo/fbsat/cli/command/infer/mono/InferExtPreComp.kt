@@ -10,7 +10,6 @@ import ru.ifmo.fbsat.cli.command.infer.options.ExtraOptions
 import ru.ifmo.fbsat.cli.command.infer.options.INPUT_OUTPUT_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.SolverOptions
 import ru.ifmo.fbsat.cli.command.infer.options.inputNamesOption
-import ru.ifmo.fbsat.cli.command.infer.options.maxGuardSizeOption
 import ru.ifmo.fbsat.cli.command.infer.options.maxOutgoingTransitionsOption
 import ru.ifmo.fbsat.cli.command.infer.options.maxTotalGuardsSizeOption
 import ru.ifmo.fbsat.cli.command.infer.options.maxTransitionsOption
@@ -19,7 +18,6 @@ import ru.ifmo.fbsat.cli.command.infer.options.outDirOption
 import ru.ifmo.fbsat.cli.command.infer.options.outputNamesOption
 import ru.ifmo.fbsat.cli.command.infer.options.scenariosFileOption
 import ru.ifmo.fbsat.core.automaton.Automaton
-import ru.ifmo.fbsat.core.task.single.extended.extended
 import ru.ifmo.fbsat.core.task.single.extprecomp.extPreComp
 import java.io.File
 

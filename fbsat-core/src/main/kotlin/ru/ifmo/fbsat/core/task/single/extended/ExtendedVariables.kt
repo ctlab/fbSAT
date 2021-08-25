@@ -7,7 +7,7 @@ import com.github.lipen.satlib.core.newBoolVarArray
 import com.github.lipen.satlib.core.newDomainVarArray
 import com.github.lipen.satlib.core.newIntVarArray
 import com.github.lipen.satlib.solver.Solver
-import ru.ifmo.fbsat.core.automaton.NodeType
+import ru.ifmo.fbsat.core.automaton.guard.NodeType
 import ru.ifmo.fbsat.core.solver.literals
 import ru.ifmo.fbsat.core.utils.Globals
 

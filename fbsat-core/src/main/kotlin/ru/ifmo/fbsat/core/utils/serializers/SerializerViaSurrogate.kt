@@ -8,7 +8,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import ru.ifmo.fbsat.core.automaton.BooleanExpressionGuard
+import ru.ifmo.fbsat.core.automaton.guard.BooleanExpressionGuard
 import ru.ifmo.fbsat.core.utils.boolexpr.randomBooleanExpression
 import kotlin.random.Random
 

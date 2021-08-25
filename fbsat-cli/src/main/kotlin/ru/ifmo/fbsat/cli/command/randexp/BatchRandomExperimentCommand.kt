@@ -15,12 +15,10 @@ import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
-import kotlinx.serialization.json.Json
 import ru.ifmo.fbsat.cli.command.infer.options.isDebugOption
 import ru.ifmo.fbsat.cli.command.infer.options.numberOfStatesOption
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
-import ru.ifmo.fbsat.core.utils.serializers.fbsatSerializersModule
 import java.io.File
 
 private val logger = MyLogger {}

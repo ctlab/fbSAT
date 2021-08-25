@@ -69,14 +69,16 @@ class InferArbitraryModularExtendedCommand :
 private object `infer modular-arbitrary-extended` {
     @JvmStatic
     fun main(args: Array<String>) {
-        InferArbitraryModularExtendedCommand().main(listOf(
-            "-i", "data/tests-1.gz",
-            "-M", "5",
-            "-C", "4",
-            "-P", "5",
-            "--epsilon-output-events", "none",
-            "--debug",
-            "--minisat",
-        ))
+        InferArbitraryModularExtendedCommand().main(
+            listOf(
+                "-i", "data/tests-1.gz",
+                "-M", "5",
+                "-C", "4",
+                "-P", "5",
+                "--epsilon-output-events", "none",
+                "--debug",
+                "--minisat",
+            )
+        )
     }
 }

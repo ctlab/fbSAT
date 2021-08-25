@@ -310,7 +310,7 @@ class RandomExperimentCommand : CliktCommand(name = "randexp") {
                     else -> error("Method '$method' is not supported")
                 }
                 val solverInfo = SolverInfo(
-                    name = solverOptions.solverBackend.name.toLowerCase(),
+                    name = solverOptions.solverBackend.name.lowercase(),
                     seed = solverSeed ?: 0
                 )
                 val solver = solverOptions.solver

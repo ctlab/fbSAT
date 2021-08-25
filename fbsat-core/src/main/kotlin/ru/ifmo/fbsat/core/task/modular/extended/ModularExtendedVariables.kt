@@ -4,7 +4,7 @@ import com.github.lipen.satlib.card.declareCardinality
 import com.github.lipen.satlib.core.DomainVarArray
 import com.github.lipen.satlib.core.neq
 import com.github.lipen.satlib.solver.Solver
-import ru.ifmo.fbsat.core.automaton.NodeType
+import ru.ifmo.fbsat.core.automaton.guard.NodeType
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.single.extended.declareExtendedVariables
 

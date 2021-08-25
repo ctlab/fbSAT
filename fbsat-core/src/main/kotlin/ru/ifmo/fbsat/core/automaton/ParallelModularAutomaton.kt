@@ -10,6 +10,9 @@ import com.github.lipen.satlib.core.Context
 import com.github.lipen.satlib.core.Model
 import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
+import ru.ifmo.fbsat.core.automaton.guard.BooleanExpressionGuard
+import ru.ifmo.fbsat.core.automaton.guard.NodeType
+import ru.ifmo.fbsat.core.automaton.guard.TruthTableGuard
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.OutputEvent

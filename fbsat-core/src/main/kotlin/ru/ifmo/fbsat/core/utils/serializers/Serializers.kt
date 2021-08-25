@@ -9,7 +9,7 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import ru.ifmo.fbsat.core.automaton.algorithmModule
-import ru.ifmo.fbsat.core.automaton.guardModule
+import ru.ifmo.fbsat.core.automaton.guard.guardModule
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.OutputEvent

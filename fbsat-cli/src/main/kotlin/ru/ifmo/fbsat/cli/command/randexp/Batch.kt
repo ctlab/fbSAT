@@ -79,7 +79,8 @@ fun generateBatch(
 
                 runFile.ensureParentExists().sink().buffer().useWith {
                     // sbatch header
-                    writeln("""
+                    writeln(
+                        """
                         #!/bin/bash
                         #SBATCH --job-name=randexp
                         #SBATCH --output=${outDir.resolve("slurm-%j.log")}
@@ -87,7 +88,8 @@ fun generateBatch(
                         #SBATCH --ntasks=1
                         #SBATCH --time=01:00:00
                         #SBATCH --mem=1G
-                    """.trimIndent())
+                    """.trimIndent()
+                    )
                     // general info
                     writeln("echo pwd: $(pwd); echo hostname: $(hostname); echo date: $(date -Iseconds)")
                     // create lock file
@@ -112,7 +114,8 @@ fun generateBatch(
 
     slurmFile.sink().buffer().useWith {
         // sbatch header
-        writeln("""
+        writeln(
+            """
             #!/bin/bash
             #SBATCH --job-name=randexp-batch
             #SBATCH --output=${slurmFile.resolveSibling("slurm-%A_%a.log")}
@@ -122,14 +125,16 @@ fun generateBatch(
             #SBATCH --mem=1G
             #
             #SBATCH --array=0-${arraySolverSeeds.size - 1}${if (maxSimultaneousTasks != null) "%$maxSimultaneousTasks" else ""}
-        """.trimIndent())
+        """.trimIndent()
+        )
 
         // general info
         writeln("echo pwd: $(pwd); echo hostname: $(hostname); echo date: $(date -Iseconds)")
         writeln("echo SLURM_ARRAY_TASK_ID=\$SLURM_ARRAY_TASK_ID")
 
         // data for array jobs
-        writeln().writeln("""
+        writeln().writeln(
+            """
             AUTOMATON_SEEDS=(${arrayAutomatonSeeds.joinToString(" ")})
             SCENARIOS_SEEDS=(${arrayScenariosSeeds.joinToString(" ")})
             SOLVER_SEEDS=(${arraySolverSeeds.joinToString(" ")})
@@ -139,21 +144,26 @@ fun generateBatch(
             solverSeed=${'$'}{SOLVER_SEEDS[${'$'}SLURM_ARRAY_TASK_ID]}
             outDir="$outDir"
             runFile="${'$'}{outDir}/run.sh"
-        """.trimIndent())
+        """.trimIndent()
+        )
 
         // print params
-        writeln().writeln("""
+        writeln().writeln(
+            """
             echo automatonSeed=${'$'}automatonSeed
             echo scenariosSeed=${'$'}scenariosSeed
             echo solverSeed=${'$'}solverSeed
             echo outDir=${'$'}outDir
-        """.trimIndent())
+        """.trimIndent()
+        )
 
         // run experiment
-        writeln().writeln("""
+        writeln().writeln(
+            """
             chmod +x ${'$'}{runFile}
             srun --output=${'$'}{outDir}/output-%j.log ${'$'}{runFile}
-        """.trimIndent())
+        """.trimIndent()
+        )
 
         // general info
         writeln().writeln("echo date: $(date -Iseconds)")
