@@ -18,6 +18,7 @@ import ru.ifmo.fbsat.core.utils.boolexpr.Variable
 import ru.ifmo.fbsat.core.utils.inputNamesPnP
 import ru.ifmo.fbsat.core.utils.makeDnfString
 import ru.ifmo.fbsat.core.utils.pow
+import ru.ifmo.fbsat.core.utils.serializers.BooleanExpressionGuardSerializer
 import ru.ifmo.fbsat.core.utils.serializers.ParseTreeGuardSerializer
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.toBooleanList
@@ -406,6 +407,7 @@ fun BooleanExpression.toSmvString(): String = when (this) {
     }
 }
 
+@Serializable(with = BooleanExpressionGuardSerializer::class)
 class BooleanExpressionGuard(
     val expr: BooleanExpression,
 ) : Guard {
