@@ -92,16 +92,6 @@ fun Solver.declareNewConstraints() {
 
     comment("Transition semantics")
 
-    // for (u in 1..U)
-    //     for (i in 1..C)
-    //         for (k in 1..K)
-    //             for (j in 1..C)
-    //                 imply2(
-    //                     firstFired[i, u] eq k,
-    //                     transitionDestination[i, k] eq j,
-    //                     actualTransitionFunction[i, u] eq j
-    //                 )
-
     // (actualTransitionFunction[q,u] = q') <=>
     //   OR_k( (transitionDestination[q,k] = q') & (firstFired[q,u] = k) )
     for (i in 1..C)
@@ -170,27 +160,4 @@ fun Solver.declareNewConstraints() {
                     stateOutputFunction[c, z, if (tree.outputValue(p, z)) 1 else 2] sign tree.outputValue(v, z)
                 )
     }
-
-    // comment("Mapping")
-    // for (v in 1..V) {
-    //     val p = tree.parent(v)
-    //     val u = tree.inputNumber(v)
-    //
-    //     // (mapping[v] = c) => (nextState[mapping[tp(v)],tin(v)] = c)
-    //     for (i in 1..C)
-    //         for (j in 1..C)
-    //             implyImply(
-    //                 mapping[p] eq i,
-    //                 mapping[v] eq j,
-    //                 nextState[i, u] eq j
-    //             )
-    //
-    //     // (mapping[v] = c) => (stateOutputFunction[c,z,tov(p,z)] = tov(v,z))
-    //     for (c in 1..C)
-    //         for (z in 1..Z)
-    //             imply(
-    //                 mapping[v] eq c,
-    //                 stateOutputFunction[c, z, if (tree.outputValue(p, z)) 1 else 2] sign tree.outputValue(v, z)
-    //             )
-    // }
 }
