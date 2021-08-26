@@ -30,7 +30,7 @@ subprojects {
     dependencies {
         implementation(platform(kotlin("bom")))
         implementation(kotlin("stdlib-jdk8"))
-        implementation(Libs.KotlinLogging.kotlin_logging)
+        implementation(Libs.KotlinLogging.kotlin_logging_jvm)
         implementation(Libs.Log4j.log4j_slf4j_impl)
 
         testImplementation(Libs.JUnit.jupiter_api)

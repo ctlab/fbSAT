@@ -64,7 +64,7 @@ object Libs {
     // https://github.com/MicroUtils/kotlin-logging
     object KotlinLogging {
         const val version = Versions.kotlin_logging
-        const val kotlin_logging = "io.github.microutils:kotlin-logging:$version"
+        const val kotlin_logging_jvm = "io.github.microutils:kotlin-logging-jvm:$version"
     }
 
     // https://github.com/apache/logging-log4j2
