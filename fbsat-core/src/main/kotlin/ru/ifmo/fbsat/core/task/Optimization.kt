@@ -120,7 +120,7 @@ fun Inferrer.optimizeN_Forest(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): Automaton? {
-    logger.info("Optimizing N...")
+    logger.info("Optimizing N (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
     val cardinality: Cardinality = solver.context["cardinalityN"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -137,7 +137,7 @@ fun Inferrer.optimizeN_PreComp(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): Automaton? {
-    logger.info("Optimizing N...")
+    logger.info("Optimizing N (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
     val cardinality: Cardinality = solver.context["cardinalityN"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -153,7 +153,7 @@ fun Inferrer.optimizeParallelModularT(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): ParallelModularAutomaton? {
-    logger.info("Optimizing T...")
+    logger.info("Optimizing T (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
     val cardinality: Cardinality = solver.context["cardinalityT"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -169,7 +169,7 @@ fun Inferrer.optimizeConsecutiveModularT(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): ConsecutiveModularAutomaton? {
-    logger.info("Optimizing T...")
+    logger.info("Optimizing T (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
     val cardinality: Cardinality = solver.context["cardinalityT"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -185,7 +185,7 @@ fun Inferrer.optimizeArbitraryModularT(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): ArbitraryModularAutomaton? {
-    logger.info("Optimizing T...")
+    logger.info("Optimizing T (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
     val cardinality: Cardinality = solver.context["cardinalityT"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -201,7 +201,7 @@ fun Inferrer.optimizeParallelModularN(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): ParallelModularAutomaton? {
-    logger.info("Optimizing N...")
+    logger.info("Optimizing N (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
     val cardinality: Cardinality = solver.context["cardinalityN"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -217,7 +217,7 @@ fun Inferrer.optimizeConsecutiveModularN(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): ConsecutiveModularAutomaton? {
-    logger.info("Optimizing N...")
+    logger.info("Optimizing N (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
     val cardinality: Cardinality = solver.context["cardinalityN"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -233,7 +233,7 @@ fun Inferrer.optimizeArbitraryModularN(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): ArbitraryModularAutomaton? {
-    logger.info("Optimizing N...")
+    logger.info("Optimizing N (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
     val cardinality: Cardinality = solver.context["cardinalityN"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -249,7 +249,7 @@ fun Inferrer.optimizeDistributedSumC(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): DistributedAutomaton? {
-    logger.info("Optimizing Csum...")
+    logger.info("Optimizing Csum (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
     val cardinality: Cardinality = solver.context["cardinalityC"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -265,7 +265,7 @@ fun Inferrer.optimizeDistributedSumC_Extended(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): DistributedAutomaton? {
-    logger.info("Optimizing Csum...")
+    logger.info("Optimizing Csum (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
     val cardinality: Cardinality = solver.context["cardinalityC"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -281,7 +281,7 @@ fun Inferrer.optimizeDistributedSumC_Complete(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): DistributedAutomaton? {
-    logger.info("Optimizing Csum...")
+    logger.info("Optimizing Csum (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
     val cardinality: Cardinality = solver.context["cardinalityC"]
     return cardinality.optimizeTopDown(
         start = start,
@@ -297,7 +297,7 @@ fun Inferrer.optimizeDistributedSumN(
     end: Int = 0,
     useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
 ): DistributedAutomaton? {
-    logger.info("Optimizing Nsum...")
+    logger.info("Optimizing Nsum (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
     val cardinality: Cardinality = solver.context["cardinalityN"]
     return cardinality.optimizeTopDown(
         start = start,
