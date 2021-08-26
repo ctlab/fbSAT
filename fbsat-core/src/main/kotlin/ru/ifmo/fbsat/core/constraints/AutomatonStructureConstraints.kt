@@ -319,7 +319,7 @@ private fun Solver.declareAutomatonStructureConstraintsForInputs(
             }
 
     comment("Not fired definition")
-    // not_fired[k] <=> ~transitionFiring[k] & notFired[k-1]
+    // notFired[k] <=> ~transitionFiring[k] & notFired[k-1]
     for (c in 1..C)
         for (e in 1..E)
             for (u in Us) {
@@ -358,7 +358,7 @@ private fun Solver.declareAutomatonStructureConstraintsForInputs(
 
     comment("Actual transition function definition")
     // (actualTransitionFunction[q,e,u] = q') <=>
-    //  OR_k ( (transitionDestination[q,k] = q') & (transitionInputEvent[q,k] = e) & (firstFired[q,e,u] = k) )
+    //  OR_k ( (transitionDestination[q,k] = q') & (firstFired[q,e,u] = k) )
     for (i in 1..C)
         for (e in 1..E)
             for (u in Us)
