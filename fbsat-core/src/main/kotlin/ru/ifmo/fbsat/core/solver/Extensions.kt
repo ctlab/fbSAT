@@ -16,6 +16,9 @@ import com.github.lipen.satlib.core.SequenceScopeLit
 import com.github.lipen.satlib.core.convert
 import com.github.lipen.satlib.core.newContext
 import com.github.lipen.satlib.op.implyIff
+import com.github.lipen.satlib.op.implyImply
+import com.github.lipen.satlib.op.implyImplyAnd
+import com.github.lipen.satlib.op.implyImplyOr
 import com.github.lipen.satlib.op.runWithTimeout
 import com.github.lipen.satlib.solver.CadicalSolver
 import com.github.lipen.satlib.solver.GlucoseSolver
@@ -159,6 +162,51 @@ fun Solver.implyIffXor(x1: Lit, x2: Lit, xs: SequenceScopeLit) {
 /** [x1] => ([x2] <=> `XOR`([xs])) */
 fun Solver.implyIffXor(x1: Lit, x2: Lit, vararg xs: Lit) {
     implyIffXor(x1, x2, xs.asIterable())
+}
+
+/** [x1] & [x2] => [x3] */
+fun Solver.imply2(x1: Lit, x2: Lit, x3: Lit) {
+    implyImply(x1, x2, x3)
+}
+
+/** [x1] & [x2] => `OR`([xs]) */
+fun Solver.imply2Or(x1: Lit, x2: Lit, xs: Iterable<Lit>) {
+    implyImplyOr(x1, x2, xs)
+}
+
+/** [x1] & [x2] => `OR`([xs]) */
+fun Solver.imply2Or(x1: Lit, x2: Lit, xs: Sequence<Lit>) {
+    imply2Or(x1, x2, xs.asIterable())
+}
+
+/** [x1] & [x2] => `OR`([xs]) */
+fun Solver.imply2Or(x1: Lit, x2: Lit, xs: SequenceScopeLit) {
+    imply2Or(x1, x2, sequence(xs))
+}
+
+/** [x1] & [x2] => `OR`([xs]) */
+fun Solver.imply2Or(x1: Lit, x2: Lit, vararg xs: Lit) {
+    imply2Or(x1, x2, xs.asIterable())
+}
+
+/** [x1] & [x2] => `AND`([xs]) */
+fun Solver.imply2And(x1: Lit, x2: Lit, xs: Iterable<Lit>) {
+    implyImplyAnd(x1, x2, xs)
+}
+
+/** [x1] & [x2] => `AND`([xs]) */
+fun Solver.imply2And(x1: Lit, x2: Lit, xs: Sequence<Lit>) {
+    imply2And(x1, x2, xs.asIterable())
+}
+
+/** [x1] & [x2] => `AND`([xs]) */
+fun Solver.imply2And(x1: Lit, x2: Lit, xs: SequenceScopeLit) {
+    imply2And(x1, x2, sequence(xs))
+}
+
+/** [x1] & [x2] => `AND`([xs]) */
+fun Solver.imply2And(x1: Lit, x2: Lit, vararg xs: Lit) {
+    imply2And(x1, x2, xs.asIterable())
 }
 
 fun Solver.isSupportStats(): Boolean =
