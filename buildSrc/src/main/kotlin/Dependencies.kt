@@ -2,30 +2,30 @@
 
 object Versions {
     const val arrow = "0.11.0"
-    const val clikt = "3.1.0"
-    const val gradle_download_task = "4.1.1"
-    const val gradle_versions = "0.36.0"
+    const val clikt = "3.2.0"
+    const val gradle_download_task = "4.1.2"
+    const val gradle_versions = "0.39.0"
     const val jgitver = "0.9.1"
     const val junit = "5.7.0"
-    const val klock = "1.12.1"
-    const val kluent = "1.63"
-    const val kmongo = "4.2.4"
-    const val kotlin = "1.5.21"
-    const val kotlin_logging = "2.0.3"
-    const val kotlinx_coroutines = "1.4.1"
-    const val kotlinx_serialization = "1.0.1"
-    const val ktlint = "0.41.0"
-    const val ktlint_gradle_plugin = "10.0.0"
+    const val klock = "2.3.4"
+    const val kluent = "1.68"
+    const val kmongo = "4.2.8"
+    const val kotlin = "1.5.30"
+    const val kotlin_logging = "2.0.11"
+    const val kotlinx_coroutines = "1.5.1"
+    const val kotlinx_serialization = "1.2.2"
+    const val ktlint = "0.42.1"
+    const val ktlint_gradle_plugin = "10.1.0"
     const val lazycache = "0.3.0"
-    const val log4j = "2.14.0"
+    const val log4j = "2.14.1"
     const val mordant = "1.2.1"
     const val multiarray = "0.12.0"
     const val okio = "2.9.0"
     const val pretty_print = "2.0.2"
     const val satlib = "0.22.0"
-    const val shadow = "6.1.0"
-    const val xml_builder = "1.5.3"
-    const val xmlutil = "0.80.1"
+    const val shadow = "7.0.0"
+    const val xml_builder = "1.7.3"
+    const val xmlutil = "0.82.0"
 }
 
 object Libs {
@@ -119,8 +119,8 @@ object Libs {
     // https://github.com/pdvrieze/xmlutil
     object XmlUtil {
         const val version = Versions.xmlutil
-        const val xmlutil_jvm = "net.devrieze:xmlutil-jvm:$version"
-        const val xmlutil_serialization_jvm = "net.devrieze:xmlutil-serialization-jvm:$version"
+        const val xmlutil_jvm = "io.github.pdvrieze.xmlutil:core-jvm:$version"
+        const val xmlutil_serialization_jvm = "io.github.pdvrieze.xmlutil:serialization-jvm:$version"
     }
 
     // https://github.com/Kotlin/kotlinx.serialization
