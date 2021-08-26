@@ -40,8 +40,16 @@ fun Solver.declareNewConstraints() {
     val actualTransitionFunction = newIntVarArray(C, U) { 0..C } // activeNextState
     val mapping = newIntVarArray(V) { 1..C }
     val active = newBoolVarArray(V)
-    // TODO: (activeMapping[v] = q) <=> (mapping[v] = q) & active[v]
-    // TODO: (passiveMapping[v] = q) <=> (mapping[v] = q) & ~active[v]
+    // TODO: active/passive mapping:
+    //   activeMapping = newIntVarArray(V) { 0..C }
+    //   // Note: this 0 is NOT the same as in the negative tree.
+    //   //       What happens in the negative tree is a big open question...
+    //   (activeMapping[v] = q) <=> (mapping[v] = q) & active[v]
+    //   active[v] => (activeMapping[v] != 0)
+    //   ...same for passive:
+    //   (passiveMapping[v] = q) <=> (mapping[v] = q) & ~active[v]
+    //   ...interaction:
+    //   (activeMapping[v] != 0) <=> (passiveMapping[v] = 0)
 
     comment("State action semantics")
     for (c in 1..C)
