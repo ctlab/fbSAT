@@ -560,7 +560,8 @@ fun buildBasicArbitraryModularAutomaton(
                                     '0' -> false
                                     else -> error("Bad bit '$it'")
                                 }
-                            }) to when {
+                            }
+                        ) to when {
                             notFired[c, k, 1, u] -> false
                             firstFired[c, 1, u] == k -> true
                             else -> null
