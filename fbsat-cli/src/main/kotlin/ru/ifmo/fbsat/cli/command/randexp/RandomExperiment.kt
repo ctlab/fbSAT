@@ -9,6 +9,7 @@ import com.github.lipen.satlib.solver.Solver
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.CountOptions
 import com.soywiz.klock.PerformanceCounter
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -90,6 +91,7 @@ data class ExperimentData(
         val seed: Int,
     )
 
+    @OptIn(ExperimentalSerializationApi::class)
     fun saveTo(file: File) {
         logger.debug { "Saving experiment data to '$file'..." }
         file.ensureParentExists().sink().buffer().use {
@@ -294,6 +296,7 @@ data class ExperimentResult(
         }
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     fun saveTo(file: File) {
         logger.debug { "Saving experiment result to '$file'..." }
         file.ensureParentExists().sink().buffer().use {
@@ -458,6 +461,7 @@ fun runExperiment(
     )
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 @Suppress("LocalVariableName")
 fun main() {
     val timeStart = PerformanceCounter.reference
