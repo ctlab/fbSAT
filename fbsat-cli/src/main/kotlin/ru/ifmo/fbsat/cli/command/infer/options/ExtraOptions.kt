@@ -35,6 +35,10 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isEncodeHardToExplain: Boolean by isEncodeHardToExplainOption()
     val isEncodeTotalizer: Boolean by isEncodeTotalizerOption()
     val isEncodeDisjunctiveTransitions: Boolean by isEncodeDisjunctiveTransitionsOption()
+    val isEncodeAtf0: Boolean by isEncodeAtf0Option()
+    val isEncodeFf0VarDecl: Boolean by isEncodeFf0VarDeclOption()
+    val isEncodeFfNfVarDecl: Boolean by isEncodeFfNfVarDeclOption()
+    val isEncodeActivePassive: Boolean by isEncodeActivePassiveOption()
     val isReuseK: Boolean by isReuseKOption()
     val isUseAssumptions: Boolean by isUseAssumptionsOption()
     val isRenderWithDot: Boolean by isRenderWithDotOption()
@@ -120,7 +124,7 @@ fun ParameterHolder.isEncodeReverseImplicationOption() =
         help = "Encode reverse implication"
     ).flag(
         "--no-encode-reverse-implication",
-        default = true
+        default = Globals.IS_ENCODE_REVERSE_IMPLICATION
     )
 
 fun ParameterHolder.isEncodeTransitionsOrderOption() =
@@ -175,6 +179,42 @@ fun ParameterHolder.isEncodeDisjunctiveTransitionsOption() =
     ).flag(
         "--no-encode-disjunctive-transitions",
         default = Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS
+    )
+
+fun ParameterHolder.isEncodeAtf0Option() =
+    option(
+        "--encode-atf0",
+        help = "TODO"
+    ).flag(
+        "--no-encode-atf0",
+        default = Globals.IS_ENCODE_ATF_0
+    )
+
+fun ParameterHolder.isEncodeFf0VarDeclOption() =
+    option(
+        "--encode-ff0-vardecl",
+        help = "TODO"
+    ).flag(
+        "--no-encode-ff0-vardecl",
+        default = Globals.IS_ENCODE_FF_0_VARDECL
+    )
+
+fun ParameterHolder.isEncodeFfNfVarDeclOption() =
+    option(
+        "--encode-ff-nf-vardecl",
+        help = "TODO"
+    ).flag(
+        "--no-encode-ff-nf-vardecl",
+        default = Globals.IS_ENCODE_FF_NF_VARDECL
+    )
+
+fun ParameterHolder.isEncodeActivePassiveOption() =
+    option(
+        "--encode-active-passive",
+        help = "TODO"
+    ).flag(
+        "--no-encode-active-passive",
+        default = Globals.IS_ENCODE_ACTIVE_PASSIVE
     )
 
 fun ParameterHolder.isReuseKOption() =

@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.task
 
 import com.github.lipen.satlib.core.LitArray
 import com.github.lipen.satlib.core.Model
+import com.github.lipen.satlib.solver.GlucoseSolver
 import com.github.lipen.satlib.solver.Solver
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.klock.TimeSpan

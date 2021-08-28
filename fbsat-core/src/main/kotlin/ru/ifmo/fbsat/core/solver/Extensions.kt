@@ -18,6 +18,7 @@ import com.github.lipen.satlib.core.newContext
 import com.github.lipen.satlib.op.implyIff
 import com.github.lipen.satlib.op.implyImply
 import com.github.lipen.satlib.op.implyImplyAnd
+import com.github.lipen.satlib.op.implyImplyImply
 import com.github.lipen.satlib.op.implyImplyOr
 import com.github.lipen.satlib.op.runWithTimeout
 import com.github.lipen.satlib.solver.CadicalSolver
@@ -209,8 +210,13 @@ fun Solver.imply2And(x1: Lit, x2: Lit, vararg xs: Lit) {
     imply2And(x1, x2, xs.asIterable())
 }
 
+/** [x1] & [x2] & [x3] => [x4] */
+fun Solver.imply3(x1: Lit, x2: Lit, x3: Lit, x4: Lit) {
+    implyImplyImply(x1, x2, x3, x4)
+}
+
 fun Solver.isSupportStats(): Boolean =
-    this is MiniSatSolver || this is GlucoseSolver
+    this is MiniSatSolver || this is GlucoseSolver || this is CadicalSolver
 
 fun Solver.numberOfPropagations(): Int = when (this) {
     is MiniSatSolver -> backend.numberOfPropagations

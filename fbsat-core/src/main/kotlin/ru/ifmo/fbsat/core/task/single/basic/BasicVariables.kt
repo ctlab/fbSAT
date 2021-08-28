@@ -1,10 +1,15 @@
 package ru.ifmo.fbsat.core.task.single.basic
 
 import com.github.lipen.satlib.card.declareCardinality
+import com.github.lipen.satlib.core.IntVarArray
+import com.github.lipen.satlib.core.eq
 import com.github.lipen.satlib.core.neq
 import com.github.lipen.satlib.core.newBoolVarArray
+import com.github.lipen.satlib.core.newDomainVarArray
+import com.github.lipen.satlib.core.newIntVar
 import com.github.lipen.satlib.core.newIntVarArray
 import com.github.lipen.satlib.solver.Solver
+import ru.ifmo.fbsat.core.constraints.new.StateAction
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.literals
 import ru.ifmo.fbsat.core.utils.Globals
@@ -36,6 +41,11 @@ fun Solver.declareBasicVariables(
 
     /* Core variables */
     comment("Core variables")
+    if (Globals.IS_ENCODE_ACTIVE_PASSIVE) {
+        val transitionFunction = context("transitionFunction") {
+            newIntVarArray(C, E, U) { 1..C }
+        }
+    }
     val actualTransitionFunction = context("actualTransitionFunction") {
         newIntVarArray(C, E, U) { 0..C }
     }
@@ -52,11 +62,36 @@ fun Solver.declareBasicVariables(
         newBoolVarArray(C, K, E, U)
     }
     val firstFired = context("firstFired") {
-        newIntVarArray(C, E, U) { 0..K }
+        if (Globals.IS_ENCODE_FF_0_VARDECL) {
+            IntVarArray.new(C, E, U) { (c, e, u) ->
+                newIntVar(0..K) { k ->
+                    if (k == 0)
+                        actualTransitionFunction[c, e, u] eq 0
+                    else
+                        newLiteral()
+                }
+            }
+        } else {
+            newIntVarArray(C, E, U) { 0..K }
+        }
     }
     val notFired = context("notFired") {
-        newBoolVarArray(C, K, E, U)
+        if (Globals.IS_ENCODE_FF_NF_VARDECL) {
+            newBoolVarArray(C, K, E, U) { (c, k, e, u) ->
+                if (k == K)
+                    firstFired[c, e, u] eq 0
+                else
+                    newLiteral()
+            }
+        } else {
+            newBoolVarArray(C, K, E, U)
+        }
     }
+    // if (Globals.IS_ENCODE_ACTIVE_PASSIVE) {
+    //     val stateOutputAction = context("stateOutputAction") {
+    //         newDomainVarArray(C, Z) { StateAction.values().asIterable() }
+    //     }
+    // }
     val stateOutputEvent = context("stateOutputEvent") {
         newIntVarArray(C) { 0..O }
     }
@@ -71,6 +106,14 @@ fun Solver.declareBasicVariables(
     comment("Mapping variables")
     val mapping = context("mapping") {
         newIntVarArray(V) { 1..C }
+    }
+    if (Globals.IS_ENCODE_ACTIVE_PASSIVE) {
+        val active = context("active") {
+            newBoolVarArray(V)
+        }
+        // val activeMapping = context("activeMapping") {
+        //     newIntVarArray(V) { 0..C }
+        // }
     }
 
     /* Cardinality */

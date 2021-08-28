@@ -23,12 +23,17 @@ object Globals {
     var IS_FORBID_TRANSITIONS_TO_FIRST_STATE: Boolean = true
     var IS_BFS_AUTOMATON: Boolean = true
     var IS_BFS_GUARD: Boolean = true
+    var IS_ENCODE_REVERSE_IMPLICATION: Boolean = true
     var IS_ENCODE_TRANSITIONS_ORDER: Boolean = true
     var IS_ENCODE_TERMINALS_ORDER: Boolean = false
     var IS_ENCODE_TERMINALS_MINI_ORDER: Boolean = false
     var IS_ENCODE_HARD_TO_EXPLAIN: Boolean = true
     var IS_ENCODE_TOTALIZER: Boolean = true
     var IS_ENCODE_DISJUNCTIVE_TRANSITIONS: Boolean = false
+    var IS_ENCODE_ATF_0: Boolean = false
+    var IS_ENCODE_FF_0_VARDECL: Boolean = false
+    var IS_ENCODE_FF_NF_VARDECL: Boolean = false
+    var IS_ENCODE_ACTIVE_PASSIVE : Boolean = false
     var IS_DEBUG: Boolean = false
     var IS_REUSE_K: Boolean = true
     var IS_DUMP_CNF: Boolean = false

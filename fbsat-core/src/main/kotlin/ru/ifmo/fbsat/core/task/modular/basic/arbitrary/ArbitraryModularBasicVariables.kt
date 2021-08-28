@@ -6,8 +6,8 @@ import com.github.lipen.satlib.core.IntVarArray
 import com.github.lipen.satlib.core.neq
 import com.github.lipen.satlib.core.newBoolVarArray
 import com.github.lipen.satlib.core.newIntVarArray
+import com.github.lipen.satlib.core.newOneHotBinaryIntVarArray
 import com.github.lipen.satlib.solver.Solver
-import newOneHotBinaryIntVarArray
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.declareModularContext
 import ru.ifmo.fbsat.core.solver.forEachModularContext
