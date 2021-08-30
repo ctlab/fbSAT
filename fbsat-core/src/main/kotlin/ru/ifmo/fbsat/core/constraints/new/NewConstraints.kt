@@ -19,6 +19,7 @@ import ru.ifmo.fbsat.core.solver.imply3
 import ru.ifmo.fbsat.core.utils.Globals
 
 // Old reduction:
+// fbsat infer extended-min -P 5 -i data\tests-39.gz --glucose --debug
 // [23:54:36] [I] BasicTask: declared 63900 variables and 305729 clauses in 0.363 s.
 // [23:54:36] [I] BasicMin: C = 8 -> SAT in 0.604 s.
 // [23:54:36] [D] Propagations: 2071667
@@ -29,6 +30,7 @@ import ru.ifmo.fbsat.core.utils.Globals
 // [23:54:44] [I] All done in 12.516 seconds
 //
 // New reduction:
+// fbsat infer extended-min -P 5 -i data\tests-39.gz --glucose --debug --encode-active-passive
 // [23:57:22] [I] BasicTask: declared 107932 variables and 766935 clauses in 0.608 s.
 // [23:57:22] [I] BasicMin: C = 8 -> SAT in 1.131 s.
 // [23:57:22] [D] Propagations: 3122233
@@ -37,6 +39,17 @@ import ru.ifmo.fbsat.core.utils.Globals
 // [23:57:22] [I] BasicMin: minimal C = 8
 // [23:57:23] [I] ExtendedTask: declared 19968 variables and 424128 clauses in 0.369 s.
 // [23:57:42] [I] All done in 25.830 seconds
+//
+// New reduction with redundant constraints:
+// fbsat infer extended-min -P 5 -i data\tests-39.gz --glucose --debug --encode-active-passive
+// [14:16:51] [I] BasicTask: declared 107932 variables and 889687 clauses in 0.623 s.
+// [14:16:52] [I] BasicMin: C = 8 -> SAT in 1.382 s.
+// [14:16:52] [D] Propagations: 6056590
+// [14:16:52] [D] Conflicts: 1355
+// [14:16:52] [D] Decisions: 31040
+// [14:16:52] [I] BasicMin: minimal C = 8
+// [14:16:52] [I] ExtendedTask: declared 19968 variables and 424128 clauses in 0.366 s.
+// [14:17:06] [I] All done in 19.731 seconds
 
 enum class StateAction {
     Same, Zero, One
@@ -196,6 +209,15 @@ fun Solver.declareNewConstraints() {
                 -active[v],
                 actualTransitionFunction[c, e, u] eq 0
             )
+        // REDUNDANT?
+        // (mapping[p] = q) & (mapping[v] = q') => (transitionFunction[q,e,u] = q')
+        for (i in 1..C)
+            for (j in 1..C)
+                imply2(
+                    mapping[p] eq i,
+                    mapping[v] eq j,
+                    transitionFunction[i, e, u] eq j
+                )
 
         comment("Passive mapping propagation")
         // (mapping[p] = q) & ~active[v] => (mapping[v] = q)
@@ -236,6 +258,17 @@ fun Solver.declareNewConstraints() {
                 imply2(
                     mapping[p] eq i,
                     transitionFunction[i, e, u] eq j,
+                    mapping[v] eq j
+                )
+
+        // REDUNDANT?
+        comment("REVERSE actualTransitionFunction/mapping")
+        // (mapping[p] = q) & (actualTransitionFunction[q,e,u] = q') => (mapping[v] = q')
+        for (i in 1..C)
+            for (j in 1..C)
+                imply2(
+                    mapping[p] eq i,
+                    actualTransitionFunction[i, e, u] eq j,
                     mapping[v] eq j
                 )
 
@@ -280,7 +313,7 @@ fun Solver.declareNewConstraints() {
                 imply(lhsAux, rhsAux)
 
                 // Adhoc: other way around!
-                // imply(rhsAux, lhsAux)
+                imply(rhsAux, lhsAux)
             }
     }
 }
