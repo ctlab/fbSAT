@@ -20,6 +20,7 @@ dependencies {
 
 application {
     mainClassName = "ru.ifmo.fbsat.cli.MainKt"
+    applicationDefaultJvmArgs = listOf("-Dfile.encoding=UTF-8", "-Dsun.stdout.encoding=UTF-8")
 }
 
 tasks.withType<JavaExec> {
