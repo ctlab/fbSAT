@@ -7,21 +7,23 @@ import kotlin.math.roundToInt
 private val logger = MyLogger {}
 
 object Timing {
-    val rootTimer: Timer = Timer("fbsat", null)
+    val rootTimer: Timer = Timer("/")
 
-    var currentTimer: Timer = rootTimer
-        private set
+    private val stack: ArrayDeque<Timer> = ArrayDeque()
+    private val currentTimer: Timer
+        get() = stack.first()
+
+    init {
+        stack.addFirst(rootTimer)
+    }
 
     fun push(name: String) {
-        val timer = currentTimer.subtimer(name)
-        timer.start()
-        currentTimer = timer
+        val timer = currentTimer.subtimer(name).also { it.start() }
+        stack.addFirst(timer)
     }
 
     fun pop(): TimeSpan {
-        val timer = currentTimer
-        currentTimer = timer.parent
-            ?: error("Cannot pop a timer without a parent")
+        val timer = stack.removeFirst()
         return timer.stop()
     }
 }
@@ -37,13 +39,15 @@ inline fun <T> withTimer(name: String, block: () -> T): T {
 
 class Timer(
     val name: String,
-    val parent: Timer? = Timing.rootTimer,
 ) {
     private val _subtimers: MutableMap<String, Timer> = mutableMapOf()
     val subtimers: Map<String, Timer> = _subtimers
 
     private val _deltas: MutableList<TimeSpan> = mutableListOf()
     val deltas: List<TimeSpan> = _deltas
+
+    val totalTime: Double
+        get() = deltas.sumOf { it.seconds }
 
     private var startTime: TimeSpan = TimeSpan.NIL
 
@@ -52,24 +56,12 @@ class Timer(
     var isStopped: Boolean = false
         private set
 
-    val totalTime: Double
-        get() = deltas.sumOf { it.seconds }
-
-    val fullName: String =
-        if (parent == null) {
-            name
-        } else {
-            parent.fullName + "/" + name
-        }
-
     fun subtimer(name: String): Timer {
-        return _subtimers.computeIfAbsent(name) {
-            Timer(it, this)
-        }
+        return _subtimers.computeIfAbsent(name) { Timer(it) }
     }
 
     fun start() {
-        // logger.debug { "Starting timer '$fullName'" }
+        // logger.debug { "Starting timer '$name'" }
 
         if (isStarted) {
             error("Timer '$name' has already been started")
@@ -81,7 +73,7 @@ class Timer(
     }
 
     fun stop(): TimeSpan {
-        // logger.debug { "Stopping timer '$fullName'" }
+        // logger.debug { "Stopping timer '$name'" }
 
         if (!isStarted) {
             error("Timer '$name' has not been started")
@@ -92,7 +84,7 @@ class Timer(
 
         for (timer in subtimers.values) {
             if (!timer.isStopped) {
-                logger.warn("Stopping a running subtimer '${timer.fullName}'")
+                logger.warn("Stopping a running subtimer '${timer.name}'")
                 timer.stop()
             }
         }
@@ -100,7 +92,7 @@ class Timer(
         val delta = PerformanceCounter.reference - startTime
         _deltas.add(delta)
 
-        // logger.debug { "Timer '$fullName' delta: ${"%.3fs".format(delta.seconds)}" }
+        // logger.debug { "Timer '$name' delta: ${"%.3fs".format(delta.seconds)}" }
 
         startTime = TimeSpan.NIL
         isStarted = false
@@ -109,20 +101,21 @@ class Timer(
         return delta
     }
 
-    fun pprint(
+    fun toLines(
         externalTotalTime: Double = 0.0,
-        prefixFirst: String = "",
-        prefixSub: String = "",
-        p: (String) -> Unit,
-    ) {
+    ): Sequence<String> = sequence {
         require(externalTotalTime >= 0)
+
+        // cache the value
         val totalTime = totalTime
+
         val percent = if (externalTotalTime > 0) {
             totalTime / externalTotalTime * 100.0
         } else {
             100.0
         }
         val percentString = "%.0f".format(percent) + "%"
+
         val timeSecondsString = when {
             totalTime < .9995 -> "%.3f".format(totalTime)
             totalTime < 9.995 -> "%.2f".format(totalTime)
@@ -132,8 +125,8 @@ class Timer(
         val timeHumanString = if (totalTime >= 60) {
             val s = totalTime.roundToInt()
             val hours = s / 3600
-            val minutes = (s - hours * 3600) / 60
-            val seconds = s - hours * 3600 - minutes * 60
+            val minutes = (s % 3600) / 60
+            val seconds = s % 60
             check(hours * 3600 + minutes * 60 + seconds == s)
             "${
                 if (hours > 0) "${hours}h " else ""
@@ -148,16 +141,49 @@ class Timer(
         val timeString = timeSecondsString +
             (if (timeHumanString != null) " ($timeHumanString)" else "")
 
-        // p("$prefixFirst${"%2.0f".format(percent)}% ${"%6.2f".format(totalTime)}s  $name")
-        // p("$prefixFirst$timeString [$percentString]  $name")
-        p("$prefixFirst[$percentString] $timeString  $name")
+        yield("$timeString [$percentString]  $name")
+        // yield("[$percentString] $timeString  $name")
 
-        for ((i, timer) in subtimers.values.withIndex()) {
-            if (i < subtimers.size - 1) {
-                timer.pprint(totalTime, "├─╴", "│ ") { p("$prefixSub  $it") }
-            } else {
-                timer.pprint(totalTime, "└─╴", "  ") { p("$prefixSub  $it") }
+        // F - first, S - sub
+        val prefixFF = "├─╴"
+        val prefixFS = "│  "
+        val prefixSF = "└─╴"
+        val prefixSS = "   "
+
+        if (subtimers.isNotEmpty()) {
+            val lineGroups: MutableList<Sequence<String>> = mutableListOf()
+
+            for (timer in subtimers.values) {
+                val lines = timer.toLines(totalTime)
+                lineGroups.add(lines)
+            }
+
+            // TODO: add 'other' if necessary
+
+            // yield lines from all groups except the last one
+            for (group in lineGroups.dropLast(1)) {
+                val iter = group.iterator()
+                check(iter.hasNext())
+                yield("$prefixFF${iter.next()}")
+                for (line in iter) {
+                    yield("$prefixFS$line")
+                }
+            }
+
+            // yield lines from the last group
+            if (lineGroups.isNotEmpty()) {
+                val lastGroup = lineGroups.last()
+                val iter = lastGroup.iterator()
+                check(iter.hasNext())
+                yield("$prefixSF${iter.next()}")
+                for (line in iter) {
+                    yield("$prefixSS$line")
+                }
             }
         }
+    }
+
+    fun pprint(p: (String) -> Unit) {
+        toLines().forEach(p)
     }
 }

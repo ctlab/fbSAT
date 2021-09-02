@@ -89,7 +89,10 @@ fun main(args: Array<String>) {
         FbSAT(args).main(args)
     }
     Timing.rootTimer.stop()
+
+    logger.info("Timers:")
     Timing.rootTimer.pprint { logger.info(it) }
+
     logger.info("End time: ${DateTime.nowLocal().format(dateTimeFormat)}")
     logger.info("All done in %.3f seconds".format(runningTime.seconds))
 }
