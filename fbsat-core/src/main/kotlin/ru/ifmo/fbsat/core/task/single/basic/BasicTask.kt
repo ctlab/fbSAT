@@ -9,6 +9,7 @@ import ru.ifmo.fbsat.core.constraints.declarePositiveMappingConstraints
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.withTimer
 
 data class BasicTask(
     val scenarioTree: PositiveScenarioTree,
@@ -17,7 +18,7 @@ data class BasicTask(
     val maxTransitions: Int? = null, // T, unconstrained if null
     val isEncodeReverseImplication: Boolean = Globals.IS_ENCODE_REVERSE_IMPLICATION,
 ) : Task() {
-    override fun Solver.declare_() {
+    override fun Solver.declare_(): Unit = withTimer("declare") {
         /* Variables */
         comment("$name: Variables")
         declareBasicVariables(

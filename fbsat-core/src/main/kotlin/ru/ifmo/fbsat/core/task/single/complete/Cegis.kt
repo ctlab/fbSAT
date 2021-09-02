@@ -15,6 +15,7 @@ import ru.ifmo.fbsat.core.task.single.extended.inferExtended
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.timeSince
+import ru.ifmo.fbsat.core.utils.withTimer
 import java.io.File
 
 private val logger = MyLogger {}
@@ -29,7 +30,7 @@ fun Inferrer.cegis(
     maxTotalGuardsSize: Int? = null, // N, unconstrained if null
     smvDir: File,
     loopNumber: Int = 0,
-): Automaton? {
+): Automaton? = withTimer("CEGIS (C=$numberOfStates, P=$maxGuardSize)") {
     // val timeStart = PerformanceCounter.reference
     reset()
     declare(
@@ -65,7 +66,7 @@ fun Inferrer.cegisMin(
     maxGuardSize: Int? = null, // P, search if null
     maxPlateauWidth: Int? = null, // w, =Inf if null
     smvDir: File,
-): Automaton? {
+): Automaton? = withTimer("CEGIS-min") {
     val extendedAutomaton = if (maxGuardSize == null) {
         extendedMinUB(scenarioTree, numberOfStates = startNumberOfStates, maxPlateauWidth = maxPlateauWidth)
     } else {
@@ -114,7 +115,7 @@ fun Inferrer.cegisMin(
 }
 
 @Suppress("DuplicatedCode")
-fun Inferrer.performCegis(smvDir: File, loopNumber: Int): Automaton? {
+fun Inferrer.performCegis(smvDir: File, loopNumber: Int): Automaton? = withTimer("CEGIS step") {
     logger.info("Performing CEGIS...")
 
     // Copy smv files to output directory

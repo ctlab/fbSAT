@@ -14,6 +14,7 @@ import ru.ifmo.fbsat.core.task.optimizeT
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.timeSince
+import ru.ifmo.fbsat.core.utils.withTimer
 
 private val logger = MyLogger {}
 
@@ -23,7 +24,7 @@ fun Inferrer.basic(
     maxOutgoingTransitions: Int? = null, // K, =C if null
     maxTransitions: Int? = null, // T, unconstrained if null
     isEncodeReverseImplication: Boolean = true,
-): Automaton? {
+): Automaton? = withTimer("Basic (C=$numberOfStates)") {
     val timeStart = PerformanceCounter.reference
     reset()
     declare(
@@ -54,7 +55,7 @@ fun Inferrer.basicMinC(
     start: Int = 1, // C_start
     end: Int = 20, // C_end
     isEncodeReverseImplication: Boolean = true,
-): Automaton? {
+): Automaton? = withTimer("BasicMinC") {
     var best: Automaton? = null
     for (C in start..end) {
         val (result, runningTime) = measureTimeWithResult {
@@ -92,7 +93,7 @@ fun Inferrer.basicMin(
     start: Int = 1, // C_start
     end: Int = 20, // C_end
     isEncodeReverseImplication: Boolean = true,
-): Automaton? {
+): Automaton? = withTimer("BasicMin") {
     val timeStart = PerformanceCounter.reference
     val automaton = run {
         basicMinC(
@@ -115,7 +116,7 @@ fun Inferrer.basicMin(
     return automaton
 }
 
-fun Inferrer.inferBasic(): Automaton? {
+fun Inferrer.inferBasic(): Automaton? = withTimer("infer") {
     val model = solveAndGetModel() ?: return null
     val automaton = buildBasicAutomaton(solver.context, model)
 

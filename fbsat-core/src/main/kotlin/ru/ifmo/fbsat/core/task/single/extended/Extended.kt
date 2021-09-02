@@ -21,6 +21,7 @@ import ru.ifmo.fbsat.core.task.single.basic.basicMinC
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.timeSince
+import ru.ifmo.fbsat.core.utils.withTimer
 
 private val logger = MyLogger {}
 
@@ -32,7 +33,7 @@ fun Inferrer.extended(
     maxTransitions: Int? = null, // T, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N, unconstrained if null
     isEncodeReverseImplication: Boolean = true,
-): Automaton? {
+): Automaton? = withTimer("Extended (C=$numberOfStates, P=$maxGuardSize)") {
     // val timeStart = PerformanceCounter.reference
     reset()
     declare(
@@ -67,7 +68,7 @@ fun Inferrer.extendedMin(
     scenarioTree: PositiveScenarioTree,
     numberOfStates: Int? = null, // C_start
     maxGuardSize: Int, // P
-): Automaton? {
+): Automaton? = withTimer("ExtendedMin (P=$maxGuardSize)") {
     val timeStart = PerformanceCounter.reference
     val automaton = run {
         basicMinC(scenarioTree, start = numberOfStates ?: 1) ?: return@run null
@@ -108,7 +109,7 @@ fun Inferrer.extendedMinUB(
     start: Int = 1, // P_start
     end: Int = 20, // P_end
     maxPlateauWidth: Int? = null, // w, =Inf if null
-): Automaton? {
+): Automaton? = withTimer("ExtendedMinUB") {
     require(start >= 1)
     require(end >= 1)
     require(start <= end)
@@ -169,7 +170,7 @@ fun Inferrer.extendedMinUB(
     return answer
 }
 
-fun Inferrer.inferExtended(): Automaton? {
+fun Inferrer.inferExtended(): Automaton? = withTimer("infer") {
     val model = solveAndGetModel() ?: return null
     val automaton = buildExtendedAutomaton(solver.context, model)
 

@@ -17,6 +17,7 @@ import ru.ifmo.fbsat.cli.command.randexp.MultiRandomExperimentCommand
 import ru.ifmo.fbsat.cli.command.randexp.RandomExperimentCommand
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.setupLogFileAppender
+import ru.ifmo.fbsat.core.utils.Timing
 import java.io.File
 
 private val logger = MyLogger {}
@@ -83,7 +84,12 @@ class FbSAT(
 }
 
 fun main(args: Array<String>) {
-    val runningTime = measureTime { FbSAT(args).main(args) }
+    Timing.rootTimer.start()
+    val runningTime = measureTime {
+        FbSAT(args).main(args)
+    }
+    Timing.rootTimer.stop()
+    Timing.rootTimer.pprint { logger.info(it) }
     logger.info("End time: ${DateTime.nowLocal().format(dateTimeFormat)}")
     logger.info("All done in %.3f seconds".format(runningTime.seconds))
 }

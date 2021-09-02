@@ -18,13 +18,14 @@ import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.timeSince
+import ru.ifmo.fbsat.core.utils.withTimer
 
 private val logger = MyLogger {}
 
 data class CompleteTask(
     val negativeScenarioTree: NegativeScenarioTree? = null, // empty if null
 ) : Task() {
-    override fun Solver.declare_() {
+    override fun Solver.declare_(): Unit = withTimer("declare") {
         val positiveScenarioTree: PositiveScenarioTree = context["positiveScenarioTree"]
         val negativeScenarioTree = context("negativeScenarioTree") {
             this@CompleteTask.negativeScenarioTree ?: NegativeScenarioTree(positiveScenarioTree)
@@ -45,7 +46,7 @@ data class CompleteTask(
 @Suppress("LocalVariableName")
 fun Solver.updateNegativeReduction(
     isForbidLoops: Boolean = true,
-) {
+): Unit = withTimer("update negative reduction") {
     val timeStart = PerformanceCounter.reference
     val nVarsStart = numberOfVariables
     val nClausesStart = numberOfClauses

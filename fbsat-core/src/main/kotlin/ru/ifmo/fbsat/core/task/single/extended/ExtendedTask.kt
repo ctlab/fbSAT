@@ -7,12 +7,13 @@ import ru.ifmo.fbsat.core.constraints.declareGuardConditionsBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveGuardConditionsConstraints
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.withTimer
 
 data class ExtendedTask(
     val maxGuardSize: Int, // P
     val maxTotalGuardsSize: Int? = null, // N, unconstrained if null
 ) : Task() {
-    override fun Solver.declare_() {
+    override fun Solver.declare_(): Unit = withTimer("declare") {
         /* Variables */
         comment("$name: Variables")
         declareExtendedVariables(

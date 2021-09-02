@@ -17,6 +17,7 @@ import ru.ifmo.fbsat.core.task.single.extended.inferExtended
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.timeSince
+import ru.ifmo.fbsat.core.utils.withTimer
 
 private val logger = MyLogger {}
 
@@ -28,7 +29,7 @@ fun Inferrer.complete(
     maxGuardSize: Int, // P
     maxTransitions: Int? = null, // T, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N, unconstrained if null
-): Automaton? {
+): Automaton? = withTimer("Complete (C=$numberOfStates, P=$maxGuardSize)") {
     // val timeStart = PerformanceCounter.reference
     reset()
     declare(
@@ -59,7 +60,7 @@ fun Inferrer.completeMin(
     scenarioTree: PositiveScenarioTree,
     negativeScenarioTree: NegativeScenarioTree? = null, // empty if null
     maxGuardSize: Int, // P
-): Automaton? {
+): Automaton? = withTimer("CompleteMin (P=$maxGuardSize)") {
     val timeStart = PerformanceCounter.reference
     val automaton = run {
         val basicAutomaton = basicMinC(scenarioTree) ?: return@run null
@@ -90,6 +91,6 @@ fun Inferrer.completeMin(
     return automaton
 }
 
-fun Inferrer.completeMinUB(): Automaton? {
+fun Inferrer.completeMinUB(): Automaton? = withTimer("CompleteMinUB") {
     TODO("completeMinUB")
 }

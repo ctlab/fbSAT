@@ -12,6 +12,7 @@ import ru.ifmo.fbsat.core.task.single.extended.extendedMin
 import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
+import ru.ifmo.fbsat.core.utils.withTimer
 import java.io.File
 
 private val logger = MyLogger {}
@@ -26,7 +27,7 @@ fun Inferrer.cegisAssumptions(
     maxTotalGuardsSize: Int? = null, // N, unconstrained if null
     smvDir: File,
     loopNumber: Int, // = 0
-): Automaton? {
+): Automaton? = withTimer("CEGIS (C=$numberOfStates, P=$maxGuardSize)") {
     reset()
     declare(
         BasicTask(
@@ -46,7 +47,7 @@ fun Inferrer.cegisAssumptionsStep(
     maxTotalGuardsSize: Int,
     smvDir: File,
     loopNumber: Int,// = 0,
-): Automaton? {
+): Automaton? = withTimer("CEGIS step") {
     solver.apply {
         // clearAssumptions()
         val cardinalityN: Cardinality = context["cardinalityN"]
@@ -64,7 +65,7 @@ fun Inferrer.cegisMinAssumptions(
     maxGuardSize: Int? = null, // P, search if null
     maxPlateauWidth: Int? = null, // w, =Inf if null
     smvDir: File,
-): Automaton? {
+): Automaton? = withTimer("CEGIS-min") {
     check(Globals.IS_USE_ASSUMPTIONS) { "Currently, cegis-min-assumptions only works with assumptions being turned on globally. Pass --use-assumptions flag to enable them." }
 
     val extendedAutomaton = if (maxGuardSize == null) {
