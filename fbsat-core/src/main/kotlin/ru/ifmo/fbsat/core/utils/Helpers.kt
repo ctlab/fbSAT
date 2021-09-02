@@ -133,6 +133,7 @@ fun File.sourceAutoGzip(): Source =
 fun <K, V, T> Map<K, V>.getForce(key: K): T {
     @Suppress("UNCHECKED_CAST")
     return this[key] as T
+    // TODO: maybe rewrite it as `this.getValue(key) as T` ?
 }
 
 fun <T> Map<String, Any?>.getForce(key: String): T {
