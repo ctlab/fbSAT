@@ -5,11 +5,9 @@ import com.github.lipen.satlib.core.IntVarArray
 import com.github.lipen.satlib.core.eq
 import com.github.lipen.satlib.core.neq
 import com.github.lipen.satlib.core.newBoolVarArray
-import com.github.lipen.satlib.core.newDomainVarArray
 import com.github.lipen.satlib.core.newIntVar
 import com.github.lipen.satlib.core.newIntVarArray
 import com.github.lipen.satlib.solver.Solver
-import ru.ifmo.fbsat.core.constraints.new.StateAction
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.literals
 import ru.ifmo.fbsat.core.utils.Globals

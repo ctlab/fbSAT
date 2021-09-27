@@ -2,10 +2,10 @@ package ru.ifmo.fbsat.core.task.single.basic
 
 import com.github.lipen.satlib.card.Cardinality
 import com.github.lipen.satlib.solver.Solver
+import ru.ifmo.fbsat.core.constraints.declareActivePassiveMappingConstraints
 import ru.ifmo.fbsat.core.constraints.declareAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveMappingConstraints
-import ru.ifmo.fbsat.core.constraints.new.declareNewConstraints
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Task
 import ru.ifmo.fbsat.core.utils.Globals
@@ -15,7 +15,7 @@ data class BasicTask(
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int? = null, // K, =C if null
     val maxTransitions: Int? = null, // T, unconstrained if null
-    val isEncodeReverseImplication: Boolean = true,
+    val isEncodeReverseImplication: Boolean = Globals.IS_ENCODE_REVERSE_IMPLICATION,
 ) : Task() {
     override fun Solver.declare_() {
         /* Variables */
@@ -28,11 +28,11 @@ data class BasicTask(
 
         /* Constraints */
         comment("$name: Constraints")
+        declareAutomatonStructureConstraints()
+        if (Globals.IS_BFS_AUTOMATON) declareAutomatonBfsConstraints()
         if (Globals.IS_ENCODE_ACTIVE_PASSIVE) {
-            declareNewConstraints()
+            declareActivePassiveMappingConstraints(isEncodeReverseImplication = isEncodeReverseImplication)
         } else {
-            declareAutomatonStructureConstraints()
-            if (Globals.IS_BFS_AUTOMATON) declareAutomatonBfsConstraints()
             declarePositiveMappingConstraints(isEncodeReverseImplication = isEncodeReverseImplication)
         }
 

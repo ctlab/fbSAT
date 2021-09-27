@@ -1,4 +1,4 @@
-package ru.ifmo.fbsat.core.constraints.new
+package ru.ifmo.fbsat.core.constraints
 
 import com.github.lipen.satlib.core.BoolVarArray
 import com.github.lipen.satlib.core.IntVarArray
@@ -9,14 +9,10 @@ import com.github.lipen.satlib.op.iffAnd
 import com.github.lipen.satlib.op.iffOr
 import com.github.lipen.satlib.op.imply
 import com.github.lipen.satlib.solver.Solver
-import ru.ifmo.fbsat.core.constraints.declareAutomatonBfsConstraints
-import ru.ifmo.fbsat.core.constraints.declareAutomatonStructureConstraintsForInputs
-import ru.ifmo.fbsat.core.constraints.declareAutomatonStructureConstraintsInputless
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.imply2
 import ru.ifmo.fbsat.core.solver.imply3
-import ru.ifmo.fbsat.core.utils.Globals
 
 // Old reduction:
 // fbsat infer extended-min -P 5 -i data\tests-39.gz --glucose --debug
@@ -51,12 +47,14 @@ import ru.ifmo.fbsat.core.utils.Globals
 // [14:16:52] [I] ExtendedTask: declared 19968 variables and 424128 clauses in 0.366 s.
 // [14:17:06] [I] All done in 19.731 seconds
 
-enum class StateAction {
-    Same, Zero, One
-}
+// enum class StateAction {
+//     Same, Zero, One
+// }
 
-fun Solver.declareNewConstraints() {
-    comment("New constraints")
+fun Solver.declareActivePassiveMappingConstraints(
+    isEncodeReverseImplication: Boolean,
+) {
+    comment("Active-passive mapping constraints")
 
     val tree: ScenarioTree<*, *> = context["tree"]
     val V: Int = context["V"]
@@ -91,10 +89,6 @@ fun Solver.declareNewConstraints() {
     //   (passiveMapping[v] = q) <=> (mapping[v] = q) & ~active[v]
     //   ...interaction:
     //   (activeMapping[v] != 0) <=> (passiveMapping[v] = 0)
-
-    declareAutomatonStructureConstraintsInputless()
-    declareAutomatonStructureConstraintsForInputs(1..U, isPositive = true)
-    if (Globals.IS_BFS_AUTOMATON) declareAutomatonBfsConstraints()
 
     // comment("State action semantics")
     // for (c in 1..C)
@@ -289,7 +283,7 @@ fun Solver.declareNewConstraints() {
             )
     }
 
-    if (Globals.IS_ENCODE_REVERSE_IMPLICATION) {
+    if (isEncodeReverseImplication) {
         comment("Mysterious reverse-implication")
         // OR_k(transitionDestination[i,k,j]) => OR_{v}( mapping[p]=i & mapping[v]=j & active[v] )
         for (i in 1..C)
