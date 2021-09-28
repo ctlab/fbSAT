@@ -39,6 +39,8 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isEncodeFf0VarDecl: Boolean by isEncodeFf0VarDeclOption()
     val isEncodeFfNfVarDecl: Boolean by isEncodeFfNfVarDeclOption()
     val isEncodeActivePassive: Boolean by isEncodeActivePassiveOption()
+    val isEncodeEpsilonPassive: Boolean by isEncodeEpsilonPassiveOption()
+    val isEncodeNotEpsilonActive: Boolean by isEncodeNotEpsilonActiveOption()
     val isReuseK: Boolean by isReuseKOption()
     val isUseAssumptions: Boolean by isUseAssumptionsOption()
     val isRenderWithDot: Boolean by isRenderWithDotOption()
@@ -215,6 +217,24 @@ fun ParameterHolder.isEncodeActivePassiveOption() =
     ).flag(
         "--no-encode-active-passive",
         default = Globals.IS_ENCODE_ACTIVE_PASSIVE
+    )
+
+fun ParameterHolder.isEncodeEpsilonPassiveOption() =
+    option(
+        "--encode-epsilon-passive",
+        help = "TODO"
+    ).flag(
+        "--no-encode-epsilon-passive",
+        default = Globals.IS_ENCODE_EPSILON_PASSIVE
+    )
+
+fun ParameterHolder.isEncodeNotEpsilonActiveOption() =
+    option(
+        "--encode-not-epsilon-active",
+        help = "TODO"
+    ).flag(
+        "--no-encode-not-epsilon-active",
+        default = Globals.IS_ENCODE_NOT_EPSILON_ACTIVE
     )
 
 fun ParameterHolder.isReuseKOption() =

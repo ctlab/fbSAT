@@ -13,6 +13,7 @@ import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.imply2
 import ru.ifmo.fbsat.core.solver.imply3
+import ru.ifmo.fbsat.core.utils.Globals
 
 // Old reduction:
 // fbsat infer extended-min -P 5 -i data\tests-39.gz --glucose --debug
@@ -166,14 +167,18 @@ fun Solver.declareActivePassivePositiveMappingConstraints(
             clause(active[v])
         }
 
-        // If output event is epsilon, then the node is definitely passive
-        if (o == 0) {
-            clause(-active[v])
+        if (Globals.IS_ENCODE_EPSILON_PASSIVE) {
+            // If output event is epsilon, then the node is definitely passive
+            if (o == 0) {
+                clause(-active[v])
+            }
         }
 
-        // If output event is not epsilon, then the node is definitely active
-        if (o != 0) {
-            clause(active[v])
+        if (Globals.IS_ENCODE_NOT_EPSILON_ACTIVE) {
+            // If output event is not epsilon, then the node is definitely active
+            if (o != 0) {
+                clause(active[v])
+            }
         }
 
         comment("transitionFunction definition")
