@@ -15,12 +15,12 @@ import com.github.lipen.satlib.op.iffAnd
 import com.github.lipen.satlib.op.iffImply
 import com.github.lipen.satlib.op.iffOr
 import com.github.lipen.satlib.op.imply
-import com.github.lipen.satlib.op.implyAnd
 import com.github.lipen.satlib.op.implyIff
 import com.github.lipen.satlib.op.implyIffAnd
 import com.github.lipen.satlib.op.implyIffIte
 import com.github.lipen.satlib.op.implyImply
 import com.github.lipen.satlib.op.implyImplyImply
+import com.github.lipen.satlib.op.implyImplyOr
 import com.github.lipen.satlib.op.implyOr
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
@@ -770,7 +770,56 @@ private fun Solver.declareMappingConstraintsForActiveNode(
 
     if (isPositive) {
         comment("Positive mapping definition for active node v = $v")
-        // (mapping[v]=c) => (actualTransition[mapping[tp(v)],tie(v),tin(v)]=c) & (stateOutputEvent[c]=toe(v)) & AND_{z}(stateAlgorithm{tov(tp(v),z)}(c,z) = tov(v,z))
+        // (mapping[v] = c) <=> (actualTransition[mapping[tp(v)],tie(v),tin(v)] = c)
+        for (i in 1..C)
+            for (j in 1..C)
+                implyIff(
+                    mapping[p] eq i,
+                    mapping[v] eq j,
+                    actualTransitionFunction[i, e, u] eq j
+                )
+        // (mapping[v] = c) => (stateOutputEvent[c] = toe(v))
+        for (c in 1..C)
+            imply(
+                mapping[v] eq c,
+                stateOutputEvent[c] eq o
+            )
+        // (mapping[v] = c) => AND_{z}(stateAlgorithm{tov(tp(v),z)}[c,z] = tov(v,z))
+        for (c in 1..C)
+            for (z in 1..Z)
+                imply(
+                    mapping[v] eq c,
+                    algorithmChoice(
+                        tree = tree,
+                        v = v, c = c, z = z,
+                        algorithmTop = stateAlgorithmTop,
+                        algorithmBot = stateAlgorithmBot
+                    )
+                )
+    } else {
+        // comment("Negative mapping definition for active node v = $v")
+        // // (mapping[v]=c) <=> (actualTransition[mapping[tp(v)],tie(v),tin(v)]=c) & (stateOutputEvent[c]=toe(v)) & AND_{z}(stateAlgorithm{tov(tp(v),z)}[c,z] = tov(v,z))
+        // for (i in 1..C)
+        //     for (j in 1..C)
+        //         implyIffAnd(
+        //             mapping[p] eq i,
+        //             mapping[v] eq j
+        //         ) {
+        //             yield(actualTransitionFunction[i, e, u] eq j)
+        //             yield(stateOutputEvent[j] eq o)
+        //             for (z in 1..Z)
+        //                 yield(
+        //                     algorithmChoice(
+        //                         tree = tree,
+        //                         v = v, c = j, z = z,
+        //                         algorithmTop = stateAlgorithmTop,
+        //                         algorithmBot = stateAlgorithmBot
+        //                     )
+        //                 )
+        //         }
+
+        comment("Negative mapping definition for active node v = $v")
+        // (mapping[v] = c) => (actualTransition[mapping[tp(v)],tie(v),tin(v)] = c)
         for (i in 1..C)
             for (j in 1..C)
                 implyImply(
@@ -778,39 +827,80 @@ private fun Solver.declareMappingConstraintsForActiveNode(
                     mapping[v] eq j,
                     actualTransitionFunction[i, e, u] eq j
                 )
+        // (mapping[v] = c) => (stateOutputEvent[c] = toe(v))
         for (c in 1..C)
-            implyAnd(mapping[v] eq c) {
-                yield(stateOutputEvent[c] eq o)
-                for (z in 1..Z)
-                    yield(
-                        algorithmChoice(
-                            tree = tree,
-                            v = v, c = c, z = z,
-                            algorithmTop = stateAlgorithmTop,
-                            algorithmBot = stateAlgorithmBot
-                        )
+            imply(
+                mapping[v] eq c,
+                stateOutputEvent[c] eq o
+            )
+        // (mapping[v] = c) => AND_{z}(stateAlgorithm{tov(tp(v),z)}(c,z) = tov(v,z))
+        for (c in 1..C)
+            for (z in 1..Z)
+                imply(
+                    mapping[v] eq c,
+                    algorithmChoice(
+                        tree = tree,
+                        v = v, c = c, z = z,
+                        algorithmTop = stateAlgorithmTop,
+                        algorithmBot = stateAlgorithmBot
                     )
+                )
+        // (mapping[v] = 0) => (
+        //   (actualTransition[mapping[tp(v)],tie(v),tin(v)] = 0)
+        //    \/
+        //   OR_{c} (
+        //     (actualTransition[mapping[tp(v)],tie(v),tin(v)] = c)
+        //      /\
+        //     ((stateOutputEvent[c] != toe(v)) \/ OR_{z} (stateAlgorithm[c,z] != tov(v,z)))
+        //   )
+        // )
+        for (i in 1..C)
+            implyImplyOr(
+                mapping[p] eq i,
+                mapping[v] eq 0
+            ) {
+                yield(actualTransitionFunction[i, e, u] eq 0)
+                for (j in 1..C) {
+                    val internalAux = newLiteral()
+                    iffOr(internalAux) {
+                        yield(stateOutputEvent[j] neq o)
+                        for (z in 1..Z)
+                            yield(
+                                algorithmChoice(
+                                    tree = tree,
+                                    v = v, c = j, z = z,
+                                    algorithmTop = stateAlgorithmTop,
+                                    algorithmBot = stateAlgorithmBot
+                                )
+                            )
+                    }
+
+                    val aux = newLiteral()
+                    iffAnd(
+                        aux,
+                        actualTransitionFunction[i, e, u] eq j,
+                        internalAux
+                    )
+                    yield(aux)
+                }
             }
-    } else {
-        comment("Negative mapping definition for active node v = $v")
-        // (mapping[v]=c) <=> (actualTransition[mapping[tp(v)],tie(v),tin(v)]=c) & (stateOutputEvent[c]=toe(v)) & AND_{z}(stateAlgorithm{tov(tp(v),z)}(c,z) = tov(v,z))
+        // (actualTransition[mapping[tp(v)],tie(v),tin(v)] = c) & (stateOutputEvent[c] = toe(v)) & AND_{z}(stateAlgorithm{tov(tp(v),z)}[c,z] = tov(v,z)) => (mapping[v] = c)
         for (i in 1..C)
             for (j in 1..C)
-                implyIffAnd(
-                    mapping[p] eq i,
-                    mapping[v] eq j
-                ) {
-                    yield(actualTransitionFunction[i, e, u] eq j)
-                    yield(stateOutputEvent[j] eq o)
+                clause {
+                    yield(-(mapping[p] eq i))
+                    yield(-(actualTransitionFunction[i, e, u] eq j))
+                    yield(-(stateOutputEvent[j] eq o))
                     for (z in 1..Z)
                         yield(
-                            algorithmChoice(
+                            -algorithmChoice(
                                 tree = tree,
                                 v = v, c = j, z = z,
                                 algorithmTop = stateAlgorithmTop,
                                 algorithmBot = stateAlgorithmBot
                             )
                         )
+                    yield(mapping[v] eq j)
                 }
     }
 }
@@ -851,7 +941,7 @@ private fun Solver.declareMappingConstraintsForPassiveNode(
             )
 
         comment("Constraining actualTransitionFunction for passive node v = $v")
-        // actualTransition[mapping[tp(v)],tie(v),tin(v)] = 0
+        // (mapping[tp(v)] = c) => (actualTransition[c,tie(v),tin(v)] = 0)
         for (c in 1..C)
             imply(
                 mapping[p] eq c,
@@ -859,7 +949,7 @@ private fun Solver.declareMappingConstraintsForPassiveNode(
             )
     } else {
         comment("Negative mapping propagation for passive node v = $v")
-        // (negMapping[v] = negMapping[tp(v)]) | (negMapping[v] = 0)
+        // (negMapping[tp(v)] = c) => (negMapping[v] = c) \/ (negMapping[v] = 0)
         for (c in 1..C)
             implyOr(
                 mapping[p] eq c,
@@ -868,15 +958,16 @@ private fun Solver.declareMappingConstraintsForPassiveNode(
             )
 
         comment("Constraining negActualTransitionFunction for passive node v = $v")
-        // (negMapping[v] = c) => (negActualTransition[c,tie(v),tin(v)] = 0)
+        // (negMapping[tp(v)] = c) => ((negMapping[v] = c) <=> (negActualTransition[c,tie(v),tin(v)] = 0))
         for (c in 1..C)
-            imply(
+            implyIff(
+                mapping[p] eq c,
                 mapping[v] eq c,
                 actualTransitionFunction[c, e, u] eq 0
             )
-        // (negMapping[v] = 0) => (negActualTransition[mapping[tp(v)],tie(v),tin(v)] != 0)
+        // (negMapping[tp(v)] = c) => ((negMapping[v] = 0) <=> (negActualTransition[c,tie(v),tin(v)] != 0))
         for (c in 1..C)
-            implyImply(
+            implyIff(
                 mapping[p] eq c,
                 mapping[v] eq 0,
                 actualTransitionFunction[c, e, u] neq 0

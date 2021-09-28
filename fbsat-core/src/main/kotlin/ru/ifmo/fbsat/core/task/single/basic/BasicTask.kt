@@ -2,7 +2,7 @@ package ru.ifmo.fbsat.core.task.single.basic
 
 import com.github.lipen.satlib.card.Cardinality
 import com.github.lipen.satlib.solver.Solver
-import ru.ifmo.fbsat.core.constraints.declareActivePassiveMappingConstraints
+import ru.ifmo.fbsat.core.constraints.declareActivePassivePositiveMappingConstraints
 import ru.ifmo.fbsat.core.constraints.declareAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveMappingConstraints
@@ -31,7 +31,7 @@ data class BasicTask(
         declareAutomatonStructureConstraints()
         if (Globals.IS_BFS_AUTOMATON) declareAutomatonBfsConstraints()
         if (Globals.IS_ENCODE_ACTIVE_PASSIVE) {
-            declareActivePassiveMappingConstraints(isEncodeReverseImplication = isEncodeReverseImplication)
+            declareActivePassivePositiveMappingConstraints(isEncodeReverseImplication = isEncodeReverseImplication)
         } else {
             declarePositiveMappingConstraints(isEncodeReverseImplication = isEncodeReverseImplication)
         }

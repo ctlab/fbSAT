@@ -51,10 +51,10 @@ import ru.ifmo.fbsat.core.solver.imply3
 //     Same, Zero, One
 // }
 
-fun Solver.declareActivePassiveMappingConstraints(
+fun Solver.declareActivePassivePositiveMappingConstraints(
     isEncodeReverseImplication: Boolean,
 ) {
-    comment("Active-passive mapping constraints")
+    comment("Active-passive positive mapping constraints")
 
     val tree: ScenarioTree<*, *> = context["tree"]
     val V: Int = context["V"]
