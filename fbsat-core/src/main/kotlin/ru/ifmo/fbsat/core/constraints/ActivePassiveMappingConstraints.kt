@@ -4,49 +4,39 @@ import com.github.lipen.satlib.core.BoolVarArray
 import com.github.lipen.satlib.core.IntVarArray
 import com.github.lipen.satlib.core.eq
 import com.github.lipen.satlib.core.neq
-import com.github.lipen.satlib.core.sign
 import com.github.lipen.satlib.op.iffAnd
 import com.github.lipen.satlib.op.iffOr
 import com.github.lipen.satlib.op.imply
+import com.github.lipen.satlib.op.implyIff
+import com.github.lipen.satlib.op.implyImplyIff
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.imply2
-import ru.ifmo.fbsat.core.solver.imply3
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.algorithmChoice
 
-// Old reduction:
+// Standard reduction:
 // fbsat infer extended-min -P 5 -i data\tests-39.gz --glucose --debug
-// [23:54:36] [I] BasicTask: declared 63900 variables and 305729 clauses in 0.363 s.
-// [23:54:36] [I] BasicMin: C = 8 -> SAT in 0.604 s.
-// [23:54:36] [D] Propagations: 2071667
-// [23:54:36] [D] Conflicts: 411
-// [23:54:36] [D] Decisions: 37311
-// [23:54:36] [I] BasicMin: minimal C = 8
-// [23:54:36] [I] ExtendedTask: declared 19968 variables and 424128 clauses in 0.354 s.
-// [23:54:44] [I] All done in 12.516 seconds
+// [18:28:08] [I] BasicTask: declared 63900 variables and 326593 clauses in 0.462 s.
+// [18:28:09] [I] BasicMin: C = 8 -> SAT in 1.416 s.
+// [18:28:09] [D] Propagations: 11089340
+// [18:28:09] [D] Conflicts: 2380
+// [18:28:09] [D] Decisions: 40045
+// [18:28:09] [I] BasicMin: minimal C = 8
+// [18:28:09] [I] ExtendedTask: declared 19968 variables and 424128 clauses in 0.365 s.
+// [18:28:21] [I] All done in 17.649 seconds
 //
-// New reduction:
+// New active-passive reduction:
 // fbsat infer extended-min -P 5 -i data\tests-39.gz --glucose --debug --encode-active-passive
-// [23:57:22] [I] BasicTask: declared 107932 variables and 766935 clauses in 0.608 s.
-// [23:57:22] [I] BasicMin: C = 8 -> SAT in 1.131 s.
-// [23:57:22] [D] Propagations: 3122233
-// [23:57:22] [D] Conflicts: 705
-// [23:57:22] [D] Decisions: 17120
-// [23:57:22] [I] BasicMin: minimal C = 8
-// [23:57:23] [I] ExtendedTask: declared 19968 variables and 424128 clauses in 0.369 s.
-// [23:57:42] [I] All done in 25.830 seconds
-//
-// New reduction with redundant constraints:
-// fbsat infer extended-min -P 5 -i data\tests-39.gz --glucose --debug --encode-active-passive
-// [14:16:51] [I] BasicTask: declared 107932 variables and 889687 clauses in 0.623 s.
-// [14:16:52] [I] BasicMin: C = 8 -> SAT in 1.382 s.
-// [14:16:52] [D] Propagations: 6056590
-// [14:16:52] [D] Conflicts: 1355
-// [14:16:52] [D] Decisions: 31040
-// [14:16:52] [I] BasicMin: minimal C = 8
-// [14:16:52] [I] ExtendedTask: declared 19968 variables and 424128 clauses in 0.366 s.
-// [14:17:06] [I] All done in 19.731 seconds
+// [18:26:50] [I] BasicTask: declared 107932 variables and 827352 clauses in 0.821 s.
+// [18:26:51] [I] BasicMin: C = 8 -> SAT in 2.039 s.
+// [18:26:51] [D] Propagations: 8868239
+// [18:26:51] [D] Conflicts: 1984
+// [18:26:51] [D] Decisions: 99845
+// [18:26:51] [I] BasicMin: minimal C = 8
+// [18:26:52] [I] ExtendedTask: declared 19968 variables and 424128 clauses in 0.556 s.
+// [18:27:28] [I] All done in 45.277 seconds
 
 // enum class StateAction {
 //     Same, Zero, One
@@ -182,93 +172,47 @@ fun Solver.declareActivePassivePositiveMappingConstraints(
         }
 
         comment("transitionFunction definition")
-        // (mapping[p] = q) & (mapping[v] = q') => (transitionFunction[q,e,u] = q')
+        // (mapping[p] = q) => ((mapping[v] = q') <=> (transitionFunction[q,e,u] = q'))
         for (i in 1..C)
             for (j in 1..C)
-                imply2(
+                implyIff(
                     mapping[p] eq i,
                     mapping[v] eq j,
                     transitionFunction[i, e, u] eq j
                 )
 
-        comment("actualTransitionFunction definition")
-        // (mapping[p] = q) & (mapping[v] = q') & active[v] => (actualTransitionFunction[q,e,u] = q')
+        comment("Positive active-mapping definition for v = $v")
+        // active[v] =>
+        //  (mapping[v] = c) <=> (actualTransition[mapping[tp(v)],tie(v),tin(v)] = c)
         for (i in 1..C)
             for (j in 1..C)
-                imply3(
+                implyImplyIff(
+                    active[v],
                     mapping[p] eq i,
                     mapping[v] eq j,
-                    active[v],
                     actualTransitionFunction[i, e, u] eq j
                 )
-        // (mapping[p] = q) & ~active[v] => (actualTransitionFunction[q,e,u] = 0)
+        // active[v] =>
+        //  (mapping[v] = c) => (stateOutputEvent[c] = toe(v))
         for (c in 1..C)
             imply2(
-                mapping[p] eq c,
-                -active[v],
-                actualTransitionFunction[c, e, u] eq 0
-            )
-        // REDUNDANT?
-        // (mapping[p] = q) & (mapping[v] = q') => (transitionFunction[q,e,u] = q')
-        for (i in 1..C)
-            for (j in 1..C)
-                imply2(
-                    mapping[p] eq i,
-                    mapping[v] eq j,
-                    transitionFunction[i, e, u] eq j
-                )
-
-        comment("Passive mapping propagation")
-        // (mapping[p] = q) & ~active[v] => (mapping[v] = q)
-        for (c in 1..C)
-            imply2(
-                mapping[p] eq c,
-                -active[v],
-                mapping[v] eq c
-            )
-
-        comment("Active mapping semantics: output event")
-        // (mapping[v] = q) & active[v] => (stateOutputEvent[q] = toe(v))
-        for (c in 1..C)
-            imply2(
-                mapping[v] eq c,
                 active[v],
+                mapping[v] eq c,
                 stateOutputEvent[c] eq o
             )
-
-        comment("Active mapping semantics: output values")
-        // (mapping[v] = q) & active[v] => (stateOutputFunction[q,z,tov(p,z)] = tov(v,z))
+        // active[v] =>
+        //  (mapping[v] = c) => AND_{z}(stateAlgorithm{tov(tp(v),z)}[c,z] = tov(v,z))
         for (c in 1..C)
             for (z in 1..Z)
                 imply2(
-                    mapping[v] eq c,
                     active[v],
-                    if (tree.outputValue(p, z)) {
-                        stateAlgorithmTop[c, z]
-                    } else {
-                        stateAlgorithmBot[c, z]
-                    } sign tree.outputValue(v, z)
-                )
-
-        comment("REVERSE transitionFunction/mapping")
-        // (mapping[p] = q) & (transitionFunction[q,e,u] = q') => (mapping[v] = q')
-        for (i in 1..C)
-            for (j in 1..C)
-                imply2(
-                    mapping[p] eq i,
-                    transitionFunction[i, e, u] eq j,
-                    mapping[v] eq j
-                )
-
-        // REDUNDANT?
-        comment("REVERSE actualTransitionFunction/mapping")
-        // (mapping[p] = q) & (actualTransitionFunction[q,e,u] = q') => (mapping[v] = q')
-        for (i in 1..C)
-            for (j in 1..C)
-                imply2(
-                    mapping[p] eq i,
-                    actualTransitionFunction[i, e, u] eq j,
-                    mapping[v] eq j
+                    mapping[v] eq c,
+                    algorithmChoice(
+                        tree = tree,
+                        v = v, c = c, z = z,
+                        algorithmTop = stateAlgorithmTop,
+                        algorithmBot = stateAlgorithmBot
+                    )
                 )
 
         comment("REVERSE actualTransitionFunction/active")
@@ -279,6 +223,26 @@ fun Solver.declareActivePassivePositiveMappingConstraints(
                 actualTransitionFunction[c, e, u] neq 0,
                 active[v]
             )
+
+        comment("Positive passive-mapping definition for v = $v")
+        // ~active[v] =>
+        //  mapping[v] = mapping[tp(v)]
+        for (c in 1..C)
+            imply2(
+                -active[v],
+                mapping[p] eq c,
+                mapping[v] eq c
+            )
+        // ~active[v] =>
+        //  (mapping[tp(v)] = c) => (actualTransition[c,tie(v),tin(v)] = 0)
+        for (c in 1..C)
+            imply2(
+                -active[v],
+                mapping[p] eq c,
+                actualTransitionFunction[c, e, u] eq 0
+            )
+
+        comment("REVERSE actualTransitionFunction/passive")
         // (mapping[p] = q) & (actualTransitionFunction[q,e,u] = 0) => ~active[v]
         for (c in 1..C)
             imply2(
