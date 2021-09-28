@@ -37,6 +37,17 @@ import ru.ifmo.fbsat.core.utils.algorithmChoice
 // [18:26:51] [I] BasicMin: minimal C = 8
 // [18:26:52] [I] ExtendedTask: declared 19968 variables and 424128 clauses in 0.556 s.
 // [18:27:28] [I] All done in 45.277 seconds
+//
+// Active-passive reduction with adhoc flags:
+// fbsat infer extended-min -P 5 -i data\tests-39.gz --glucose --debug --encode-active-passive --encode-epsilon-passive --encode-not-epsilon-active
+// [18:29:44] [I] BasicTask: declared 107932 variables and 828311 clauses in 0.674 s.
+// [18:29:45] [I] BasicMin: C = 8 -> SAT in 1.450 s.
+// [18:29:45] [D] Propagations: 5415239
+// [18:29:45] [D] Conflicts: 1132
+// [18:29:45] [D] Decisions: 32339
+// [18:29:45] [I] BasicMin: minimal C = 8
+// [18:29:45] [I] ExtendedTask: declared 19968 variables and 424128 clauses in 0.332 s.
+// [18:30:02] [I] All done in 24.202 seconds
 
 // enum class StateAction {
 //     Same, Zero, One
