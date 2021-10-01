@@ -214,7 +214,7 @@ fun ParameterHolder.isEncodeFfNfVarDeclOption() =
 fun ParameterHolder.isEncodeActivePassiveOption() =
     option(
         "--encode-active-passive",
-        help = "TODO"
+        help = "Encode eventless mapping"
     ).flag(
         "--no-encode-active-passive",
         default = Globals.IS_ENCODE_ACTIVE_PASSIVE
@@ -223,7 +223,7 @@ fun ParameterHolder.isEncodeActivePassiveOption() =
 fun ParameterHolder.isEncodeTransitionFunctionOption() =
     option(
         "--encode-transition-function",
-        help = "TODO"
+        help = "Encode the transitionFunction"
     ).flag(
         "--no-encode-transition-function",
         default = Globals.IS_ENCODE_TRANSITION_FUNCTION
@@ -232,7 +232,7 @@ fun ParameterHolder.isEncodeTransitionFunctionOption() =
 fun ParameterHolder.isEncodeEpsilonPassiveOption() =
     option(
         "--encode-epsilon-passive",
-        help = "TODO"
+        help = "Encode the constraint 'tree vertex with epsilon output event is definitely passive'"
     ).flag(
         "--no-encode-epsilon-passive",
         default = Globals.IS_ENCODE_EPSILON_PASSIVE
