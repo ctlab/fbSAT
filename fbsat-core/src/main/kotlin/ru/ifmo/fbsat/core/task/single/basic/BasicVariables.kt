@@ -40,8 +40,10 @@ fun Solver.declareBasicVariables(
     /* Core variables */
     comment("Core variables")
     if (Globals.IS_ENCODE_ACTIVE_PASSIVE) {
-        val transitionFunction = context("transitionFunction") {
-            newIntVarArray(C, E, U) { 1..C }
+        if (Globals.IS_ENCODE_TRANSITION_FUNCTION) {
+            val transitionFunction = context("transitionFunction") {
+                newIntVarArray(C, E, U) { 1..C }
+            }
         }
     }
     val actualTransitionFunction = context("actualTransitionFunction") {

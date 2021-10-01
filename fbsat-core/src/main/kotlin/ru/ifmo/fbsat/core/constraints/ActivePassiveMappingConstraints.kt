@@ -64,30 +64,33 @@ fun Solver.declareActivePassivePositiveMappingConstraints(
     val stateOutputEvent: IntVarArray = context["stateOutputEvent"]
     val stateAlgorithmTop: BoolVarArray = context["stateAlgorithmTop"]
     val stateAlgorithmBot: BoolVarArray = context["stateAlgorithmBot"]
-    val transitionFunction: IntVarArray = context["transitionFunction"]
     val actualTransitionFunction: IntVarArray = context["actualTransitionFunction"]
     val transitionDestination: IntVarArray = context["transitionDestination"]
     val mapping: IntVarArray = context["mapping"]
     val active: BoolVarArray = context["active"]
 
-    comment("Transition function definition")
-    // (atf[q,e,u] = q') => (tf[q,e,u] = q')
-    for (i in 1..C)
-        for (e in 1..E)
-            for (u in 1..U)
-                for (j in 1..C)
+    if (Globals.IS_ENCODE_TRANSITION_FUNCTION) {
+        val transitionFunction: IntVarArray = context["transitionFunction"]
+
+        comment("Transition function definition")
+        // (atf[q,e,u] = q') => (tf[q,e,u] = q')
+        for (i in 1..C)
+            for (e in 1..E)
+                for (u in 1..U)
+                    for (j in 1..C)
+                        imply(
+                            actualTransitionFunction[i, e, u] eq j,
+                            transitionFunction[i, e, u] eq j
+                        )
+        // (atf[q,e,u] = 0) => (tf[q,e,u] = q)
+        for (c in 1..C)
+            for (e in 1..E)
+                for (u in 1..U)
                     imply(
-                        actualTransitionFunction[i, e, u] eq j,
-                        transitionFunction[i, e, u] eq j
+                        actualTransitionFunction[c, e, u] eq 0,
+                        transitionFunction[c, e, u] eq c
                     )
-    // (atf[q,e,u] = 0) => (tf[q,e,u] = q)
-    for (c in 1..C)
-        for (e in 1..E)
-            for (u in 1..U)
-                imply(
-                    actualTransitionFunction[c, e, u] eq 0,
-                    transitionFunction[c, e, u] eq c
-                )
+    }
 
     comment("Root maps to the first state")
     clause(mapping[1] eq 1)
@@ -121,15 +124,19 @@ fun Solver.declareActivePassivePositiveMappingConstraints(
             }
         }
 
-        comment("Positive mapping/transitionFunction definition for v = $v")
-        // (mapping[p] = q) => ((mapping[v] = q') <=> (transitionFunction[q,e,u] = q'))
-        for (i in 1..C)
-            for (j in 1..C)
-                implyIff(
-                    mapping[p] eq i,
-                    mapping[v] eq j,
-                    transitionFunction[i, e, u] eq j
-                )
+        if (Globals.IS_ENCODE_TRANSITION_FUNCTION) {
+            val transitionFunction: IntVarArray = context["transitionFunction"]
+
+            comment("Positive mapping/transitionFunction definition for v = $v")
+            // (mapping[p] = q) => ((mapping[v] = q') <=> (transitionFunction[q,e,u] = q'))
+            for (i in 1..C)
+                for (j in 1..C)
+                    implyIff(
+                        mapping[p] eq i,
+                        mapping[v] eq j,
+                        transitionFunction[i, e, u] eq j
+                    )
+        }
 
         comment("Positive active-mapping definition for v = $v")
         // active[v] =>

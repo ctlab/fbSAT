@@ -34,6 +34,7 @@ object Globals {
     var IS_ENCODE_FF_0_VARDECL: Boolean = false
     var IS_ENCODE_FF_NF_VARDECL: Boolean = false
     var IS_ENCODE_ACTIVE_PASSIVE: Boolean = false
+    var IS_ENCODE_TRANSITION_FUNCTION: Boolean = false
     var IS_ENCODE_EPSILON_PASSIVE: Boolean = false
     var IS_ENCODE_NOT_EPSILON_ACTIVE: Boolean = false
     var IS_DEBUG: Boolean = false
