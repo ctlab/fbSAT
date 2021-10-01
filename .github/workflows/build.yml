@@ -12,13 +12,19 @@ jobs:
       - name: Checkout latest code
         uses: actions/checkout@v2
 
-      - name: Set up JDK
-        uses: actions/setup-java@v1
+      - name: Setup Java
+        uses: actions/setup-java@v2
         with:
-          java-version: 8
+          distribution: zulu
+          java-version: 11
 
-      - name: Build with Gradle
-        uses: eskatos/gradle-command-action@v1
+      - name: Setup build cache
+        uses: pat-s/always-upload-cache@v2
         with:
-          arguments: build --stacktrace --scan
-          dependencies-cache-enabled: true
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build project using Gradle
+        run: ./gradlew clean build -x test --stacktrace --scan
