@@ -22,7 +22,7 @@ object Versions {
     const val multiarray = "0.12.0"
     const val okio = "2.9.0"
     const val pretty_print = "2.0.2"
-    const val satlib = "0.23.0"
+    const val satlib = "0.23.2"
     const val shadow = "7.0.0"
     const val xml_builder = "1.7.3"
     const val xmlutil = "0.82.0"
