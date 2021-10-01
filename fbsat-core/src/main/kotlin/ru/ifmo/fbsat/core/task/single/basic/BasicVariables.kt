@@ -85,11 +85,6 @@ fun Solver.declareBasicVariables(
             newBoolVarArray(C, K, E, U)
         }
     }
-    // if (Globals.IS_ENCODE_ACTIVE_PASSIVE) {
-    //     val stateOutputAction = context("stateOutputAction") {
-    //         newDomainVarArray(C, Z) { StateAction.values().asIterable() }
-    //     }
-    // }
     val stateOutputEvent = context("stateOutputEvent") {
         newIntVarArray(C) { 0..O }
     }
@@ -109,9 +104,6 @@ fun Solver.declareBasicVariables(
         val active = context("active") {
             newBoolVarArray(V)
         }
-        // val activeMapping = context("activeMapping") {
-        //     newIntVarArray(V) { 0..C }
-        // }
     }
 
     /* Cardinality */

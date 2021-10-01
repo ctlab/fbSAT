@@ -27,7 +27,7 @@ import ru.ifmo.fbsat.core.utils.algorithmChoice
 // [18:28:09] [I] ExtendedTask: declared 19968 variables and 424128 clauses in 0.365 s.
 // [18:28:21] [I] All done in 17.649 seconds
 //
-// New active-passive reduction:
+// New active-passive reduction: (278bbaf9ac1d6527c135785124f3f508fdef7103)
 // fbsat infer extended-min -P 5 -i data\tests-39.gz --glucose --debug --encode-active-passive
 // [18:26:50] [I] BasicTask: declared 107932 variables and 827352 clauses in 0.821 s.
 // [18:26:51] [I] BasicMin: C = 8 -> SAT in 2.039 s.
@@ -38,7 +38,7 @@ import ru.ifmo.fbsat.core.utils.algorithmChoice
 // [18:26:52] [I] ExtendedTask: declared 19968 variables and 424128 clauses in 0.556 s.
 // [18:27:28] [I] All done in 45.277 seconds
 //
-// Active-passive reduction with adhoc flags:
+// Active-passive reduction with adhoc flags: (278bbaf9ac1d6527c135785124f3f508fdef7103)
 // fbsat infer extended-min -P 5 -i data\tests-39.gz --glucose --debug --encode-active-passive --encode-epsilon-passive --encode-not-epsilon-active
 // [18:29:44] [I] BasicTask: declared 107932 variables and 828311 clauses in 0.674 s.
 // [18:29:45] [I] BasicMin: C = 8 -> SAT in 1.450 s.
@@ -48,10 +48,6 @@ import ru.ifmo.fbsat.core.utils.algorithmChoice
 // [18:29:45] [I] BasicMin: minimal C = 8
 // [18:29:45] [I] ExtendedTask: declared 19968 variables and 424128 clauses in 0.332 s.
 // [18:30:02] [I] All done in 24.202 seconds
-
-// enum class StateAction {
-//     Same, Zero, One
-// }
 
 fun Solver.declareActivePassivePositiveMappingConstraints(
     isEncodeReverseImplication: Boolean,
@@ -63,73 +59,16 @@ fun Solver.declareActivePassivePositiveMappingConstraints(
     val C: Int = context["C"]
     val K: Int = context["K"]
     val E: Int = context["E"]
-    val X: Int = context["X"]
     val Z: Int = context["Z"]
     val U: Int = context["U"]
-    // val stateOutputAction: DomainVarArray<StateAction> = context["stateOutputAction"]
     val stateOutputEvent: IntVarArray = context["stateOutputEvent"]
     val stateAlgorithmTop: BoolVarArray = context["stateAlgorithmTop"]
     val stateAlgorithmBot: BoolVarArray = context["stateAlgorithmBot"]
     val transitionFunction: IntVarArray = context["transitionFunction"]
     val actualTransitionFunction: IntVarArray = context["actualTransitionFunction"]
     val transitionDestination: IntVarArray = context["transitionDestination"]
-    val transitionInputEvent: IntVarArray = context["transitionInputEvent"]
-    val transitionTruthTable: BoolVarArray = context["transitionTruthTable"]
-    val transitionFiring: BoolVarArray = context["transitionFiring"]
-    val firstFired: IntVarArray = context["firstFired"]
-    val notFired: BoolVarArray = context["notFired"]
     val mapping: IntVarArray = context["mapping"]
     val active: BoolVarArray = context["active"]
-    // val activeMapping: IntVarArray = context["activeMapping"]
-    // TODO: active/passive mapping:
-    //   activeMapping = newIntVarArray(V) { 0..C }
-    //   // Note: this 0 is NOT the same as in the negative tree.
-    //   //       What happens in the negative tree is a big open question...
-    //   (activeMapping[v] = q) <=> (mapping[v] = q) & active[v]
-    //   active[v] => (activeMapping[v] != 0)
-    //   ...same for passive:
-    //   (passiveMapping[v] = q) <=> (mapping[v] = q) & ~active[v]
-    //   ...interaction:
-    //   (activeMapping[v] != 0) <=> (passiveMapping[v] = 0)
-
-    // comment("State action semantics")
-    // for (c in 1..C)
-    //     for (z in 1..Z) {
-    //         // Note: 1 is true, 2 is false
-    //
-    //         // (stateOutputAction[c,z] = Same) => stateOutputFunction[c,z,1]
-    //         // (stateOutputAction[c,z] = Same) => ~stateOutputFunction[c,z,2]
-    //         implyAnd(
-    //             stateOutputAction[c, z] eq StateAction.Same,
-    //             stateAlgorithmTop[c, z],
-    //             -stateAlgorithmBot[c, z]
-    //         )
-    //
-    //         // (stateOutputAction[c,z] = Zero) => ~stateOutputFunction[c,z,1]
-    //         // (stateOutputAction[c,z] = Zero) => ~stateOutputFunction[c,z,2]
-    //         implyAnd(
-    //             stateOutputAction[c, z] eq StateAction.Zero,
-    //             -stateAlgorithmTop[c, z],
-    //             -stateAlgorithmBot[c, z]
-    //         )
-    //
-    //         // (stateOutputAction[c,z] = One) => stateOutputFunction[c,z,1]
-    //         // (stateOutputAction[c,z] = One) => stateOutputFunction[c,z,2]
-    //         implyAnd(
-    //             stateOutputAction[c, z] eq StateAction.One,
-    //             stateAlgorithmTop[c, z],
-    //             stateAlgorithmBot[c, z]
-    //         )
-    //
-    //         // TODO: flip
-    //         // (stateOutputAction[c,z] = Flip) => ~stateOutputFunction[c,z,1]
-    //         // (stateOutputAction[c,z] = Flip) => stateOutputFunction[c,z,2]
-    //         // implyAnd(
-    //         //     stateOutputAction[c, z] eq StateAction.Flip,
-    //         //     stateAlgorithmTop[c,z],
-    //         //     stateAlgorithmBot[c,z]
-    //         // )
-    //     }
 
     comment("Transition function definition")
     // (atf[q,e,u] = q') => (tf[q,e,u] = q')
@@ -182,7 +121,7 @@ fun Solver.declareActivePassivePositiveMappingConstraints(
             }
         }
 
-        comment("transitionFunction definition")
+        comment("Positive mapping/transitionFunction definition for v = $v")
         // (mapping[p] = q) => ((mapping[v] = q') <=> (transitionFunction[q,e,u] = q'))
         for (i in 1..C)
             for (j in 1..C)
