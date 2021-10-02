@@ -218,28 +218,28 @@ fun Solver.imply3(x1: Lit, x2: Lit, x3: Lit, x4: Lit) {
 fun Solver.isSupportStats(): Boolean =
     this is MiniSatSolver || this is GlucoseSolver || this is CadicalSolver
 
-fun Solver.numberOfPropagations(): Int = when (this) {
+fun Solver.numberOfPropagations(): Long = when (this) {
     is MiniSatSolver -> backend.numberOfPropagations
     is GlucoseSolver -> backend.numberOfPropagations
-    is CadicalSolver -> backend.numberOfPropagations.toInt()
+    is CadicalSolver -> backend.numberOfPropagations
     else -> error("$this does not support querying the number of propagations")
 }
 
-fun Solver.numberOfConflicts(): Int = when (this) {
+fun Solver.numberOfConflicts(): Long = when (this) {
     is MiniSatSolver -> backend.numberOfConflicts
     is GlucoseSolver -> backend.numberOfConflicts
-    is CadicalSolver -> backend.numberOfConflicts.toInt()
+    is CadicalSolver -> backend.numberOfConflicts
     else -> error("$this does not support querying the number of conflicts")
 }
 
-fun Solver.numberOfDecisions(): Int = when (this) {
+fun Solver.numberOfDecisions(): Long = when (this) {
     is MiniSatSolver -> backend.numberOfDecisions
     is GlucoseSolver -> backend.numberOfDecisions
-    is CadicalSolver -> backend.numberOfDecisions.toInt()
+    is CadicalSolver -> backend.numberOfDecisions
     else -> error("$this does not support querying the number of decisions")
 }
 
-fun Solver.numberOfRestarts(): Int = when (this) {
-    is CadicalSolver -> backend.numberOfRestarts.toInt()
+fun Solver.numberOfRestarts(): Long = when (this) {
+    is CadicalSolver -> backend.numberOfRestarts
     else -> error("$this does not support querying the number of restarts")
 }
