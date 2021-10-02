@@ -42,6 +42,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isEncodeTransitionFunction: Boolean by isEncodeTransitionFunctionOption()
     val isEncodeEpsilonPassive: Boolean by isEncodeEpsilonPassiveOption()
     val isEncodeNotEpsilonActive: Boolean by isEncodeNotEpsilonActiveOption()
+    val isFixActive: Boolean by isFixActiveOption()
     val isReuseK: Boolean by isReuseKOption()
     val isUseAssumptions: Boolean by isUseAssumptionsOption()
     val isRenderWithDot: Boolean by isRenderWithDotOption()
@@ -241,10 +242,19 @@ fun ParameterHolder.isEncodeEpsilonPassiveOption() =
 fun ParameterHolder.isEncodeNotEpsilonActiveOption() =
     option(
         "--encode-not-epsilon-active",
-        help = "TODO"
+        help = "Encode the constraint 'tree vertex with non-epsilon output event is definitely active'"
     ).flag(
         "--no-encode-not-epsilon-active",
         default = Globals.IS_ENCODE_NOT_EPSILON_ACTIVE
+    )
+
+fun ParameterHolder.isFixActiveOption() =
+    option(
+        "--fix-active",
+        help = "Fix active[v] after basic-min"
+    ).flag(
+        "--no-fix-active",
+        default = Globals.IS_FIX_ACTIVE
     )
 
 fun ParameterHolder.isReuseKOption() =

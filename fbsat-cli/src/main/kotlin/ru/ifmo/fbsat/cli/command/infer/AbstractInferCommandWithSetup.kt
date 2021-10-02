@@ -5,7 +5,10 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.MyLogger
 import java.io.File
+
+private val logger = MyLogger {}
 
 abstract class AbstractInferCommandWithSetup<AutomatonType : Any>(name: String) :
     AbstractInferCommand<AutomatonType>(name) {
@@ -22,6 +25,21 @@ abstract class AbstractInferCommandWithSetup<AutomatonType : Any>(name: String) 
     final override fun setup() {
         outDir.mkdirs()
         check(outDir.exists()) { "Output directory does not exist" }
+
+        if (!Globals.IS_ENCODE_ACTIVE_PASSIVE) {
+            if (Globals.IS_ENCODE_TRANSITION_FUNCTION) {
+                logger.warn("IS_ENCODE_TRANSITION_FUNCTION is true, but IS_ENCODE_ACTIVE_PASSIVE is false, so the former has no effect")
+            }
+            if (Globals.IS_ENCODE_EPSILON_PASSIVE) {
+                logger.warn("IS_ENCODE_EPSILON_PASSIVE is true, but IS_ENCODE_ACTIVE_PASSIVE is false, so the former has no effect")
+            }
+            if (Globals.IS_ENCODE_NOT_EPSILON_ACTIVE) {
+                logger.warn("IS_ENCODE_NOT_EPSILON_ACTIVE is true, but IS_ENCODE_ACTIVE_PASSIVE is false, so the former has no effect")
+            }
+            if (Globals.IS_FIX_ACTIVE) {
+                logger.warn("IS_FIX_ACTIVE is true, but IS_ENCODE_ACTIVE_PASSIVE is false, so the former has no effect")
+            }
+        }
 
         Globals.INITIAL_OUTPUT_VALUES = extraOptions.initialOutputValues ?: OutputValues.zeros(outputNames.size)
         val scenarios = if (scenariosFile.extension == "json") {

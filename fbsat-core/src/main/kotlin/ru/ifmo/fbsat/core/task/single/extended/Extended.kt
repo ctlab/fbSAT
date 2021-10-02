@@ -1,9 +1,13 @@
 package ru.ifmo.fbsat.core.task.single.extended
 
+import com.github.lipen.satlib.core.BoolVarArray
+import com.github.lipen.satlib.core.convert
+import com.github.lipen.satlib.core.sign
 import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.buildExtendedAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.isSupportStats
 import ru.ifmo.fbsat.core.solver.numberOfConflicts
 import ru.ifmo.fbsat.core.solver.numberOfDecisions
@@ -67,6 +71,21 @@ fun Inferrer.extendedMin(
     val timeStart = PerformanceCounter.reference
     val automaton = run {
         basicMinC(scenarioTree, start = numberOfStates ?: 1) ?: return@run null
+        if (Globals.IS_ENCODE_ACTIVE_PASSIVE) {
+            if (Globals.IS_FIX_ACTIVE) {
+                logger.info("Fixing found active[v] values")
+                @Suppress("LocalVariableName")
+                with(solver) {
+                    val V: Int = context["V"]
+                    val active: BoolVarArray = context["active"]
+                    val model = getModel()
+                    val activeVal = active.convert(model)
+                    for (v in 1..V) {
+                        clause(active[v] sign activeVal[v])
+                    }
+                }
+            }
+        }
         declare(ExtendedTask(maxGuardSize = maxGuardSize))
         optimizeN()
     }
