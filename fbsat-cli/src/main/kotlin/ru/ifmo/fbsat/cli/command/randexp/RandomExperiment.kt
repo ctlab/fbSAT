@@ -288,7 +288,7 @@ data class ExperimentResult(
         val automaton: Automaton?, // inferred
         val forwardCheck: Int, // 0 if automaton is null
         val time: Double,
-        val solverStats: Map<String, Int>,
+        val solverStats: Map<String, Long>,
     ) {
         @Serializable
         enum class Status {
@@ -381,7 +381,7 @@ fun runExperiment(
     }
     val timeInfer = timeSince(timeInferStart)
 
-    val solverStats: MutableMap<String, Int> = mutableMapOf()
+    val solverStats: MutableMap<String, Long> = mutableMapOf()
     when (solver) {
         is MiniSatSolver -> {
             solverStats["propagations"] = solver.backend.numberOfPropagations
@@ -394,11 +394,10 @@ fun runExperiment(
             solverStats["decisions"] = solver.backend.numberOfDecisions
         }
         is CadicalSolver -> {
-            // TODO: fix type - properties are `Long`, but solverStats have to contain `Int`s
-            solverStats["conflicts"] = solver.backend.numberOfConflicts.toInt()
-            solverStats["decisions"] = solver.backend.numberOfDecisions.toInt()
-            solverStats["restarts"] = solver.backend.numberOfRestarts.toInt()
-            solverStats["propagations"] = solver.backend.numberOfPropagations.toInt()
+            solverStats["conflicts"] = solver.backend.numberOfConflicts
+            solverStats["decisions"] = solver.backend.numberOfDecisions
+            solverStats["restarts"] = solver.backend.numberOfRestarts
+            solverStats["propagations"] = solver.backend.numberOfPropagations
         }
         else -> {
             logger.debug { "$solver does not support querying statistics" }
