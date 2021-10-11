@@ -121,8 +121,7 @@ fun Inferrer.completeMin__(
     maxTransitions: Int? = null, // T_sum, unconstrained if null
     startD: Int = 1,
 ): DistributedAutomaton? {
-    // for (D in startD..100) {
-    for (D in startD..5) {
+    for (D in startD..30) {
         logger.info("Trying D = $D...")
         // val automaton = completeMin_(
         //     numberOfModules = numberOfModules,
