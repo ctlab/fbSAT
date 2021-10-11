@@ -11,7 +11,6 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.utils.MyLogger
-import ru.ifmo.fbsat.core.utils.multiArrayOf
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.timeSince
@@ -64,7 +63,7 @@ fun Inferrer.distributedCegis2(
             // modularNumberOfStates = modularNumberOfStates,
             // modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
             modularMaxGuardSize = modularMaxGuardSize,
-            modularInitialOutputValues=modularInitialOutputValues,
+            modularInitialOutputValues = modularInitialOutputValues,
             startD = D
         )
         if (automaton == null) {
