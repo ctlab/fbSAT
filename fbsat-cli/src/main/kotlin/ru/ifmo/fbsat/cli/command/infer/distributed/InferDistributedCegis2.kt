@@ -8,6 +8,7 @@ import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.file
+import com.github.ajalt.clikt.parameters.types.int
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.cli.command.infer.options.AUTOMATON_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.ExtraOptions
@@ -87,6 +88,13 @@ fun ParameterHolder.multiInitialOutputValuesOption() =
         OutputValues(it.map { c -> c == '1' })
     }.multiple()
 
+fun ParameterHolder.numberD() =
+    option(
+        "-D",
+        help = "TODO",
+        metavar = "<int>"
+    ).int()
+
 private class DistributedCegis2InputOutputOptions : OptionGroup(INPUT_OUTPUT_OPTIONS) {
     val multiScenariosFile: List<File> by multiScenariosFileOption()
     val moduleNames: List<String> by moduleNamesOption()
@@ -100,6 +108,7 @@ private class DistributedCegis2AutomatonOptions : OptionGroup(AUTOMATON_OPTIONS)
     val numberOfModules: Int by numberOfModulesOption().required()
     val multiMaxGuardSize: List<Int> by maxGuardSizeOption().multiple(required = true)
     val multiInitialOutputValues: List<OutputValues?> by multiInitialOutputValuesOption()
+    val numberD: Int? by numberD()
 }
 
 class InferDistributedCegis2Command : AbstractInferDistributedModularCommand("distributed-cegis2") {
@@ -151,7 +160,8 @@ class InferDistributedCegis2Command : AbstractInferDistributedModularCommand("di
                     vs ?: OutputValues.zeros(modularOutputNames[i + 1].size)
                 }.toMultiArray()
             },
-            smvDir = io.smvDir
+            smvDir = io.smvDir,
+            startD = params.numberD ?: 1,
         )
     }
 }
