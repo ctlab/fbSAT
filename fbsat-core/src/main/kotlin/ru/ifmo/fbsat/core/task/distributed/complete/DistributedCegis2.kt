@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.core.task.distributed.complete
 
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.multiarray.map
 import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.InputEvent
@@ -91,7 +92,7 @@ fun Inferrer.distributedCegis2(
         // Verify automaton with NuSMV
         val counterexamples = automaton.verifyWithNuSMV(
             dir = outDir,
-            modularModuleName = modularModuleName
+            modularModuleName = modularModuleName.map { it.capitalize() }
         )
         if (counterexamples.isEmpty()) {
             logger.info("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
