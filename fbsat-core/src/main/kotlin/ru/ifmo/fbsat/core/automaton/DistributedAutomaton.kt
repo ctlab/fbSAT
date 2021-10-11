@@ -276,13 +276,14 @@ class DistributedAutomaton(
      * @return `true` if **all** scenarios are satisfied.
      */
     fun verify(modularScenarioTree: ModularScenarioTree): Boolean {
+        var ok = true
         for (m in 1..M) {
             if (!modules[m].verify(modularScenarioTree[m])) {
                 logger.error("Scenario tree verification failed for m = $m")
-                return false
+                ok = false
             }
         }
-        return true
+        return ok
     }
 
     fun dumpSmv(outDir: File, modularModuleName: MultiArray<String>) {

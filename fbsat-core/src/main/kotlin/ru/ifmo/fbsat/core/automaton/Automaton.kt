@@ -330,7 +330,7 @@ class Automaton(
         out@ for ((i, result) in eval(scenario).withIndex()) {
             val element = scenario.elements[i]
             if (result.outputAction != element.outputAction) {
-                // log.error("No mapping for ${i + 1}-th element = $element, result = $result")
+                // logger.error("No mapping for ${i + 1}-th element = $element, result = $result")
                 break@out
             }
             mapping[i] = result
