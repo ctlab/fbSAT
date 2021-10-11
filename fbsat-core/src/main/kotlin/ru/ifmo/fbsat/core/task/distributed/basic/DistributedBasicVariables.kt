@@ -21,20 +21,20 @@ private val logger = MyLogger {}
 @Suppress("LocalVariableName")
 fun Solver.declareDistributedBasicVariables(
     M: Int,
-    compoundScenarioTree: PositiveCompoundScenarioTree,
-    modularScenarioTree: MultiArray<PositiveScenarioTree> = compoundScenarioTree.modular,
+    // compoundScenarioTree: PositiveCompoundScenarioTree,
+    modularScenarioTree: MultiArray<PositiveScenarioTree>, // = compoundScenarioTree.modular,
     modularC: MultiArray<Int>,
     modularK: MultiArray<Int>,
-    modularV: MultiArray<Int> = compoundScenarioTree.modular.map { it.size },
-    modularE: MultiArray<Int> = compoundScenarioTree.modular.map { it.inputEvents.size },
-    modularO: MultiArray<Int> = compoundScenarioTree.modular.map { it.outputEvents.size },
-    modularX: MultiArray<Int> = compoundScenarioTree.modular.map { it.inputNames.size },
-    modularZ: MultiArray<Int> = compoundScenarioTree.modular.map { it.outputNames.size },
-    modularU: MultiArray<Int> = compoundScenarioTree.modular.map { it.uniqueInputs.size },
+    modularV: MultiArray<Int> = modularScenarioTree.map { it.size },
+    modularE: MultiArray<Int> = modularScenarioTree.map { it.inputEvents.size },
+    modularO: MultiArray<Int> = modularScenarioTree.map { it.outputEvents.size },
+    modularX: MultiArray<Int> = modularScenarioTree.map { it.inputNames.size },
+    modularZ: MultiArray<Int> = modularScenarioTree.map { it.outputNames.size },
+    modularU: MultiArray<Int> = modularScenarioTree.map { it.uniqueInputs.size },
 ) {
     context["M"] = M
-    context["compoundScenarioTree"] = compoundScenarioTree
-    context["compoundTree"] = compoundScenarioTree
+    // context["compoundScenarioTree"] = compoundScenarioTree
+    // context["compoundTree"] = compoundScenarioTree
     context["modularScenarioTree"] = modularScenarioTree
     context["modularTree"] = modularScenarioTree
     context["modularC"] = modularC

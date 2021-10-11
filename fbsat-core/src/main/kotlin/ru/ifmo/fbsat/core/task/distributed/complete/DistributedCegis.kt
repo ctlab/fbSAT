@@ -10,7 +10,6 @@ import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
 import ru.ifmo.fbsat.core.scenario.negative.readCounterexamplesFromFile
-import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask
@@ -26,9 +25,10 @@ import java.io.File
 
 private val logger = MyLogger {}
 
+@Deprecated("Consider using distributedCegis2")
 fun Inferrer.distributedCegis(
     numberOfModules: Int, // M
-    compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
+    // compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
     modularScenarioTree: MultiArray<PositiveScenarioTree>,
     negativeCompoundScenarioTree: NegativeCompoundScenarioTree? = null,
     modularNumberOfStates: MultiArray<Int>, // [C]
@@ -45,7 +45,7 @@ fun Inferrer.distributedCegis(
     declare(
         DistributedBasicTask(
             numberOfModules = numberOfModules,
-            compoundScenarioTree = compoundScenarioTree,
+            // compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = modularScenarioTree,
             modularNumberOfStates = modularNumberOfStates,
             modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
@@ -71,6 +71,7 @@ fun Inferrer.distributedCegis(
     return performDistributedCegis(smvDir)
 }
 
+@Deprecated("Consider using distributedCegis2")
 @Suppress("DuplicatedCode")
 fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
     logger.info("Performing distributed CEGIS...")
@@ -86,7 +87,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
 
     // =====
     val M: Int = solver.context["M"]
-    val modularName = multiArrayOf(
+    val modularModuleName = multiArrayOf(
         "sender",
         "receiver"
     )
@@ -126,7 +127,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
         // ==============
         for (m in 1..M) {
             // Dump intermediate automaton
-            automaton.project(m).dump(outDir, "_${modularName[m]}_iter%04d".format(iterationNumber))
+            automaton.project(m).dump(outDir, "_${modularModuleName[m]}_iter%04d".format(iterationNumber))
             // Print intermediate automaton
             logger.info("Intermediate inferred automaton (module $m):")
             automaton.project(m).pprint()
@@ -205,7 +206,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
             NegativeCompoundScenario.fromCounterexample(
                 counterexample = it,
                 M = M,
-                modularName = modularName,
+                modularModuleName = modularModuleName,
                 modularInputEvents = modularInputEvents,
                 modularOutputEvents = modularOutputEvents,
                 modularInputNames = modularInputNames,

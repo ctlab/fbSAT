@@ -22,7 +22,6 @@ import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.multiArrayOf
 import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.timeSince
-import ru.ifmo.fbsat.core.utils.toMultiArray
 import java.io.File
 
 private val logger = MyLogger {}
@@ -33,7 +32,7 @@ fun main() {
     val timeStart = PerformanceCounter.reference
 
     val M = 2
-    val modularName = multiArrayOf(
+    val modularModuleName = multiArrayOf(
         "sender",
         "receiver"
     )
@@ -65,7 +64,6 @@ fun main() {
     // Globals.IS_BFS_AUTOMATON = false
     // Globals.IS_BFS_GUARD = false
     Globals.IS_DEBUG = true
-    Globals.modularName = listOf("sender", "receiver").toMultiArray()
 
     // val fileTraces = File("data/abp-take/trace.xml")
     // val fileTraces = File("data/abp-take/trace_100_50.xml")
@@ -77,7 +75,7 @@ fun main() {
         PositiveCompoundScenario.fromCounterexample(
             counterexample = trace,
             M = M,
-            modularName = modularName,
+            modularModuleName = modularModuleName,
             modularInputEvents = modularInputEvents,
             modularOutputEvents = modularOutputEvents,
             modularInputNames = modularInputNames,
@@ -117,18 +115,18 @@ fun main() {
     //                 ScenarioElement(
     //                     inputAction = InputAction(
     //                         event = modularInputEvents[m].firstOrNull {
-    //                             inputData.getValue("${modularName[m]}$${it.name}")
+    //                             inputData.getValue("${modularModuleName[m]}$${it.name}")
     //                         },
     //                         values = InputValues(modularInputNames[m].map {
-    //                             inputData.getValue("${modularName[m]}$$it")
+    //                             inputData.getValue("${modularModuleName[m]}$$it")
     //                         })
     //                     ),
     //                     outputAction = OutputAction(
     //                         event = modularOutputEvents[m].firstOrNull {
-    //                             outputData.getValue("${modularName[m]}.${it.name}")
+    //                             outputData.getValue("${modularModuleName[m]}.${it.name}")
     //                         },
     //                         values = OutputValues(modularOutputNames[m].map {
-    //                             outputData.getValue("${modularName[m]}.$it")
+    //                             outputData.getValue("${modularModuleName[m]}.$it")
     //                         })
     //                     )
     //                 )
@@ -184,7 +182,7 @@ fun main() {
     //     val negativeScenario = NegativeCompoundScenario.fromCounterexample(
     //         counterexample = ce,
     //         M = M,
-    //         modularName = modularName,
+    //         modularModuleName = modularModuleName,
     //         modularInputEvents = modularInputEvents,
     //         modularOutputEvents = modularOutputEvents,
     //         modularInputNames = modularInputNames,
@@ -220,7 +218,7 @@ fun main() {
     //         NegativeCompoundScenario.fromCounterexample(
     //             counterexample = ce,
     //             M = 1,
-    //             modularName = modularName,
+    //             modularModuleName = modularModuleName,
     //             modularInputEvents = modularInputEvents,
     //             modularOutputEvents = modularOutputEvents,
     //             modularInputNames = modularInputNames,
@@ -308,9 +306,14 @@ fun main() {
     // )
     val distributedAutomaton = inferrer.distributedCegis2(
         numberOfModules = M,
-        compoundScenarioTree = positiveCompoundScenarioTree,
+        // compoundScenarioTree = positiveCompoundScenarioTree,
         modularScenarioTree = positiveCompoundScenarioTree.modular,
         // negativeCompoundScenarioTree = negativeCompoundScenarioTree,
+        modularModuleName = modularModuleName,
+        modularInputEvents = modularInputEvents,
+        modularOutputEvents = modularOutputEvents,
+        modularInputNames = modularInputNames,
+        modularOutputNames = modularOutputNames,
         // modularNumberOfStates = multiArrayOf(C1, C2),
         // modularMaxOutgoingTransitions = multiArrayOf(K1, K2),
         modularMaxGuardSize = multiArrayOf(P1, P2),
@@ -339,7 +342,7 @@ fun main() {
 
         for (m in 1..M) {
             val automaton = distributedAutomaton.project(m)
-            val name = modularName[m]
+            val name = modularModuleName[m]
             logger.info("Inferred $name:")
             automaton.pprint()
             logger.info(

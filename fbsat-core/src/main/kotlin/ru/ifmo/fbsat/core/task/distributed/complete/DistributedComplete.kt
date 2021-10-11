@@ -21,7 +21,7 @@ private val logger = MyLogger {}
 
 fun Inferrer.distributedComplete(
     numberOfModules: Int, // M
-    compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
+    // compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
     modularScenarioTree: MultiArray<PositiveScenarioTree>,
     negativeCompoundScenarioTree: NegativeCompoundScenarioTree? = null,
     modularNumberOfStates: MultiArray<Int>, // [C]
@@ -37,7 +37,7 @@ fun Inferrer.distributedComplete(
     declare(
         DistributedBasicTask(
             numberOfModules = numberOfModules,
-            compoundScenarioTree = compoundScenarioTree,
+            // compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = modularScenarioTree,
             modularNumberOfStates = modularNumberOfStates,
             modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
@@ -65,7 +65,7 @@ fun Inferrer.distributedComplete(
 
 fun Inferrer.completeMin_(
     numberOfModules: Int, // M
-    compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
+    // compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
     modularScenarioTree: MultiArray<PositiveScenarioTree>,
     negativeCompoundScenarioTree: NegativeCompoundScenarioTree? = null,
     modularNumberOfStates: MultiArray<Int>, // [C]
@@ -79,7 +79,7 @@ fun Inferrer.completeMin_(
     declare(
         DistributedBasicTask(
             numberOfModules = numberOfModules,
-            compoundScenarioTree = compoundScenarioTree,
+            // compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = modularScenarioTree,
             modularNumberOfStates = modularNumberOfStates,
             modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
@@ -105,7 +105,7 @@ fun Inferrer.completeMin_(
 
 fun Inferrer.completeMin__(
     numberOfModules: Int, // M
-    compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
+    // compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
     modularScenarioTree: MultiArray<PositiveScenarioTree>,
     negativeCompoundScenarioTree: NegativeCompoundScenarioTree? = null,
     // modularNumberOfStates: MultiArray<Int>, // [C]
@@ -132,7 +132,7 @@ fun Inferrer.completeMin__(
         // )
         val automaton = distributedComplete(
             numberOfModules = numberOfModules,
-            compoundScenarioTree = compoundScenarioTree,
+            // compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = modularScenarioTree,
             negativeCompoundScenarioTree = negativeCompoundScenarioTree,
             modularNumberOfStates = MultiArray.new(numberOfModules) { D },
@@ -151,7 +151,7 @@ fun Inferrer.completeMin__(
             // log.info("modularNumberOfStates = ${automatonMinSumC.modules.map { it.numberOfStates }.values}")
             val reinferred = distributedComplete(
                 numberOfModules = numberOfModules,
-                compoundScenarioTree = compoundScenarioTree,
+                // compoundScenarioTree = compoundScenarioTree,
                 modularScenarioTree = modularScenarioTree,
                 negativeCompoundScenarioTree = negativeCompoundScenarioTree,
                 modularNumberOfStates = automatonMinSumC.modules.map { it.numberOfReachableStates },

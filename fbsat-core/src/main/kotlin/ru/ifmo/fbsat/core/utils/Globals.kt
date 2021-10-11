@@ -47,7 +47,6 @@ object Globals {
     var IS_RENDER_WITH_DOT: Boolean = true
     val xmlPrintOptions: PrintOptions =
         PrintOptions(pretty = true, singleLineTextElements = true, useSelfClosingTags = true)
-    var modularName: MultiArray<String> by Delegates.notNull()
     var ICMS_CMD: String = "incremental-cryptominisat"
     var MINISAT_SIMP_STRATEGY: MiniSatSolver.Companion.SimpStrategy? = null
     var GLUCOSE_SIMP_STRATEGY: GlucoseSolver.Companion.SimpStrategy? = null

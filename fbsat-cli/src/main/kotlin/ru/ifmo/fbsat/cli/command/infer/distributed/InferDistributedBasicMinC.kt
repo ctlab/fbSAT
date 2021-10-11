@@ -46,7 +46,7 @@ class InferDistributedBasicMinCCommand : AbstractInferDistributedCommand("distri
         val M = params.numberOfModules
         return inferrer.distributedBasicMinC(
             numberOfModules = M,
-            compoundScenarioTree = compoundScenarioTree,
+            // compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = compoundScenarioTree.modular,
             modularIsEncodeReverseImplication = MultiArray.new(M) { extraOptions.isEncodeReverseImplication }
         )

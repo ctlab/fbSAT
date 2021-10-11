@@ -56,7 +56,7 @@ class InferDistributedBasicCommand : AbstractInferDistributedCommand("distribute
         val T = params.maxTransitions
         return inferrer.distributedBasic(
             numberOfModules = M,
-            compoundScenarioTree = compoundScenarioTree,
+            // compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = compoundScenarioTree.modular,
             modularNumberOfStates = MultiArray.new(M) { C },
             modularMaxOutgoingTransitions = MultiArray.new(M) { K },

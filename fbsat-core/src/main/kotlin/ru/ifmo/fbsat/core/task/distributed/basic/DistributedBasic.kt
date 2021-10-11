@@ -5,7 +5,6 @@ import com.github.lipen.multiarray.map
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.buildBasicDistributedAutomaton
-import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumC
@@ -16,8 +15,8 @@ private val logger = MyLogger {}
 
 fun Inferrer.distributedBasic(
     numberOfModules: Int, // M
-    compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
-    modularScenarioTree: MultiArray<PositiveScenarioTree> = compoundScenarioTree.modular,
+    // compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
+    modularScenarioTree: MultiArray<PositiveScenarioTree>, // = compoundScenarioTree.modular,
     modularNumberOfStates: MultiArray<Int>, // [C]
     modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
@@ -28,7 +27,7 @@ fun Inferrer.distributedBasic(
     declare(
         DistributedBasicTask(
             numberOfModules = numberOfModules,
-            compoundScenarioTree = compoundScenarioTree,
+            // compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = modularScenarioTree,
             modularNumberOfStates = modularNumberOfStates,
             modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
@@ -42,8 +41,8 @@ fun Inferrer.distributedBasic(
 
 fun Inferrer.distributedBasicMinC(
     numberOfModules: Int, // M
-    compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
-    modularScenarioTree: MultiArray<PositiveScenarioTree> = compoundScenarioTree.modular,
+    // compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
+    modularScenarioTree: MultiArray<PositiveScenarioTree>, // = compoundScenarioTree.modular,
     // modularStartNumberOfStates: MultiArray<Int> = MultiArray.new(numberOfModules){1}, // C_start
     // modularEndNumberOfStates: MultiArray<Int> = MultiArray.new(numberOfModules){20}, // C_end
     start: Int = 1, // C_start
@@ -57,8 +56,8 @@ fun Inferrer.distributedBasicMinC(
         val (result, runningTime) = measureTimeWithResult {
             distributedBasic(
                 numberOfModules = M,
-                compoundScenarioTree = compoundScenarioTree,
-                modularScenarioTree = compoundScenarioTree.modular,
+                // compoundScenarioTree = compoundScenarioTree,
+                modularScenarioTree = modularScenarioTree,
                 modularNumberOfStates = MultiArray.new(M) { C },
                 modularIsEncodeReverseImplication = modularIsEncodeReverseImplication
             )
