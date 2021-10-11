@@ -6,6 +6,7 @@ import okio.source
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
@@ -37,6 +38,7 @@ fun Inferrer.distributedCegis(
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     modularMaxTotalGuardsSize: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [N]
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
+    modularInitialOutputValues: MultiArray<OutputValues>,
     maxTransitions: Int? = null, // T_sum, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N_sum, unconstrained if null
     smvDir: File,
@@ -51,6 +53,7 @@ fun Inferrer.distributedCegis(
             modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
             modularMaxTransitions = modularMaxTransitions,
             modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
+            modularInitialOutputValues = modularInitialOutputValues,
             maxTransitions = maxTransitions
         )
     )
@@ -247,7 +250,10 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
     return null
 }
 
-fun DistributedAutomaton.verifyWithNuSMV(dir: File, modularModuleName: MultiArray<String>): List<THE_Counterexample> {
+fun DistributedAutomaton.verifyWithNuSMV(
+    dir: File,
+    modularModuleName: MultiArray<String>,
+): List<THE_Counterexample> {
     // Save automaton to smv directory
     dumpSmv(dir, modularModuleName)
 

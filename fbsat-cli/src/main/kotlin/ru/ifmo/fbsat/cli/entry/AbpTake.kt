@@ -50,6 +50,9 @@ fun main() {
         listOf("done", "packet", "output_bit"),
         listOf("deliver", "acknowledge", "output_bit")
     )
+    val modularInitialOutputValues = MultiArray.new(M) { (m) ->
+        OutputValues.zeros(modularOutputNames[m].size)
+    }
     val solver: Solver = MiniSatSolver()
     val outDir = File("out/abp-take2")
     // val outDir = File("out/abp-100x50-all")
@@ -319,6 +322,7 @@ fun main() {
         modularMaxGuardSize = multiArrayOf(P1, P2),
         // modularMaxTransitions = multiArrayOf(T1, T2),
         // modularMaxTotalGuardsSize = multiArrayOf(N1, N2),
+        modularInitialOutputValues = modularInitialOutputValues,
         smvDir = File("data/abp-take/smv")
     )
     // val distributedAutomaton = inferrer.distributedCegis2(

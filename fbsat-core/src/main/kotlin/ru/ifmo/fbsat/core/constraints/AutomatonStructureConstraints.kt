@@ -15,6 +15,7 @@ import com.github.lipen.satlib.op.imply
 import com.github.lipen.satlib.op.implyAnd
 import com.github.lipen.satlib.op.implyOr
 import com.github.lipen.satlib.solver.Solver
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.solver.autoneg
 import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.forEachModularContext
@@ -177,6 +178,7 @@ internal fun Solver.declareAutomatonStructureConstraintsInputless() {
     val stateAlgorithmBot: BoolVarArray = context["stateAlgorithmBot"]
     val transitionDestination: IntVarArray = context["transitionDestination"]
     val transitionInputEvent: IntVarArray = context["transitionInputEvent"]
+    val initialOutputValues: OutputValues = context["initialOutputValues"]
 
     when (Globals.EPSILON_OUTPUT_EVENTS) {
         EpsilonOutputEvents.START -> {
@@ -222,7 +224,7 @@ internal fun Solver.declareAutomatonStructureConstraintsInputless() {
         StartStateAlgorithms.INIT -> {
             comment("Start state algorithms are the same as init state algorithms")
             for (z in 1..Z) {
-                val initVal = Globals.INITIAL_OUTPUT_VALUES[z - 1]
+                val initVal = initialOutputValues[z - 1]
                 val botLiteral = stateAlgorithmBot[1, z]
                 val topLiteral = stateAlgorithmTop[1, z]
                 clause(if (initVal) botLiteral else -botLiteral)
@@ -232,7 +234,7 @@ internal fun Solver.declareAutomatonStructureConstraintsInputless() {
         StartStateAlgorithms.INITNOTHING -> {
             comment("Start state does not change initial values")
             for (z in 1..Z) {
-                val initVal = Globals.INITIAL_OUTPUT_VALUES[z - 1]
+                val initVal = initialOutputValues[z - 1]
                 if (initVal)
                     clause(stateAlgorithmTop[1, z])
                 else

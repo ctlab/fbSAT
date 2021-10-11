@@ -325,7 +325,8 @@ fun buildBasicParallelModularAutomaton(
             inputEvents = scenarioTree.inputEvents,
             outputEvents = scenarioTree.outputEvents,
             inputNames = scenarioTree.inputNames,
-            outputNames = moduleOutputVariables.map { z -> scenarioTree.outputNames[z - 1] }
+            outputNames = moduleOutputVariables.map { z -> scenarioTree.outputNames[z - 1] },
+            initialOutputValues = OutputValues.zeros(Z) // FIXME
         ).endow(
             C = C, K = K,
             stateOutputEvent = { c ->
@@ -386,12 +387,14 @@ fun buildExtendedParallelModularAutomaton(
         val nodeParent = ctx.convertIntVarArray("nodeParent", model)
         val nodeChild = ctx.convertIntVarArray("nodeChild", model)
         val moduleOutputVariables = (1..Z).filter { z -> moduleControllingOutputVariable[z] == m }
+        val initialOutputValues: OutputValues = ctx["initialOutputValues"]
 
         Automaton(
             scenarioTree.inputEvents,
             scenarioTree.outputEvents,
             scenarioTree.inputNames,
-            moduleOutputVariables.map { z -> scenarioTree.outputNames[z - 1] }
+            moduleOutputVariables.map { z -> scenarioTree.outputNames[z - 1] },
+            initialOutputValues = initialOutputValues
         ).endow(
             C = C, K = K,
             stateOutputEvent = { c ->

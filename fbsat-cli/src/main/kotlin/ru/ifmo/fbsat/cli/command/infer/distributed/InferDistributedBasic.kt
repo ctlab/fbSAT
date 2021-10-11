@@ -20,6 +20,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.outputNamesOption
 import ru.ifmo.fbsat.cli.command.infer.options.scenariosFileOption
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.task.distributed.basic.distributedBasic
+import ru.ifmo.fbsat.core.utils.Globals
 import java.io.File
 
 private class DistributedBasicInputOutputOptions : OptionGroup(INPUT_OUTPUT_OPTIONS) {
@@ -61,7 +62,8 @@ class InferDistributedBasicCommand : AbstractInferDistributedCommand("distribute
             modularNumberOfStates = MultiArray.new(M) { C },
             modularMaxOutgoingTransitions = MultiArray.new(M) { K },
             modularMaxTransitions = MultiArray.new(M) { T }, // for now
-            modularIsEncodeReverseImplication = MultiArray.new(M) { extraOptions.isEncodeReverseImplication }
+            modularIsEncodeReverseImplication = MultiArray.new(M) { extraOptions.isEncodeReverseImplication },
+            modularInitialOutputValues = MultiArray.new(M) { Globals.INITIAL_OUTPUT_VALUES }, // TODO
             // maxTransitions = T
         )
     }

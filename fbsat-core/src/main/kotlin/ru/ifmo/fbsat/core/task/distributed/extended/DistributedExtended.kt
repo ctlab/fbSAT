@@ -3,6 +3,7 @@ package ru.ifmo.fbsat.core.task.distributed.extended
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.buildExtendedDistributedAutomaton
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask
@@ -18,6 +19,7 @@ fun Inferrer.distributedExtended(
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     modularMaxTotalGuardsSize: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [N]
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
+    modularInitialOutputValues: MultiArray<OutputValues>,
     maxTransitions: Int? = null, // T_sum, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N_sum, unconstrained if null
 ): DistributedAutomaton? {
@@ -31,6 +33,7 @@ fun Inferrer.distributedExtended(
             modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
             modularMaxTransitions = modularMaxTransitions,
             modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
+            modularInitialOutputValues = modularInitialOutputValues,
             maxTransitions = maxTransitions
         )
     )

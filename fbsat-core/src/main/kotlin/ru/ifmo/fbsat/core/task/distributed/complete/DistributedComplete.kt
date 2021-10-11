@@ -4,8 +4,8 @@ import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.buildExtendedDistributedAutomaton
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
-import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask
@@ -30,6 +30,7 @@ fun Inferrer.distributedComplete(
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     modularMaxTotalGuardsSize: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [N]
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
+    modularInitialOutputValues: MultiArray<OutputValues>,
     maxTransitions: Int? = null, // T_sum, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N_sum, unconstrained if null
 ): DistributedAutomaton? {
@@ -43,6 +44,7 @@ fun Inferrer.distributedComplete(
             modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
             modularMaxTransitions = modularMaxTransitions,
             modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
+            modularInitialOutputValues = modularInitialOutputValues,
             maxTransitions = maxTransitions
         )
     )
@@ -73,6 +75,7 @@ fun Inferrer.completeMin_(
     modularMaxGuardSize: MultiArray<Int>, // [P]
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
+    modularInitialOutputValues: MultiArray<OutputValues>,
     maxTransitions: Int? = null, // T_sum, unconstrained if null
 ): DistributedAutomaton? {
     reset()
@@ -85,6 +88,7 @@ fun Inferrer.completeMin_(
             modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
             modularMaxTransitions = modularMaxTransitions,
             modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
+            modularInitialOutputValues = modularInitialOutputValues,
             maxTransitions = maxTransitions
         )
     )
@@ -113,6 +117,7 @@ fun Inferrer.completeMin__(
     modularMaxGuardSize: MultiArray<Int>, // [P]
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
+    modularInitialOutputValues: MultiArray<OutputValues>,
     maxTransitions: Int? = null, // T_sum, unconstrained if null
     startD: Int = 1,
 ): DistributedAutomaton? {
@@ -139,6 +144,7 @@ fun Inferrer.completeMin__(
             modularMaxGuardSize = modularMaxGuardSize,
             modularMaxTransitions = modularMaxTransitions,
             modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
+            modularInitialOutputValues = modularInitialOutputValues,
             maxTransitions = maxTransitions
         )
         if (automaton != null) {
@@ -159,6 +165,7 @@ fun Inferrer.completeMin__(
                 modularMaxGuardSize = modularMaxGuardSize,
                 modularMaxTransitions = modularMaxTransitions,
                 modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
+                modularInitialOutputValues = modularInitialOutputValues,
                 maxTransitions = maxTransitions
             )!!
             return optimizeDistributedSumN(

@@ -5,6 +5,7 @@ import com.github.lipen.multiarray.map
 import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.buildBasicDistributedAutomaton
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeDistributedSumC
@@ -21,6 +22,7 @@ fun Inferrer.distributedBasic(
     modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
+    modularInitialOutputValues: MultiArray<OutputValues>,
     maxTransitions: Int? = null, // T_sum, unconstrained if null
 ): DistributedAutomaton? {
     reset()
@@ -33,6 +35,7 @@ fun Inferrer.distributedBasic(
             modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
             modularMaxTransitions = modularMaxTransitions,
             modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
+            modularInitialOutputValues = modularInitialOutputValues,
             maxTransitions = maxTransitions
         )
     )
@@ -48,6 +51,7 @@ fun Inferrer.distributedBasicMinC(
     start: Int = 1, // C_start
     end: Int = 20, // C_end
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
+    modularInitialOutputValues: MultiArray<OutputValues>,
 ): DistributedAutomaton? {
     val M = numberOfModules
     var best: DistributedAutomaton? = null
@@ -59,7 +63,8 @@ fun Inferrer.distributedBasicMinC(
                 // compoundScenarioTree = compoundScenarioTree,
                 modularScenarioTree = modularScenarioTree,
                 modularNumberOfStates = MultiArray.new(M) { C },
-                modularIsEncodeReverseImplication = modularIsEncodeReverseImplication
+                modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
+                modularInitialOutputValues = modularInitialOutputValues
             )
         }
         if (result != null) {

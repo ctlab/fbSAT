@@ -48,7 +48,8 @@ class InferDistributedBasicMinCCommand : AbstractInferDistributedCommand("distri
             numberOfModules = M,
             // compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = compoundScenarioTree.modular,
-            modularIsEncodeReverseImplication = MultiArray.new(M) { extraOptions.isEncodeReverseImplication }
+            modularIsEncodeReverseImplication = MultiArray.new(M) { extraOptions.isEncodeReverseImplication },
+            modularInitialOutputValues = MultiArray.new(M) { ru.ifmo.fbsat.core.utils.Globals.INITIAL_OUTPUT_VALUES }, // TODO
         )
     }
 }

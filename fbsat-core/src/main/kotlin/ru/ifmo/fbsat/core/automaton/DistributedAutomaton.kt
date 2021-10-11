@@ -15,7 +15,6 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.utils.Compound
 import ru.ifmo.fbsat.core.utils.CompoundImpl
-import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.ModularAutomaton
 import ru.ifmo.fbsat.core.utils.ModularContext
 import ru.ifmo.fbsat.core.utils.ModularEvalResult
@@ -152,14 +151,14 @@ class DistributedAutomaton(
     fun eval(
         modularInputActions: Sequence<ModularInputAction>,
         modularStartState: ModularState = modules.map { it.initialState },
-        modularStartOutputValues: ModularOutputValues = modules.map { Globals.INITIAL_OUTPUT_VALUES },
+        modularStartOutputValues: ModularOutputValues = modules.map { it.initialOutputValues },
     ): Sequence<CompoundEvalResult> =
         CompoundEvalState(M, modularStartState, modularStartOutputValues).eval(modularInputActions)
 
     fun eval(
         modularInputActions: Iterable<ModularInputAction>,
         modularStartState: ModularState = modules.map { it.initialState },
-        modularStartOutputValues: ModularOutputValues = modules.map { Globals.INITIAL_OUTPUT_VALUES },
+        modularStartOutputValues: ModularOutputValues = modules.map { it.initialOutputValues },
     ): List<CompoundEvalResult> =
         eval(modularInputActions.asSequence(), modularStartState, modularStartOutputValues).toList()
 

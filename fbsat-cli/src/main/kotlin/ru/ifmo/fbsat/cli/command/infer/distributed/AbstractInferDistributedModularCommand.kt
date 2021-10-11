@@ -3,8 +3,10 @@ package ru.ifmo.fbsat.cli.command.infer.distributed
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.cli.command.infer.AbstractInferCommand
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
+import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import java.io.File
 
@@ -25,12 +27,12 @@ abstract class AbstractInferDistributedModularCommand(name: String) :
     protected lateinit var inferrer: Inferrer private set
 
     final override fun setup() {
-        // Globals.INITIAL_OUTPUT_VALUES = extraOptions.initialOutputValues ?: OutputValues.zeros(outputNames.size)
-
         val M = numberOfModules
         require(modularScenariosFile.shape.single() == M)
         require(modularInputNames.shape.single() == M)
         require(modularOutputNames.shape.single() == M)
+
+        Globals.INITIAL_OUTPUT_VALUES = extraOptions.initialOutputValues ?: OutputValues.zeros(M)
 
         modularScenarioTree = MultiArray.new(M) { (m) ->
             PositiveScenarioTree.fromFile(

@@ -20,6 +20,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.smvDirOption
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.task.distributed.complete.distributedCegis2
 import ru.ifmo.fbsat.core.utils.toMultiArray
 import java.io.File
@@ -59,7 +60,7 @@ fun ParameterHolder.multiInputNamesOption() =
         mustBeReadable = true
     ).convert {
         it.readLines()
-    }.multiple(required = true)
+    }.multiple()
 
 fun ParameterHolder.multiOutputNamesOption() =
     option(
@@ -74,6 +75,18 @@ fun ParameterHolder.multiOutputNamesOption() =
         it.readLines()
     }.multiple(required = true)
 
+fun ParameterHolder.multiInitialOutputValuesOption() =
+    option(
+        "--iov",
+        help = "[MODULAR] Initial output values (as a bitstring)",
+        metavar = "<[01]+>"
+    ).convert {
+        require(it.matches(Regex("[01]+"))) {
+            "--iov must match [01]+"
+        }
+        OutputValues(it.map { c -> c == '1' })
+    }.multiple()
+
 private class DistributedCegis2InputOutputOptions : OptionGroup(INPUT_OUTPUT_OPTIONS) {
     val multiScenariosFile: List<File> by multiScenariosFileOption()
     val moduleNames: List<String> by moduleNamesOption()
@@ -86,6 +99,7 @@ private class DistributedCegis2InputOutputOptions : OptionGroup(INPUT_OUTPUT_OPT
 private class DistributedCegis2AutomatonOptions : OptionGroup(AUTOMATON_OPTIONS) {
     val numberOfModules: Int by numberOfModulesOption().required()
     val multiMaxGuardSize: List<Int> by maxGuardSizeOption().multiple(required = true)
+    val multiInitialOutputValues: List<OutputValues?> by multiInitialOutputValuesOption()
 }
 
 class InferDistributedCegis2Command : AbstractInferDistributedModularCommand("distributed-cegis2") {
@@ -99,7 +113,13 @@ class InferDistributedCegis2Command : AbstractInferDistributedModularCommand("di
         io.multiScenariosFile.toMultiArray()
     }
     override val modularInputNames: MultiArray<List<String>> by lazy {
-        io.multiInputNames.toMultiArray()
+        if (io.multiInputNames.size == 1) {
+            MultiArray.new(numberOfModules) {
+                io.multiInputNames[0]
+            }
+        } else {
+            io.multiInputNames.toMultiArray()
+        }
     }
     override val modularOutputNames: MultiArray<List<String>> by lazy {
         io.multiOutputNames.toMultiArray()
@@ -122,6 +142,15 @@ class InferDistributedCegis2Command : AbstractInferDistributedModularCommand("di
             modularInputNames = modularInputNames,
             modularOutputNames = modularOutputNames,
             modularMaxGuardSize = params.multiMaxGuardSize.toMultiArray(),
+            modularInitialOutputValues = if (params.multiInitialOutputValues.isEmpty()) {
+                MultiArray.new(M) { (m) ->
+                    OutputValues.zeros(modularOutputNames[m].size)
+                }
+            } else {
+                params.multiInitialOutputValues.mapIndexed { i, vs ->
+                    vs ?: OutputValues.zeros(modularOutputNames[i + 1].size)
+                }.toMultiArray()
+            },
             smvDir = io.smvDir
         )
     }

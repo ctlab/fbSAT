@@ -8,7 +8,7 @@ import com.github.lipen.satlib.core.IntVarArray
 import com.github.lipen.satlib.core.neq
 import com.github.lipen.satlib.core.newBoolVarArray
 import com.github.lipen.satlib.solver.Solver
-import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.declareModularContext
 import ru.ifmo.fbsat.core.solver.forEachModularContext
@@ -31,6 +31,7 @@ fun Solver.declareDistributedBasicVariables(
     modularX: MultiArray<Int> = modularScenarioTree.map { it.inputNames.size },
     modularZ: MultiArray<Int> = modularScenarioTree.map { it.outputNames.size },
     modularU: MultiArray<Int> = modularScenarioTree.map { it.uniqueInputs.size },
+    modularInitialOutputValues: MultiArray<OutputValues>,
 ) {
     context["M"] = M
     // context["compoundScenarioTree"] = compoundScenarioTree
@@ -52,6 +53,7 @@ fun Solver.declareDistributedBasicVariables(
     /* Modular */
     declareModularContext(M)
     forEachModularContext { m ->
+        context["initialOutputValues"] = modularInitialOutputValues[m]
         declareBasicVariables(
             positiveScenarioTree = modularScenarioTree[m],
             C = modularC[m],

@@ -7,6 +7,7 @@ import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.constraints.declareDistributedAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareDistributedAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declareDistributedPositiveMappingConstraints_compound
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.Task
@@ -21,6 +22,7 @@ data class DistributedBasicTask(
     val modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
     val modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     val modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
+    val modularInitialOutputValues: MultiArray<OutputValues>,
     val maxTransitions: Int? = null, // T, unconstrained if null
 ) : Task() {
     init {
@@ -29,6 +31,7 @@ data class DistributedBasicTask(
         require(modularMaxOutgoingTransitions.shape.single() == numberOfModules)
         require(modularMaxTransitions.shape.single() == numberOfModules)
         require(modularIsEncodeReverseImplication.shape.single() == numberOfModules)
+        require(modularInitialOutputValues.shape.single() == numberOfModules)
     }
 
     override fun Solver.declare_() {
@@ -41,7 +44,8 @@ data class DistributedBasicTask(
             modularC = modularNumberOfStates,
             modularK = modularMaxOutgoingTransitions.mapIndexed { (m), k ->
                 k ?: modularNumberOfStates[m]
-            }
+            },
+            modularInitialOutputValues = modularInitialOutputValues
         )
 
         /* Constraints */

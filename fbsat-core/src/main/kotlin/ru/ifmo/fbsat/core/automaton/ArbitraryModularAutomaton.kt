@@ -538,8 +538,12 @@ fun buildBasicArbitraryModularAutomaton(
         val notFired = ctx.convertBoolVarArray("notFired", model)
         val stateAlgorithmBot = ctx.convertBoolVarArray("stateAlgorithmBot", model)
         val stateAlgorithmTop = ctx.convertBoolVarArray("stateAlgorithmTop", model)
+        val initialOutputValues: OutputValues = ctx["initialOutputValues"]
 
-        Automaton(scenarioTree).endow(
+        Automaton(
+            scenarioTree = scenarioTree,
+            initialOutputValues = initialOutputValues
+        ).endow(
             C = C, K = K,
             stateOutputEvent = { OutputEvent("CNF") },
             stateAlgorithm = { c ->
@@ -605,8 +609,12 @@ fun buildExtendedArbitraryModularAutomaton(
         val nodeInputVariable = ctx.convertIntVarArray("nodeInputVariable", model)
         val nodeParent = ctx.convertIntVarArray("nodeParent", model)
         val nodeChild = ctx.convertIntVarArray("nodeChild", model)
+        val initialOutputValues: OutputValues = ctx["initialOutputValues"]
 
-        Automaton(scenarioTree).endow(
+        Automaton(
+            scenarioTree = scenarioTree,
+            initialOutputValues = initialOutputValues
+        ).endow(
             C = C, K = K,
             stateOutputEvent = { OutputEvent("CNF") },
             stateAlgorithm = { c ->
