@@ -92,7 +92,7 @@ fun Inferrer.distributedCegis2(
         // Verify automaton with NuSMV
         val counterexamples = automaton.verifyWithNuSMV(
             dir = outDir,
-            modularModuleName = multiArrayOf("Sender", "Receiver")
+            modularModuleName = modularModuleName
         )
         if (counterexamples.isEmpty()) {
             logger.info("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
