@@ -6,7 +6,6 @@ import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
-import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
@@ -37,7 +36,6 @@ fun Inferrer.distributedCegis2(
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     modularMaxTotalGuardsSize: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [N]
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
-    modularInitialOutputValues: MultiArray<OutputValues>,
     maxTransitions: Int? = null, // T_sum, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N_sum, unconstrained if null
     smvDir: File,
@@ -64,7 +62,6 @@ fun Inferrer.distributedCegis2(
             // modularNumberOfStates = modularNumberOfStates,
             // modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
             modularMaxGuardSize = modularMaxGuardSize,
-            modularInitialOutputValues = modularInitialOutputValues,
             startD = D
         )
         if (automaton == null) {

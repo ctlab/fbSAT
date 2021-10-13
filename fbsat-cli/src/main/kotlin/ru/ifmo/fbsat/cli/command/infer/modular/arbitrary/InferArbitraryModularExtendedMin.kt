@@ -9,6 +9,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.AUTOMATON_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.ExtraOptions
 import ru.ifmo.fbsat.cli.command.infer.options.INPUT_OUTPUT_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.SolverOptions
+import ru.ifmo.fbsat.cli.command.infer.options.getInitialOutputValuesOption
 import ru.ifmo.fbsat.cli.command.infer.options.inputNamesOption
 import ru.ifmo.fbsat.cli.command.infer.options.maxGuardSizeOption
 import ru.ifmo.fbsat.cli.command.infer.options.numberOfModulesOption
@@ -17,6 +18,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.outDirOption
 import ru.ifmo.fbsat.cli.command.infer.options.outputNamesOption
 import ru.ifmo.fbsat.cli.command.infer.options.scenariosFileOption
 import ru.ifmo.fbsat.core.automaton.ArbitraryModularAutomaton
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.task.modular.extended.arbitrary.arbitraryModularExtendedMin
 import java.io.File
 
@@ -25,6 +27,7 @@ private class ArbitraryModularExtendedMinInputOutputOptions : OptionGroup(INPUT_
     val outDir: File by outDirOption()
     val inputNames: List<String> by inputNamesOption()
     val outputNames: List<String> by outputNamesOption()
+    val initialOutputValues: OutputValues? by getInitialOutputValuesOption()
 }
 
 private class ArbitraryModularExtendedMinAutomatonOptions : OptionGroup(AUTOMATON_OPTIONS) {
@@ -44,6 +47,7 @@ class InferArbitraryModularExtendedMinCommand :
     override val scenariosFile: File get() = io.scenariosFile
     override val inputNames: List<String> get() = io.inputNames
     override val outputNames: List<String> get() = io.outputNames
+    override val initialOutputValues: OutputValues? get() = io.initialOutputValues
     override val outDir: File get() = io.outDir
 
     override fun infer(): ArbitraryModularAutomaton? =

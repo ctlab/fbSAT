@@ -1,17 +1,21 @@
 package ru.ifmo.fbsat.core.scenario.negative
 
+import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.InputValues
+import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.addGenericScenario
-import ru.ifmo.fbsat.core.scenario.auxScenarioElement
 
 class NegativeScenarioTree(
     override val inputEvents: List<InputEvent>,
     override val outputEvents: List<OutputEvent>,
     override val inputNames: List<String>,
     override val outputNames: List<String>,
+    initialOutputValues: OutputValues? = null,
     override val isTrie: Boolean = false,
 ) : ScenarioTree<NegativeScenario, NegativeScenarioTree.Node> {
     private val _scenarios: MutableList<NegativeScenario> = mutableListOf()
@@ -24,7 +28,19 @@ class NegativeScenarioTree(
 
     init {
         // Create the root (auto-added to _nodes)
-        Node(element = auxScenarioElement, parent = null)
+        Node(
+            element = ScenarioElement(
+                InputAction(
+                    event = null,
+                    values = InputValues.empty()
+                ),
+                OutputAction(
+                    event = null,
+                    values = initialOutputValues ?: OutputValues.zeros(outputNames.size)
+                )
+            ),
+            parent = null
+        )
     }
 
     constructor(

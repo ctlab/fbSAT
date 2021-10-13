@@ -24,7 +24,7 @@ data class BasicTask(
         declareBasicVariables(
             positiveScenarioTree = scenarioTree,
             C = numberOfStates,
-            K = maxOutgoingTransitions ?: numberOfStates
+            K = maxOutgoingTransitions ?: numberOfStates,
         )
 
         /* Constraints */

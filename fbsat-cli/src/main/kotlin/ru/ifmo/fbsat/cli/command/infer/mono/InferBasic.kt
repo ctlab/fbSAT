@@ -9,6 +9,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.AUTOMATON_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.ExtraOptions
 import ru.ifmo.fbsat.cli.command.infer.options.INPUT_OUTPUT_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.SolverOptions
+import ru.ifmo.fbsat.cli.command.infer.options.getInitialOutputValuesOption
 import ru.ifmo.fbsat.cli.command.infer.options.inputNamesOption
 import ru.ifmo.fbsat.cli.command.infer.options.maxOutgoingTransitionsOption
 import ru.ifmo.fbsat.cli.command.infer.options.maxTransitionsOption
@@ -17,6 +18,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.outDirOption
 import ru.ifmo.fbsat.cli.command.infer.options.outputNamesOption
 import ru.ifmo.fbsat.cli.command.infer.options.scenariosFileOption
 import ru.ifmo.fbsat.core.automaton.Automaton
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.task.single.basic.basic
 import java.io.File
 
@@ -25,6 +27,7 @@ private class BasicInputOutputOptions : OptionGroup(INPUT_OUTPUT_OPTIONS) {
     val outDir: File by outDirOption()
     val inputNames: List<String> by inputNamesOption()
     val outputNames: List<String> by outputNamesOption()
+    val initialOutputValues: OutputValues? by getInitialOutputValuesOption()
 }
 
 private class BasicAutomatonOptions : OptionGroup(AUTOMATON_OPTIONS) {
@@ -42,6 +45,7 @@ class InferBasicCommand : AbstractInferMonoCommand("basic") {
     override val scenariosFile: File get() = io.scenariosFile
     override val inputNames: List<String> get() = io.inputNames
     override val outputNames: List<String> get() = io.outputNames
+    override val initialOutputValues: OutputValues? get() = io.initialOutputValues
     override val outDir: File get() = io.outDir
 
     override fun infer(): Automaton? =

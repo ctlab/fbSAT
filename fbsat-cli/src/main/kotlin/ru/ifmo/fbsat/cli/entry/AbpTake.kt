@@ -9,7 +9,6 @@ import com.soywiz.klock.DateTime
 import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
-import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.negative.readCounterexamplesFromFile
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
@@ -50,9 +49,9 @@ fun main() {
         listOf("done", "packet", "output_bit"),
         listOf("deliver", "acknowledge", "output_bit")
     )
-    val modularInitialOutputValues = MultiArray.new(M) { (m) ->
-        OutputValues.zeros(modularOutputNames[m].size)
-    }
+    // val modularInitialOutputValues = MultiArray.new(M) { (m) ->
+    //     OutputValues.zeros(modularOutputNames[m].size)
+    // }
     val solver: Solver = MiniSatSolver()
     val outDir = File("out/abp-take2")
     // val outDir = File("out/abp-100x50-all")
@@ -60,8 +59,8 @@ fun main() {
     val inferrer = Inferrer(solver, outDir)
 
     check(modularOutputNames.values.all { it.size == 3 })
+    // Globals.INITIAL_OUTPUT_VALUES = OutputValues.zeros(3)
     Globals.START_STATE_ALGORITHMS = StartStateAlgorithms.ANY
-    Globals.INITIAL_OUTPUT_VALUES = OutputValues.zeros(3)
     Globals.IS_FORBID_TRANSITIONS_TO_FIRST_STATE = false
     Globals.EPSILON_OUTPUT_EVENTS = EpsilonOutputEvents.NONE
     // Globals.IS_BFS_AUTOMATON = false
@@ -82,7 +81,8 @@ fun main() {
             modularInputEvents = modularInputEvents,
             modularOutputEvents = modularOutputEvents,
             modularInputNames = modularInputNames,
-            modularOutputNames = modularOutputNames
+            modularOutputNames = modularOutputNames,
+            // TODO: pass modularInitialOutputValues
         )
     }
 
@@ -322,7 +322,6 @@ fun main() {
         modularMaxGuardSize = multiArrayOf(P1, P2),
         // modularMaxTransitions = multiArrayOf(T1, T2),
         // modularMaxTotalGuardsSize = multiArrayOf(N1, N2),
-        modularInitialOutputValues = modularInitialOutputValues,
         smvDir = File("data/abp-take/smv")
     )
     // val distributedAutomaton = inferrer.distributedCegis2(

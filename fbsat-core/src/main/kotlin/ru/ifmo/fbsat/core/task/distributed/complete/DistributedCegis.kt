@@ -38,7 +38,6 @@ fun Inferrer.distributedCegis(
     modularMaxTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [T]
     modularMaxTotalGuardsSize: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [N]
     modularIsEncodeReverseImplication: MultiArray<Boolean> = MultiArray.new(numberOfModules) { true },
-    modularInitialOutputValues: MultiArray<OutputValues>,
     maxTransitions: Int? = null, // T_sum, unconstrained if null
     maxTotalGuardsSize: Int? = null, // N_sum, unconstrained if null
     smvDir: File,
@@ -53,7 +52,6 @@ fun Inferrer.distributedCegis(
             modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
             modularMaxTransitions = modularMaxTransitions,
             modularIsEncodeReverseImplication = modularIsEncodeReverseImplication,
-            modularInitialOutputValues = modularInitialOutputValues,
             maxTransitions = maxTransitions
         )
     )

@@ -6,7 +6,6 @@ import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import java.io.File
 
@@ -20,6 +19,7 @@ abstract class AbstractInferDistributedModularCommand(name: String) :
     protected abstract val modularScenariosFile: MultiArray<File>
     protected abstract val modularInputNames: MultiArray<List<String>>
     protected abstract val modularOutputNames: MultiArray<List<String>>
+    protected abstract val modularInitialOutputValues: MultiArray<OutputValues?>
     protected abstract val outDir: File
 
     // protected lateinit var compoundScenarioTree: PositiveCompoundScenarioTree private set
@@ -32,15 +32,14 @@ abstract class AbstractInferDistributedModularCommand(name: String) :
         require(modularInputNames.shape.single() == M)
         require(modularOutputNames.shape.single() == M)
 
-        Globals.INITIAL_OUTPUT_VALUES = extraOptions.initialOutputValues ?: OutputValues.zeros(M)
-
         modularScenarioTree = MultiArray.new(M) { (m) ->
             PositiveScenarioTree.fromFile(
-                modularScenariosFile[m],
-                modularInputNames[m],
-                modularOutputNames[m]
+                file = modularScenariosFile[m],
+                inputNames = modularInputNames[m],
+                outputNames = modularOutputNames[m],
+                initialOutputValues = modularInitialOutputValues[m],
             ).also {
-                logger.info("= modularScenarioTree[$m]:")
+                logger.info("modularScenarioTree[$m]:")
                 it.printStats()
             }
         }

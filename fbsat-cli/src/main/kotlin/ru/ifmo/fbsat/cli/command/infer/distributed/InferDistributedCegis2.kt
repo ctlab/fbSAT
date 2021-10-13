@@ -1,3 +1,5 @@
+@file:Suppress("PublicApiImplicitType")
+
 package ru.ifmo.fbsat.cli.command.infer.distributed
 
 import com.github.ajalt.clikt.core.ParameterHolder
@@ -14,6 +16,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.AUTOMATON_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.ExtraOptions
 import ru.ifmo.fbsat.cli.command.infer.options.INPUT_OUTPUT_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.SolverOptions
+import ru.ifmo.fbsat.cli.command.infer.options.getInitialOutputValuesOption
 import ru.ifmo.fbsat.cli.command.infer.options.maxGuardSizeOption
 import ru.ifmo.fbsat.cli.command.infer.options.numberOfModulesOption
 import ru.ifmo.fbsat.cli.command.infer.options.outDirOption
@@ -23,13 +26,14 @@ import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.task.distributed.complete.distributedCegis2
+import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 import ru.ifmo.fbsat.core.utils.toMultiArray
 import java.io.File
 
 fun ParameterHolder.multiScenariosFileOption() =
     option(
         "-i", "--scenarios",
-        help = "File with scenarios",
+        help = "File with scenarios (can be passed multiple times)",
         metavar = "<path>"
     ).file(
         mustExist = true,
@@ -53,20 +57,7 @@ fun ParameterHolder.moduleNamesOption() =
 fun ParameterHolder.multiInputNamesOption() =
     option(
         "--input-names",
-        help = "File with input variables names",
-        metavar = "<path>"
-    ).file(
-        mustExist = true,
-        canBeDir = false,
-        mustBeReadable = true
-    ).convert {
-        it.readLines()
-    }.multiple()
-
-fun ParameterHolder.multiOutputNamesOption() =
-    option(
-        "--output-names",
-        help = "File with output variables names",
+        help = "File with input variables names (can be passed multiple times)",
         metavar = "<path>"
     ).file(
         mustExist = true,
@@ -76,22 +67,23 @@ fun ParameterHolder.multiOutputNamesOption() =
         it.readLines()
     }.multiple(required = true)
 
-fun ParameterHolder.multiInitialOutputValuesOption() =
+fun ParameterHolder.multiOutputNamesOption() =
     option(
-        "--iov",
-        help = "[MODULAR] Initial output values (as a bitstring)",
-        metavar = "<[01]+>"
+        "--output-names",
+        help = "File with output variables names (can be passed multiple times)",
+        metavar = "<path>"
+    ).file(
+        mustExist = true,
+        canBeDir = false,
+        mustBeReadable = true
     ).convert {
-        require(it.matches(Regex("[01]+"))) {
-            "--iov must match [01]+"
-        }
-        OutputValues(it.map { c -> c == '1' })
-    }.multiple()
+        it.readLines()
+    }.multiple(required = true)
 
-fun ParameterHolder.numberD() =
+fun ParameterHolder.startDOption() =
     option(
-        "-D",
-        help = "TODO",
+        "-Dstart",
+        help = "Start D value",
         metavar = "<int>"
     ).int()
 
@@ -100,6 +92,7 @@ private class DistributedCegis2InputOutputOptions : OptionGroup(INPUT_OUTPUT_OPT
     val moduleNames: List<String> by moduleNamesOption()
     val multiInputNames: List<List<String>> by multiInputNamesOption()
     val multiOutputNames: List<List<String>> by multiOutputNamesOption()
+    val multiInitialOutputValues: List<OutputValues> by getInitialOutputValuesOption().multiple()
     val outDir: File by outDirOption()
     val smvDir: File by smvDirOption()
 }
@@ -107,8 +100,7 @@ private class DistributedCegis2InputOutputOptions : OptionGroup(INPUT_OUTPUT_OPT
 private class DistributedCegis2AutomatonOptions : OptionGroup(AUTOMATON_OPTIONS) {
     val numberOfModules: Int by numberOfModulesOption().required()
     val multiMaxGuardSize: List<Int> by maxGuardSizeOption().multiple(required = true)
-    val multiInitialOutputValues: List<OutputValues?> by multiInitialOutputValuesOption()
-    val numberD: Int? by numberD()
+    val startD: Int? by startDOption()
 }
 
 class InferDistributedCegis2Command : AbstractInferDistributedModularCommand("distributed-cegis2") {
@@ -122,16 +114,25 @@ class InferDistributedCegis2Command : AbstractInferDistributedModularCommand("di
         io.multiScenariosFile.toMultiArray()
     }
     override val modularInputNames: MultiArray<List<String>> by lazy {
-        if (io.multiInputNames.size == 1) {
-            MultiArray.new(numberOfModules) {
-                io.multiInputNames[0]
-            }
-        } else {
-            io.multiInputNames.toMultiArray()
+        when (io.multiInputNames.size) {
+            0 -> error("--input-names is a required option")
+            1 -> MultiArray.new(numberOfModules) { io.multiInputNames[0] }
+            else -> io.multiInputNames.toMultiArray()
         }
     }
     override val modularOutputNames: MultiArray<List<String>> by lazy {
-        io.multiOutputNames.toMultiArray()
+        when (io.multiOutputNames.size) {
+            0 -> error("--output-names is a required option")
+            1 -> MultiArray.new(numberOfModules) { io.multiOutputNames[0] }
+            else -> io.multiOutputNames.toMultiArray()
+        }
+    }
+    override val modularInitialOutputValues: MultiArray<OutputValues?> by lazy {
+        when (io.multiInitialOutputValues.size) {
+            0 -> multiArrayOfNulls(numberOfModules)
+            1 -> MultiArray.new(numberOfModules) { io.multiInitialOutputValues[0] }
+            else -> io.multiInitialOutputValues.toMultiArray()
+        }
     }
     override val outDir: File get() = io.outDir
 
@@ -151,17 +152,8 @@ class InferDistributedCegis2Command : AbstractInferDistributedModularCommand("di
             modularInputNames = modularInputNames,
             modularOutputNames = modularOutputNames,
             modularMaxGuardSize = params.multiMaxGuardSize.toMultiArray(),
-            modularInitialOutputValues = if (params.multiInitialOutputValues.isEmpty()) {
-                MultiArray.new(M) { (m) ->
-                    OutputValues.zeros(modularOutputNames[m].size)
-                }
-            } else {
-                params.multiInitialOutputValues.mapIndexed { i, vs ->
-                    vs ?: OutputValues.zeros(modularOutputNames[i + 1].size)
-                }.toMultiArray()
-            },
             smvDir = io.smvDir,
-            startD = params.numberD ?: 1,
+            startD = params.startD ?: 1,
         )
     }
 }

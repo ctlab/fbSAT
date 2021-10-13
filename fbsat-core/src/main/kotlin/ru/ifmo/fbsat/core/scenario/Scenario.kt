@@ -36,19 +36,6 @@ data class ScenarioElement(
     companion object
 }
 
-val auxScenarioElement: ScenarioElement by lazy {
-    ScenarioElement(
-        InputAction(
-            event = null,
-            values = InputValues.empty()
-        ),
-        OutputAction(
-            event = null,
-            values = Globals.INITIAL_OUTPUT_VALUES
-        )
-    )
-}
-
 val List<ScenarioElement>.preprocessed: List<ScenarioElement>
     get() = if (isEmpty()) emptyList() else
         sequence {

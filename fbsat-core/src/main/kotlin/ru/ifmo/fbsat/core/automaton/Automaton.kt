@@ -47,7 +47,7 @@ class Automaton(
     val outputEvents: List<OutputEvent>,
     val inputNames: List<String>,
     val outputNames: List<String>,
-    initialOutputValues: OutputValues? = null,
+    val initialOutputValues: OutputValues, //= OutputValues.zeros(outputNames.size),
 ) {
     private val lazyCache = LazyCache()
     private val _states: MutableMap<Int, State> = mutableMapOf()
@@ -97,14 +97,14 @@ class Automaton(
         transitions.sumOf { it.guard.size }
     }
 
-    /** Initial output values. */
-    val initialOutputValues: OutputValues by lazyCache {
-        initialOutputValues ?: OutputValues.zeros(outputNames.size)
-    }
+    // /** Initial output values. */
+    // val initialOutputValues: OutputValues by lazyCache {
+    //     initialOutputValues ?: OutputValues.zeros(outputNames.size)
+    // }
 
     constructor(
         scenarioTree: PositiveScenarioTree,
-        initialOutputValues: OutputValues? = null,
+        initialOutputValues: OutputValues, //= scenarioTree.initialOutputValues,
     ) : this(
         scenarioTree.inputEvents,
         scenarioTree.outputEvents,

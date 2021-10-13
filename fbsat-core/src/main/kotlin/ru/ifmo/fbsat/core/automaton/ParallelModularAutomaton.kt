@@ -320,13 +320,14 @@ fun buildBasicParallelModularAutomaton(
         val stateAlgorithmBot = ctx.convertBoolVarArray("stateAlgorithmBot", model)
         val stateAlgorithmTop = ctx.convertBoolVarArray("stateAlgorithmTop", model)
         val moduleOutputVariables = (1..Z).filter { z -> moduleControllingOutputVariable[z] == m }
+        val initialOutputValues: OutputValues = ctx["initialOutputValues"]
 
         Automaton(
             inputEvents = scenarioTree.inputEvents,
             outputEvents = scenarioTree.outputEvents,
             inputNames = scenarioTree.inputNames,
             outputNames = moduleOutputVariables.map { z -> scenarioTree.outputNames[z - 1] },
-            initialOutputValues = OutputValues.zeros(Z) // FIXME
+            initialOutputValues = initialOutputValues
         ).endow(
             C = C, K = K,
             stateOutputEvent = { c ->

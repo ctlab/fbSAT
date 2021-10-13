@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.core.scenario
 
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.utils.Compound
 
 interface CompoundScenarioTree<T, S, N> : GenericScenarioTree<S, N>, Compound<T>
@@ -17,3 +18,6 @@ interface CompoundScenarioTree<T, S, N> : GenericScenarioTree<S, N>, Compound<T>
         GenericScenarioTree.Node<Self, CompoundScenarioElement>,
         Compound<ScenarioTree.Node<*>>
 }
+
+val CompoundScenarioTree<*, *, *>.modularInitialOutputValues: MultiArray<OutputValues>
+    get() = modular.map { it.initialOutputValues }
