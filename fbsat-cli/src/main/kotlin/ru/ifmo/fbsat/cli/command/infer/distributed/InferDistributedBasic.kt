@@ -22,7 +22,6 @@ import ru.ifmo.fbsat.cli.command.infer.options.scenariosFileOption
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.task.distributed.basic.distributedBasic
-import ru.ifmo.fbsat.core.utils.Globals
 import java.io.File
 
 private class DistributedBasicInputOutputOptions : OptionGroup(INPUT_OUTPUT_OPTIONS) {

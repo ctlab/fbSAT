@@ -3,7 +3,6 @@ package ru.ifmo.fbsat.core.task.distributed.extended
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.buildExtendedDistributedAutomaton
-import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask

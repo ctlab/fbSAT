@@ -1,11 +1,8 @@
 package ru.ifmo.fbsat.core.utils
 
-import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.satlib.solver.GlucoseSolver
 import com.github.lipen.satlib.solver.MiniSatSolver
 import org.redundent.kotlin.xml.PrintOptions
-import ru.ifmo.fbsat.core.scenario.OutputValues
-import kotlin.properties.Delegates
 
 enum class EpsilonOutputEvents {
     START, ONLYSTART, NONE;

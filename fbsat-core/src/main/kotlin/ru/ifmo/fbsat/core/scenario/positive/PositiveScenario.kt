@@ -70,7 +70,7 @@ data class PositiveScenario(
         fun fromString(
             s: String,
             initialOutputValues: OutputValues,
-            preprocess: Boolean = true
+            preprocess: Boolean = true,
         ): PositiveScenario {
             var lastOutputValues = initialOutputValues
             val elements: List<ScenarioElement> = s

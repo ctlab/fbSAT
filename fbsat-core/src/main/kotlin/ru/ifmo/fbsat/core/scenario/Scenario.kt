@@ -2,7 +2,6 @@ package ru.ifmo.fbsat.core.scenario
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import ru.ifmo.fbsat.core.utils.Globals
 
 interface Scenario : GenericScenario<ScenarioElement>
 
