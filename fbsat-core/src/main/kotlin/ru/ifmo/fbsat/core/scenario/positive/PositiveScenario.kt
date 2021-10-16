@@ -16,7 +16,6 @@ import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.negative.Counterexample
 import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
 import ru.ifmo.fbsat.core.scenario.preprocessed
-import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.sourceAutoGzip
 import ru.ifmo.fbsat.core.utils.toBooleanList
@@ -35,7 +34,11 @@ data class PositiveScenario(
             return Json.decodeFromString(s)
         }
 
-        fun fromFile(file: File, preprocess: Boolean = true): List<PositiveScenario> {
+        fun fromFile(
+            file: File,
+            initialOutputValues: OutputValues,
+            preprocess: Boolean = true,
+        ): List<PositiveScenario> {
             return file.sourceAutoGzip().useLines { lines ->
                 val scenarios: MutableList<PositiveScenario> = mutableListOf()
                 var numberOfScenarios = 0
@@ -44,7 +47,7 @@ data class PositiveScenario(
                     if (index == 0) {
                         numberOfScenarios = line.toInt()
                     } else {
-                        scenarios.add(fromString(line, preprocess))
+                        scenarios.add(fromString(line, initialOutputValues, preprocess))
                     }
                 }
 
@@ -64,8 +67,12 @@ data class PositiveScenario(
             Regex("""out=.*?\[([01]*)]""")
         }
 
-        fun fromString(s: String, preprocess: Boolean = true): PositiveScenario {
-            var lastOutputValues = Globals.INITIAL_OUTPUT_VALUES
+        fun fromString(
+            s: String,
+            initialOutputValues: OutputValues,
+            preprocess: Boolean = true,
+        ): PositiveScenario {
+            var lastOutputValues = initialOutputValues
             val elements: List<ScenarioElement> = s
                 .splitToSequence(";")
                 .map { it.trim() }
@@ -95,8 +102,9 @@ data class PositiveScenario(
                 }
                 .map { (first, second) ->
                     when (second) {
-                        is InputAction ->
+                        is InputAction -> {
                             ScenarioElement(first, OutputAction(null, lastOutputValues))
+                        }
                         is OutputAction -> {
                             lastOutputValues = second.values
                             ScenarioElement(first, second)

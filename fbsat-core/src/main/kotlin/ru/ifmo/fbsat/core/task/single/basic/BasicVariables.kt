@@ -8,6 +8,7 @@ import com.github.lipen.satlib.core.newBoolVarArray
 import com.github.lipen.satlib.core.newIntVar
 import com.github.lipen.satlib.core.newIntVarArray
 import com.github.lipen.satlib.solver.Solver
+import ru.ifmo.fbsat.core.scenario.initialOutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.literals
 import ru.ifmo.fbsat.core.utils.Globals
@@ -36,6 +37,7 @@ fun Solver.declareBasicVariables(
     context["X"] = X
     context["Z"] = Z
     context["U"] = U
+    context["initialOutputValues"] = positiveScenarioTree.initialOutputValues
 
     /* Core variables */
     comment("Core variables")

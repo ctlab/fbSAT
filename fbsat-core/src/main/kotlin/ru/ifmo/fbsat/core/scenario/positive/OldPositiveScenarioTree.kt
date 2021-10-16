@@ -11,7 +11,6 @@ import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
-import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import java.io.File
 
@@ -134,8 +133,7 @@ class OldPositiveScenarioTree(
                 ),
                 OutputAction(
                     event = null,
-                    // event = OutputEvent("INITO"),
-                    values = Globals.INITIAL_OUTPUT_VALUES
+                    values = OutputValues.zeros(outputNames.size)
                 )
             ),
             parent = null
@@ -222,7 +220,10 @@ class OldPositiveScenarioTree(
             outputEvents: List<OutputEvent>? = null,
             isTrie: Boolean = true,
         ): OldPositiveScenarioTree {
-            val scenarios: List<PositiveScenario> = PositiveScenario.fromFile(file)
+            val scenarios: List<PositiveScenario> = PositiveScenario.fromFile(
+                file = file,
+                initialOutputValues = OutputValues.zeros(outputNames.size)
+            )
             return fromScenarios(
                 scenarios = scenarios,
                 inputNames = inputNames,

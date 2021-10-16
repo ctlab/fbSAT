@@ -454,7 +454,6 @@ private fun main() {
     val Z = 1
 
     Globals.IS_DEBUG = true
-    Globals.INITIAL_OUTPUT_VALUES = OutputValues.zeros(Z)
 
     val tree = PositiveScenarioTree(
         inputEvents = listOf(InputEvent("REQ")),

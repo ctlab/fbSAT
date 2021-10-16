@@ -45,7 +45,8 @@ private class AutomatonSurrogate private constructor(
             inputEvents = stats.inputEvents,
             outputEvents = stats.outputEvents,
             inputNames = stats.inputNames,
-            outputNames = stats.outputNames
+            outputNames = stats.outputNames,
+            initialOutputValues = stats.initialOutputValues
         )
         for (state in states) {
             automaton.addState(
@@ -135,7 +136,8 @@ private class AutomatonSurrogate private constructor(
                 inputEvents = original.inputEvents,
                 outputEvents = original.outputEvents,
                 inputNames = original.inputNames,
-                outputNames = original.outputNames
+                outputNames = original.outputNames,
+                initialOutputValues = original.initialOutputValues
             )
             return AutomatonSurrogate(
                 stats = stats,

@@ -19,7 +19,7 @@ import java.io.File
 internal const val INPUT_OUTPUT_OPTIONS = "Input/Output Options"
 
 @Deprecated("This is just a template with ALL options. Create your own class.")
-@Suppress("MemberVisibilityCanBePrivate")
+@Suppress("MemberVisibilityCanBePrivate", "unused")
 class InputOutputOptions : OptionGroup(INPUT_OUTPUT_OPTIONS) {
     val scenariosFile: File by scenariosFileOption()
     val initialCounterexamples: List<Counterexample>? by initialCounterexamplesOption()

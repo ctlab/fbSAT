@@ -1,11 +1,15 @@
 package ru.ifmo.fbsat.core.scenario.positive
 
+import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.InputValues
+import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.addGenericScenario
-import ru.ifmo.fbsat.core.scenario.auxScenarioElement
+import ru.ifmo.fbsat.core.scenario.initialOutputValues
 import ru.ifmo.fbsat.core.utils.MyLogger
 import java.io.File
 
@@ -16,20 +20,30 @@ class PositiveScenarioTree(
     override val outputEvents: List<OutputEvent>,
     override val inputNames: List<String>,
     override val outputNames: List<String>,
+    initialOutputValues: OutputValues? = null,
     override val isTrie: Boolean = true,
 ) : ScenarioTree<PositiveScenario, PositiveScenarioTree.Node> {
     private val _scenarios: MutableList<PositiveScenario> = mutableListOf()
-    private val _nodes: MutableList<Node> = mutableListOf()
-
     override val scenarios: List<PositiveScenario> = _scenarios
-    override val nodes: List<Node> = _nodes
 
-    override val size: Int get() = nodes.size
-    override val root: Node get() = nodes.first()
+    private val _nodes: MutableList<Node> = mutableListOf()
+    override val nodes: List<Node> = _nodes
 
     init {
         // Create the root (auto-added to _nodes)
-        Node(element = auxScenarioElement, parent = null)
+        Node(
+            element = ScenarioElement(
+                InputAction(
+                    event = null,
+                    values = InputValues.empty()
+                ),
+                OutputAction(
+                    event = null,
+                    values = initialOutputValues ?: OutputValues.zeros(outputNames.size)
+                )
+            ),
+            parent = null
+        )
     }
 
     fun addScenario(scenario: PositiveScenario) {
@@ -69,7 +83,7 @@ class PositiveScenarioTree(
         logger.info("Scenarios: ${scenarios.size}")
         logger.info("Elements: ${scenarios.sumOf({ it.elements.size })}")
         logger.info("Tree size: $size")
-
+        logger.info("Initial output values: $initialOutputValues")
         logger.info("Unique inputs: ${uniqueInputs.size}")
         logger.info("Unique outputs: ${uniqueOutputs.size}")
     }
@@ -81,6 +95,7 @@ class PositiveScenarioTree(
             outputNames: List<String>,
             inputEvents: List<InputEvent>? = null,
             outputEvents: List<OutputEvent>? = null,
+            initialOutputValues: OutputValues? = null,
             isTrie: Boolean = true,
         ): PositiveScenarioTree =
             PositiveScenarioTree(
@@ -92,6 +107,7 @@ class PositiveScenarioTree(
                 }.distinct(),
                 inputNames = inputNames,
                 outputNames = outputNames,
+                initialOutputValues = initialOutputValues,
                 isTrie = isTrie
             ).also {
                 for (scenario in scenarios) {
@@ -105,19 +121,29 @@ class PositiveScenarioTree(
             outputNames: List<String>,
             inputEvents: List<InputEvent>? = null,
             outputEvents: List<OutputEvent>? = null,
+            initialOutputValues: OutputValues? = null,
             isTrie: Boolean = true,
         ): PositiveScenarioTree {
             val scenarios =
-                if (file.extension == "smvout") {
-                    PositiveScenario.fromSmv(
-                        file = file,
-                        inputEvents = inputEvents ?: listOf(InputEvent("REQ")),
-                        outputEvents = outputEvents ?: listOf(OutputEvent("CNF")),
-                        inputNames = inputNames,
-                        outputNames = outputNames
-                    )
-                } else {
-                    PositiveScenario.fromFile(file)
+                when (file.extension) {
+                    "smvout" -> {
+                        PositiveScenario.fromSmv(
+                            file = file,
+                            inputEvents = inputEvents ?: listOf(InputEvent("REQ")),
+                            outputEvents = outputEvents ?: listOf(OutputEvent("CNF")),
+                            inputNames = inputNames,
+                            outputNames = outputNames
+                        )
+                    }
+                    "json" -> {
+                        PositiveScenario.fromJsonFile(file)
+                    }
+                    else -> {
+                        PositiveScenario.fromFile(
+                            file = file,
+                            initialOutputValues = initialOutputValues ?: OutputValues.zeros(outputNames.size)
+                        )
+                    }
                 }
             return fromScenarios(
                 scenarios = scenarios,
@@ -125,6 +151,7 @@ class PositiveScenarioTree(
                 outputNames = outputNames,
                 inputEvents = inputEvents,
                 outputEvents = outputEvents,
+                initialOutputValues = initialOutputValues,
                 isTrie = isTrie
             )
         }

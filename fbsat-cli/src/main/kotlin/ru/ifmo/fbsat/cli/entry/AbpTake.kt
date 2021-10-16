@@ -9,7 +9,6 @@ import com.soywiz.klock.DateTime
 import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
-import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.negative.readCounterexamplesFromFile
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
@@ -22,7 +21,6 @@ import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.multiArrayOf
 import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.timeSince
-import ru.ifmo.fbsat.core.utils.toMultiArray
 import java.io.File
 
 private val logger = MyLogger {}
@@ -33,7 +31,7 @@ fun main() {
     val timeStart = PerformanceCounter.reference
 
     val M = 2
-    val modularName = multiArrayOf(
+    val modularModuleName = multiArrayOf(
         "sender",
         "receiver"
     )
@@ -51,6 +49,9 @@ fun main() {
         listOf("done", "packet", "output_bit"),
         listOf("deliver", "acknowledge", "output_bit")
     )
+    // val modularInitialOutputValues = MultiArray.new(M) { (m) ->
+    //     OutputValues.zeros(modularOutputNames[m].size)
+    // }
     val solver: Solver = MiniSatSolver()
     val outDir = File("out/abp-take2")
     // val outDir = File("out/abp-100x50-all")
@@ -58,14 +59,13 @@ fun main() {
     val inferrer = Inferrer(solver, outDir)
 
     check(modularOutputNames.values.all { it.size == 3 })
+    // Globals.INITIAL_OUTPUT_VALUES = OutputValues.zeros(3)
     Globals.START_STATE_ALGORITHMS = StartStateAlgorithms.ANY
-    Globals.INITIAL_OUTPUT_VALUES = OutputValues.zeros(3)
     Globals.IS_FORBID_TRANSITIONS_TO_FIRST_STATE = false
     Globals.EPSILON_OUTPUT_EVENTS = EpsilonOutputEvents.NONE
     // Globals.IS_BFS_AUTOMATON = false
     // Globals.IS_BFS_GUARD = false
     Globals.IS_DEBUG = true
-    Globals.modularName = listOf("sender", "receiver").toMultiArray()
 
     // val fileTraces = File("data/abp-take/trace.xml")
     // val fileTraces = File("data/abp-take/trace_100_50.xml")
@@ -77,11 +77,12 @@ fun main() {
         PositiveCompoundScenario.fromCounterexample(
             counterexample = trace,
             M = M,
-            modularName = modularName,
+            modularModuleName = modularModuleName,
             modularInputEvents = modularInputEvents,
             modularOutputEvents = modularOutputEvents,
             modularInputNames = modularInputNames,
-            modularOutputNames = modularOutputNames
+            modularOutputNames = modularOutputNames,
+            // TODO: pass modularInitialOutputValues
         )
     }
 
@@ -117,18 +118,18 @@ fun main() {
     //                 ScenarioElement(
     //                     inputAction = InputAction(
     //                         event = modularInputEvents[m].firstOrNull {
-    //                             inputData.getValue("${modularName[m]}$${it.name}")
+    //                             inputData.getValue("${modularModuleName[m]}$${it.name}")
     //                         },
     //                         values = InputValues(modularInputNames[m].map {
-    //                             inputData.getValue("${modularName[m]}$$it")
+    //                             inputData.getValue("${modularModuleName[m]}$$it")
     //                         })
     //                     ),
     //                     outputAction = OutputAction(
     //                         event = modularOutputEvents[m].firstOrNull {
-    //                             outputData.getValue("${modularName[m]}.${it.name}")
+    //                             outputData.getValue("${modularModuleName[m]}.${it.name}")
     //                         },
     //                         values = OutputValues(modularOutputNames[m].map {
-    //                             outputData.getValue("${modularName[m]}.$it")
+    //                             outputData.getValue("${modularModuleName[m]}.$it")
     //                         })
     //                     )
     //                 )
@@ -184,7 +185,7 @@ fun main() {
     //     val negativeScenario = NegativeCompoundScenario.fromCounterexample(
     //         counterexample = ce,
     //         M = M,
-    //         modularName = modularName,
+    //         modularModuleName = modularModuleName,
     //         modularInputEvents = modularInputEvents,
     //         modularOutputEvents = modularOutputEvents,
     //         modularInputNames = modularInputNames,
@@ -220,7 +221,7 @@ fun main() {
     //         NegativeCompoundScenario.fromCounterexample(
     //             counterexample = ce,
     //             M = 1,
-    //             modularName = modularName,
+    //             modularModuleName = modularModuleName,
     //             modularInputEvents = modularInputEvents,
     //             modularOutputEvents = modularOutputEvents,
     //             modularInputNames = modularInputNames,
@@ -308,9 +309,14 @@ fun main() {
     // )
     val distributedAutomaton = inferrer.distributedCegis2(
         numberOfModules = M,
-        compoundScenarioTree = positiveCompoundScenarioTree,
+        // compoundScenarioTree = positiveCompoundScenarioTree,
         modularScenarioTree = positiveCompoundScenarioTree.modular,
         // negativeCompoundScenarioTree = negativeCompoundScenarioTree,
+        modularModuleName = modularModuleName,
+        modularInputEvents = modularInputEvents,
+        modularOutputEvents = modularOutputEvents,
+        modularInputNames = modularInputNames,
+        modularOutputNames = modularOutputNames,
         // modularNumberOfStates = multiArrayOf(C1, C2),
         // modularMaxOutgoingTransitions = multiArrayOf(K1, K2),
         modularMaxGuardSize = multiArrayOf(P1, P2),
@@ -339,7 +345,7 @@ fun main() {
 
         for (m in 1..M) {
             val automaton = distributedAutomaton.project(m)
-            val name = modularName[m]
+            val name = modularModuleName[m]
             logger.info("Inferred $name:")
             automaton.pprint()
             logger.info(

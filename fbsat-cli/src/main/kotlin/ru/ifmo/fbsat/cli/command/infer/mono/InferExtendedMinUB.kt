@@ -10,6 +10,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.ExtraOptions
 import ru.ifmo.fbsat.cli.command.infer.options.INPUT_OUTPUT_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.SolverOptions
 import ru.ifmo.fbsat.cli.command.infer.options.endMaxGuardSizeOption
+import ru.ifmo.fbsat.cli.command.infer.options.getInitialOutputValuesOption
 import ru.ifmo.fbsat.cli.command.infer.options.inputNamesOption
 import ru.ifmo.fbsat.cli.command.infer.options.maxPlateauWidthOption
 import ru.ifmo.fbsat.cli.command.infer.options.numberOfStatesOption
@@ -18,6 +19,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.outputNamesOption
 import ru.ifmo.fbsat.cli.command.infer.options.scenariosFileOption
 import ru.ifmo.fbsat.cli.command.infer.options.startMaxGuardSizeOption
 import ru.ifmo.fbsat.core.automaton.Automaton
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.task.single.extended.extendedMinUB
 import java.io.File
 
@@ -26,6 +28,7 @@ private class ExtendedMinUBInputOutputOptions : OptionGroup(INPUT_OUTPUT_OPTIONS
     val outDir: File by outDirOption()
     val inputNames: List<String> by inputNamesOption()
     val outputNames: List<String> by outputNamesOption()
+    val initialOutputValues: OutputValues? by getInitialOutputValuesOption()
 }
 
 private class ExtendedMinUBAutomatonOptions : OptionGroup(AUTOMATON_OPTIONS) {
@@ -44,6 +47,7 @@ class InferExtendedMinUBCommand : AbstractInferMonoCommand("extended-min-ub") {
     override val scenariosFile: File get() = io.scenariosFile
     override val inputNames: List<String> get() = io.inputNames
     override val outputNames: List<String> get() = io.outputNames
+    override val initialOutputValues: OutputValues? get() = io.initialOutputValues
     override val outDir: File get() = io.outDir
 
     override fun infer(): Automaton? =
