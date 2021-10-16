@@ -55,7 +55,7 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
     val solverRndInit: Boolean? by solverRndInitOption()
 
     // CMS options:
-    val solverThreads: Int by solverThreadsOption().validate {
+    val solverThreads: Int? by solverThreadsOption().validate {
         require(solverBackend == SolverBackend.CRYPTOMINISAT) {
             "supported only by CryptoMiniSat"
         }
@@ -100,8 +100,13 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
                 )
             }
             SolverBackend.CRYPTOMINISAT -> {
-                logger.debug { "CMS: threads = $solverThreads" }
-                CryptoMiniSatSolver(JCryptoMiniSat(solverThreads))
+                val t = solverThreads
+                if (t == null) {
+                    CryptoMiniSatSolver()
+                } else {
+                    logger.debug { "CMS: threads = $t" }
+                    CryptoMiniSatSolver(JCryptoMiniSat(t))
+                }
             }
             SolverBackend.CADICAL -> {
                 logger.debug { "Cadical: seed = $solverSeed" }
@@ -194,4 +199,4 @@ fun ParameterHolder.solverThreadsOption() =
         "--solver-threads",
         help = "CMS threads",
         metavar = "<int>"
-    ).int().default(1)
+    ).int()
