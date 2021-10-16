@@ -1,25 +1,44 @@
 package ru.ifmo.fbsat.core.scenario.positive
 
-import ru.ifmo.fbsat.core.automaton.InputEvent
-import ru.ifmo.fbsat.core.automaton.InputValues
-import ru.ifmo.fbsat.core.automaton.OutputEvent
-import ru.ifmo.fbsat.core.automaton.OutputValues
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import okio.buffer
+import okio.source
 import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.OutputAction
+import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
+import ru.ifmo.fbsat.core.scenario.negative.Counterexample
+import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
 import ru.ifmo.fbsat.core.scenario.preprocessed
-import ru.ifmo.fbsat.core.utils.log
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.sourceAutoGzip
 import ru.ifmo.fbsat.core.utils.toBooleanList
 import ru.ifmo.fbsat.core.utils.useLines
 import java.io.File
 
+private val logger = MyLogger {}
+
+@Serializable
 data class PositiveScenario(
-    override val elements: List<ScenarioElement>
+    override val elements: List<ScenarioElement>,
 ) : Scenario {
     companion object {
-        fun fromFile(file: File, preprocess: Boolean = true): List<PositiveScenario> {
+        fun fromJsonFile(file: File): List<PositiveScenario> {
+            val s = file.source().buffer().use { it.readUtf8() }
+            return Json.decodeFromString(s)
+        }
+
+        fun fromFile(
+            file: File,
+            initialOutputValues: OutputValues,
+            preprocess: Boolean = true,
+        ): List<PositiveScenario> {
             return file.sourceAutoGzip().useLines { lines ->
                 val scenarios: MutableList<PositiveScenario> = mutableListOf()
                 var numberOfScenarios = 0
@@ -28,12 +47,12 @@ data class PositiveScenario(
                     if (index == 0) {
                         numberOfScenarios = line.toInt()
                     } else {
-                        scenarios.add(fromString(line, preprocess))
+                        scenarios.add(fromString(line, initialOutputValues, preprocess))
                     }
                 }
 
                 if (scenarios.size != numberOfScenarios)
-                    log.warn("Number of scenarios mismatch: specified $numberOfScenarios, but found ${scenarios.size}")
+                    logger.warn("Number of scenarios mismatch: specified $numberOfScenarios, but found ${scenarios.size}")
 
                 scenarios
             }
@@ -48,8 +67,12 @@ data class PositiveScenario(
             Regex("""out=.*?\[([01]*)]""")
         }
 
-        fun fromString(s: String, preprocess: Boolean = true): PositiveScenario {
-            var lastOutputValues = OutputValues.zeros(regexOutputValues.find(s)!!.groups[1]!!.value.length)
+        fun fromString(
+            s: String,
+            initialOutputValues: OutputValues,
+            preprocess: Boolean = true,
+        ): PositiveScenario {
+            var lastOutputValues = initialOutputValues
             val elements: List<ScenarioElement> = s
                 .splitToSequence(";")
                 .map { it.trim() }
@@ -59,8 +82,14 @@ data class PositiveScenario(
                 .map {
                     val (type, event, values) = it.destructured
                     when (type) {
-                        "in" -> InputAction(InputEvent(event), InputValues(values.toBooleanList()))
-                        "out" -> OutputAction(OutputEvent(event), OutputValues(values.toBooleanList()))
+                        "in" -> InputAction(
+                            event = InputEvent(event),
+                            values = InputValues(values.toBooleanList())
+                        )
+                        "out" -> OutputAction(
+                            event = OutputEvent(event),
+                            values = OutputValues(values.toBooleanList())
+                        )
                         else -> error("Unsupported action type '$type'")
                     }
                 }
@@ -73,8 +102,9 @@ data class PositiveScenario(
                 }
                 .map { (first, second) ->
                     when (second) {
-                        is InputAction ->
+                        is InputAction -> {
                             ScenarioElement(first, OutputAction(null, lastOutputValues))
+                        }
                         is OutputAction -> {
                             lastOutputValues = second.values
                             ScenarioElement(first, second)
@@ -88,5 +118,60 @@ data class PositiveScenario(
             else
                 PositiveScenario(elements)
         }
+
+        fun fromTrace(
+            trace: THE_Counterexample,
+            // inputEvents: List<InputEvent>,
+            // outputEvents: List<OutputEvent>,
+            inputNames: List<String>,
+            outputNames: List<String>,
+        ): PositiveScenario {
+            val elements = trace.nodes
+                .map { node ->
+                    node.states.single().values.associate { value ->
+                        value.variable to value.content.toBoolean()
+                    }
+                }
+                .zipWithNext { inputData, outputData ->
+                    ScenarioElement(
+                        inputAction = InputAction(
+                            event = InputEvent("REQ"),
+                            values = InputValues(inputNames.map { inputData.getValue(it) })
+                        ),
+                        outputAction = OutputAction(
+                            event = OutputEvent("CNF"),
+                            values = OutputValues(outputNames.map { outputData.getValue(it) })
+                        )
+                    )
+                }
+            return PositiveScenario(elements)
+        }
+
+        fun fromSmv(
+            file: File,
+            inputEvents: List<InputEvent>,
+            outputEvents: List<OutputEvent>,
+            inputNames: List<String>,
+            outputNames: List<String>,
+            preprocess: Boolean = true,
+        ): List<PositiveScenario> =
+            Counterexample.from(file).map { counterexample ->
+                val elements = counterexample.states.zipWithNext { first, second ->
+                    ScenarioElement(
+                        InputAction(
+                            InputEvent.of(first.getFirstTrue(inputEvents.map { it.name })),
+                            InputValues(first.getBooleanValues(inputNames))
+                        ),
+                        OutputAction(
+                            OutputEvent.of(second.getFirstTrue(outputEvents.map { it.name })),
+                            OutputValues(second.getBooleanValues(outputNames))
+                        )
+                    )
+                }
+                if (preprocess)
+                    PositiveScenario(elements.preprocessed)
+                else
+                    PositiveScenario(elements)
+            }
     }
 }

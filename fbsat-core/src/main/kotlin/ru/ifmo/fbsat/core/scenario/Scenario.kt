@@ -1,5 +1,45 @@
 package ru.ifmo.fbsat.core.scenario
 
-interface Scenario {
-    val elements: List<ScenarioElement>
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+
+interface Scenario : GenericScenario<ScenarioElement>
+
+@Serializable
+data class ScenarioElement(
+    override val inputAction: InputAction,
+    override val outputAction: OutputAction,
+) : GenericScenario.Element<InputAction, OutputAction> {
+    @Transient
+    override var nodeId: Int? = null
+
+    @Transient
+    var ceState: String? = null // FIXME: remove
+
+    @Transient
+    val inputEvent: InputEvent? = inputAction.event
+
+    @Transient
+    val inputValues: InputValues = inputAction.values
+
+    @Transient
+    val outputEvent: OutputEvent? = outputAction.event
+
+    @Transient
+    val outputValues: OutputValues = outputAction.values
+
+    override fun toString(): String {
+        return "Element($inputAction / $outputAction)"
+    }
+
+    companion object
 }
+
+val List<ScenarioElement>.preprocessed: List<ScenarioElement>
+    get() = if (isEmpty()) emptyList() else
+        sequence {
+            yield(this@preprocessed.first())
+            for ((prev, cur) in this@preprocessed.asSequence().zipWithNext())
+                if (cur.outputAction.event != null || cur != prev)
+                    yield(cur)
+        }.toList()

@@ -1,13 +1,21 @@
 plugins {
     application
-    id("com.github.johnrengelman.shadow")
+    id(Plugins.Shadow.id)
+    kotlin("plugin.serialization")
 }
 
 dependencies {
     implementation(project(":core"))
-    implementation(Libs.clikt)
-    implementation(Libs.multiarray)
-    implementation(Libs.klock)
+    implementation(Libs.Clikt.clikt)
+    implementation(Libs.Mordant.mordant)
+    implementation(Libs.MultiArray.multiarray)
+    implementation(Libs.Klock.klock_jvm)
+    implementation(Libs.Satlib.satlib_core)
+    implementation(Libs.KotlinxSerialization.serialization_json)
+    implementation(Libs.XmlUtil.xmlutil_jvm)
+    implementation(Libs.XmlUtil.xmlutil_serialization_jvm)
+    implementation(Libs.Okio.okio)
+    implementation(Libs.KMongo.kmongo_serialization)
 }
 
 application {
@@ -24,13 +32,15 @@ tasks.startScripts {
 
 tasks.jar {
     manifest.attributes("Main-Class" to application.mainClassName)
+    manifest.attributes("Multi-Release" to true) // needed for log4j
 }
 
 tasks.shadowJar {
     archiveBaseName.set(rootProject.name)
-    archiveClassifier.set(null as String?)
-    archiveVersion.set(null as String?)
+    archiveClassifier.set("")
+    archiveVersion.set("")
     minimize {
-        // exclude(dependency("org.jetbrains.kotlin:kotlin-reflect"))
+        exclude(dependency("org.jetbrains.kotlin:kotlin-reflect"))
+        exclude(dependency(Libs.Log4j.log4j_core))
     }
 }

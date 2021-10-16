@@ -6,11 +6,12 @@ endif::[]
 
 Automatic Inference of Minimal Finite-State Models of Function Blocks from Execution Scenarios and Temporal Properties
 
-image:https://travis-ci.org/ctlab/fbSAT.svg?branch=master["Build Status", link="https://travis-ci.org/ctlab/fbSAT"]
-image:https://api.codacy.com/project/badge/Grade/7d2a6633604c4d04be079015afa6e30f["Codacy code quality", link="https://app.codacy.com/app/Lipen/fbSAT"]
+image:https://jb.gg/badges/research.svg["JetBrains-Research Project",link="https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub"]
+image:https://github.com/ctlab/fbSAT/workflows/Build/badge.svg["Build Status", link="https://github.com/ctlab/fbSAT/actions"]
+image:https://api.codacy.com/project/badge/Grade/4e7cce48cb6844af9ec03fa459773c0d["Codacy code quality", link="https://www.codacy.com/manual/Lipen/fbSAT"]
 image:https://hitsofcode.com/github/ctlab/fbSAT["Hits-of-Code", link="https://hitsofcode.com/view/github/ctlab/fbSAT"]
 
-https://arxiv.org/abs/1907.03285[Paper on arXiv]
+link:https://arxiv.org/abs/1907.03285[Paper on arXiv]
 
 toc::[]
 
@@ -18,13 +19,13 @@ toc::[]
 
 To build fbSAT, use shipped gradle wrapper:
 
-----
+....
 ## on Unix:
 ./gradlew
 
 ## on Windows:
 gradlew.bat
-----
+....
 
 By default, it runs `clean build installDist` gradle tasks.
 
@@ -32,116 +33,253 @@ By default, it runs `clean build installDist` gradle tasks.
 
 Gradle task `installDist` produces fbSAT binaries in `fbsat-cli/build/install/fbSAT/bin/` directory:
 
-----
+....
 ## on Unix:
 ./fbsat-cli/build/install/cli/bin/fbSAT -h
 
 ## on Windows:
 fbsat-cli\build\install\cli\bin\fbSAT.bat -h
-----
+....
+
+There are also simple binaries (link:fbsat[] and link:fbsat.bat[]), which first builds (`gradlew installDist`) and then runs fbSAT with specified arguments.
+
+....
+## on Unix:
+./fbsat -h
+
+## on Windows:
+fbsat.bat -h
+....
 
 == CLI
 
-----
-fbSAT -h
+....
+λ ./fbsat --help
 
-Usage: fbsat [OPTIONS]
+Usage: fbsat [OPTIONS] COMMAND [ARGS]...
 
 Options:
-* -i, --scenarios <path>             File with scenarios (required)
-  --smvdir <path>                    Directory with SMV files (default: data/pnp/smv)
-  -o, --outdir <path>                Output directory (default: out/2019-06-16THH:06:SS)
-* -m, --method <method>              Method to use (required)
-  -C <int>                           Number of automaton states
-  -K <int>                           Maximum number of transitions from each state
-  -P <int>                           Maximum guard size (number of parse tree nodes)
-  -T <int>                           Upper bound for the total number of transitions
-  -N <int>                           Upper bound for the total size of guards
-  -w <int>                           Maximum plateau width
-  -M <int>                           Number of modules
-  --solver <cmd>                     SAT-solver (default: incremental-cryptominisat)
-  --incremental / --no-incremental   Use IncrementalSolver backend
-  --bfs-automaton / --no-bfs-automat
+  -h, --help  Show this message and exit
+
+Commands:
+  infer
+....
+
+....
+λ ./fbsat infer --help
+
+Usage: fbsat infer [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  -h, --help  Show this message and exit
+
+Commands:
+  basic
+  basic-min
+  basic-minC
+  extended
+  extended-min
+  extended-min-ub
+  complete
+  complete-min
+  cegis
+  cegis-min
+  modular-parallel-basic
+  modular-parallel-basic-min
+  modular-parallel-basic-minC
+  modular-parallel-extended
+  modular-parallel-extended-min
+  modular-consecutive-basic
+  modular-consecutive-basic-min
+  modular-consecutive-basic-minC
+  modular-consecutive-extended
+  modular-consecutive-extended-min
+  modular-consecutive-basic
+  modular-arbitrary-basic-min
+  modular-arbitrary-basic-minC
+  distributed-basic
+....
+
+....
+λ ./fbsat infer cegis-min --help
+
+Usage: fbsat infer cegis-min [OPTIONS]
+
+Input/Output Options:
+* -i, --scenarios <path>
+    File with scenarios (required)
+  -o, --outdir <path>
+    Output directory (default: out/<yyyy-MM-dd_HH-mm-ss>)
+  --input-names <path>
+    File with input variables names (default: PnP names)
+  --output-names <path>
+    File with output variables names (default: PnP names)
+  --smvdir <path>
+    Directory with SMV files (default: data\pnp\smv)
+
+Automaton Options:
+  -C <int>
+    Number of automaton states
+  -Cstart <int>
+    Start number of automaton states
+  -P <int>
+    Maximum guard size (number of parse tree nodes)
+  -w <int>
+    Maximum plateau width
+
+Solver Options:
+  --filesolver, --streamsolver, --icms, --minisat, --glucose, --cryptominisat, --cadical
+    SAT-solver backend (default: icms (incremental-cryptominisat))
+  --filesolver-cmd <cmd>
+    FileSolver command (use %s placeholder to access the filename) (default: cadical %s)
+  --filesolver-file <path>
+    FileSolver file (for CNF) (default: cnf)
+  --streamsolver-cmd <cmd>
+    StreamSolver command (default: cadical)
+
+Extra Options:
+  --forbid-or / --allow-or
+  --forbid-transitions-to-first-state / --allow-transitions-to-first-state
+  --bfs-automaton / --no-bfs-automaton
   --bfs-guard / --no-bfs-guard
-  -h, --help                         Show this message and exit
-----
+  --only-C
+    [basic-min] Minimize only C, without T
+  --fail-verify-st / --no-fail-verify-st
+    Halt if verification of scenario tree has failed
+  --initial-output-values <[01]+>
+    Initial output values (as a bitstring)
+  --epsilon-output-events [start|onlystart|none]
+    Epsilon output events (default: ONLYSTART)
+  --start-state-algorithms [nothing|zero|zeronothing|any|init|initnothing]
+    Start state algorithms (default: ZERO)
+  --encode-reverse-implication / --no-encode-reverse-implication
+    Encode reverse implication
+  --encode-transitions-order / --no-encode-transitions-order
+    [DEBUG] Encode transitions lexicographic order
+  --encode-terminals-order / --no-encode-terminals-order
+    [DEBUG] Encode terminal numbers lexicographic order
+  --encode-terminals-mini-order / --no-encode-terminals-mini-order
+    [DEBUG] Encode AND/OR children-terminals order
+  --encode-hard-to-explain / --no-encode-hard-to-explain
+    [DEBUG] Encode some hard to explain thing
+  --encode-totalizer / --no-encode-totalizer
+    Encode totalizer when upper bound is null
+  --encode-disjunctive-transitions / --no-encode-disjunctive-transitions
+    Encode disjunctive transitions (adhocly forbid priority function)
+  --reuse-k / --no-reuse-k
+    Reuse K found by ExtendedMinTask during CEGIS
+  --debug / --no-debug
+    Debug mode
+
+Options:
+  -h, --help
+    Show this message and exit
+....
 
 == SAT solver
 
-fbSAT is able to use any SAT solver, supporting link:http://www.domagoj-babic.com/uploads/ResearchProjects/Spear/dimacs-cnf.pdf[DIMACS] input. You can specify it with `--solver <cmd>` flag.
+fbSAT is able to use any SAT solver supporting link:http://www.domagoj-babic.com/uploads/ResearchProjects/Spear/dimacs-cnf.pdf[DIMACS format].
+Such solver has to either accept the input CNF via stdin ("stream solver"), or as a file argument ("file solver").
+In both cases the solver must produce DIMACS-formatted output to stdout.
+You can choose the backend solver using the following flags and options:
 
-If you already have your favorite SAT solver, use it. If not, check out link:https://github.com/msoos/cryptominisat[cryptominisat], link:http://www.labri.fr/perso/lsimon/glucose[glucose], link:http://fmv.jku.at/cadical[cadical], link:http://fmv.jku.at/lingeling[lingeling], or any other.
+- `--streamsolver` for "stream solver"
+** `--streamsolver-cmd <cmd>` to customize the solver command
+- `--filesolver` for "file solver"
+** `--filesolver-cmd <cmd with %s>` to customize the solver command (use `%s` to access the filename)
+** `--filesolver-file <cmd>` to customize the filename
 
-Note, that you have to specify the `--no-incremental` flag, if your SAT solver is not able to process incremental problems via stdin.
-This is true for all standard SAT solvers, which are only able to read the single one non-incremental SAT problem written in DIMACS format.
+If you already have a favorite SAT solver -- use it.
+If not, check out link:http://minisat.se[minisat], link:https://github.com/msoos/cryptominisat[cryptominisat], link:http://www.labri.fr/perso/lsimon/glucose[glucose], link:http://fmv.jku.at/lingeling[lingeling], link:http://fmv.jku.at/cadical[cadical], link:https://github.com/shnarazk/splr[splr], or any other.
+
+Moreover, fbSAT depends on link:https://github.com/Lipen/kotlin-satlib[kotlin-satlib], which allows you to access various SAT solvers natively (via JNI technology).
+Currently, kotlin-satlib support link:https://github.com/niklasso/minisat[MiniSat], link:https://github.com/wadoon/glucose[Glucose], link:https://github.com/msoos/cryptominisat[Cryptominisat], and link:https://github.com/arminbiere/cadical[Cadical] (all links are given to the source repositories being used).
+Those backends can be chosen via the followings flags:
+
+- `--minisat` for link:https://github.com/Lipen/kotlin-satlib/blob/master/kotlin-satlib-core/src/main/kotlin/com/github/lipen/satlib/solver/MiniSatSolver.kt[native MiniSat] via JNI
+- `--glucose` for link:https://github.com/Lipen/kotlin-satlib/blob/master/kotlin-satlib-core/src/main/kotlin/com/github/lipen/satlib/solver/GlucoseSolver.kt[native Glucose] via JNI
+- `--cryptominisat` for link:https://github.com/Lipen/kotlin-satlib/blob/master/kotlin-satlib-core/src/main/kotlin/com/github/lipen/satlib/solver/CryptoMiniSatSolver.kt[native Cryptominisat] via JNI
+- `--cadical` for link:https://github.com/Lipen/kotlin-satlib/blob/master/kotlin-satlib-core/src/main/kotlin/com/github/lipen/satlib/solver/CadicalSolver.kt[native Cadical] via JNI
+
+Additionally, we provide a wrapper for Cryptominisat, which allows solving SAT **incrementally** via stdin. In order to use it, you should pick the following flag:
+
+- `--icms` for link:fbsat-core/src/main/kotlin/ru/ifmo/fbsat/core/solver/IncrementalCryptominisatSolver.kt["incremental Cryptominisat"] via link:https://github.com/Lipen/incremental-cryptominisat[wrapper]
 
 === Cryptominisat
 
-In order to get cryptominisat, simply download one of the link:https://github.com/msoos/cryptominisat/releases[release binaries] for Linux/Windows.
+In order to get cryptominisat, simply download one of the link:https://github.com/msoos/cryptominisat/releases[release binaries] for Linux or Windows (_e.g._ release 5.6.8 has corresponding assets).
+Use fbSAT in the following way:
 
-[source,bash]
-----
-fbsat ... --solver="cryptominisat5" --no-incremental
-----
+....
+fbsat ... --streamsolver --streamsolver-cmd="cryptominisat5"
+....
 
-Also, you may use link:https://hub.docker.com/r/msoos/cryptominisat[docker container]:
+Also, you may use the link:https://hub.docker.com/r/msoos/cryptominisat[docker container]:
 
-[source,bash]
-----
+....
 ## Pull cryptominisat image
 docker pull msoos/cryptominisat
-## Specify solver cmd to fbSAT
-fbsat ... --solver="docker run --rm -i msoos/cryptominisat" --no-incremental
-----
+
+## Specify solver cmd to fbSAT:=
+fbsat ... --streamsolver --streamsolver-cmd="docker run --rm -i msoos/cryptominisat"
+....
 
 However, a relatively large launch time of the container (up to 2 seconds on Windows) can lead to undesirable large total execution time, since fbSAT makes multiple calls to the SAT solver.
 The solution is to spawn a container only once, in link:https://docs.docker.com/engine/reference/run/#detached--d[detached mode], and later link:https://docs.docker.com/engine/reference/commandline/exec[exec] cryptominisat inside it:
 
-[source,bash]
-----
-## Run cryptominisat in detached mode:
+....
+## Run cryptominisat in detached mode
 docker run -d -i --name cms --entrypoint="/bin/sh" msoos/cryptominisat
-## Specify solver cmd to fbSAT:
-fbsat ... --solver "docker exec -i cms /usr/local/bin/cryptominisat5 --verb=0" --no-incremental
-## When finished, do not forget to stop and remove the spawned container:
+
+## Specify solver cmd to fbSAT
+fbsat ... --streamsolver --streamsolver-cmd="docker exec -i cms /usr/local/bin/cryptominisat5 --verb=0"
+
+## When finished, do not forget to stop and remove the spawned container
 docker rm -f cms
-----
+....
 
 === Incremental Cryptominisat
 
-During inferring minimal models and performing the CEGIS, the fbSAT heavily relies on the ability of SAT solvers to solve _incrementally_ -- continue solving the SAT problem after adding new constraints (tighter upper bound during minimization; new counterexamples to forbid during CEGIS).
-However, such feature is only available via the native interface, and not via the standard input in some format for CNF similar to DIMACS.
+During inferring minimal models and performing the CEGIS, the fbSAT heavily relies on the ability of SAT solvers to solve _incrementally_ -- continue solving the SAT problem after adding new constraints (_e.g._ tighter upper bound during minimization, and new counterexamples to forbid during CEGIS).
+However, such feature is only available via the native interface, and not via the standard input in DIMACS format.
 Hence, we developed link:https://github.com/lipen/incremental-cryptominisat[a small wrapper] around the cryptominisat library, which is able to process the incremental SAT problems written in iCNF format via stdin.
-In order to enforce fbSAT to use it, specify path to wrapper  via `--solver` and use `--incremental` flag (which is turned on by default).
+In order to use it, create the binary file `incremental-cryptominisat` (sadly, this is not customizable via cli, yet) and ensure that it is located in your PATH.
+Then, simply pass the `--icms` flag to fbSAT.
 
-[source,bash]
-----
-## Run incremental-cryptominisat in detached mode:
+....
+## Run incremental-cryptominisat in detached mode
 docker run -d -i --name icms --entrypoint="/bin/sh" lipen/incremental-cryptominisat
-## Specify solver cmd to fbSAT:
-fbsat ... --solver="docker exec -i icms /usr/local/bin/incremental-cryptominisat"
-## When finished, do not forget to stop and remove the spawned container:
+
+## Create the `incremental-cryptominisat` binary
+echo -e "#/bin/bash\ndocker exec -i icms /usr/local/bin/incremental-cryptominisat" > ~/bin/incremental-cryptominisat
+chmod +x ~/bin/incremental-cryptominisat
+
+## Choose incremental-cryptominisat backend in fbSAT
+fbsat ... --icms
+
+## When finished, do not forget to stop and remove the spawned container
 docker rm -f icms
-----
+....
 
 === TL;DR
 
-NOTE: Add link:scripts[`scripts`] folder to your PATH and execute link:scripts/start-icms[`start-icms`]. After this you will be able to use fbSAT without any specific solver-related arguments.
+NOTE: Add link:scripts[`scripts`] folder to your PATH and execute link:scripts/start-icms[`start-icms`].
+After this, you will be able to use fbSAT without any specific solver-related arguments.
 
 == Usage example
 
-* Minimize `tests-1` using `extended` method:
+* Minimize `tests-1` using `extended`:
 
- fbsat -i data/tests-1.gz -o out/tests-1-min -m extended-min -P 3
+ fbsat infer extended-min -i data/tests-1.gz -o out/tests-1-min -P 3
 
 * Minimize `tests-4` using `extended` method with automatic search of `P` (until first SAT: w=0):
 
- fbsat -i data/tests-4.gz -o out/tests-4-min-ub-w0 -m extended-min-ub -w 0
+ fbsat infer extended-min-ub -i data/tests-4.gz -o out/tests-4-min-ub-w0 -w 0
 
 * Minimize `tests-4` using `extended` method with automatic search of `P` (up to an upper bound with plateau heuristic: w=2):
 
- fbsat -i data/tests-4.gz -o out/tests-4-min-ub-w2 -m extended-min-ub -w 2
+ fbsat infer extended-min-ub -i data/tests-4.gz -o out/tests-4-min-ub-w2 -w 2
 
-* Run CEGIS loop, maintaining the minimal model on `tests-1`:
+* Run CEGIS loop, maintaining the minimal model, on `tests-1`:
 
- fbsat -i data/tests-1.gz -o out/tests-1-complete-min-cegis -m complete-min-cegis -P 3
+ fbsat infer cegis-min -i data/tests-1.gz -o out/tests-1-complete-min-cegis

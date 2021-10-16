@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="warn">
+    <Properties>
+        <Property name="logDir">logs</Property>
+        <Property name="baseName">fbsat</Property>
+        <Property name="dateTime">${date:yyyy-MM-dd_HH-mm-ss}</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <PatternLayout
+                pattern="%highlight{[%date{HH:mm:ss}] [%level] %logger: %message}{DEBUG=bright black, INFO=bright blue, WARN=bright magenta, ERROR=bright red}%n%throwable"
+                disableAnsi="false"/>
+            <Filters>
+                <RegexFilter regex="(?s)^// .*" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </Filters>
+        </Console>
+
+        <Console name="STDOUT-fbsat" target="SYSTEM_OUT">
+            <PatternLayout
+                pattern="%highlight{[%date{HH:mm:ss}] [%level{TRACE=T, DEBUG=D, INFO=I, WARN=W, ERROR=E}] %message}{DEBUG=bright black, INFO=bright blue, WARN=bright magenta, ERROR=bright red}%n%throwable"
+                disableAnsi="false"/>
+            <Filters>
+                <MarkerFilter marker="NO_CONSOLE" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </Filters>
+        </Console>
+
+        <File name="file"
+              createOnDemand="true"
+              fileName="${logDir}/${baseName}_${date:yyyy-MM-dd_HH-mm-ss}.log">
+            <PatternLayout pattern="[%date{yyyy-MM-dd HH:mm:ss}] [%level] %logger: %message%n%throwable"/>
+            <Filters>
+                <RegexFilter regex="(?s)^// .*" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <!--<RegexFilter regex="(?s)^solve\(assumptions" onMatch="DENY" onMismatch="NEUTRAL"/>-->
+            </Filters>
+        </File>
+    </Appenders>
+
+    <Loggers>
+        <!-- fbSAT: log (DEBUG to stdout, excluding NO_CONSOLE marker] and (DEBUG to file) -->
+        <Logger name="ru.ifmo.fbsat" level="debug" additivity="false">
+            <AppenderRef ref="STDOUT-fbsat" level="debug"/>
+            <AppenderRef ref="file" level="debug"/>
+        </Logger>
+
+        <!-- Mongo: log only INFO+ -->
+        <Logger name="org.mongodb.driver" level="info"/>
+
+        <!-- Others: log (WARN to stdout) and (DEBUG to file) -->
+        <Root level="debug">
+            <AppenderRef ref="STDOUT" level="warn"/>
+            <AppenderRef ref="file" level="debug"/>
+        </Root>
+    </Loggers>
+</Configuration>

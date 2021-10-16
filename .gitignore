@@ -1,13 +1,14 @@
 # Hidden folders
 .idea/
 .gradle/
+.Rproj.user/
 
 # Build folders
 build/
 out/
 target/
 
-# Project file, compiled bytecode, logs, archives, scripts
+# Project file, compiled bytecode, logs, archives, scripts, libraries
 *.iml
 *.class
 *.log
@@ -20,7 +21,12 @@ target/
 *.sh
 *.bat
 *.py
+*.dll
+*.so
 /logs/
+/data/
+/analysis/
+docker-compose.yml
 
 # Gradle
 !/gradle/wrapper/gradle-wrapper.jar
@@ -29,3 +35,4 @@ target/
 !/fbsat.bat
 # Specific scripts
 !/scripts/runner.py
+.Rproj.user
