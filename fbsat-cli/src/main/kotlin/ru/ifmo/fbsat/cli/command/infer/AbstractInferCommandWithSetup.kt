@@ -26,18 +26,18 @@ abstract class AbstractInferCommandWithSetup<AutomatonType : Any>(name: String) 
         outDir.mkdirs()
         check(outDir.exists()) { "Output directory does not exist" }
 
-        if (!Globals.IS_ENCODE_ACTIVE_PASSIVE) {
+        if (!Globals.IS_ENCODE_EVENTLESS) {
             if (Globals.IS_ENCODE_TRANSITION_FUNCTION) {
-                logger.warn("IS_ENCODE_TRANSITION_FUNCTION is true, but IS_ENCODE_ACTIVE_PASSIVE is false, so the former has no effect")
+                logger.warn("IS_ENCODE_TRANSITION_FUNCTION is true, but IS_ENCODE_EVENTLESS is false, so the former has no effect")
             }
             if (Globals.IS_ENCODE_EPSILON_PASSIVE) {
-                logger.warn("IS_ENCODE_EPSILON_PASSIVE is true, but IS_ENCODE_ACTIVE_PASSIVE is false, so the former has no effect")
+                logger.warn("IS_ENCODE_EPSILON_PASSIVE is true, but IS_ENCODE_EVENTLESS is false, so the former has no effect")
             }
             if (Globals.IS_ENCODE_NOT_EPSILON_ACTIVE) {
-                logger.warn("IS_ENCODE_NOT_EPSILON_ACTIVE is true, but IS_ENCODE_ACTIVE_PASSIVE is false, so the former has no effect")
+                logger.warn("IS_ENCODE_NOT_EPSILON_ACTIVE is true, but IS_ENCODE_EVENTLESS is false, so the former has no effect")
             }
             if (Globals.IS_FIX_ACTIVE) {
-                logger.warn("IS_FIX_ACTIVE is true, but IS_ENCODE_ACTIVE_PASSIVE is false, so the former has no effect")
+                logger.warn("IS_FIX_ACTIVE is true, but IS_ENCODE_EVENTLESS is false, so the former has no effect")
             }
         }
 

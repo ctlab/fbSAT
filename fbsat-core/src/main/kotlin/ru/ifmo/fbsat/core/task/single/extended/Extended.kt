@@ -71,7 +71,7 @@ fun Inferrer.extendedMin(
     val timeStart = PerformanceCounter.reference
     val automaton = run {
         basicMinC(scenarioTree, start = numberOfStates ?: 1) ?: return@run null
-        if (Globals.IS_ENCODE_ACTIVE_PASSIVE) {
+        if (Globals.IS_ENCODE_EVENTLESS) {
             if (Globals.IS_FIX_ACTIVE) {
                 logger.info("Fixing found active[v] values")
                 @Suppress("LocalVariableName")

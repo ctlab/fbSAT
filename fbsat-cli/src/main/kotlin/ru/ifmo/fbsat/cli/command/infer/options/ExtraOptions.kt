@@ -34,7 +34,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isEncodeAtf0: Boolean by isEncodeAtf0Option()
     val isEncodeFf0VarDecl: Boolean by isEncodeFf0VarDeclOption()
     val isEncodeFfNfVarDecl: Boolean by isEncodeFfNfVarDeclOption()
-    val isEncodeActivePassive: Boolean by isEncodeActivePassiveOption()
+    val isEncodeEventless: Boolean by isEncodeEventlessOption()
     val isEncodeTransitionFunction: Boolean by isEncodeTransitionFunctionOption()
     val isEncodeEpsilonPassive: Boolean by isEncodeEpsilonPassiveOption()
     val isEncodeNotEpsilonActive: Boolean by isEncodeNotEpsilonActiveOption()
@@ -208,13 +208,13 @@ fun ParameterHolder.isEncodeFfNfVarDeclOption() =
         default = Globals.IS_ENCODE_FF_NF_VARDECL
     )
 
-fun ParameterHolder.isEncodeActivePassiveOption() =
+fun ParameterHolder.isEncodeEventlessOption() =
     option(
-        "--encode-active-passive",
+        "--encode-eventless",
         help = "Encode eventless mapping"
     ).flag(
-        "--no-encode-active-passive",
-        default = Globals.IS_ENCODE_ACTIVE_PASSIVE
+        "--no-encode-eventless",
+        default = Globals.IS_ENCODE_EVENTLESS
     )
 
 fun ParameterHolder.isEncodeTransitionFunctionOption() =

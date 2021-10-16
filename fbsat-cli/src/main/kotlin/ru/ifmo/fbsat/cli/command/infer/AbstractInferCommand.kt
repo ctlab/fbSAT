@@ -38,7 +38,7 @@ abstract class AbstractInferCommand<AutomatonType : Any>(name: String) : CliktCo
             Globals.IS_ENCODE_ATF_0 = isEncodeAtf0
             Globals.IS_ENCODE_FF_0_VARDECL = isEncodeFf0VarDecl
             Globals.IS_ENCODE_FF_NF_VARDECL = isEncodeFfNfVarDecl
-            Globals.IS_ENCODE_ACTIVE_PASSIVE = isEncodeActivePassive
+            Globals.IS_ENCODE_EVENTLESS = isEncodeEventless
             Globals.IS_ENCODE_TRANSITION_FUNCTION = isEncodeTransitionFunction
             Globals.IS_ENCODE_EPSILON_PASSIVE = isEncodeEpsilonPassive
             Globals.IS_ENCODE_NOT_EPSILON_ACTIVE = isEncodeNotEpsilonActive

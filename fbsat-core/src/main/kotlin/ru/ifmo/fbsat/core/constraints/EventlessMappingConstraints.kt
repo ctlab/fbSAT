@@ -49,10 +49,10 @@ import ru.ifmo.fbsat.core.utils.algorithmChoice
 // [18:29:45] [I] ExtendedTask: declared 19968 variables and 424128 clauses in 0.332 s.
 // [18:30:02] [I] All done in 24.202 seconds
 
-fun Solver.declareActivePassivePositiveMappingConstraints(
+fun Solver.declareEventlessPositiveMappingConstraints(
     isEncodeReverseImplication: Boolean,
 ) {
-    comment("Active-passive positive mapping constraints")
+    comment("Eventless positive mapping constraints")
 
     val tree: ScenarioTree<*, *> = context["tree"]
     val V: Int = context["V"]
