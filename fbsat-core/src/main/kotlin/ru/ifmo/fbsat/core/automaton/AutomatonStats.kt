@@ -3,6 +3,7 @@ package ru.ifmo.fbsat.core.automaton
 import kotlinx.serialization.Serializable
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
 
 @Serializable
 data class AutomatonStats(
@@ -20,6 +21,7 @@ data class AutomatonStats(
     val outputEvents: List<OutputEvent>,
     val inputNames: List<String>,
     val outputNames: List<String>,
+    val initialOutputValues: OutputValues,
 ) {
     constructor(automaton: Automaton) : this(
         hash = automaton.calculateHashCode(),
@@ -35,7 +37,8 @@ data class AutomatonStats(
         inputEvents = automaton.inputEvents,
         outputEvents = automaton.outputEvents,
         inputNames = automaton.inputNames,
-        outputNames = automaton.outputNames
+        outputNames = automaton.outputNames,
+        initialOutputValues = automaton.initialOutputValues,
     )
 }
 

@@ -24,6 +24,13 @@ interface GenericScenarioTree<S, N>
     }
 }
 
+val <N, E, Out, OV> GenericScenarioTree<*, N>.initialOutputValues: OV
+    where N : GenericScenarioTree.Node<*, E>,
+          E : GenericScenario.Element<*, Out>,
+          Out : GenericScenarioOutputAction<*, OV>,
+          OV : GenericOutputValues
+    get() = root.element.outputAction.values
+
 internal inline fun <N, E> GenericScenarioTree<*, N>.addGenericScenario(
     scenario: GenericScenario<E>,
     sameNode: (index: Int, element: E, child: N) -> N,

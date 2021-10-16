@@ -10,12 +10,14 @@ import ru.ifmo.fbsat.cli.command.infer.options.AUTOMATON_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.ExtraOptions
 import ru.ifmo.fbsat.cli.command.infer.options.INPUT_OUTPUT_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.SolverOptions
+import ru.ifmo.fbsat.cli.command.infer.options.getInitialOutputValuesOption
 import ru.ifmo.fbsat.cli.command.infer.options.inputNamesOption
 import ru.ifmo.fbsat.cli.command.infer.options.numberOfModulesOption
 import ru.ifmo.fbsat.cli.command.infer.options.outDirOption
 import ru.ifmo.fbsat.cli.command.infer.options.outputNamesOption
 import ru.ifmo.fbsat.cli.command.infer.options.scenariosFileOption
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.task.distributed.basic.distributedBasicMinC
 import java.io.File
 
@@ -24,6 +26,7 @@ private class DistributedBasicMinCInputOutputOptions : OptionGroup(INPUT_OUTPUT_
     val outDir: File by outDirOption()
     val inputNames: List<String> by inputNamesOption()
     val outputNames: List<String> by outputNamesOption()
+    val initialOutputValues: OutputValues? by getInitialOutputValuesOption()
 }
 
 private class DistributedBasicMinCAutomatonOptions : OptionGroup(AUTOMATON_OPTIONS) {
@@ -40,15 +43,16 @@ class InferDistributedBasicMinCCommand : AbstractInferDistributedCommand("distri
     override val scenariosFile: File get() = io.scenariosFile
     override val inputNames: List<String> get() = io.inputNames
     override val outputNames: List<String> get() = io.outputNames
+    override val initialOutputValues: OutputValues? get() = io.initialOutputValues
     override val outDir: File get() = io.outDir
 
     override fun infer(): DistributedAutomaton? {
         val M = params.numberOfModules
         return inferrer.distributedBasicMinC(
             numberOfModules = M,
-            compoundScenarioTree = compoundScenarioTree,
+            // compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = compoundScenarioTree.modular,
-            modularIsEncodeReverseImplication = MultiArray.new(M) { extraOptions.isEncodeReverseImplication }
+            modularIsEncodeReverseImplication = MultiArray.new(M) { extraOptions.isEncodeReverseImplication },
         )
     }
 }

@@ -36,7 +36,7 @@ class PositiveCompoundScenario private constructor(
         fun fromCounterexample(
             counterexample: THE_Counterexample,
             M: Int,
-            modularName: MultiArray<String>,
+            modularModuleName: MultiArray<String>,
             modularInputEvents: MultiArray<List<InputEvent>>,
             modularOutputEvents: MultiArray<List<OutputEvent>>,
             modularInputNames: MultiArray<List<String>>,
@@ -54,18 +54,18 @@ class PositiveCompoundScenario private constructor(
                             ScenarioElement(
                                 inputAction = InputAction(
                                     event = modularInputEvents[m].firstOrNull {
-                                        inputData.getValue("${modularName[m]}$${it.name}")
+                                        inputData.getValue("${modularModuleName[m]}$${it.name}")
                                     },
                                     values = InputValues(modularInputNames[m].map {
-                                        inputData.getValue("${modularName[m]}$$it")
+                                        inputData.getValue("${modularModuleName[m]}$$it")
                                     })
                                 ),
                                 outputAction = OutputAction(
                                     event = modularOutputEvents[m].firstOrNull {
-                                        outputData.getValue("${modularName[m]}.${it.name}")
+                                        outputData.getValue("${modularModuleName[m]}.${it.name}")
                                     },
                                     values = OutputValues(modularOutputNames[m].map {
-                                        outputData.getValue("${modularName[m]}.$it")
+                                        outputData.getValue("${modularModuleName[m]}.$it")
                                     })
                                 )
                             )

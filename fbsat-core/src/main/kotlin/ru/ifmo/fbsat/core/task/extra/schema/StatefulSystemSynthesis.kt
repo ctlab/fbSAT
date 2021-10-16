@@ -28,7 +28,6 @@ import okio.buffer
 import okio.sink
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
-import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.negative.readCounterexamplesFromFile
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
@@ -859,7 +858,6 @@ private fun main() {
     val Z = outputNames.size
 
     Globals.IS_DEBUG = true
-    Globals.INITIAL_OUTPUT_VALUES = OutputValues.zeros(Z)
 
     val tree = PositiveScenarioTree(
         inputEvents = listOf(InputEvent("REQ")),

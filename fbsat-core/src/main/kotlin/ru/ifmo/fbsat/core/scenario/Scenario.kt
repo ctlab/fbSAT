@@ -2,7 +2,6 @@ package ru.ifmo.fbsat.core.scenario
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import ru.ifmo.fbsat.core.utils.Globals
 
 interface Scenario : GenericScenario<ScenarioElement>
 
@@ -34,19 +33,6 @@ data class ScenarioElement(
     }
 
     companion object
-}
-
-val auxScenarioElement: ScenarioElement by lazy {
-    ScenarioElement(
-        InputAction(
-            event = null,
-            values = InputValues.empty()
-        ),
-        OutputAction(
-            event = null,
-            values = Globals.INITIAL_OUTPUT_VALUES
-        )
-    )
 }
 
 val List<ScenarioElement>.preprocessed: List<ScenarioElement>

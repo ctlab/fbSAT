@@ -22,10 +22,6 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isForbidTransitionsToFirstState: Boolean by isForbidTransitionsToFirstStateOption()
     val isBfsAutomaton: Boolean by isBfsAutomatonOption()
     val isBfsGuard: Boolean by isBfsGuardOption()
-
-    // val isOnlyC: Boolean by isOnlyCOption()
-    // val failIfSTVerifyFailed: Boolean by getFailIfSTVerifyFailedOption()
-    val initialOutputValues: OutputValues? by getInitialOutputValuesOption()
     val epsilonOutputEvents: EpsilonOutputEvents by getEpsilonOutputEventsOption()
     val startStateAlgorithms: StartStateAlgorithms by getStartStateAlgorithmsOption()
     val isEncodeReverseImplication: Boolean by isEncodeReverseImplicationOption()
@@ -35,6 +31,14 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isEncodeHardToExplain: Boolean by isEncodeHardToExplainOption()
     val isEncodeTotalizer: Boolean by isEncodeTotalizerOption()
     val isEncodeDisjunctiveTransitions: Boolean by isEncodeDisjunctiveTransitionsOption()
+    val isEncodeAtf0: Boolean by isEncodeAtf0Option()
+    val isEncodeFf0VarDecl: Boolean by isEncodeFf0VarDeclOption()
+    val isEncodeFfNfVarDecl: Boolean by isEncodeFfNfVarDeclOption()
+    val isEncodeEventless: Boolean by isEncodeEventlessOption()
+    val isEncodeTransitionFunction: Boolean by isEncodeTransitionFunctionOption()
+    val isEncodeEpsilonPassive: Boolean by isEncodeEpsilonPassiveOption()
+    val isEncodeNotEpsilonActive: Boolean by isEncodeNotEpsilonActiveOption()
+    val isFixActive: Boolean by isFixActiveOption()
     val isReuseK: Boolean by isReuseKOption()
     val isUseAssumptions: Boolean by isUseAssumptionsOption()
     val isRenderWithDot: Boolean by isRenderWithDotOption()
@@ -120,7 +124,7 @@ fun ParameterHolder.isEncodeReverseImplicationOption() =
         help = "Encode reverse implication"
     ).flag(
         "--no-encode-reverse-implication",
-        default = true
+        default = Globals.IS_ENCODE_REVERSE_IMPLICATION
     )
 
 fun ParameterHolder.isEncodeTransitionsOrderOption() =
@@ -175,6 +179,78 @@ fun ParameterHolder.isEncodeDisjunctiveTransitionsOption() =
     ).flag(
         "--no-encode-disjunctive-transitions",
         default = Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS
+    )
+
+fun ParameterHolder.isEncodeAtf0Option() =
+    option(
+        "--encode-atf0",
+        help = "TODO"
+    ).flag(
+        "--no-encode-atf0",
+        default = Globals.IS_ENCODE_ATF_0
+    )
+
+fun ParameterHolder.isEncodeFf0VarDeclOption() =
+    option(
+        "--encode-ff0-vardecl",
+        help = "TODO"
+    ).flag(
+        "--no-encode-ff0-vardecl",
+        default = Globals.IS_ENCODE_FF_0_VARDECL
+    )
+
+fun ParameterHolder.isEncodeFfNfVarDeclOption() =
+    option(
+        "--encode-ff-nf-vardecl",
+        help = "TODO"
+    ).flag(
+        "--no-encode-ff-nf-vardecl",
+        default = Globals.IS_ENCODE_FF_NF_VARDECL
+    )
+
+fun ParameterHolder.isEncodeEventlessOption() =
+    option(
+        "--encode-eventless",
+        help = "Encode eventless mapping"
+    ).flag(
+        "--no-encode-eventless",
+        default = Globals.IS_ENCODE_EVENTLESS
+    )
+
+fun ParameterHolder.isEncodeTransitionFunctionOption() =
+    option(
+        "--encode-transition-function",
+        help = "Encode the transitionFunction"
+    ).flag(
+        "--no-encode-transition-function",
+        default = Globals.IS_ENCODE_TRANSITION_FUNCTION
+    )
+
+fun ParameterHolder.isEncodeEpsilonPassiveOption() =
+    option(
+        "--encode-epsilon-passive",
+        help = "Encode the constraint 'tree vertex with epsilon output event is definitely passive'"
+    ).flag(
+        "--no-encode-epsilon-passive",
+        default = Globals.IS_ENCODE_EPSILON_PASSIVE
+    )
+
+fun ParameterHolder.isEncodeNotEpsilonActiveOption() =
+    option(
+        "--encode-not-epsilon-active",
+        help = "Encode the constraint 'tree vertex with non-epsilon output event is definitely active'"
+    ).flag(
+        "--no-encode-not-epsilon-active",
+        default = Globals.IS_ENCODE_NOT_EPSILON_ACTIVE
+    )
+
+fun ParameterHolder.isFixActiveOption() =
+    option(
+        "--fix-active",
+        help = "Fix active[v] after basic-min"
+    ).flag(
+        "--no-fix-active",
+        default = Globals.IS_FIX_ACTIVE
     )
 
 fun ParameterHolder.isReuseKOption() =

@@ -20,6 +20,7 @@ import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
+import ru.ifmo.fbsat.core.scenario.initialOutputValues
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
@@ -47,6 +48,7 @@ class ArbitraryModularAutomaton(
     val outputEvents: List<OutputEvent>,
     val inputNames: List<String>,
     val outputNames: List<String>,
+    val initialOutputValues: OutputValues = OutputValues.zeros(outputNames.size),
 ) {
     /** Number of modules */
     @Suppress("PropertyName")
@@ -61,12 +63,13 @@ class ArbitraryModularAutomaton(
         inboundVarPinParent: MultiArray<Int>,
         scenarioTree: PositiveScenarioTree,
     ) : this(
-        modules,
-        inboundVarPinParent,
-        scenarioTree.inputEvents,
-        scenarioTree.outputEvents,
-        scenarioTree.inputNames,
-        scenarioTree.outputNames
+        modules = modules,
+        inboundVarPinParent = inboundVarPinParent,
+        inputEvents = scenarioTree.inputEvents,
+        outputEvents = scenarioTree.outputEvents,
+        inputNames = scenarioTree.inputNames,
+        outputNames = scenarioTree.outputNames,
+        initialOutputValues = scenarioTree.initialOutputValues,
     )
 
     init {
@@ -104,11 +107,11 @@ class ArbitraryModularAutomaton(
                     InputValues.zeros(it.inputNames.size)
                 )
             }
-            val currentModularOutputValues = modules.mapToMut { OutputValues.zeros(it.outputNames.size) }
+            val currentModularOutputValues = modules.mapToMut { it.initialOutputValues }
             val currentModularOutputEvent: MutableMultiArray<OutputEvent?> = modules.mapToMut { null }
             val currentInboundVarPinComputedValue = MutableMultiArray.newBoolean(allInboundVarPins.size)
             val currentOutboundVarPinComputedValue = MutableMultiArray.newBoolean(allOutboundVarPins.size)
-            var currentOutputValues = OutputValues.zeros(Z)
+            var currentOutputValues = initialOutputValues
 
             return inputActions.map { inputAction ->
                 for (x in 1..X) {
@@ -538,8 +541,12 @@ fun buildBasicArbitraryModularAutomaton(
         val notFired = ctx.convertBoolVarArray("notFired", model)
         val stateAlgorithmBot = ctx.convertBoolVarArray("stateAlgorithmBot", model)
         val stateAlgorithmTop = ctx.convertBoolVarArray("stateAlgorithmTop", model)
+        val initialOutputValues: OutputValues = ctx["initialOutputValues"]
 
-        Automaton(scenarioTree).endow(
+        Automaton(
+            scenarioTree = scenarioTree,
+            initialOutputValues = initialOutputValues
+        ).endow(
             C = C, K = K,
             stateOutputEvent = { OutputEvent("CNF") },
             stateAlgorithm = { c ->
@@ -605,8 +612,12 @@ fun buildExtendedArbitraryModularAutomaton(
         val nodeInputVariable = ctx.convertIntVarArray("nodeInputVariable", model)
         val nodeParent = ctx.convertIntVarArray("nodeParent", model)
         val nodeChild = ctx.convertIntVarArray("nodeChild", model)
+        val initialOutputValues: OutputValues = ctx["initialOutputValues"]
 
-        Automaton(scenarioTree).endow(
+        Automaton(
+            scenarioTree = scenarioTree,
+            initialOutputValues = initialOutputValues
+        ).endow(
             C = C, K = K,
             stateOutputEvent = { OutputEvent("CNF") },
             stateAlgorithm = { c ->

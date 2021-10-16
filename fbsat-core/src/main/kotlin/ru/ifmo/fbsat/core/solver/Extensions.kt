@@ -16,6 +16,10 @@ import com.github.lipen.satlib.core.SequenceScopeLit
 import com.github.lipen.satlib.core.convert
 import com.github.lipen.satlib.core.newContext
 import com.github.lipen.satlib.op.implyIff
+import com.github.lipen.satlib.op.implyImply
+import com.github.lipen.satlib.op.implyImplyAnd
+import com.github.lipen.satlib.op.implyImplyImply
+import com.github.lipen.satlib.op.implyImplyOr
 import com.github.lipen.satlib.op.runWithTimeout
 import com.github.lipen.satlib.solver.CadicalSolver
 import com.github.lipen.satlib.solver.GlucoseSolver
@@ -161,31 +165,81 @@ fun Solver.implyIffXor(x1: Lit, x2: Lit, vararg xs: Lit) {
     implyIffXor(x1, x2, xs.asIterable())
 }
 
-fun Solver.isSupportStats(): Boolean =
-    this is MiniSatSolver || this is GlucoseSolver
+/** [x1] & [x2] => [x3] */
+fun Solver.imply2(x1: Lit, x2: Lit, x3: Lit) {
+    implyImply(x1, x2, x3)
+}
 
-fun Solver.numberOfPropagations(): Int = when (this) {
+/** [x1] & [x2] => `OR`([xs]) */
+fun Solver.imply2Or(x1: Lit, x2: Lit, xs: Iterable<Lit>) {
+    implyImplyOr(x1, x2, xs)
+}
+
+/** [x1] & [x2] => `OR`([xs]) */
+fun Solver.imply2Or(x1: Lit, x2: Lit, xs: Sequence<Lit>) {
+    imply2Or(x1, x2, xs.asIterable())
+}
+
+/** [x1] & [x2] => `OR`([xs]) */
+fun Solver.imply2Or(x1: Lit, x2: Lit, xs: SequenceScopeLit) {
+    imply2Or(x1, x2, sequence(xs))
+}
+
+/** [x1] & [x2] => `OR`([xs]) */
+fun Solver.imply2Or(x1: Lit, x2: Lit, vararg xs: Lit) {
+    imply2Or(x1, x2, xs.asIterable())
+}
+
+/** [x1] & [x2] => `AND`([xs]) */
+fun Solver.imply2And(x1: Lit, x2: Lit, xs: Iterable<Lit>) {
+    implyImplyAnd(x1, x2, xs)
+}
+
+/** [x1] & [x2] => `AND`([xs]) */
+fun Solver.imply2And(x1: Lit, x2: Lit, xs: Sequence<Lit>) {
+    imply2And(x1, x2, xs.asIterable())
+}
+
+/** [x1] & [x2] => `AND`([xs]) */
+fun Solver.imply2And(x1: Lit, x2: Lit, xs: SequenceScopeLit) {
+    imply2And(x1, x2, sequence(xs))
+}
+
+/** [x1] & [x2] => `AND`([xs]) */
+fun Solver.imply2And(x1: Lit, x2: Lit, vararg xs: Lit) {
+    imply2And(x1, x2, xs.asIterable())
+}
+
+/** [x1] & [x2] & [x3] => [x4] */
+fun Solver.imply3(x1: Lit, x2: Lit, x3: Lit, x4: Lit) {
+    implyImplyImply(x1, x2, x3, x4)
+}
+
+fun Solver.isSupportStats(): Boolean =
+    this is MiniSatSolver || this is GlucoseSolver || this is CadicalSolver
+
+fun Solver.numberOfPropagations(): Long = when (this) {
     is MiniSatSolver -> backend.numberOfPropagations
     is GlucoseSolver -> backend.numberOfPropagations
-    is CadicalSolver -> backend.numberOfPropagations.toInt()
+    is CadicalSolver -> backend.numberOfPropagations
     else -> error("$this does not support querying the number of propagations")
 }
 
-fun Solver.numberOfConflicts(): Int = when (this) {
+fun Solver.numberOfConflicts(): Long = when (this) {
     is MiniSatSolver -> backend.numberOfConflicts
     is GlucoseSolver -> backend.numberOfConflicts
-    is CadicalSolver -> backend.numberOfConflicts.toInt()
+    is CadicalSolver -> backend.numberOfConflicts
     else -> error("$this does not support querying the number of conflicts")
 }
 
-fun Solver.numberOfDecisions(): Int = when (this) {
+fun Solver.numberOfDecisions(): Long = when (this) {
     is MiniSatSolver -> backend.numberOfDecisions
     is GlucoseSolver -> backend.numberOfDecisions
-    is CadicalSolver -> backend.numberOfDecisions.toInt()
+    is CadicalSolver -> backend.numberOfDecisions
     else -> error("$this does not support querying the number of decisions")
 }
 
-fun Solver.numberOfRestarts(): Int = when (this) {
-    is CadicalSolver -> backend.numberOfRestarts.toInt()
+fun Solver.numberOfRestarts(): Long = when (this) {
+    is CadicalSolver -> backend.numberOfRestarts
     else -> error("$this does not support querying the number of restarts")
 }

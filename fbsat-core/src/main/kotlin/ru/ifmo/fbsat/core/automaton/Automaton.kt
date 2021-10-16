@@ -47,6 +47,7 @@ class Automaton(
     val outputEvents: List<OutputEvent>,
     val inputNames: List<String>,
     val outputNames: List<String>,
+    val initialOutputValues: OutputValues, //= OutputValues.zeros(outputNames.size),
 ) {
     private val lazyCache = LazyCache()
     private val _states: MutableMap<Int, State> = mutableMapOf()
@@ -71,9 +72,7 @@ class Automaton(
         states.size
     }
 
-    /**
-     * Number of reachable automaton states.
-     */
+    /** Number of reachable automaton states. */
     val numberOfReachableStates: Int by lazyCache {
         (transitions.map { it.destination } + initialState).toSet().size
     }
@@ -98,11 +97,20 @@ class Automaton(
         transitions.sumOf { it.guard.size }
     }
 
-    constructor(scenarioTree: PositiveScenarioTree) : this(
+    // /** Initial output values. */
+    // val initialOutputValues: OutputValues by lazyCache {
+    //     initialOutputValues ?: OutputValues.zeros(outputNames.size)
+    // }
+
+    constructor(
+        scenarioTree: PositiveScenarioTree,
+        initialOutputValues: OutputValues, //= scenarioTree.initialOutputValues,
+    ) : this(
         scenarioTree.inputEvents,
         scenarioTree.outputEvents,
         scenarioTree.inputNames,
-        scenarioTree.outputNames
+        scenarioTree.outputNames,
+        initialOutputValues
     )
 
     fun getState(id: Int): State {
@@ -300,14 +308,14 @@ class Automaton(
     fun eval(
         inputActions: Sequence<InputAction>,
         startState: State = initialState,
-        startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES,
+        startValues: OutputValues = initialOutputValues,
     ): Sequence<EvalResult> =
         eval(inputActions, EvalState(startState, startValues))
 
     fun eval(
         inputActions: Iterable<InputAction>,
         startState: State = initialState,
-        startValues: OutputValues = Globals.INITIAL_OUTPUT_VALUES,
+        startValues: OutputValues = initialOutputValues,
     ): List<EvalResult> =
         eval(inputActions.asSequence(), startState, startValues).toList()
 
@@ -322,7 +330,7 @@ class Automaton(
         out@ for ((i, result) in eval(scenario).withIndex()) {
             val element = scenario.elements[i]
             if (result.outputAction != element.outputAction) {
-                // log.error("No mapping for ${i + 1}-th element = $element, result = $result")
+                // logger.error("No mapping for ${i + 1}-th element = $element, result = $result")
                 break@out
             }
             mapping[i] = result
@@ -684,7 +692,7 @@ class Automaton(
                     }
                 }
                 "Algorithm"("Name" to "INIT") {
-                    val a = Globals.INITIAL_OUTPUT_VALUES.values.toBooleanArray()
+                    val a = initialOutputValues.values.toBooleanArray()
                     "ST"(
                         "Text" to BinaryAlgorithm(a, a).toST(outputNames)
                     )
@@ -833,6 +841,7 @@ fun buildBasicAutomaton(
     val stateOutputEvent = context.convertIntVarArray("stateOutputEvent", model)
     val stateAlgorithmTop = context.convertBoolVarArray("stateAlgorithmTop", model)
     val stateAlgorithmBot = context.convertBoolVarArray("stateAlgorithmBot", model)
+    val initialOutputValues: OutputValues = context["initialOutputValues"]
 
     val stateUsedFunction: (c: Int) -> Boolean =
         if (useStateUsed) {
@@ -842,7 +851,10 @@ fun buildBasicAutomaton(
             { true }
         }
 
-    return Automaton(scenarioTree).endow(
+    return Automaton(
+        scenarioTree = scenarioTree,
+        initialOutputValues = initialOutputValues
+    ).endow(
         C = C, K = K,
         stateUsed = stateUsedFunction,
         stateOutputEvent = { c ->
@@ -895,6 +907,7 @@ fun buildExtendedAutomaton(
     val nodeInputVariable = context.convertIntVarArray("nodeInputVariable", model)
     val nodeParent = context.convertIntVarArray("nodeParent", model)
     val nodeChild = context.convertIntVarArray("nodeChild", model)
+    val initialOutputValues: OutputValues = context["initialOutputValues"]
 
     val stateUsedFunction: (c: Int) -> Boolean =
         if (useStateUsed) {
@@ -904,7 +917,10 @@ fun buildExtendedAutomaton(
             { true }
         }
 
-    return Automaton(scenarioTree).endow(
+    return Automaton(
+        scenarioTree = scenarioTree,
+        initialOutputValues = initialOutputValues
+    ).endow(
         C = C, K = K,
         stateUsed = stateUsedFunction,
         stateOutputEvent = { c ->

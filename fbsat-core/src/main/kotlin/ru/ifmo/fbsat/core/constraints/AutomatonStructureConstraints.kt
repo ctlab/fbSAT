@@ -11,17 +11,22 @@ import com.github.lipen.satlib.op.atMostOne
 import com.github.lipen.satlib.op.exactlyOne
 import com.github.lipen.satlib.op.iff
 import com.github.lipen.satlib.op.iffAnd
-import com.github.lipen.satlib.op.iffOr
 import com.github.lipen.satlib.op.imply
 import com.github.lipen.satlib.op.implyAnd
+import com.github.lipen.satlib.op.implyOr
 import com.github.lipen.satlib.solver.Solver
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.solver.autoneg
 import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.forEachModularContext
+import ru.ifmo.fbsat.core.solver.imply2
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.exhaustive
+
+private val logger = MyLogger {}
 
 fun Solver.declareAutomatonStructureConstraints() {
     comment("Automaton structure constraints")
@@ -163,7 +168,8 @@ fun Solver.declareDistributedAutomatonStructureConstraints() {
     }
 }
 
-private fun Solver.declareAutomatonStructureConstraintsInputless() {
+// TODO: change `internal` back to `private`
+internal fun Solver.declareAutomatonStructureConstraintsInputless() {
     val C: Int = context["C"]
     val K: Int = context["K"]
     val Z: Int = context["Z"]
@@ -172,6 +178,7 @@ private fun Solver.declareAutomatonStructureConstraintsInputless() {
     val stateAlgorithmBot: BoolVarArray = context["stateAlgorithmBot"]
     val transitionDestination: IntVarArray = context["transitionDestination"]
     val transitionInputEvent: IntVarArray = context["transitionInputEvent"]
+    val initialOutputValues: OutputValues = context["initialOutputValues"]
 
     when (Globals.EPSILON_OUTPUT_EVENTS) {
         EpsilonOutputEvents.START -> {
@@ -217,7 +224,7 @@ private fun Solver.declareAutomatonStructureConstraintsInputless() {
         StartStateAlgorithms.INIT -> {
             comment("Start state algorithms are the same as init state algorithms")
             for (z in 1..Z) {
-                val initVal = Globals.INITIAL_OUTPUT_VALUES[z - 1]
+                val initVal = initialOutputValues[z - 1]
                 val botLiteral = stateAlgorithmBot[1, z]
                 val topLiteral = stateAlgorithmTop[1, z]
                 clause(if (initVal) botLiteral else -botLiteral)
@@ -227,7 +234,7 @@ private fun Solver.declareAutomatonStructureConstraintsInputless() {
         StartStateAlgorithms.INITNOTHING -> {
             comment("Start state does not change initial values")
             for (z in 1..Z) {
-                val initVal = Globals.INITIAL_OUTPUT_VALUES[z - 1]
+                val initVal = initialOutputValues[z - 1]
                 if (initVal)
                     clause(stateAlgorithmTop[1, z])
                 else
@@ -262,7 +269,8 @@ private fun Solver.declareAutomatonStructureConstraintsInputless() {
     }
 }
 
-private fun Solver.declareAutomatonStructureConstraintsForInputs(
+// TODO: change `internal` back to `private`
+internal fun Solver.declareAutomatonStructureConstraintsForInputs(
     Us: Iterable<Int>,
     isPositive: Boolean,
 ) {
@@ -335,15 +343,17 @@ private fun Solver.declareAutomatonStructureConstraintsForInputs(
                     )
             }
 
-    comment("Shortcut: firstFired[0] <=> notFired[K]")
-    // firstFired[0] <=> notFired[K}
-    for (c in 1..C)
-        for (e in 1..E)
-            for (u in Us)
-                iff(
-                    firstFired[c, e, u] eq 0,
-                    notFired[c, K, e, u]
-                )
+    if (!Globals.IS_ENCODE_FF_NF_VARDECL) {
+        comment("Shortcut: firstFired[0] <=> notFired[K]")
+        // firstFired[0] <=> notFired[K}
+        for (c in 1..C)
+            for (e in 1..E)
+                for (u in Us)
+                    iff(
+                        firstFired[c, e, u] eq 0,
+                        notFired[c, K, e, u]
+                    )
+    }
 
     comment("Propagation of not-notFired (maybe redundant)")
     // ~notFired[k] => ~notFired[k+1]
@@ -359,11 +369,39 @@ private fun Solver.declareAutomatonStructureConstraintsForInputs(
     comment("Actual transition function definition")
     // (actualTransitionFunction[q,e,u] = q') <=>
     //  OR_k ( (transitionDestination[q,k] = q') & (firstFired[q,e,u] = k) )
+    // for (i in 1..C)
+    //     for (e in 1..E)
+    //         for (u in Us)
+    //             for (j in 1..C)
+    //                 iffOr(actualTransitionFunction[i, e, u] eq j) {
+    //                     for (k in 1..K) {
+    //                         // aux <=> (transitionDestination[q,k] = q') & (firstFired[q,e,u] = k)
+    //                         val aux = newLiteral()
+    //                         iffAnd(
+    //                             aux,
+    //                             transitionDestination[i, k] eq j,
+    //                             firstFired[i, e, u] eq k
+    //                         )
+    //                         yield(aux)
+    //                     }
+    //                 }
+    // t & ff => atf
     for (i in 1..C)
         for (e in 1..E)
             for (u in Us)
                 for (j in 1..C)
-                    iffOr(actualTransitionFunction[i, e, u] eq j) {
+                    for (k in 1..K)
+                        imply2(
+                            transitionDestination[i, k] eq j,
+                            firstFired[i, e, u] eq k,
+                            actualTransitionFunction[i, e, u] eq j
+                        )
+    // atf => OR_k (t & ff)
+    for (i in 1..C)
+        for (e in 1..E)
+            for (u in Us)
+                for (j in 1..C)
+                    implyOr(actualTransitionFunction[i, e, u] eq j) {
                         for (k in 1..K) {
                             // aux <=> (transitionDestination[q,k] = q') & (firstFired[q,e,u] = k)
                             val aux = newLiteral()
@@ -375,6 +413,21 @@ private fun Solver.declareAutomatonStructureConstraintsForInputs(
                             yield(aux)
                         }
                     }
+
+    if (Globals.IS_ENCODE_ATF_0) {
+        if (!Globals.IS_ENCODE_FF_0_VARDECL) {
+            // (actualTransitionFunction[q,e,u] = 0) <=> (firstFired[q,e,u] = 0)
+            for (c in 1..C)
+                for (e in 1..E)
+                    for (u in Us)
+                        iff(
+                            actualTransitionFunction[c, e, u] eq 0,
+                            firstFired[c, e, u] eq 0
+                        )
+        } else {
+            logger.warn("IS_ENCODE_ATF_0 and IS_ENCODE_FF_0_VARDECL are both True. Constraint is NOT declared")
+        }
+    }
 
     if (Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS) {
         comment("Transitions are disjunctive (without priority function)")

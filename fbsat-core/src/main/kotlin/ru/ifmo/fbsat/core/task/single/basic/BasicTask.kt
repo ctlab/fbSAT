@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.task.single.basic
 
 import com.github.lipen.satlib.card.Cardinality
 import com.github.lipen.satlib.solver.Solver
+import ru.ifmo.fbsat.core.constraints.declareEventlessPositiveMappingConstraints
 import ru.ifmo.fbsat.core.constraints.declareAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveMappingConstraints
@@ -14,7 +15,7 @@ data class BasicTask(
     val numberOfStates: Int, // C
     val maxOutgoingTransitions: Int? = null, // K, =C if null
     val maxTransitions: Int? = null, // T, unconstrained if null
-    val isEncodeReverseImplication: Boolean = true,
+    val isEncodeReverseImplication: Boolean = Globals.IS_ENCODE_REVERSE_IMPLICATION,
 ) : Task() {
     override fun Solver.declare_() {
         /* Variables */
@@ -22,14 +23,18 @@ data class BasicTask(
         declareBasicVariables(
             positiveScenarioTree = scenarioTree,
             C = numberOfStates,
-            K = maxOutgoingTransitions ?: numberOfStates
+            K = maxOutgoingTransitions ?: numberOfStates,
         )
 
         /* Constraints */
         comment("$name: Constraints")
         declareAutomatonStructureConstraints()
         if (Globals.IS_BFS_AUTOMATON) declareAutomatonBfsConstraints()
-        declarePositiveMappingConstraints(isEncodeReverseImplication = isEncodeReverseImplication)
+        if (Globals.IS_ENCODE_EVENTLESS) {
+            declareEventlessPositiveMappingConstraints(isEncodeReverseImplication = isEncodeReverseImplication)
+        } else {
+            declarePositiveMappingConstraints(isEncodeReverseImplication = isEncodeReverseImplication)
+        }
 
         /* Initial cardinality constraints */
         comment("$name: Initial cardinality (T) constraints")
@@ -42,6 +47,5 @@ data class BasicTask(
         } else {
             cardinalityT.declareUpperBoundLessThanOrEqual(maxTransitions)
         }
-
     }
 }

@@ -7,7 +7,6 @@ import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.constraints.declareDistributedAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareDistributedAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declareDistributedPositiveMappingConstraints_compound
-import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.Task
@@ -16,7 +15,7 @@ import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 
 data class DistributedBasicTask(
     val numberOfModules: Int, // M
-    val compoundScenarioTree: PositiveCompoundScenarioTree,
+    // val compoundScenarioTree: PositiveCompoundScenarioTree,
     val modularScenarioTree: MultiArray<PositiveScenarioTree>,
     val modularNumberOfStates: MultiArray<Int>, // [C]
     val modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
@@ -37,11 +36,12 @@ data class DistributedBasicTask(
         comment("$name: Variables")
         declareDistributedBasicVariables(
             M = numberOfModules,
-            compoundScenarioTree = compoundScenarioTree,
+            // compoundScenarioTree = compoundScenarioTree,
+            modularScenarioTree = modularScenarioTree,
             modularC = modularNumberOfStates,
             modularK = modularMaxOutgoingTransitions.mapIndexed { (m), k ->
                 k ?: modularNumberOfStates[m]
-            }
+            },
         )
 
         /* Constraints */

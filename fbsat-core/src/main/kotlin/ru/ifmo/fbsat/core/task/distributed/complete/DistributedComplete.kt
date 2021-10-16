@@ -5,7 +5,6 @@ import com.github.lipen.multiarray.map
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.buildExtendedDistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
-import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask
@@ -21,7 +20,7 @@ private val logger = MyLogger {}
 
 fun Inferrer.distributedComplete(
     numberOfModules: Int, // M
-    compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
+    // compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
     modularScenarioTree: MultiArray<PositiveScenarioTree>,
     negativeCompoundScenarioTree: NegativeCompoundScenarioTree? = null,
     modularNumberOfStates: MultiArray<Int>, // [C]
@@ -37,7 +36,7 @@ fun Inferrer.distributedComplete(
     declare(
         DistributedBasicTask(
             numberOfModules = numberOfModules,
-            compoundScenarioTree = compoundScenarioTree,
+            // compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = modularScenarioTree,
             modularNumberOfStates = modularNumberOfStates,
             modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
@@ -65,7 +64,7 @@ fun Inferrer.distributedComplete(
 
 fun Inferrer.completeMin_(
     numberOfModules: Int, // M
-    compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
+    // compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
     modularScenarioTree: MultiArray<PositiveScenarioTree>,
     negativeCompoundScenarioTree: NegativeCompoundScenarioTree? = null,
     modularNumberOfStates: MultiArray<Int>, // [C]
@@ -79,7 +78,7 @@ fun Inferrer.completeMin_(
     declare(
         DistributedBasicTask(
             numberOfModules = numberOfModules,
-            compoundScenarioTree = compoundScenarioTree,
+            // compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = modularScenarioTree,
             modularNumberOfStates = modularNumberOfStates,
             modularMaxOutgoingTransitions = modularMaxOutgoingTransitions,
@@ -105,7 +104,7 @@ fun Inferrer.completeMin_(
 
 fun Inferrer.completeMin__(
     numberOfModules: Int, // M
-    compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
+    // compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
     modularScenarioTree: MultiArray<PositiveScenarioTree>,
     negativeCompoundScenarioTree: NegativeCompoundScenarioTree? = null,
     // modularNumberOfStates: MultiArray<Int>, // [C]
@@ -116,8 +115,7 @@ fun Inferrer.completeMin__(
     maxTransitions: Int? = null, // T_sum, unconstrained if null
     startD: Int = 1,
 ): DistributedAutomaton? {
-    // for (D in startD..100) {
-    for (D in startD..5) {
+    for (D in startD..100) {
         logger.info("Trying D = $D...")
         // val automaton = completeMin_(
         //     numberOfModules = numberOfModules,
@@ -132,7 +130,7 @@ fun Inferrer.completeMin__(
         // )
         val automaton = distributedComplete(
             numberOfModules = numberOfModules,
-            compoundScenarioTree = compoundScenarioTree,
+            // compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = modularScenarioTree,
             negativeCompoundScenarioTree = negativeCompoundScenarioTree,
             modularNumberOfStates = MultiArray.new(numberOfModules) { D },
@@ -151,7 +149,7 @@ fun Inferrer.completeMin__(
             // log.info("modularNumberOfStates = ${automatonMinSumC.modules.map { it.numberOfStates }.values}")
             val reinferred = distributedComplete(
                 numberOfModules = numberOfModules,
-                compoundScenarioTree = compoundScenarioTree,
+                // compoundScenarioTree = compoundScenarioTree,
                 modularScenarioTree = modularScenarioTree,
                 negativeCompoundScenarioTree = negativeCompoundScenarioTree,
                 modularNumberOfStates = automatonMinSumC.modules.map { it.numberOfReachableStates },

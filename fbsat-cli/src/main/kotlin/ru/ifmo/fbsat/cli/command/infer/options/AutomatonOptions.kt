@@ -10,6 +10,7 @@ import com.github.ajalt.clikt.parameters.types.int
 internal const val AUTOMATON_OPTIONS = "Automaton Options"
 
 @Deprecated("This is just a template with ALL options. Create your own class.")
+@Suppress("MemberVisibilityCanBePrivate", "unused")
 class AutomatonOptions private constructor() : OptionGroup(AUTOMATON_OPTIONS) {
     val numberOfModules: Int? by numberOfModulesOption()
     val numberOfStates: Int? by numberOfStatesOption()

@@ -3,6 +3,8 @@ package ru.ifmo.fbsat.cli.command.infer
 import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import ru.ifmo.fbsat.cli.command.infer.distributed.InferDistributedBasicCommand
+import ru.ifmo.fbsat.cli.command.infer.distributed.InferDistributedBasicMinCCommand
+import ru.ifmo.fbsat.cli.command.infer.distributed.InferDistributedCegis2Command
 import ru.ifmo.fbsat.cli.command.infer.modular.arbitrary.InferArbitraryModularBasicCommand
 import ru.ifmo.fbsat.cli.command.infer.modular.arbitrary.InferArbitraryModularBasicMinCCommand
 import ru.ifmo.fbsat.cli.command.infer.modular.arbitrary.InferArbitraryModularBasicMinCommand
@@ -63,7 +65,9 @@ class InferCommand : NoOpCliktCommand() {
             InferArbitraryModularBasicMinCCommand(),
             InferArbitraryModularExtendedCommand(),
             InferArbitraryModularExtendedMinCommand(),
-            InferDistributedBasicCommand()
+            InferDistributedBasicCommand(),
+            InferDistributedBasicMinCCommand(),
+            InferDistributedCegis2Command(),
         )
     }
 }

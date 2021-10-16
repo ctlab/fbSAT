@@ -92,7 +92,7 @@ fun Solver.updateNegativeReduction(
         }
 
     val oldOnlyNegUIs: List<InputValues> = context["onlyNegUIs"]
-    val onlyNegUIs = context("onlyNegUIs", negUIs - posUIs)
+    val onlyNegUIs = context("onlyNegUIs") { negUIs - posUIs }
     val newOnlyNegUIs = onlyNegUIs - oldOnlyNegUIs
     val newOnlyNegUs = newOnlyNegUIs.map(::getNegU)
 

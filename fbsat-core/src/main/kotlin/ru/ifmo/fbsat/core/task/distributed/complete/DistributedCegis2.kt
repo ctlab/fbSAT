@@ -1,17 +1,16 @@
 package ru.ifmo.fbsat.core.task.distributed.complete
 
 import com.github.lipen.multiarray.MultiArray
+import com.github.lipen.multiarray.map
 import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
-import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.utils.MyLogger
-import ru.ifmo.fbsat.core.utils.multiArrayOf
 import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 import ru.ifmo.fbsat.core.utils.project
 import ru.ifmo.fbsat.core.utils.timeSince
@@ -23,9 +22,14 @@ private val logger = MyLogger {}
 @Suppress("DuplicatedCode", "LocalVariableName")
 fun Inferrer.distributedCegis2(
     numberOfModules: Int, // M
-    compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
+    // compoundScenarioTree: PositiveCompoundScenarioTree, // TEMPORARILY
     modularScenarioTree: MultiArray<PositiveScenarioTree>,
     negativeCompoundScenarioTree: NegativeCompoundScenarioTree? = null,
+    modularModuleName: MultiArray<String>,
+    modularInputEvents: MultiArray<List<InputEvent>>,
+    modularOutputEvents: MultiArray<List<OutputEvent>>,
+    modularInputNames: MultiArray<List<String>>,
+    modularOutputNames: MultiArray<List<String>>,
     // modularNumberOfStates: MultiArray<Int>, // [C]
     modularMaxOutgoingTransitions: MultiArray<Int?> = multiArrayOfNulls(numberOfModules), // [K]
     modularMaxGuardSize: MultiArray<Int>, // [P]
@@ -42,30 +46,9 @@ fun Inferrer.distributedCegis2(
     // Copy smv files to output directory
     smvDir.copyRecursively(outDir, overwrite = true)
 
-    // =====
     val M = numberOfModules
-    val modularName = multiArrayOf(
-        "sender",
-        "receiver"
-    )
-    val modularInputEvents = MultiArray.new(M) {
-        listOf("REQ").map { InputEvent(it) }
-    }
-    val modularOutputEvents = MultiArray.new(M) {
-        listOf("CNF").map { OutputEvent(it) }
-    }
-    val modularInputNames = multiArrayOf(
-        listOf("send", "timeout", "acknowledge", "input_bit"),
-        listOf("packet", "input_bit")
-    )
-    val modularOutputNames = multiArrayOf(
-        listOf("done", "packet", "output_bit"),
-        listOf("deliver", "acknowledge", "output_bit")
-    )
-    // =====
-
     var negativeTree: NegativeCompoundScenarioTree? = negativeCompoundScenarioTree
-    var D = 1
+    var D = startD
 
     for (iterationNumber in 1 until 10000) {
         // log.info("CEGIS iteration #$iterationNumber")
@@ -73,7 +56,7 @@ fun Inferrer.distributedCegis2(
 
         val automaton = completeMin__(
             numberOfModules = numberOfModules,
-            compoundScenarioTree = compoundScenarioTree,
+            // compoundScenarioTree = compoundScenarioTree,
             modularScenarioTree = modularScenarioTree,
             negativeCompoundScenarioTree = negativeTree,
             // modularNumberOfStates = modularNumberOfStates,
@@ -96,7 +79,7 @@ fun Inferrer.distributedCegis2(
         // ==============
         for (m in 1..M) {
             // Dump intermediate automaton
-            automaton.project(m).dump(outDir, "_${modularName[m]}_iter%04d".format(iterationNumber))
+            automaton.project(m).dump(outDir, "_${modularModuleName[m]}_iter%04d".format(iterationNumber))
             // Print intermediate automaton
             logger.info("Intermediate inferred automaton (module $m):")
             automaton.project(m).pprint()
@@ -106,7 +89,7 @@ fun Inferrer.distributedCegis2(
         // Verify automaton with NuSMV
         val counterexamples = automaton.verifyWithNuSMV(
             dir = outDir,
-            modularModuleName = multiArrayOf("Sender", "Receiver")
+            modularModuleName = modularModuleName.map { it.capitalize() }
         )
         if (counterexamples.isEmpty()) {
             logger.info("CEGIS iteration #$iterationNumber done in %.3f s".format(timeSince(timeStart).seconds))
@@ -121,7 +104,7 @@ fun Inferrer.distributedCegis2(
             NegativeCompoundScenario.fromCounterexample(
                 counterexample = it,
                 M = M,
-                modularName = modularName,
+                modularModuleName = modularModuleName,
                 modularInputEvents = modularInputEvents,
                 modularOutputEvents = modularOutputEvents,
                 modularInputNames = modularInputNames,

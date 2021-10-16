@@ -11,6 +11,7 @@ import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.double
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
+import com.github.lipen.satlib.jni.solver.JCryptoMiniSat
 import com.github.lipen.satlib.solver.CadicalSolver
 import com.github.lipen.satlib.solver.CryptoMiniSatSolver
 import com.github.lipen.satlib.solver.DimacsFileSolver
@@ -53,6 +54,14 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
     val solverRndPol: Boolean? by solverRndPolOption()
     val solverRndInit: Boolean? by solverRndInitOption()
 
+    // CMS options:
+    val solverThreads: Int by solverThreadsOption().validate {
+        require(solverBackend == SolverBackend.CRYPTOMINISAT) {
+            "supported only by CryptoMiniSat"
+        }
+        require(it >= 0) { "value must be non-negative" }
+    }
+
     val solver: Solver by lazy {
         when (solverBackend) {
             SolverBackend.FILE -> {
@@ -91,7 +100,8 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
                 )
             }
             SolverBackend.CRYPTOMINISAT -> {
-                CryptoMiniSatSolver()
+                logger.debug { "CMS: threads = $solverThreads" }
+                CryptoMiniSatSolver(JCryptoMiniSat(solverThreads))
             }
             SolverBackend.CADICAL -> {
                 logger.debug { "Cadical: seed = $solverSeed" }
@@ -178,3 +188,10 @@ fun ParameterHolder.solverRndInitOption() =
         "--solver-rnd-init" to true,
         "--solver-no-rnd-init" to false
     )
+
+fun ParameterHolder.solverThreadsOption() =
+    option(
+        "--solver-threads",
+        help = "CMS threads",
+        metavar = "<int>"
+    ).int().default(1)

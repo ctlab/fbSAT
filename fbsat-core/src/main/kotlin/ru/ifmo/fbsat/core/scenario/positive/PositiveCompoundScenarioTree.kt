@@ -3,11 +3,15 @@ package ru.ifmo.fbsat.core.scenario.positive
 import com.github.lipen.multiarray.MultiArray
 import ru.ifmo.fbsat.core.scenario.CompoundScenarioElement
 import ru.ifmo.fbsat.core.scenario.CompoundScenarioTree
+import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
+import ru.ifmo.fbsat.core.scenario.InputValues
+import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.OutputValues
+import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.addGenericScenario
-import ru.ifmo.fbsat.core.scenario.auxScenarioElement
 import ru.ifmo.fbsat.core.utils.CompoundImpl
 import ru.ifmo.fbsat.core.utils.project
 
@@ -40,18 +44,28 @@ class PositiveCompoundScenarioTree(
         }
 
     private val _scenarios: MutableList<PositiveCompoundScenario> = mutableListOf()
-    private val _nodes: MutableList<Node> = mutableListOf()
-
     override val scenarios: List<PositiveCompoundScenario> = _scenarios
-    override val nodes: List<Node> = _nodes
 
-    override val size: Int get() = nodes.size
-    override val root: Node get() = nodes.first()
+    private val _nodes: MutableList<Node> = mutableListOf()
+    override val nodes: List<Node> = _nodes
 
     init {
         // Create the root (auto-added to _nodes)
         Node(
-            element = CompoundScenarioElement(MultiArray.new(M) { auxScenarioElement }),
+            element = CompoundScenarioElement(
+                MultiArray.new(M) { (m) ->
+                    ScenarioElement(
+                        InputAction(
+                            event = null,
+                            values = InputValues.empty()
+                        ),
+                        OutputAction(
+                            event = null,
+                            values = OutputValues.zeros(modularOutputNames[m].size) // FIXME
+                        )
+                    )
+                }
+            ),
             parent = null
         )
     }

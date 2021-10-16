@@ -1,0 +1,86 @@
+MODULE main
+VAR
+    --REQ: boolean;
+    atEntry: boolean;
+    atFront: boolean;
+    atLeftEntry: boolean;
+    atLeftExit: boolean;
+    atLoadPos: boolean;
+    atRightEntry: boolean;
+    atRightExit: boolean;
+    atTurnEntry: boolean;
+    atUnloadPos: boolean;
+    HighBox: boolean;
+    LowBox: boolean;
+    smth: boolean;
+
+    alpha: Alpha(
+        REQ,
+        atEntry,
+        atFront,
+        atLeftEntry,
+        atLeftExit,
+        atLoadPos,
+        atRightEntry,
+        atRightExit,
+        atTurnEntry,
+        atUnloadPos,
+        HighBox,
+        LowBox,
+        smth
+    );
+    beta: Beta(
+        REQ,
+        atEntry,
+        atFront,
+        atLeftEntry,
+        atLeftExit,
+        atLoadPos,
+        atRightEntry,
+        atRightExit,
+        atTurnEntry,
+        atUnloadPos,
+        HighBox,
+        LowBox,
+        smth
+    );
+    gamma: Gamma(
+        REQ,
+        atEntry,
+        atFront,
+        atLeftEntry,
+        atLeftExit,
+        atLoadPos,
+        atRightEntry,
+        atRightExit,
+        atTurnEntry,
+        atUnloadPos,
+        HighBox,
+        LowBox,
+        smth
+    );
+    omega: Omega(
+        REQ,
+        atEntry,
+        atFront,
+        atLeftEntry,
+        atLeftExit,
+        atLoadPos,
+        atRightEntry,
+        atRightExit,
+        atTurnEntry,
+        atUnloadPos,
+        HighBox,
+        LowBox,
+        smth
+    );
+-- Output variables
+--  EntryConveyor
+--  FeederConveyor
+--  LeftConveyor
+--  Load
+--  RightConveyor
+--  Turn
+--  Unload
+DEFINE
+    REQ := TRUE;

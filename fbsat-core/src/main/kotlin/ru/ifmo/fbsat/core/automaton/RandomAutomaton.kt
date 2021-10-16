@@ -8,7 +8,6 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
-import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.boolexpr.randomBooleanExpression
 import ru.ifmo.fbsat.core.utils.randomBinaryString
@@ -47,7 +46,8 @@ fun newRandomAutomaton(
     } else {
         (1..Z).map { "z$it" }
     }
-    val automaton = Automaton(inputEvents, outputEvents, inputNames, outputNames)
+    val initialOutputValues = OutputValues.zeros(Z)
+    val automaton = Automaton(inputEvents, outputEvents, inputNames, outputNames, initialOutputValues)
 
     for (c in 1..C) {
         val outputEvent = outputEvents.random(random)
@@ -99,7 +99,6 @@ fun Automaton.randomWalk(random: Random = Random): Sequence<Automaton.EvalResult
 
 fun Automaton.generateRandomScenario(length: Int, random: Random = Random): PositiveScenario {
     // logger.debug { "Generating random scenario of length $length..." }
-    Globals.INITIAL_OUTPUT_VALUES = OutputValues.zeros(outputNames.size)
     val elements = randomWalk(random)
         .take(length)
         .map {

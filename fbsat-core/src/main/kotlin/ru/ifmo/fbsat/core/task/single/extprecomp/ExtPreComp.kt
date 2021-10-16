@@ -8,6 +8,7 @@ import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.core.automaton.endow
 import ru.ifmo.fbsat.core.automaton.guard.BooleanExpressionGuard
 import ru.ifmo.fbsat.core.automaton.guard.UnconditionalGuard
+import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.convertBoolVarArray
 import ru.ifmo.fbsat.core.solver.convertDomainVarArray
@@ -83,7 +84,6 @@ fun buildExtPreCompAutomaton(
     model: Model,
 ): Automaton {
     val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
-    val uniqueInputs = scenarioTree.uniqueInputs
     val C: Int = context["C"]
     val K: Int = context["K"]
     val X: Int = context["X"]
@@ -97,6 +97,7 @@ fun buildExtPreCompAutomaton(
     val stateOutputEvent = context.convertIntVarArray("stateOutputEvent", model)
     val stateAlgorithmTop = context.convertBoolVarArray("stateAlgorithmTop", model)
     val stateAlgorithmBot = context.convertBoolVarArray("stateAlgorithmBot", model)
+    val initialOutputValues: OutputValues = context["initialOutputValues"]
 
     val vars =
         if (X == inputNamesPnP.size) {
@@ -109,7 +110,10 @@ fun buildExtPreCompAutomaton(
             }
         }
 
-    return Automaton(scenarioTree).endow(
+    return Automaton(
+        scenarioTree = scenarioTree,
+        initialOutputValues = initialOutputValues
+    ).endow(
         C = C, K = K,
         stateOutputEvent = { c ->
             stateOutputEvent[c].let { o ->
