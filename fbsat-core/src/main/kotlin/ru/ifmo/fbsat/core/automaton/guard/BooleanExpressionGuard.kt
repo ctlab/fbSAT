@@ -9,28 +9,13 @@ import ru.ifmo.fbsat.core.utils.boolexpr.BooleanExpression
 import ru.ifmo.fbsat.core.utils.boolexpr.Constant
 import ru.ifmo.fbsat.core.utils.boolexpr.UnaryOperation
 import ru.ifmo.fbsat.core.utils.boolexpr.Variable
-import ru.ifmo.fbsat.core.utils.inputNamesPnP
-import ru.ifmo.fbsat.core.utils.pow
 import ru.ifmo.fbsat.core.utils.serializers.BooleanExpressionGuardSerializer
-import ru.ifmo.fbsat.core.utils.toBinaryString
-import ru.ifmo.fbsat.core.utils.toBooleanList
 
 @Serializable(with = BooleanExpressionGuardSerializer::class)
 class BooleanExpressionGuard(
     val expr: BooleanExpression,
 ) : Guard {
     override val size: Int = expr.size()
-
-    // FIXME: adhoc 10
-    // FIXME: adhoc inputNamesPnP
-    /*override*/ val truthTableString: String
-        // get() = truthTableString((1..10).map { "x$it" })
-        get() = truthTableString(inputNamesPnP)
-
-    override fun truthTableString(inputNames: List<String>): String =
-        (0 until 2.pow(inputNames.size)).map { i ->
-            eval(InputValues(i.toString(2).padStart(inputNames.size, '0').toBooleanList()))
-        }.toBinaryString()
 
     override fun eval(inputValues: InputValues): Boolean = expr.eval(inputValues)
 

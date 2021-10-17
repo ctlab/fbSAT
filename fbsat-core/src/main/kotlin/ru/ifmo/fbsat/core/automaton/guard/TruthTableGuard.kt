@@ -13,14 +13,7 @@ class TruthTableGuard(
 ) : Guard {
     override val size: Int = 0
 
-    @Transient
-    private val truthTableString = truthTable.values.filterNotNull().toBinaryString()
-
-    override fun truthTableString(inputNames: List<String>): String = truthTableString
-
     override fun eval(inputValues: InputValues): Boolean {
-        // return truthTable[uniqueInputs.indexOf(inputValues)] in "1x"
-        // return truthTable.getValue(inputValues) ?: true
         return truthTable.getValue(inputValues)!!
     }
 

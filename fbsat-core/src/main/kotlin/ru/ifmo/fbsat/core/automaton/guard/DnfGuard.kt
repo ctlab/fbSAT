@@ -22,10 +22,6 @@ class DnfGuard(
 
     override val size: Int = dnf.sumOf { it.size }
 
-    override fun truthTableString(inputNames: List<String>): String {
-        TODO()
-    }
-
     override fun eval(inputValues: InputValues): Boolean =
         if (_dnf.isEmpty()) {
             check(toSimpleString() == "0")
