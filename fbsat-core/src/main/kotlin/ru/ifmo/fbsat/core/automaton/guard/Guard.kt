@@ -12,6 +12,7 @@ val guardModule = SerializersModule {
         subclass(TruthTableGuard::class)
         subclass(ParseTreeGuard::class)
         subclass(BooleanExpressionGuard::class)
+        subclass(ConjunctiveGuard::class)
     }
 }
 
