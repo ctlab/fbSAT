@@ -39,9 +39,4 @@ class ConjunctiveGuard(
     override fun toSmvString(): String {
         return toSimpleString().replace("~", "!")
     }
-
-    override fun truthTableString(inputNames: List<String>): String =
-        (0 until 2.pow(inputNames.size)).map { i ->
-            eval(InputValues(i.toString(2).padStart(inputNames.size, '0').toBooleanList()))
-        }.toBinaryString()
 }

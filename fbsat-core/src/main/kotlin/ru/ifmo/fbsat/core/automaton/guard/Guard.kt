@@ -4,13 +4,15 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import ru.ifmo.fbsat.core.scenario.InputValues
+import ru.ifmo.fbsat.core.utils.pow
+import ru.ifmo.fbsat.core.utils.toBinaryString
+import ru.ifmo.fbsat.core.utils.toBooleanList
 
 @Suppress("PublicApiImplicitType")
 val guardModule = SerializersModule {
     polymorphic(Guard::class) {
         subclass(UnconditionalGuard::class)
         subclass(TruthTableGuard::class)
-        subclass(ParseTreeGuard::class)
         subclass(BooleanExpressionGuard::class)
         subclass(ConjunctiveGuard::class)
     }
@@ -23,7 +25,9 @@ interface Guard {
     fun toGraphvizString(): String
     fun toFbtString(): String
     fun toSmvString(): String
-
-    // TODO: extract to extension method
-    fun truthTableString(inputNames: List<String>): String
 }
+
+fun Guard.truthTableString(inputNames: List<String>): String =
+    (0 until 2.pow(inputNames.size)).map { i ->
+        eval(InputValues(i.toString(2).padStart(inputNames.size, '0').toBooleanList()))
+    }.toBinaryString()

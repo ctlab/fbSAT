@@ -15,6 +15,7 @@ import ru.ifmo.fbsat.core.automaton.guard.ConjunctiveGuard
 import ru.ifmo.fbsat.core.automaton.guard.Guard
 import ru.ifmo.fbsat.core.automaton.guard.NodeType
 import ru.ifmo.fbsat.core.automaton.guard.TruthTableGuard
+import ru.ifmo.fbsat.core.automaton.guard.truthTableString
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputAction

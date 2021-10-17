@@ -8,6 +8,7 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.AutomatonStats
 import ru.ifmo.fbsat.core.automaton.BinaryAlgorithm
 import ru.ifmo.fbsat.core.automaton.guard.Guard
+import ru.ifmo.fbsat.core.automaton.guard.truthTableString
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.utils.toBinaryString

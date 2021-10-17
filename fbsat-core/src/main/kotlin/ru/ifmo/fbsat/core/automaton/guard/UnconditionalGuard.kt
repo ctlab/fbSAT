@@ -14,10 +14,6 @@ class UnconditionalGuard : Guard {
             return 1
         }
 
-    override fun truthTableString(inputNames: List<String>): String {
-        return "1"
-    }
-
     override fun eval(inputValues: InputValues): Boolean {
         return true
     }
