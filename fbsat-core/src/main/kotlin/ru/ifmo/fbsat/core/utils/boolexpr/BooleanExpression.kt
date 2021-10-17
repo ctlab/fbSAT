@@ -51,7 +51,7 @@ fun main() {
             BinaryOperation(
                 BinaryOperation.Kind.Or,
                 Variable(1, "x2"),
-                Variable(2, "x3")
+                Constant.True
             )
         )
     )
