@@ -38,6 +38,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isEncodeTransitionFunction: Boolean by isEncodeTransitionFunctionOption()
     val isEncodeEpsilonPassive: Boolean by isEncodeEpsilonPassiveOption()
     val isEncodeNotEpsilonActive: Boolean by isEncodeNotEpsilonActiveOption()
+    val isEncodeConjunctiveGuards: Boolean by isEncodeConjunctiveGuardsOption()
     val isFixActive: Boolean by isFixActiveOption()
     val isReuseK: Boolean by isReuseKOption()
     val isUseAssumptions: Boolean by isUseAssumptionsOption()
@@ -242,6 +243,15 @@ fun ParameterHolder.isEncodeNotEpsilonActiveOption() =
     ).flag(
         "--no-encode-not-epsilon-active",
         default = Globals.IS_ENCODE_NOT_EPSILON_ACTIVE
+    )
+
+fun ParameterHolder.isEncodeConjunctiveGuardsOption() =
+    option(
+        "--encode-conjunctive-guards",
+        help = "Encode conjunctive guards"
+    ).flag(
+        "--no-encode-conjunctive-guards",
+        default = Globals.IS_ENCODE_CONJUNCTIVE_GUARDS
     )
 
 fun ParameterHolder.isFixActiveOption() =

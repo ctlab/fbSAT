@@ -1,6 +1,7 @@
 package ru.ifmo.fbsat.core.task.single.basic
 
 import com.github.lipen.satlib.card.declareCardinality
+import com.github.lipen.satlib.core.BoolVarArray
 import com.github.lipen.satlib.core.IntVarArray
 import com.github.lipen.satlib.core.eq
 import com.github.lipen.satlib.core.neq
@@ -10,7 +11,6 @@ import com.github.lipen.satlib.core.newIntVarArray
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.scenario.initialOutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.literals
 import ru.ifmo.fbsat.core.utils.Globals
 
 @Suppress("LocalVariableName")
@@ -98,6 +98,14 @@ fun Solver.declareBasicVariables(
     val stateAlgorithmTop = context("stateAlgorithmTop") {
         newBoolVarArray(C, Z)
     }
+    if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
+        val inputVariableUsed = context("inputVariableUsed") {
+            newBoolVarArray(X)
+        }
+        val inputVariableLiteral = context("inputVariableLiteral") {
+            newBoolVarArray(C, K, X)
+        }
+    }
 
     /* Mapping variables */
     comment("Mapping variables")
@@ -119,19 +127,16 @@ fun Solver.declareBasicVariables(
                     yield(transitionDestination[c, k] neq 0)
         }
     }
-
-    if (Globals.IS_DUMP_VARS_IN_CNF) {
-        comment("actualTransitionFunction = ${actualTransitionFunction.literals}")
-        comment("transitionDestination = ${transitionDestination.literals}")
-        comment("transitionInputEvent = ${transitionInputEvent.literals}")
-        comment("transitionTruthTable = ${transitionTruthTable.literals}")
-        comment("transitionFiring = ${transitionFiring.literals}")
-        comment("firstFired = ${firstFired.literals}")
-        comment("notFired = ${notFired.literals}")
-        comment("stateOutputEvent = ${stateOutputEvent.literals}")
-        comment("stateAlgorithmBot = ${stateAlgorithmBot.literals}")
-        comment("stateAlgorithmTop = ${stateAlgorithmTop.literals}")
-        comment("mapping = ${mapping.literals}")
-        comment("totalizerT = ${cardinalityT.totalizer}")
+    if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
+        comment("Cardinality (A)")
+        val inputVariableUsed: BoolVarArray = context["inputVariableUsed"]
+        val cardinalityA = context("cardinalityA") {
+            declareCardinality {
+                for (c in 1..C)
+                    for (k in 1..K)
+                        for (x in 1..X)
+                            yield(inputVariableUsed[x])
+            }
+        }
     }
 }

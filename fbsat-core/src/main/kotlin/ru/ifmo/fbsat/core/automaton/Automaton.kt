@@ -11,6 +11,7 @@ import com.soywiz.klock.DateTime
 import kotlinx.serialization.Serializable
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.automaton.guard.BooleanExpressionGuard
+import ru.ifmo.fbsat.core.automaton.guard.ConjunctiveGuard
 import ru.ifmo.fbsat.core.automaton.guard.Guard
 import ru.ifmo.fbsat.core.automaton.guard.NodeType
 import ru.ifmo.fbsat.core.automaton.guard.TruthTableGuard
@@ -330,7 +331,7 @@ class Automaton(
         out@ for ((i, result) in eval(scenario).withIndex()) {
             val element = scenario.elements[i]
             if (result.outputAction != element.outputAction) {
-                // logger.error("No mapping for ${i + 1}-th element = $element, result = $result")
+                logger.error("No mapping for ${i + 1}-th element = $element, result = $result")
                 break@out
             }
             mapping[i] = result
@@ -526,11 +527,12 @@ class Automaton(
 
     fun getStats(): String {
         return "" +
-            "C = $numberOfStates, " +
-            "K = $maxOutgoingTransitions, " +
-            "P = $maxGuardSize, " +
-            "T = $numberOfTransitions, " +
-            "N = $totalGuardsSize"
+            "C = $numberOfStates" +
+            ", K = $maxOutgoingTransitions" +
+            ", P = $maxGuardSize" +
+            ", T = $numberOfTransitions" +
+            ", N = $totalGuardsSize" +
+            ", A = ${transitions.sumOf { (it.guard as? ConjunctiveGuard)?.literals?.size ?: 0 }}"
     }
 
     fun printStats() {
@@ -834,6 +836,7 @@ fun buildBasicAutomaton(
     val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
     val C: Int = context["C"]
     val K: Int = context["K"]
+    val X: Int = context["X"]
     val Z: Int = context["Z"]
     val transitionDestination = context.convertIntVarArray("transitionDestination", model)
     val transitionInputEvent = context.convertIntVarArray("transitionInputEvent", model)
@@ -850,6 +853,14 @@ fun buildBasicAutomaton(
         } else {
             { true }
         }
+
+    // Only available if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS)
+    val inputVariableUsed by lazy {
+        context.convertBoolVarArray("inputVariableUsed", model)
+    }
+    val inputVariableLiteral by lazy {
+        context.convertBoolVarArray("inputVariableLiteral", model)
+    }
 
     return Automaton(
         scenarioTree = scenarioTree,
@@ -875,15 +886,26 @@ fun buildBasicAutomaton(
             scenarioTree.inputEvents[transitionInputEvent[c, k] - 1]
         },
         transitionGuard = { c, k ->
-            TruthTableGuard(
-                truthTable = scenarioTree.uniqueInputs
-                    .withIndex(start = 1)
-                    .associate { (u, input) ->
-                        input to transitionTruthTable[c, k, u]
-                    }
-                // inputNames = scenarioTree.inputNames,
-                // uniqueInputs = scenarioTree.uniqueInputs
-            )
+            if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
+                // inputVariableUsed!!
+                // inputVariableLiteral!!
+                ConjunctiveGuard(
+                    literals = (1..X)
+                        .filter { x -> inputVariableUsed[x] }
+                        .map { x -> if (inputVariableLiteral[c, k, x]) x else -x },
+                    inputNames = scenarioTree.inputNames
+                )
+            } else {
+                TruthTableGuard(
+                    truthTable = scenarioTree.uniqueInputs
+                        .withIndex(start = 1)
+                        .associate { (u, input) ->
+                            input to transitionTruthTable[c, k, u]
+                        }
+                    // inputNames = scenarioTree.inputNames,
+                    // uniqueInputs = scenarioTree.uniqueInputs
+                )
+            }
         }
     )
 }

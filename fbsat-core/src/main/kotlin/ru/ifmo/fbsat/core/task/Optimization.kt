@@ -7,6 +7,7 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
+import ru.ifmo.fbsat.core.automaton.guard.ConjunctiveGuard
 import ru.ifmo.fbsat.core.task.distributed.basic.inferDistributedBasic
 import ru.ifmo.fbsat.core.task.distributed.complete.inferDistributedComplete
 import ru.ifmo.fbsat.core.task.distributed.extended.inferDistributedExtended
@@ -111,6 +112,27 @@ fun Inferrer.optimizeN(
         useAssumptions = useAssumptions,
         infer = { inferExtended() },
         query = { it.totalGuardsSize }
+    )
+}
+
+@Suppress("FunctionName")
+fun Inferrer.optimizeA(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): Automaton? {
+    logger.info("Optimizing A (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
+    val cardinality: Cardinality = solver.context["cardinalityA"]
+    return cardinality.optimizeTopDown(
+        start = start,
+        end = end,
+        useAssumptions = useAssumptions,
+        infer = { inferBasic() },
+        query = {
+            it.transitions.sumOf { t ->
+                (t.guard as ConjunctiveGuard).literals.size
+            }
+        }
     )
 }
 
@@ -241,6 +263,28 @@ fun Inferrer.optimizeArbitraryModularN(
         useAssumptions = useAssumptions,
         infer = { inferArbitraryModularExtended() },
         query = { it.totalGuardsSize }
+    )
+}
+
+fun Inferrer.optimizeParallelModularA(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): ParallelModularAutomaton? {
+    logger.info("Optimizing A (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
+    val cardinality: Cardinality = solver.context["cardinalityA"]
+    return cardinality.optimizeTopDown(
+        start = start,
+        end = end,
+        useAssumptions = useAssumptions,
+        infer = { inferParallelModularBasic() },
+        query = {
+            it.modules.values.sumOf { module ->
+                module.transitions.sumOf { t ->
+                    (t.guard as ConjunctiveGuard).literals.size
+                }
+            }
+        }
     )
 }
 

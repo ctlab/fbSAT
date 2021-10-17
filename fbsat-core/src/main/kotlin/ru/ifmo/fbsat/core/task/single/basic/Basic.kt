@@ -10,6 +10,7 @@ import ru.ifmo.fbsat.core.solver.numberOfConflicts
 import ru.ifmo.fbsat.core.solver.numberOfDecisions
 import ru.ifmo.fbsat.core.solver.numberOfPropagations
 import ru.ifmo.fbsat.core.task.Inferrer
+import ru.ifmo.fbsat.core.task.optimizeA
 import ru.ifmo.fbsat.core.task.optimizeT
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
@@ -101,7 +102,11 @@ fun Inferrer.basicMin(
             end = end,
             isEncodeReverseImplication = isEncodeReverseImplication
         ) ?: return@run null
-        optimizeT()
+        if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
+            optimizeA()
+        } else {
+            optimizeT()
+        }
     }
     logger.info("Task basic-min done in %.2f s".format(timeSince(timeStart).seconds))
     if (solver.isSupportStats()) {

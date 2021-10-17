@@ -5,7 +5,9 @@ import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
 import ru.ifmo.fbsat.core.automaton.buildBasicParallelModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
+import ru.ifmo.fbsat.core.task.optimizeParallelModularA
 import ru.ifmo.fbsat.core.task.optimizeParallelModularT
+import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 
 private val logger = MyLogger {}
@@ -65,7 +67,11 @@ fun Inferrer.parallelModularBasicMin(
     numberOfStates: Int? = null, // C_start, 1 if null
 ): ParallelModularAutomaton? {
     parallelModularBasicMinC(scenarioTree, numberOfModules = numberOfModules, start = numberOfStates ?: 1)
-    return optimizeParallelModularT()
+    return if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
+        optimizeParallelModularA()
+    } else {
+        optimizeParallelModularT()
+    }
 }
 
 fun Inferrer.inferParallelModularBasic(): ParallelModularAutomaton? {
