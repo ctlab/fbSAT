@@ -11,7 +11,6 @@ import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.double
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
-import com.github.lipen.satlib.jni.solver.JCryptoMiniSat
 import com.github.lipen.satlib.solver.CadicalSolver
 import com.github.lipen.satlib.solver.CryptoMiniSatSolver
 import com.github.lipen.satlib.solver.DimacsFileSolver
@@ -105,7 +104,7 @@ class SolverOptions : OptionGroup(SOLVER_OPTIONS) {
                     CryptoMiniSatSolver()
                 } else {
                     logger.debug { "CMS: threads = $t" }
-                    CryptoMiniSatSolver(JCryptoMiniSat(t))
+                    CryptoMiniSatSolver(t)
                 }
             }
             SolverBackend.CADICAL -> {
