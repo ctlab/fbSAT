@@ -56,13 +56,9 @@ class NegativeTest {
 
         ce.states.size shouldBeEqualTo 4
         ce.loopPosition shouldBeEqualTo 2
-        ce.states[1].isLoop.shouldBeTrue()
-
-        for ((i, state) in ce.states.withIndex())
-            state.name shouldBeEqualTo "1.${i + 1}"
 
         for (state in ce.states)
-            state.variables.size shouldBeEqualTo 4
+            state.data.size shouldBeEqualTo 4
     }
 
     @Test

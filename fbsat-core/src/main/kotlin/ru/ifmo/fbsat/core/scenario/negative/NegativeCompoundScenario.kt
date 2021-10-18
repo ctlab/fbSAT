@@ -32,7 +32,7 @@ class NegativeCompoundScenario private constructor(
 
     companion object {
         fun fromCounterexample(
-            counterexample: THE_Counterexample,
+            counterexample: CounterexampleXML,
             M: Int,
             modularModuleName: MultiArray<String>,
             modularInputEvents: MultiArray<List<InputEvent>>,
@@ -43,7 +43,7 @@ class NegativeCompoundScenario private constructor(
             val loopPosition = counterexample.loops.trim().split(" ").firstOrNull()?.toInt()
             val ceElements = counterexample.nodes
                 .map { node ->
-                    node.states.single().values.associate { value ->
+                    node.state.values.associate { value ->
                         value.variable to value.content.toBoolean()
                     }
                 }

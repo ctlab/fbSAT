@@ -9,7 +9,7 @@ import com.soywiz.klock.DateTime
 import com.soywiz.klock.PerformanceCounter
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
-import ru.ifmo.fbsat.core.scenario.negative.readCounterexamplesFromFile
+import ru.ifmo.fbsat.core.scenario.negative.CounterexampleXML
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveCompoundScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
@@ -72,7 +72,7 @@ fun main() {
     // val fileTraces = File("data/abp-take/trace_10_25.xml")
     // val fileTraces = File("data/abp-take/trace_10_50.xml")
     val fileTraces = File("data/abp-take/trace_1_100.xml")
-    val traces = readCounterexamplesFromFile(fileTraces)
+    val traces = CounterexampleXML.from(fileTraces)
     val scenarios = traces.map { trace ->
         PositiveCompoundScenario.fromCounterexample(
             counterexample = trace,
@@ -99,7 +99,7 @@ fun main() {
     // val trace = xml.parse(THE_Counterexample.serializer(), sXml)
     // println("trace = "); pp(trace)
     // val states: List<Map<String, Boolean>> = trace.nodes.map { node ->
-    //     val state = node.states.single()
+    //     val state = node.state
     //     state.values.associate { value ->
     //         value.variable to value.content.toBoolean()
     //     }
@@ -108,7 +108,7 @@ fun main() {
 
     // val traceElementsAll = trace.nodes
     //     .map { node ->
-    //         node.states.single().values.associate { value ->
+    //         node.state.values.associate { value ->
     //             value.variable to value.content.toBoolean()
     //         }
     //     }

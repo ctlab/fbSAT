@@ -14,7 +14,7 @@ import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.negative.Counterexample
-import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
+import ru.ifmo.fbsat.core.scenario.negative.CounterexampleXML
 import ru.ifmo.fbsat.core.scenario.preprocessed
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.sourceAutoGzip
@@ -124,7 +124,7 @@ data class PositiveScenario(
         }
 
         fun fromTrace(
-            trace: THE_Counterexample,
+            trace: CounterexampleXML,
             // inputEvents: List<InputEvent>,
             // outputEvents: List<OutputEvent>,
             inputNames: List<String>,
@@ -132,7 +132,7 @@ data class PositiveScenario(
         ): PositiveScenario {
             val elements = trace.nodes
                 .map { node ->
-                    node.states.single().values.associate { value ->
+                    node.state.values.associate { value ->
                         value.variable to value.content.toBoolean()
                     }
                 }

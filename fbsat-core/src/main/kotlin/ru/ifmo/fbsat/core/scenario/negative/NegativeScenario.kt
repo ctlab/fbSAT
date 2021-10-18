@@ -10,7 +10,6 @@ import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.outputEvent
 import ru.ifmo.fbsat.core.scenario.outputValues
-import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.utils.MyLogger
 import java.io.File
 
@@ -74,7 +73,7 @@ data class NegativeScenario(
                         OutputValues(second.getBooleanValues(outputNames))
                     )
                 ).apply {
-                    ceState = second.variables["_state"]
+                    ceState = second.data["_state"]
                 }
             }
 

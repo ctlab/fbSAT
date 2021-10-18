@@ -28,7 +28,7 @@ import okio.buffer
 import okio.sink
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
-import ru.ifmo.fbsat.core.scenario.negative.readCounterexamplesFromFile
+import ru.ifmo.fbsat.core.scenario.negative.CounterexampleXML
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.clause
@@ -879,7 +879,7 @@ private fun main() {
     val traceFilename = "data/counter/trace_adding2_10x30.xml"
     // val traceFilename = "data/counter/trace_adding2_20x50.xml"
     // val traceFilename = "data/counter/trace_adding2_100x20.xml"
-    val traces = readCounterexamplesFromFile(File(traceFilename))
+    val traces = CounterexampleXML.from(File(traceFilename))
     logger.info("Traces: ${traces.size}")
     val scenarios = traces.map { trace ->
         PositiveScenario.fromTrace(trace, inputNames, outputNames)
