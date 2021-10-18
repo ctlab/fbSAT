@@ -1,14 +1,31 @@
 package ru.ifmo.fbsat.core.task.modular.basic.parallel
 
+import com.github.lipen.multiarray.forEachIndexed
 import com.soywiz.klock.measureTimeWithResult
+import okio.buffer
+import okio.sink
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
 import ru.ifmo.fbsat.core.automaton.buildBasicParallelModularAutomaton
+import ru.ifmo.fbsat.core.scenario.InputAction
+import ru.ifmo.fbsat.core.scenario.InputValues
+import ru.ifmo.fbsat.core.scenario.OutputAction
+import ru.ifmo.fbsat.core.scenario.OutputValues
+import ru.ifmo.fbsat.core.scenario.ScenarioElement
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.convertBoolVarArray
+import ru.ifmo.fbsat.core.solver.convertIntVarArray
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeParallelModularA
 import ru.ifmo.fbsat.core.task.optimizeParallelModularT
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.ModularContext
 import ru.ifmo.fbsat.core.utils.MyLogger
+import ru.ifmo.fbsat.core.utils.ensureParentExists
+import ru.ifmo.fbsat.core.utils.toBinaryString
+import ru.ifmo.fbsat.core.utils.useWith
+import ru.ifmo.fbsat.core.utils.write
+import ru.ifmo.fbsat.core.utils.writeln
 
 private val logger = MyLogger {}
 
@@ -74,9 +91,90 @@ fun Inferrer.parallelModularBasicMin(
     }
 }
 
+private fun PositiveScenario.slice(sliceInput: List<Int>, sliceOutput: List<Int>): PositiveScenario {
+    return PositiveScenario(elements = elements.map { it.slice(sliceInput, sliceOutput) })
+}
+
+private fun ScenarioElement.slice(sliceInput: List<Int>, sliceOutput: List<Int>): ScenarioElement {
+    return ScenarioElement(
+        inputAction = InputAction(
+            event = inputEvent,
+            values = inputValues.slice(sliceInput)
+        ),
+        outputAction = OutputAction(
+            event = outputEvent,
+            values = outputValues.slice(sliceOutput)
+        )
+    )
+}
+
+private fun InputValues.slice(sliceInput: List<Int>): InputValues {
+    return InputValues(values.slice(sliceInput.indices))
+}
+
+private fun OutputValues.slice(sliceInput: List<Int>): OutputValues {
+    return OutputValues(values.slice(sliceInput.indices))
+}
+
 fun Inferrer.inferParallelModularBasic(): ParallelModularAutomaton? {
     val model = solveAndGetModel() ?: return null
     val automaton = buildBasicParallelModularAutomaton(solver.context, model)
+
+    if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
+        val modularContext: ModularContext = solver.context["modularContext"]
+        val moduleControllingOutputVariable =
+            solver.context.convertIntVarArray("moduleControllingOutputVariable", model)
+        modularContext.forEachIndexed { (m), ctx ->
+            val scenarioTree: PositiveScenarioTree = ctx["scenarioTree"]
+            val X: Int = ctx["X"]
+            val Z: Int = ctx["Z"]
+            val inputVariableUsed = ctx.convertBoolVarArray("inputVariableUsed", model)
+
+            val sliceInput = (1..X).filter { x ->
+                inputVariableUsed[x]
+            }.map { it - 1 }
+            val sliceOutput = (1..Z).filter { z ->
+                moduleControllingOutputVariable[z] == m
+            }.map { it - 1 }
+            logger.debug("Slice input indices for m = $m: $sliceInput")
+            logger.debug("Slice output indices for m = $m: $sliceOutput")
+
+            val slicedScenarios = scenarioTree.scenarios.map {
+                it.slice(sliceInput, sliceOutput)
+            }
+            val outFile = outDir.resolve("sliced-scenarios-m$m")
+            logger.debug("Writing ${slicedScenarios.size} sliced scenario(s) for m = $m to '$outFile'")
+            outFile.ensureParentExists().sink().buffer().useWith {
+                writeln("${slicedScenarios.size}")
+                for (scenario in slicedScenarios) {
+                    for (element in scenario.elements) {
+                        if (element.inputEvent != null) {
+                            write("in=${element.inputEvent}[${element.inputValues.values.toBinaryString()}]; ")
+                        }
+                        if (element.outputEvent != null) {
+                            write("out=${element.outputEvent}[${element.outputValues.values.toBinaryString()}]; ")
+                        }
+                    }
+                    writeln()
+                }
+            }
+
+            outDir.resolve("input-names-m$m").ensureParentExists().sink().buffer().useWith {
+                for (x in 1..X) {
+                    if (inputVariableUsed[x]) {
+                        writeln(scenarioTree.inputNames[x - 1])
+                    }
+                }
+            }
+            outDir.resolve("output-names-m$m").ensureParentExists().sink().buffer().useWith {
+                for (z in 1..Z) {
+                    if (moduleControllingOutputVariable[z] == m) {
+                        writeln(scenarioTree.outputNames[z - 1])
+                    }
+                }
+            }
+        }
+    }
 
     // TODO: check automaton
     // log.warn("Mapping check is not implemented yet")
