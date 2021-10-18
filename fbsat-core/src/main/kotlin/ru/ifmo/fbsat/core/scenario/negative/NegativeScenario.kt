@@ -8,6 +8,7 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
+import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.utils.MyLogger
 import java.io.File
 
@@ -37,6 +38,10 @@ data class NegativeScenario(
         // elements.forEachIndexed { index, elem ->
         //     println("[${index + 1}/${elements.size}] $elem")
         // }
+    }
+
+    fun slice(indicesInput: Iterable<Int>, indicesOutput: Iterable<Int>): NegativeScenario {
+        return NegativeScenario(elements.map { it.slice(indicesInput, indicesOutput) }, loopPosition)
     }
 
     override fun toString(): String {
