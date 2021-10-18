@@ -3,7 +3,7 @@ package ru.ifmo.fbsat.core.scenario
 interface GenericScenario<out E : GenericScenario.Element<*, *>> {
     val elements: List<E>
 
-    interface Element<In, Out>
+    interface Element<out In, out Out>
         where In : GenericScenarioInputAction<*, *>,
               Out : GenericScenarioOutputAction<*, *> {
         var nodeId: Int?
