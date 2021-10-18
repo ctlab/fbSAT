@@ -28,6 +28,10 @@ private val logger = MyLogger {}
 data class PositiveScenario(
     override val elements: List<ScenarioElement>,
 ) : Scenario {
+    fun slice(indicesInput: Iterable<Int>, indicesOutput: Iterable<Int>): PositiveScenario {
+        return PositiveScenario(elements.map { it.slice(indicesInput, indicesOutput) })
+    }
+
     companion object {
         fun fromJsonFile(file: File): List<PositiveScenario> {
             val s = file.source().buffer().use { it.readUtf8() }
