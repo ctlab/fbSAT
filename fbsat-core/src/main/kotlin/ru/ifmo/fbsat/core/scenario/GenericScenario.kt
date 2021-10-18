@@ -25,3 +25,21 @@ val <E, Out> GenericScenario<E>.outputActions: List<Out>
 val <E, Out> GenericScenario<E>.outputActionsSeq: Sequence<Out>
     where E : GenericScenario.Element<*, Out>
     get() = elements.asSequence().map { it.outputAction }
+
+val <In, E>  GenericScenario.Element<In, *>.inputEvent: E?
+    where In : GenericScenarioInputAction<E, *>,
+          E : GenericInputEvent
+    get() = inputAction.event
+val <In, V>  GenericScenario.Element<In, *>.inputValues: V
+    where In : GenericScenarioInputAction<*, V>,
+          V : GenericInputValues
+    get() = inputAction.values
+
+val <Out, E>  GenericScenario.Element<*, Out>.outputEvent: E?
+    where Out : GenericScenarioOutputAction<E, *>,
+          E : GenericOutputEvent
+    get() = outputAction.event
+val <Out, V>  GenericScenario.Element<*, Out>.outputValues: V
+    where Out : GenericScenarioOutputAction<*, V>,
+          V : GenericOutputValues
+    get() = outputAction.values

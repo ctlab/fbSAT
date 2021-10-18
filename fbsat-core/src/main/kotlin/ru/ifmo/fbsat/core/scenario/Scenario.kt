@@ -16,18 +16,6 @@ data class ScenarioElement(
     @Transient
     var ceState: String? = null // FIXME: remove
 
-    @Transient
-    val inputEvent: InputEvent? = inputAction.event
-
-    @Transient
-    val inputValues: InputValues = inputAction.values
-
-    @Transient
-    val outputEvent: OutputEvent? = outputAction.event
-
-    @Transient
-    val outputValues: OutputValues = outputAction.values
-
     fun slice(indicesInput: Iterable<Int>, indicesOutput: Iterable<Int>): ScenarioElement {
         return ScenarioElement(
             inputAction.slice(indicesInput),

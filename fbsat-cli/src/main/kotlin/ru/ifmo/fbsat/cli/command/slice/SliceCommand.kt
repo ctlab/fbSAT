@@ -17,6 +17,10 @@ import ru.ifmo.fbsat.cli.command.infer.options.getInitialOutputValuesOption
 import ru.ifmo.fbsat.cli.command.infer.options.outDirOption
 import ru.ifmo.fbsat.cli.command.infer.options.scenariosFileOption
 import ru.ifmo.fbsat.core.scenario.OutputValues
+import ru.ifmo.fbsat.core.scenario.inputEvent
+import ru.ifmo.fbsat.core.scenario.inputValues
+import ru.ifmo.fbsat.core.scenario.outputEvent
+import ru.ifmo.fbsat.core.scenario.outputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.ensureParentExists
