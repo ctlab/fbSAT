@@ -153,7 +153,7 @@ class ParallelModularAutomaton(
     }
 
     fun getStats(): String {
-        return "M = $numberOfModules, " +
+        return "M = $numberOfModules" +
             ", C = ${
                 modules.values.joinToString("+") {
                     it.numberOfStates.toString()
