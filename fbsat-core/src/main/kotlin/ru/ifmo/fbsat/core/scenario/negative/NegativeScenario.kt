@@ -8,6 +8,8 @@ import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
+import ru.ifmo.fbsat.core.scenario.outputEvent
+import ru.ifmo.fbsat.core.scenario.outputValues
 import ru.ifmo.fbsat.core.utils.MyLogger
 import java.io.File
 
@@ -39,6 +41,10 @@ data class NegativeScenario(
         // }
     }
 
+    fun slice(indicesInput: Iterable<Int>, indicesOutput: Iterable<Int>): NegativeScenario {
+        return NegativeScenario(elements.map { it.slice(indicesInput, indicesOutput) }, loopPosition)
+    }
+
     override fun toString(): String {
         return "NegativeScenarios(loopPosition=$loopPosition, elements=$elements)"
     }
@@ -59,19 +65,20 @@ data class NegativeScenario(
             val elements = counterexample.states.zipWithNext { first, second ->
                 ScenarioElement(
                     InputAction(
-                        InputEvent.of(first.getFirstTrue(inputEvents.map { it.name })),
-                        InputValues(first.getBooleanValues(inputNames))
+                        event = InputEvent.of(first.getFirstTrue(inputEvents.map { it.name })),
+                        values = InputValues(first.getBooleanValues(inputNames))
                     ),
                     OutputAction(
-                        OutputEvent.of(second.getFirstTrue(outputEvents.map { it.name })),
-                        OutputValues(second.getBooleanValues(outputNames))
+                        event = OutputEvent.of(second.getFirstTrue(outputEvents.map { it.name })),
+                        values = OutputValues(second.getBooleanValues(outputNames))
                     )
                 ).apply {
-                    ceState = second.variables["_state"]
+                    ceState = second.data["_state"]
                 }
             }
 
-            val loopPosition = counterexample.loopPosition!!
+            val loopPosition = counterexample.loopPosition
+                ?: error("Loop-less counterexamples are not supported, yet")
             return if (loopPosition == 1) {
                 logger.info("loopPosition = 1, duplicating ${elements.size} elements...")
                 // Duplicate elements

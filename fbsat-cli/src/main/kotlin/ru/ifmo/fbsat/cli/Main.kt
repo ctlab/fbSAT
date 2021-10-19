@@ -15,6 +15,7 @@ import ru.ifmo.fbsat.cli.command.infer.InferCommand
 import ru.ifmo.fbsat.cli.command.randexp.BatchRandomExperimentCommand
 import ru.ifmo.fbsat.cli.command.randexp.MultiRandomExperimentCommand
 import ru.ifmo.fbsat.cli.command.randexp.RandomExperimentCommand
+import ru.ifmo.fbsat.cli.command.slice.SliceCommand
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.setupLogFileAppender
 import java.io.File
@@ -59,6 +60,7 @@ class FbSAT(
         }
         subcommands(
             InferCommand(),
+            SliceCommand(),
             HelloCommand(),
             RandomExperimentCommand(),
             MultiRandomExperimentCommand(),

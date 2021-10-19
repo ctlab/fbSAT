@@ -11,6 +11,10 @@ import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
+import ru.ifmo.fbsat.core.scenario.inputEvent
+import ru.ifmo.fbsat.core.scenario.inputValues
+import ru.ifmo.fbsat.core.scenario.outputEvent
+import ru.ifmo.fbsat.core.scenario.outputValues
 import ru.ifmo.fbsat.core.utils.toBinaryString
 import java.io.File
 

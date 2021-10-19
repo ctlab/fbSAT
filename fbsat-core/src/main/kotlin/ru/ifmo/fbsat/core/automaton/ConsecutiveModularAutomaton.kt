@@ -9,6 +9,9 @@ import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
+import ru.ifmo.fbsat.core.scenario.inputValues
+import ru.ifmo.fbsat.core.scenario.outputEvent
+import ru.ifmo.fbsat.core.scenario.outputValues
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree

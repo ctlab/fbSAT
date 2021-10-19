@@ -2,6 +2,7 @@
 .idea/
 .gradle/
 .Rproj.user/
+.devcontainer/
 
 # Build folders
 build/
@@ -26,7 +27,9 @@ target/
 /logs/
 /data/
 /analysis/
+/braccio/
 docker-compose.yml
+Nexus.kt
 
 # Gradle
 !/gradle/wrapper/gradle-wrapper.jar

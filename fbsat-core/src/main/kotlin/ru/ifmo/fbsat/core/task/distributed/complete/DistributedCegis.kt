@@ -6,10 +6,9 @@ import okio.source
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
+import ru.ifmo.fbsat.core.scenario.negative.CounterexampleXML
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenario
 import ru.ifmo.fbsat.core.scenario.negative.NegativeCompoundScenarioTree
-import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
-import ru.ifmo.fbsat.core.scenario.negative.readCounterexamplesFromFile
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.distributed.basic.DistributedBasicTask
@@ -250,7 +249,7 @@ fun Inferrer.performDistributedCegis(smvDir: File): DistributedAutomaton? {
 fun DistributedAutomaton.verifyWithNuSMV(
     dir: File,
     modularModuleName: MultiArray<String>,
-): List<THE_Counterexample> {
+): List<CounterexampleXML> {
     // Save automaton to smv directory
     dumpSmv(dir, modularModuleName)
 
@@ -280,7 +279,7 @@ fun DistributedAutomaton.verifyWithNuSMV(
     val fileCounterexamples = dir.resolve("counterexamples.xml")
     return if (fileCounterexamples.exists()) {
         // Read new counterexamples
-        val counterexamples: List<THE_Counterexample> = readCounterexamplesFromFile(fileCounterexamples)
+        val counterexamples: List<CounterexampleXML> = CounterexampleXML.from(fileCounterexamples)
 
         // [DEBUG] Append new counterexamples to 'ce'
         // log.debug { "Dumping ${counterexamples.size} counterexample(s)..." }

@@ -155,7 +155,7 @@ fun <T> Iterable<T>.firstIndexed(predicate: (Int, T) -> Boolean): T =
 
 fun Iterable<Boolean>.all(): Boolean = all { it }
 
-@Suppress("ReplaceCollectionCountWithSize")
+@Suppress("ReplaceSizeZeroCheckWithIsEmpty")
 fun <T> cartesianProduct(iterables: Iterable<Iterable<T>>): Sequence<List<T>> =
     if (iterables.count() == 0) emptySequence()
     else iterables.fold(sequenceOf(listOf())) { acc, iterable ->

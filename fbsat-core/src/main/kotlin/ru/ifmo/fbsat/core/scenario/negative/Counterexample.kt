@@ -1,7 +1,9 @@
 package ru.ifmo.fbsat.core.scenario.negative
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import nl.adaptivity.xmlutil.XmlDeclMode
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlElement
 import nl.adaptivity.xmlutil.serialization.XmlSerialName
@@ -11,38 +13,36 @@ import ru.ifmo.fbsat.core.utils.useLines
 import java.io.File
 
 data class Counterexample(
-    val states: List<State>,
-) {
+    val states: List<ExecutionState>,
     /**
      * One-based index of loop-back state, or `null` if there is no loop.
      */
-    val loopPosition: Int? = states.indexOfFirst { it.isLoop }.let { if (it == -1) null else it + 1 }
+    val loopPosition: Int?,
+) {
+    val loopBack: ExecutionState? = loopPosition?.let { l -> states[l - 1] }
 
     init {
         if (loopPosition != null) {
             val loop = states[loopPosition - 1]
             val last = states.last()
-            require(loop.variables == last.variables) {
+            require(loop.data == last.data) {
                 "Mismatch of variables in loopBack ($loop) and last ($last) states"
             }
         }
-
-        // println("[*] Counterexample:")
-        // states.forEachIndexed { index, state ->
-        //     println("[${index + 1}/${states.size}] $state")
-        // }
     }
 
-    data class State(val name: String, val isLoop: Boolean, val variables: Map<String, String>) {
+    data class ExecutionState(
+        val data: Map<String, String>,
+    ) {
         fun getFirstTrue(names: List<String>): String? =
-            names.firstOrNull { variables[it] == "TRUE" }
+            names.firstOrNull { data[it] == "TRUE" }
 
         fun getBooleanValues(names: List<String>): List<Boolean> =
             names.map {
-                when (variables[it]) {
+                when (val v = data[it]) {
                     "TRUE" -> true
                     "FALSE" -> false
-                    else -> error("Value of variable '$it' must be either 'TRUE' or 'FALSE', but encountered '${variables[it]}'")
+                    else -> error("Value of boolean variable '$it' must be either 'TRUE' or 'FALSE', but encountered '$v'")
                 }
             }
     }
@@ -52,139 +52,191 @@ data class Counterexample(
     }
 
     companion object {
-        fun from(file: File): List<Counterexample> {
-            val ces: MutableList<Counterexample> = mutableListOf()
-            var states: MutableList<State> = mutableListOf()
-            var hasState = false
-            var stateName = ""
-            var isLoop = false
-            var variables: MutableMap<String, String> = mutableMapOf()
+        fun from(ceXML: CounterexampleXML): Counterexample {
+            val states = ceXML.nodes.map { it.state }.map {
+                ExecutionState(it.values.associate { v -> v.variable to v.content })
+            }
+            val loopPosition: Int? = if (ceXML.loops.isBlank()) {
+                null
+            } else {
+                // Note: we assume that only the first loop is essential, so we drop the others
+                ceXML.loops.split(",").map { it.trim().toInt() }.first()
+            }
+            return Counterexample(states, loopPosition)
+        }
 
-            file.sourceAutoGzip().useLines { lines ->
-                for (line in lines.map(String::trim)) {
-                    when {
-                        line.startsWith("Trace Description") -> {
-                            // Add last state
-                            if (hasState) {
-                                states.add(State(stateName, isLoop, variables))
-                            }
-                            hasState = false
-                            // Add counter-example
-                            if (states.isNotEmpty()) {
-                                ces.add(Counterexample(states))
-                            }
-                            // Reset states
-                            states = mutableListOf()
+        fun fromSmvout(lines: Sequence<String>): List<Counterexample> {
+            val ces: MutableList<Counterexample> = mutableListOf()
+            var states: MutableList<ExecutionState> = mutableListOf()
+            var hasState = false
+            var loopPosition: Int? = null
+            var data: MutableMap<String, String> = mutableMapOf()
+
+            for (line in lines.map(String::trim)) {
+                when {
+                    line.startsWith("Trace Description") -> {
+                        // Add last state
+                        if (hasState) {
+                            states.add(ExecutionState(data))
                         }
-                        line.startsWith("Trace Type") -> {
-                            // Do nothing
+                        hasState = false
+                        // Add counter-example
+                        if (states.isNotEmpty()) {
+                            ces.add(Counterexample(states, loopPosition))
                         }
-                        line == "-- Loop starts here" -> {
-                            // Add last state
-                            if (hasState) {
-                                states.add(State(stateName, isLoop, variables))
-                            }
-                            hasState = false
-                            isLoop = true
+                        // Reset states
+                        states = mutableListOf()
+                        loopPosition = null
+                    }
+                    line.startsWith("Trace Type") -> {
+                        // Do nothing
+                    }
+                    line == "-- Loop starts here" -> {
+                        // Add last state
+                        if (hasState) {
+                            states.add(ExecutionState(data))
                         }
-                        line.startsWith("-> State") -> {
-                            // Add last state
-                            if (hasState) {
-                                states.add(State(stateName, isLoop, variables))
-                                // Reset isLoop only after state processing
-                                isLoop = false
-                            }
-                            // New state
-                            hasState = true
-                            stateName = line.substringAfter("-> State: ").substringBefore(" <-")
-                            variables = mutableMapOf()
-                        }
-                        else -> {
-                            val (name, value) = line.split(" = ", limit = 2)
-                            // Cut dot-prefix in name (e.g. "C." - controller var, or "P." - plant var)
-                            variables[name.substringAfter('.').substringAfter("$")] = value
+                        hasState = false
+                        // Remember only the first loopPosition
+                        if (loopPosition == null) {
+                            loopPosition = states.size + 1
                         }
                     }
-                }
-
-                // Post-add state
-                if (hasState) {
-                    states.add(State(stateName, isLoop, variables))
-                }
-                // Post-add counter-example
-                if (states.isNotEmpty()) {
-                    ces.add(Counterexample(states))
+                    line.startsWith("-> State") -> {
+                        // Add last state
+                        if (hasState) {
+                            states.add(ExecutionState(data))
+                        }
+                        // New state
+                        hasState = true
+                        data = mutableMapOf()
+                    }
+                    else -> {
+                        val (name, value) = line.split(" = ", limit = 2)
+                        // Cut dot-prefix in name (e.g. "C." - controller var, or "P." - plant var)
+                        // FIXME: is it really OK to cut dot-prefixes?
+                        data[name.substringAfter('.').substringAfter("$")] = value
+                    }
                 }
             }
 
+            // Post-add state
+            if (hasState) {
+                states.add(ExecutionState(data))
+            }
+            // Post-add counter-example
+            if (states.isNotEmpty()) {
+                ces.add(Counterexample(states, loopPosition))
+            }
+
             return ces
+        }
+
+        fun fromSmvout(file: File): List<Counterexample> {
+            return file.sourceAutoGzip().useLines { lines -> fromSmvout(lines) }
+        }
+
+        fun fromXml(file: File): List<Counterexample> {
+            return CounterexampleXML.from(file).map(::from)
+        }
+
+        fun from(file: File): List<Counterexample> {
+            return when (file.extension) {
+                "xml" -> fromXml(file)
+                "smvout" -> fromSmvout(file)
+                // FIXME: for backward-compatibility we have to default to smvout format
+                else -> fromSmvout(file)
+            }
         }
     }
 }
 
 @Serializable
-@XmlSerialName("counter-example", namespace = "", prefix = "")
-data class THE_Counterexample(
+@XmlSerialName("counter-example", "", "")
+data class CounterexampleXML(
     val type: Int,
     val id: Int,
-    @XmlSerialName("desc", namespace = "", prefix = "")
-    val description: String,
-    @XmlSerialName("node", namespace = "", prefix = "")
-    val nodes: List<THE_Node>,
-    // @XmlSerialName("loops", namespace = "", prefix = "")
-    // val loops: THE_Loops
+    val desc: String,
+    val nodes: List<Node>,
     @XmlElement(true)
     val loops: String,
 ) {
     @Serializable
-    @XmlSerialName("node", namespace = "", prefix = "")
-    data class THE_Node(
-        @XmlSerialName("state", namespace = "", prefix = "")
-        val states: List<THE_State>,
-    ) {
-        @Serializable
-        @XmlSerialName("state", namespace = "", prefix = "")
-        data class THE_State(
-            val id: Int,
-            @SerialName("value")
-            val values: List<THE_Value>,
-        ) {
-            @Serializable
-            @XmlSerialName("value", namespace = "", prefix = "")
-            data class THE_Value(
-                val variable: String,
-                @XmlValue(true)
-                val content: String,
-            )
-        }
-    }
+    @XmlSerialName("node", "", "")
+    data class Node(
+        val state: State,
+    )
 
     @Serializable
-    @XmlSerialName("loops", namespace = "", prefix = "")
-    data class THE_Loops(
-        @XmlValue(true)
-        val loops: String,
+    @XmlSerialName("state", "", "")
+    data class State(
+        val id: Int,
+        val values: List<Value>,
     )
+
+    @Serializable
+    @XmlSerialName("value", "", "")
+    data class Value(
+        val variable: String,
+        @XmlValue(true)
+        val content: String,
+    )
+
+    companion object {
+        private val defaultFormat = XML()
+
+        fun from(s: String, format: XML = defaultFormat): CounterexampleXML {
+            return format.decodeFromString(s)
+        }
+
+        fun from(file: File, format: XML = defaultFormat): List<CounterexampleXML> {
+            val lines = file.readLines()
+            val headerLines = lines.mapIndexedNotNull { index, s ->
+                if (s.startsWith("<?xml")) index else null
+            }
+            return (headerLines + lines.size)
+                .zipWithNext { a, b ->
+                    lines.subList(a, b).joinToString("\n")
+                }
+                .map { from(it, format) }
+        }
+    }
 }
 
-fun counterexampleFromString(s: String): THE_Counterexample {
-    val xml = XML()
-    return xml.decodeFromString(THE_Counterexample.serializer(), s)
-}
+fun main() {
+    val s = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <counter-example type="1" id="1" desc="Simulation Trace" >
+            <node>
+                <state id="1">
+                    <value variable="cat">FALSE</value>
+                    <value variable="dog">FALSE</value>
+                </state>
+            </node>
+            <node>
+                <state id="2">
+                    <value variable="cat">FALSE</value>
+                    <value variable="dog">TRUE</value>
+                </state>
+            </node>
+            <node>
+                <state id="3">
+                    <value variable="cat">FALSE</value>
+                    <value variable="dog">TRUE</value>
+                </state>
+            </node>
+            <loops> 2 ,3 </loops>
+        </counter-example>
+    """.trimIndent()
 
-fun readCounterexamplesFromFile(file: File): List<THE_Counterexample> {
-    val xmlString = file.readText()
-        .replace("<loops> </loops>", "<loops/>")
-    val lines = xmlString.lines()
-    val headerLines = lines.mapIndexedNotNull { index, s ->
-        if (s.startsWith("<?xml")) index else null
-    }.toList()
-    return (headerLines + lines.size)
-        .zipWithNext { a, b ->
-            lines.subList(a, b).joinToString("\n")
-        }
-        .map(::counterexampleFromString)
-        .also {
-            check(it.size == xmlString.lineSequence().count { line -> line.contains("?xml") })
-        }
+    val xml = XML {
+        indentString = "    "
+        xmlDeclMode = XmlDeclMode.Charset
+    }
+
+    val ce = CounterexampleXML.from(s, xml)
+    println("ce = $ce")
+
+    val serialized = xml.encodeToString(ce)
+    println("serialized:\n$serialized")
 }

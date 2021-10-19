@@ -3,8 +3,6 @@ package ru.ifmo.fbsat.core.scenario.positive
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import okio.buffer
-import okio.source
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.InputValues
@@ -14,7 +12,6 @@ import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.negative.Counterexample
-import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
 import ru.ifmo.fbsat.core.scenario.preprocessed
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.sourceAutoGzip
@@ -28,36 +25,11 @@ private val logger = MyLogger {}
 data class PositiveScenario(
     override val elements: List<ScenarioElement>,
 ) : Scenario {
+    fun slice(indicesInput: Iterable<Int>, indicesOutput: Iterable<Int>): PositiveScenario {
+        return PositiveScenario(elements.map { it.slice(indicesInput, indicesOutput) })
+    }
+
     companion object {
-        fun fromJsonFile(file: File): List<PositiveScenario> {
-            val s = file.source().buffer().use { it.readUtf8() }
-            return Json.decodeFromString(s)
-        }
-
-        fun fromFile(
-            file: File,
-            initialOutputValues: OutputValues,
-            preprocess: Boolean = true,
-        ): List<PositiveScenario> {
-            return file.sourceAutoGzip().useLines { lines ->
-                val scenarios: MutableList<PositiveScenario> = mutableListOf()
-                var numberOfScenarios = 0
-
-                for ((index, line) in lines.withIndex()) {
-                    if (index == 0) {
-                        numberOfScenarios = line.toInt()
-                    } else {
-                        scenarios.add(fromString(line, initialOutputValues, preprocess))
-                    }
-                }
-
-                if (scenarios.size != numberOfScenarios)
-                    logger.warn("Number of scenarios mismatch: specified $numberOfScenarios, but found ${scenarios.size}")
-
-                scenarios
-            }
-        }
-
         private val regexAction by lazy {
             // Regex("""^(?<type>in|out)=(?<event>.*?)\[(?<values>[01]*)]$""")
             Regex("""^(in|out)=(.*?)\[([01]*)]$""")
@@ -67,6 +39,7 @@ data class PositiveScenario(
             Regex("""out=.*?\[([01]*)]""")
         }
 
+        // fromWeirdFormat(String)
         fun fromString(
             s: String,
             initialOutputValues: OutputValues,
@@ -119,35 +92,91 @@ data class PositiveScenario(
                 PositiveScenario(elements)
         }
 
-        fun fromTrace(
-            trace: THE_Counterexample,
-            // inputEvents: List<InputEvent>,
-            // outputEvents: List<OutputEvent>,
-            inputNames: List<String>,
-            outputNames: List<String>,
-        ): PositiveScenario {
-            val elements = trace.nodes
-                .map { node ->
-                    node.states.single().values.associate { value ->
-                        value.variable to value.content.toBoolean()
+        // fromWeirdFormat(File)
+        fun fromFile(
+            file: File,
+            initialOutputValues: OutputValues,
+            preprocess: Boolean = true,
+        ): List<PositiveScenario> {
+            return file.sourceAutoGzip().useLines { lines ->
+                val scenarios: MutableList<PositiveScenario> = mutableListOf()
+                var numberOfScenarios = 0
+
+                for ((index, line) in lines.withIndex()) {
+                    if (index == 0) {
+                        numberOfScenarios = line.toInt()
+                    } else {
+                        scenarios.add(fromString(line, initialOutputValues, preprocess))
                     }
                 }
-                .zipWithNext { inputData, outputData ->
-                    ScenarioElement(
-                        inputAction = InputAction(
-                            event = InputEvent("REQ"),
-                            values = InputValues(inputNames.map { inputData.getValue(it) })
-                        ),
-                        outputAction = OutputAction(
-                            event = OutputEvent("CNF"),
-                            values = OutputValues(outputNames.map { outputData.getValue(it) })
-                        )
-                    )
-                }
-            return PositiveScenario(elements)
+
+                if (scenarios.size != numberOfScenarios)
+                    logger.warn("Number of scenarios mismatch: specified $numberOfScenarios, but found ${scenarios.size}")
+
+                scenarios
+            }
         }
 
-        fun fromSmv(
+        fun fromJson(s: String, format: Json = Json): List<PositiveScenario> {
+            return format.decodeFromString(s)
+        }
+
+        fun fromJson(file: File, format: Json = Json): List<PositiveScenario> {
+            val s = file.readText()
+            return fromJson(s, format)
+        }
+
+        fun from(
+            ce: Counterexample,
+            inputEvents: List<InputEvent>,
+            outputEvents: List<OutputEvent>,
+            inputNames: List<String>,
+            outputNames: List<String>,
+            preprocess: Boolean = true,
+        ): PositiveScenario {
+            val elements = ce.states.zipWithNext { first, second ->
+                ScenarioElement(
+                    InputAction(
+                        event = InputEvent.of(first.getFirstTrue(inputEvents.map { it.name })),
+                        values = InputValues(first.getBooleanValues(inputNames))
+                    ),
+                    OutputAction(
+                        event = OutputEvent.of(second.getFirstTrue(outputEvents.map { it.name })),
+                        values = OutputValues(second.getBooleanValues(outputNames))
+                    )
+                )
+            }
+            return if (preprocess)
+                PositiveScenario(elements.preprocessed)
+            else
+                PositiveScenario(elements)
+        }
+
+        fun fromAutoReqCnf(
+            ce: Counterexample,
+            inputNames: List<String>,
+            outputNames: List<String>,
+            preprocess: Boolean = true,
+        ): PositiveScenario {
+            val elements = ce.states.zipWithNext { first, second ->
+                ScenarioElement(
+                    InputAction(
+                        event = InputEvent("REQ"),
+                        values = InputValues(first.getBooleanValues(inputNames))
+                    ),
+                    OutputAction(
+                        event = OutputEvent("CNF"),
+                        values = OutputValues(second.getBooleanValues(outputNames))
+                    )
+                )
+            }
+            return if (preprocess)
+                PositiveScenario(elements.preprocessed)
+            else
+                PositiveScenario(elements)
+        }
+
+        fun fromSmvout(
             file: File,
             inputEvents: List<InputEvent>,
             outputEvents: List<OutputEvent>,
@@ -155,23 +184,8 @@ data class PositiveScenario(
             outputNames: List<String>,
             preprocess: Boolean = true,
         ): List<PositiveScenario> =
-            Counterexample.from(file).map { counterexample ->
-                val elements = counterexample.states.zipWithNext { first, second ->
-                    ScenarioElement(
-                        InputAction(
-                            InputEvent.of(first.getFirstTrue(inputEvents.map { it.name })),
-                            InputValues(first.getBooleanValues(inputNames))
-                        ),
-                        OutputAction(
-                            OutputEvent.of(second.getFirstTrue(outputEvents.map { it.name })),
-                            OutputValues(second.getBooleanValues(outputNames))
-                        )
-                    )
-                }
-                if (preprocess)
-                    PositiveScenario(elements.preprocessed)
-                else
-                    PositiveScenario(elements)
+            Counterexample.fromSmvout(file).map { ce ->
+                from(ce, inputEvents, outputEvents, inputNames, outputNames, preprocess)
             }
     }
 }

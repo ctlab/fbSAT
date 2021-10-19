@@ -53,6 +53,10 @@ data class InputValues(override val values: List<Boolean>) : Values(), GenericIn
     constructor(values: BooleanArray) : this(values.asList())
     constructor(values: String) : this(values.toBooleanList())
 
+    fun slice(indices: Iterable<Int>): InputValues {
+        return InputValues(values.slice(indices))
+    }
+
     companion object {
         fun empty(): InputValues = InputValues(emptyList())
         fun zeros(size: Int): InputValues = InputValues(List(size) { false })
@@ -63,6 +67,10 @@ data class InputValues(override val values: List<Boolean>) : Values(), GenericIn
 data class OutputValues(override val values: List<Boolean>) : Values(), GenericOutputValues {
     constructor(values: BooleanArray) : this(values.asList())
     constructor(values: String) : this(values.toBooleanList())
+
+    fun slice(indices: Iterable<Int>): OutputValues {
+        return OutputValues(values.slice(indices))
+    }
 
     companion object {
         fun empty(): OutputValues = OutputValues(emptyList())
@@ -85,7 +93,13 @@ data class InputAction(
     override val values: InputValues,
 ) : ScenarioAction<InputEvent, InputValues>(),
     GenericScenarioInputAction<InputEvent, InputValues> {
-    // override fun toString(): String = super.toString()
+
+    fun slice(indices: Iterable<Int>): InputAction {
+        return InputAction(
+            event = event,
+            values = values.slice(indices)
+        )
+    }
 }
 
 @Serializable
@@ -94,5 +108,11 @@ data class OutputAction(
     override val values: OutputValues,
 ) : ScenarioAction<OutputEvent, OutputValues>(),
     GenericScenarioOutputAction<OutputEvent, OutputValues> {
-    // override fun toString(): String = super.toString()
+
+    fun slice(indices: Iterable<Int>): OutputAction {
+        return OutputAction(
+            event = event,
+            values = values.slice(indices)
+        )
+    }
 }

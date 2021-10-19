@@ -13,6 +13,7 @@ import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.addGenericScenario
 import ru.ifmo.fbsat.core.utils.CompoundImpl
+import ru.ifmo.fbsat.core.utils.multiArrayOfNulls
 import ru.ifmo.fbsat.core.utils.project
 
 class PositiveCompoundScenarioTree(
@@ -21,6 +22,7 @@ class PositiveCompoundScenarioTree(
     override val modularOutputEvents: MultiArray<List<OutputEvent>>,
     override val modularInputNames: MultiArray<List<String>>,
     override val modularOutputNames: MultiArray<List<String>>,
+    modularInitialOutputValues: MultiArray<OutputValues?> = multiArrayOfNulls(M),
     override val isTrie: Boolean = true,
 ) : CompoundScenarioTree<PositiveScenarioTree, PositiveCompoundScenario, PositiveCompoundScenarioTree.Node>,
     CompoundImpl<PositiveScenarioTree>() {
@@ -61,7 +63,7 @@ class PositiveCompoundScenarioTree(
                         ),
                         OutputAction(
                             event = null,
-                            values = OutputValues.zeros(modularOutputNames[m].size) // FIXME
+                            values = modularInitialOutputValues[m] ?: OutputValues.zeros(modularOutputNames[m].size)
                         )
                     )
                 }

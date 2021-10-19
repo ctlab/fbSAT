@@ -10,7 +10,7 @@ import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.ScenarioElement
-import ru.ifmo.fbsat.core.scenario.negative.THE_Counterexample
+import ru.ifmo.fbsat.core.scenario.negative.CounterexampleXML
 import ru.ifmo.fbsat.core.utils.CompoundImpl
 import ru.ifmo.fbsat.core.utils.project
 
@@ -34,7 +34,7 @@ class PositiveCompoundScenario private constructor(
 
     companion object {
         fun fromCounterexample(
-            counterexample: THE_Counterexample,
+            counterexample: CounterexampleXML,
             M: Int,
             modularModuleName: MultiArray<String>,
             modularInputEvents: MultiArray<List<InputEvent>>,
@@ -44,7 +44,7 @@ class PositiveCompoundScenario private constructor(
         ): PositiveCompoundScenario {
             val ceElements = counterexample.nodes
                 .map { node ->
-                    node.states.single().values.associate { value ->
+                    node.state.values.associate { value ->
                         value.variable to value.content.toBoolean()
                     }
                 }
