@@ -6,7 +6,6 @@ import kotlinx.serialization.modules.subclass
 import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.utils.pow
 import ru.ifmo.fbsat.core.utils.toBinaryString
-import ru.ifmo.fbsat.core.utils.toBooleanList
 
 @Suppress("PublicApiImplicitType")
 val guardModule = SerializersModule {
@@ -29,5 +28,10 @@ interface Guard {
 
 fun Guard.truthTableString(inputNames: List<String>): String =
     (0 until 2.pow(inputNames.size)).map { i ->
-        eval(InputValues(i.toString(2).padStart(inputNames.size, '0').toBooleanList()))
+        val input = InputValues(i.toString(2).padStart(inputNames.size, '0'))
+        if (this is TruthTableGuard) {
+            this.truthTable[input]
+        } else {
+            eval(input)
+        }
     }.toBinaryString()

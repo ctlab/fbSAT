@@ -497,7 +497,10 @@ class Automaton(
             }
         val codeTransitionGuards =
             transitions.flatMap {
-                it.guard.truthTableString(inputNames)
+                val tt = it.guard.truthTableString(inputNames)
+                // FIXME: had to replace 'x' with '1' just to be able to compute hash of such guards,
+                //  but this should be fixed (rewritten) some time later...
+                tt.replace("x", "1")
                     .windowed(8, step = 8, partialWindows = true)
                     .map { s -> s.toInt(2) }
             }
