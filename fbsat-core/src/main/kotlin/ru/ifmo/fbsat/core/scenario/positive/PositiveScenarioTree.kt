@@ -126,17 +126,17 @@ class PositiveScenarioTree(
         ): PositiveScenarioTree {
             val scenarios =
                 when (file.extension) {
+                    "json" -> {
+                        PositiveScenario.fromJson(file)
+                    }
                     "smvout" -> {
-                        PositiveScenario.fromSmv(
+                        PositiveScenario.fromSmvout(
                             file = file,
                             inputEvents = inputEvents ?: listOf(InputEvent("REQ")),
                             outputEvents = outputEvents ?: listOf(OutputEvent("CNF")),
                             inputNames = inputNames,
                             outputNames = outputNames
                         )
-                    }
-                    "json" -> {
-                        PositiveScenario.fromJsonFile(file)
                     }
                     else -> {
                         PositiveScenario.fromFile(

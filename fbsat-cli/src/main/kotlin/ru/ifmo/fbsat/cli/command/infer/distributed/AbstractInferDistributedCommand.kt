@@ -44,7 +44,8 @@ abstract class AbstractInferDistributedCommand(name: String) :
             modularInputEvents = MultiArray.new(M) { scenarioTree.inputEvents },
             modularOutputEvents = MultiArray.new(M) { scenarioTree.outputEvents },
             modularInputNames = MultiArray.new(M) { scenarioTree.inputNames },
-            modularOutputNames = MultiArray.new(M) { scenarioTree.outputNames }
+            modularOutputNames = MultiArray.new(M) { scenarioTree.outputNames },
+            modularInitialOutputValues = MultiArray.new(M) { initialOutputValues }
         )
         for (scenario in scenarioTree.scenarios) {
             val compoundElements = scenario.elements.map { elem ->

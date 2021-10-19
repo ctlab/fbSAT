@@ -65,19 +65,20 @@ data class NegativeScenario(
             val elements = counterexample.states.zipWithNext { first, second ->
                 ScenarioElement(
                     InputAction(
-                        InputEvent.of(first.getFirstTrue(inputEvents.map { it.name })),
-                        InputValues(first.getBooleanValues(inputNames))
+                        event = InputEvent.of(first.getFirstTrue(inputEvents.map { it.name })),
+                        values = InputValues(first.getBooleanValues(inputNames))
                     ),
                     OutputAction(
-                        OutputEvent.of(second.getFirstTrue(outputEvents.map { it.name })),
-                        OutputValues(second.getBooleanValues(outputNames))
+                        event = OutputEvent.of(second.getFirstTrue(outputEvents.map { it.name })),
+                        values = OutputValues(second.getBooleanValues(outputNames))
                     )
                 ).apply {
                     ceState = second.data["_state"]
                 }
             }
 
-            val loopPosition = counterexample.loopPosition!!
+            val loopPosition = counterexample.loopPosition
+                ?: error("Loop-less counterexamples are not supported, yet")
             return if (loopPosition == 1) {
                 logger.info("loopPosition = 1, duplicating ${elements.size} elements...")
                 // Duplicate elements
