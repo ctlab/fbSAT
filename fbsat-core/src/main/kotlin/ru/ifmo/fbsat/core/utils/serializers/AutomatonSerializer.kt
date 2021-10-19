@@ -110,7 +110,9 @@ private class AutomatonSurrogate private constructor(
                     }
                 val codeTransitionGuards =
                     transitions.flatMap {
-                        it.guard.truthTableString(original.inputNames)
+                        val tt = it.guard.truthTableString(original.inputNames)
+                        // FIXME: see original Automaton::calculateHashCode for reference
+                        tt.replace("x", "1")
                             .windowed(8, step = 8, partialWindows = true)
                             .map { s -> s.toInt(2) }
                     }
