@@ -177,17 +177,9 @@ class ParallelModularAutomaton(
             } = $totalGuardsSize" +
             ", A = ${
                 modules.values.joinToString("+") {
-                    it.transitions.sumOf {
-                        (it.guard as? ConjunctiveGuard)?.literals?.size ?: 0
-                    }.toString()
+                    it.getA()?.toString() ?: "?"
                 }
-            } = ${
-                modules.values.sumOf {
-                    it.transitions.sumOf {
-                        (it.guard as? ConjunctiveGuard)?.literals?.size ?: 0
-                    }
-                }
-            }"
+            } = ${getA() ?: "?"}"
     }
 
     fun printStats() {
@@ -485,4 +477,13 @@ fun buildExtendedParallelModularAutomaton(
     }
 
     return ParallelModularAutomaton(modules, moduleControllingOutputVariable)
+}
+
+fun ParallelModularAutomaton.getA(): Int? {
+    var sum = 0
+    for (module in modules.values) {
+        val a = module.getA() ?: return null
+        sum += a
+    }
+    return sum
 }

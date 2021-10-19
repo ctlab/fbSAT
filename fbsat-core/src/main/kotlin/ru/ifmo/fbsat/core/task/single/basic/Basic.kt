@@ -10,7 +10,7 @@ import ru.ifmo.fbsat.core.solver.numberOfConflicts
 import ru.ifmo.fbsat.core.solver.numberOfDecisions
 import ru.ifmo.fbsat.core.solver.numberOfPropagations
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.task.optimizeA
+import ru.ifmo.fbsat.core.task.optimizeTA
 import ru.ifmo.fbsat.core.task.optimizeT
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
@@ -103,7 +103,7 @@ fun Inferrer.basicMin(
             isEncodeReverseImplication = isEncodeReverseImplication
         ) ?: return@run null
         if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
-            optimizeA()
+            optimizeTA()
         } else {
             optimizeT()
         }

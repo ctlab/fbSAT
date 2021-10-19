@@ -39,6 +39,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isEncodeEpsilonPassive: Boolean by isEncodeEpsilonPassiveOption()
     val isEncodeNotEpsilonActive: Boolean by isEncodeNotEpsilonActiveOption()
     val isEncodeConjunctiveGuards: Boolean by isEncodeConjunctiveGuardsOption()
+    val isEncodeCardinalityCKA: Boolean by isEncodeCardinalityCKAOption()
     val isFixActive: Boolean by isFixActiveOption()
     val isReuseK: Boolean by isReuseKOption()
     val isUseAssumptions: Boolean by isUseAssumptionsOption()
@@ -252,6 +253,15 @@ fun ParameterHolder.isEncodeConjunctiveGuardsOption() =
     ).flag(
         "--no-encode-conjunctive-guards",
         default = Globals.IS_ENCODE_CONJUNCTIVE_GUARDS
+    )
+
+fun ParameterHolder.isEncodeCardinalityCKAOption() =
+    option(
+        "--encode-cardinality-CKA",
+        help = "Encode cardinalityCKA (just declare, but not use)"
+    ).flag(
+        "--no-encode-cardinality-CKA",
+        default = Globals.IS_ENCODE_CARDINALITY_CKA
     )
 
 fun ParameterHolder.isFixActiveOption() =

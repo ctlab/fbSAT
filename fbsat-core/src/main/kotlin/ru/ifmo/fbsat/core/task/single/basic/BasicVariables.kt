@@ -8,6 +8,7 @@ import com.github.lipen.satlib.core.neq
 import com.github.lipen.satlib.core.newBoolVarArray
 import com.github.lipen.satlib.core.newIntVar
 import com.github.lipen.satlib.core.newIntVarArray
+import com.github.lipen.satlib.op.iffAnd
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.scenario.initialOutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
@@ -128,14 +129,21 @@ fun Solver.declareBasicVariables(
         }
     }
     if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
-        comment("Cardinality (A)")
+        comment("Cardinality (T*A)")
         val inputVariableUsed: BoolVarArray = context["inputVariableUsed"]
-        val cardinalityA = context("cardinalityA") {
+        val cardinalityTA = context("cardinalityTA") {
             declareCardinality {
                 for (c in 1..C)
                     for (k in 1..K)
-                        for (x in 1..X)
-                            yield(inputVariableUsed[x])
+                        for (x in 1..X) {
+                            val aux = newLiteral()
+                            iffAnd(
+                                aux,
+                                transitionDestination[c, k] neq 0,
+                                inputVariableUsed[x]
+                            )
+                            yield(aux)
+                        }
             }
         }
     }

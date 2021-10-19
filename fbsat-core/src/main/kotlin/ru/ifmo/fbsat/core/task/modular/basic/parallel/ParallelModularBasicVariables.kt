@@ -74,16 +74,54 @@ fun Solver.declareParallelModularBasicVariables(
             declareCardinality {
                 @Suppress("NAME_SHADOWING")
                 forEachModularContext {
-                    val C: Int = context["C"]
-                    val K: Int = context["K"]
                     val X: Int = context["X"]
                     val inputVariableUsed: BoolVarArray = context["inputVariableUsed"]
-                    for (c in 1..C)
-                        for (k in 1..K)
-                            for (x in 1..X)
-                                yield(inputVariableUsed[x])
+                    for (x in 1..X)
+                        yield(inputVariableUsed[x])
                 }
             }
         }
+        if (Globals.IS_ENCODE_CARDINALITY_CKA) {
+            comment("Cardinality (C*K*A)")
+            val cardinalityCKA = context("cardinalityCKA") {
+                declareCardinality {
+                    @Suppress("NAME_SHADOWING")
+                    forEachModularContext {
+                        val C: Int = context["C"]
+                        val K: Int = context["K"]
+                        val X: Int = context["X"]
+                        val inputVariableUsed: BoolVarArray = context["inputVariableUsed"]
+                        for (c in 1..C)
+                            for (k in 1..K)
+                                for (x in 1..X)
+                                    yield(inputVariableUsed[x])
+                    }
+                }
+            }
+        }
+        // comment("Cardinality (T*A)")
+        // val cardinalityTA = context("cardinalityTA") {
+        //     declareCardinality {
+        //         @Suppress("NAME_SHADOWING")
+        //         forEachModularContext {
+        //             val C: Int = context["C"]
+        //             val K: Int = context["K"]
+        //             val X: Int = context["X"]
+        //             val transitionDestination: IntVarArray = context["transitionDestination"]
+        //             val inputVariableUsed: BoolVarArray = context["inputVariableUsed"]
+        //             for (c in 1..C)
+        //                 for (k in 1..K)
+        //                     for (x in 1..X) {
+        //                         val aux = newLiteral()
+        //                         iffAnd(
+        //                             aux,
+        //                             transitionDestination[c, k] neq 0,
+        //                             inputVariableUsed[x]
+        //                         )
+        //                         yield(aux)
+        //                     }
+        //         }
+        //     }
+        // }
     }
 }

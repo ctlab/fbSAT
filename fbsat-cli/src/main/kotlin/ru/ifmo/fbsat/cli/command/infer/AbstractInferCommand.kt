@@ -43,6 +43,7 @@ abstract class AbstractInferCommand<AutomatonType : Any>(name: String) : CliktCo
             Globals.IS_ENCODE_EPSILON_PASSIVE = isEncodeEpsilonPassive
             Globals.IS_ENCODE_NOT_EPSILON_ACTIVE = isEncodeNotEpsilonActive
             Globals.IS_ENCODE_CONJUNCTIVE_GUARDS = isEncodeConjunctiveGuards
+            Globals.IS_ENCODE_CARDINALITY_CKA = isEncodeCardinalityCKA
             Globals.IS_FIX_ACTIVE = isFixActive
             Globals.IS_REUSE_K = isReuseK
             Globals.IS_USE_ASSUMPTIONS = isUseAssumptions

@@ -536,7 +536,7 @@ class Automaton(
             ", P = $maxGuardSize" +
             ", T = $numberOfTransitions" +
             ", N = $totalGuardsSize" +
-            ", A = ${transitions.sumOf { (it.guard as? ConjunctiveGuard)?.literals?.size ?: 0 }}"
+            ", A = ${getA()}}"
     }
 
     fun printStats() {
@@ -983,4 +983,18 @@ fun buildExtendedAutomaton(
             )
         }
     )
+}
+
+fun Automaton.getA(): Int? {
+    return (transitions.first().guard as? ConjunctiveGuard)?.literals?.size
+}
+
+fun Automaton.getTA(): Int? {
+    var sum = 0
+    for (t in transitions) {
+        val g = t.guard as? ConjunctiveGuard ?: return null
+        val a = g.literals.size
+        sum += a
+    }
+    return sum
 }
