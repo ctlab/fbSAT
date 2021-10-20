@@ -443,6 +443,15 @@ internal fun Solver.declareAutomatonStructureConstraintsForInputs(
         }
     }
 
+    comment("Null-transitions have False guards")
+    for (c in 1..C)
+        for (k in 1..K)
+            for (u in Us)
+                imply(
+                    transitionDestination[c,k] eq 0,
+                    -transitionTruthTable[c,k,u]
+                )
+
     if (Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS) {
         comment("Transitions are disjunctive (without priority function)")
         for (c in 1..C)
