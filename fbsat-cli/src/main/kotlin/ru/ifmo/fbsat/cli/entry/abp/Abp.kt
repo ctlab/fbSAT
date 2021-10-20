@@ -1,6 +1,6 @@
 @file:Suppress("DuplicatedCode")
 
-package ru.ifmo.fbsat.cli.entry
+package ru.ifmo.fbsat.cli.entry.abp
 
 import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.satlib.solver.MiniSatSolver
