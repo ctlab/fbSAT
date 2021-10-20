@@ -486,5 +486,15 @@ internal fun Solver.declareAutomatonStructureConstraintsForInputs(
                         -inputVariableUsed[x],
                         -inputVariableLiteral[c, k, x]
                     )
+
+        // fix free variables
+        // (transitionDestination[c,k] = 0) => lit[c,k,x]
+        for (c in 1..C)
+            for (k in 1..K)
+                for (x in 1..X)
+                    imply(
+                        transitionDestination[c, k] eq 0,
+                        inputVariableLiteral[c, k, x]
+                    )
     }
 }
