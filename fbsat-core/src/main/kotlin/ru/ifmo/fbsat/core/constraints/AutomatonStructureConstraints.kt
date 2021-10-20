@@ -79,7 +79,7 @@ fun Solver.declareParallelModularAutomatonStructureConstraints() {
                 yield(moduleControllingOutputVariable[z] eq m)
         }
 
-    comment("Constraint free variables")
+    comment("Constrain free variables")
     forEachModularContext { m ->
         val C: Int = context["C"]
         val stateAlgorithmBot: BoolVarArray = context["stateAlgorithmBot"]
