@@ -16,13 +16,15 @@ abstract class AbstractInferParallelModularCommand(name: String) :
         } else {
             logger.info("Inferred parallel modular automaton consists of ${automaton.modules.shape.single()} modules:")
             for ((m, module) in automaton.modules.values.withIndex(start = 1)) {
-                logger.info("Module #$m (${module.getStats()}):")
+                logger.info("Module #$m (${module.getStats()}, vars = ${automaton.moduleOutputVariables[m]}):")
                 module.pprint()
+            }
+            logger.info("Output decomposition: ${automaton.outputVariableModule.values}")
+            for (m in 1..automaton.M) {
+                logger.info("    m = $m: ${automaton.moduleOutputVariables[m]}")
             }
             logger.info("Inferred parallel modular automaton has:")
             automaton.printStats()
-
-            // TODO: print controlled variables of each module
 
             // TODO: automaton.dump(outDir)
 
