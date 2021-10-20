@@ -6,16 +6,10 @@ import okio.buffer
 import okio.sink
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
 import ru.ifmo.fbsat.core.automaton.buildBasicParallelModularAutomaton
-import ru.ifmo.fbsat.core.scenario.InputAction
-import ru.ifmo.fbsat.core.scenario.InputValues
-import ru.ifmo.fbsat.core.scenario.OutputAction
-import ru.ifmo.fbsat.core.scenario.OutputValues
-import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.inputEvent
 import ru.ifmo.fbsat.core.scenario.inputValues
 import ru.ifmo.fbsat.core.scenario.outputEvent
 import ru.ifmo.fbsat.core.scenario.outputValues
-import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.convertBoolVarArray
 import ru.ifmo.fbsat.core.solver.convertIntVarArray
@@ -93,31 +87,6 @@ fun Inferrer.parallelModularBasicMin(
     } else {
         optimizeParallelModularT()
     }
-}
-
-private fun PositiveScenario.slice(sliceInput: List<Int>, sliceOutput: List<Int>): PositiveScenario {
-    return PositiveScenario(elements = elements.map { it.slice(sliceInput, sliceOutput) })
-}
-
-private fun ScenarioElement.slice(sliceInput: List<Int>, sliceOutput: List<Int>): ScenarioElement {
-    return ScenarioElement(
-        inputAction = InputAction(
-            event = inputEvent,
-            values = inputValues.slice(sliceInput)
-        ),
-        outputAction = OutputAction(
-            event = outputEvent,
-            values = outputValues.slice(sliceOutput)
-        )
-    )
-}
-
-private fun InputValues.slice(sliceInput: List<Int>): InputValues {
-    return InputValues(values.slice(sliceInput.indices))
-}
-
-private fun OutputValues.slice(sliceInput: List<Int>): OutputValues {
-    return OutputValues(values.slice(sliceInput.indices))
 }
 
 fun Inferrer.inferParallelModularBasic(): ParallelModularAutomaton? {
