@@ -24,6 +24,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isBfsGuard: Boolean by isBfsGuardOption()
     val epsilonOutputEvents: EpsilonOutputEvents by getEpsilonOutputEventsOption()
     val startStateAlgorithms: StartStateAlgorithms by getStartStateAlgorithmsOption()
+    val fixedOutputDecomposition: List<Int?>? by getFixedOutputDecompositionOption()
     val isEncodeReverseImplication: Boolean by isEncodeReverseImplicationOption()
     val isEncodeTransitionsOrder: Boolean by isEncodeTransitionsOrderOption()
     val isEncodeTerminalsOrder: Boolean by isEncodeTerminalsOrderOption()
@@ -119,6 +120,17 @@ fun ParameterHolder.getStartStateAlgorithmsOption() =
     ).default(
         Globals.START_STATE_ALGORITHMS
     )
+
+fun ParameterHolder.getFixedOutputDecompositionOption() =
+    option(
+        "--fixed-output-decomposition",
+        help = "[modular-parallel] Comma-separated modules (1-based), controlling output variables"
+    ).convert {
+        require(it.isNotBlank()) { "string should not be blank" }
+        it.split(",").map { s ->
+            s.trim().toIntOrNull()
+        }
+    }
 
 fun ParameterHolder.isEncodeReverseImplicationOption() =
     option(

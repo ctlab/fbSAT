@@ -90,6 +90,16 @@ fun Solver.declareParallelModularAutomatonStructureConstraints() {
                 imply(moduleControllingOutputVariable[z] neq m, -stateAlgorithmBot[c, z])
             }
     }
+
+    if (Globals.FIXED_OUTPUT_DECOMPOSITION != null) {
+        comment("(adhoc) Fixing output decomposition")
+        for (z in 1..Z) {
+            val m = Globals.FIXED_OUTPUT_DECOMPOSITION!![z - 1]
+            if (m != null) {
+                clause(moduleControllingOutputVariable[z] eq m)
+            }
+        }
+    }
 }
 
 fun Solver.declareConsecutiveModularAutomatonStructureConstraints() {
