@@ -462,7 +462,7 @@ internal fun Solver.declareAutomatonStructureConstraintsForInputs(
         val inputVariableLiteral: BoolVarArray = context["inputVariableLiteral"]
 
         comment("Conjunctive guards")
-        // tt[c,k,u] <=> AND_{x}(used[x] => (lit[c,k,x] <=> u[x])
+        // tt[c,k,u] <=> AND_{x}(used[x] => (lit[c,k,x] <=> u[x]))
         for (c in 1..C)
             for (k in 1..K)
                 for (u in Us)
