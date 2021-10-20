@@ -461,7 +461,7 @@ internal fun Solver.declareAutomatonStructureConstraintsForInputs(
         val inputVariableUsed: BoolVarArray = context["inputVariableUsed"]
         val inputVariableLiteral: BoolVarArray = context["inputVariableLiteral"]
 
-        comment("Conjunctive guards")
+        comment("Conjunctive guard definition")
         // tt[c,k,u] <=> AND_{x}(used[x] => (lit[c,k,x] <=> u[x]))
         for (c in 1..C)
             for (k in 1..K)
@@ -477,17 +477,23 @@ internal fun Solver.declareAutomatonStructureConstraintsForInputs(
                             yield(aux)
                         }
                     }
-
         // ~used[x] => ~lit[c,k,x]
-        for (c in 1..C)
-            for (k in 1..K)
-                for (x in 1..X)
-                    imply(
-                        -inputVariableUsed[x],
-                        -inputVariableLiteral[c, k, x]
-                    )
+        // for (c in 1..C)
+        //     for (k in 1..K)
+        //         for (x in 1..X)
+        //             imply(
+        //                 -inputVariableUsed[x],
+        //                 -inputVariableLiteral[c, k, x]
+        //             )
 
-        // fix free variables
+        comment("ALO inputVariableUsed")
+        // ALO_{x}(used[x])
+        atLeastOne {
+            for (x in 1..X)
+                yield(inputVariableUsed[x])
+        }
+
+        comment("Fix free variables")
         // (transitionDestination[c,k] = 0) => lit[c,k,x]
         for (c in 1..C)
             for (k in 1..K)
