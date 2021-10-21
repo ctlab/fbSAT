@@ -15,6 +15,7 @@ import com.github.lipen.satlib.op.iffAnd
 import com.github.lipen.satlib.op.iffImply
 import com.github.lipen.satlib.op.imply
 import com.github.lipen.satlib.op.implyAnd
+import com.github.lipen.satlib.op.implyIffAnd
 import com.github.lipen.satlib.op.implyOr
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.scenario.InputValues
@@ -471,11 +472,14 @@ internal fun Solver.declareAutomatonStructureConstraintsForInputs(
         val inputVariableLiteral: BoolVarArray = context["inputVariableLiteral"]
 
         comment("Conjunctive guard definition")
-        // tt[c,k,u] <=> AND_{x}(used[x] => (lit[c,k,x] <=> u[x]))
+        // (transitionDestination[c,k] != 0) => (tt[c,k,u] <=> AND_{x}(used[x] => (lit[c,k,x] <=> u[x])))
         for (c in 1..C)
             for (k in 1..K)
                 for (u in Us)
-                    iffAnd(transitionTruthTable[c, k, u]) {
+                    implyIffAnd(
+                        transitionDestination[c, k] neq 0,
+                        transitionTruthTable[c, k, u]
+                    ) {
                         for (x in 1..X) {
                             val aux = newLiteral()
                             iffImply(
