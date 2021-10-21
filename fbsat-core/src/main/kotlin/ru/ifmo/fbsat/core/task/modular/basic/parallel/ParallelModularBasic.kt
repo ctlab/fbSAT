@@ -54,6 +54,7 @@ fun Inferrer.parallelModularBasicMinC(
     numberOfModules: Int, // M
     start: Int = 1, // C_start
     end: Int = 20, // C_end
+    maxOutgoingTransitionsForC: (Int) -> Int = { it }, // lambda for computing K, input arg is C, K=C by default
 ): ParallelModularAutomaton {
     var best: ParallelModularAutomaton? = null
     for (C in start..end) {
@@ -61,7 +62,8 @@ fun Inferrer.parallelModularBasicMinC(
             parallelModularBasic(
                 scenarioTree = scenarioTree,
                 numberOfModules = numberOfModules,
-                numberOfStates = C
+                numberOfStates = C,
+                maxOutgoingTransitions = maxOutgoingTransitionsForC(C)
             )
         }
         if (result != null) {
@@ -80,8 +82,14 @@ fun Inferrer.parallelModularBasicMin(
     scenarioTree: PositiveScenarioTree,
     numberOfModules: Int, // M
     numberOfStates: Int? = null, // C_start, 1 if null
+    maxOutgoingTransitionsForC: (Int) -> Int = { it }, // lambda for computing K, input arg is C, K=C by default
 ): ParallelModularAutomaton? {
-    parallelModularBasicMinC(scenarioTree, numberOfModules = numberOfModules, start = numberOfStates ?: 1)
+    parallelModularBasicMinC(
+        scenarioTree,
+        numberOfModules = numberOfModules,
+        start = numberOfStates ?: 1,
+        maxOutgoingTransitionsForC = maxOutgoingTransitionsForC
+    )
     return if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
         optimizeParallelModularA()
     } else {
