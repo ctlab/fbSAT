@@ -13,6 +13,9 @@ import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.scenario.initialOutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 @Suppress("LocalVariableName")
 fun Solver.declareBasicVariables(
@@ -132,6 +135,8 @@ fun Solver.declareBasicVariables(
         comment("Cardinality (T*A)")
         val inputVariableUsed: BoolVarArray = context["inputVariableUsed"]
         val cardinalityTA = context("cardinalityTA") {
+            val nVars = numberOfVariables
+            val nCons = numberOfClauses
             declareCardinality {
                 for (c in 1..C)
                     for (k in 1..K)
@@ -144,6 +149,10 @@ fun Solver.declareBasicVariables(
                             )
                             yield(aux)
                         }
+            }.also {
+                val diffVars = numberOfVariables - nVars
+                val diffCons = numberOfClauses - nCons
+                logger.debug("Declared cardinalityTA: $diffVars vars and $diffCons clauses")
             }
         }
     }

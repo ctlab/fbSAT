@@ -449,8 +449,8 @@ internal fun Solver.declareAutomatonStructureConstraintsForInputs(
         for (k in 1..K)
             for (u in Us)
                 imply(
-                    transitionDestination[c,k] eq 0,
-                    -transitionTruthTable[c,k,u]
+                    transitionDestination[c, k] eq 0,
+                    -transitionTruthTable[c, k, u]
                 )
 
     if (Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS) {
@@ -490,14 +490,6 @@ internal fun Solver.declareAutomatonStructureConstraintsForInputs(
                             yield(aux)
                         }
                     }
-        // ~used[x] => ~lit[c,k,x]
-        // for (c in 1..C)
-        //     for (k in 1..K)
-        //         for (x in 1..X)
-        //             imply(
-        //                 -inputVariableUsed[x],
-        //                 -inputVariableLiteral[c, k, x]
-        //             )
 
         comment("ALO inputVariableUsed")
         // ALO_{x}(used[x])

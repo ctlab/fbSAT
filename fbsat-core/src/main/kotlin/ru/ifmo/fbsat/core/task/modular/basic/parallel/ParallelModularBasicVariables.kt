@@ -11,6 +11,9 @@ import ru.ifmo.fbsat.core.solver.declareModularContext
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 @Suppress("LocalVariableName")
 fun Solver.declareParallelModularBasicVariables(
@@ -71,6 +74,8 @@ fun Solver.declareParallelModularBasicVariables(
     if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
         comment("Cardinality (A)")
         val cardinalityA = context("cardinalityA") {
+            val nVars = numberOfVariables
+            val nCons = numberOfClauses
             declareCardinality {
                 @Suppress("NAME_SHADOWING")
                 forEachModularContext {
@@ -79,6 +84,10 @@ fun Solver.declareParallelModularBasicVariables(
                     for (x in 1..X)
                         yield(inputVariableUsed[x])
                 }
+            }.also {
+                val diffVars = numberOfVariables - nVars
+                val diffCons = numberOfClauses - nCons
+                logger.debug("Declared cardinalityA: $diffVars vars and $diffCons clauses")
             }
         }
         if (Globals.IS_ENCODE_CARDINALITY_CKA) {

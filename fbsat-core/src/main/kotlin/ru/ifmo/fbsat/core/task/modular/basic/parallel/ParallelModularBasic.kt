@@ -133,17 +133,13 @@ fun Inferrer.inferParallelModularBasic(): ParallelModularAutomaton? {
             }
 
             outDir.resolve("input-names-m$m").ensureParentExists().sink().buffer().useWith {
-                for (x in 1..X) {
-                    if (inputVariableUsed[x]) {
-                        writeln(scenarioTree.inputNames[x - 1])
-                    }
+                for (name in scenarioTree.inputNames.slice(sliceInput)) {
+                    writeln(name)
                 }
             }
             outDir.resolve("output-names-m$m").ensureParentExists().sink().buffer().useWith {
-                for (z in 1..Z) {
-                    if (moduleControllingOutputVariable[z] == m) {
-                        writeln(scenarioTree.outputNames[z - 1])
-                    }
+                for (name in scenarioTree.outputNames.slice(sliceOutput)) {
+                    writeln(name)
                 }
             }
         }

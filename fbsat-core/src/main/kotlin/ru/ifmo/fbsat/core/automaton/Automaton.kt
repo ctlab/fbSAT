@@ -894,8 +894,6 @@ fun buildBasicAutomaton(
         },
         transitionGuard = { c, k ->
             if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
-                // inputVariableUsed!!
-                // inputVariableLiteral!!
                 ConjunctiveGuard(
                     literals = (1..X)
                         .filter { x -> inputVariableUsed[x] }
