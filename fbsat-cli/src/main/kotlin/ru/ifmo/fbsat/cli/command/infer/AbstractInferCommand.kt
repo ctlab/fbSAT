@@ -46,6 +46,7 @@ abstract class AbstractInferCommand<AutomatonType : Any>(name: String) : CliktCo
             Globals.IS_ENCODE_CONJUNCTIVE_GUARDS = isEncodeConjunctiveGuards
             Globals.IS_ENCODE_CARDINALITY_CKA = isEncodeCardinalityCKA
             Globals.IS_FIX_ACTIVE = isFixActive
+            Globals.IS_FIX_OUTPUT_DECOMPOSITION = isFixOutputDecomposition
             Globals.IS_REUSE_K = isReuseK
             Globals.IS_USE_ASSUMPTIONS = isUseAssumptions
             Globals.IS_RENDER_WITH_DOT = isRenderWithDot

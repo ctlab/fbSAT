@@ -37,6 +37,7 @@ object Globals {
     var IS_ENCODE_CONJUNCTIVE_GUARDS: Boolean = false
     var IS_ENCODE_CARDINALITY_CKA: Boolean = false
     var IS_FIX_ACTIVE: Boolean = false
+    var IS_FIX_OUTPUT_DECOMPOSITION: Boolean = false
     var IS_DEBUG: Boolean = false
     var IS_REUSE_K: Boolean = true
     var IS_DUMP_CNF: Boolean = false

@@ -42,6 +42,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isEncodeConjunctiveGuards: Boolean by isEncodeConjunctiveGuardsOption()
     val isEncodeCardinalityCKA: Boolean by isEncodeCardinalityCKAOption()
     val isFixActive: Boolean by isFixActiveOption()
+    val isFixOutputDecomposition: Boolean by isFixOutputDecompositionOption()
     val isReuseK: Boolean by isReuseKOption()
     val isUseAssumptions: Boolean by isUseAssumptionsOption()
     val isRenderWithDot: Boolean by isRenderWithDotOption()
@@ -283,6 +284,15 @@ fun ParameterHolder.isFixActiveOption() =
     ).flag(
         "--no-fix-active",
         default = Globals.IS_FIX_ACTIVE
+    )
+
+fun ParameterHolder.isFixOutputDecompositionOption() =
+    option(
+        "--fix-output-decomposition",
+        help = "Fix moduleControllingOutputVariable after modular-parallel-basic-minC"
+    ).flag(
+        "--no-fix-output-decomposition",
+        default = Globals.IS_FIX_OUTPUT_DECOMPOSITION
     )
 
 fun ParameterHolder.isReuseKOption() =
