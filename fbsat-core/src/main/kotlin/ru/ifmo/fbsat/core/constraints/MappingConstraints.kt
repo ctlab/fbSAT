@@ -23,6 +23,7 @@ import com.github.lipen.satlib.op.implyImplyImply
 import com.github.lipen.satlib.op.implyImplyOr
 import com.github.lipen.satlib.op.implyOr
 import com.github.lipen.satlib.solver.Solver
+import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
@@ -62,6 +63,30 @@ fun Solver.declarePositiveMappingConstraints(
     }
 
     /* Additional constraints */
+
+    run {
+        comment("Adhoc mapping to WAIT state")
+        val elementData: Map<ScenarioElement, Any> = context["elementData"]
+        val mapping: IntVarArray = context["mapping"]
+        for (node in scenarioTree.nodes.drop(1)) {
+            @Suppress("UNCHECKED_CAST")
+            val data = elementData.getValue(node.element) as Map<String, String>
+            val state = data.getValue("state")
+            when (state) {
+                // "GO_WAIT" -> {
+                //     logger.debug("Encoding mapping for GO_WAIT state: mapping[${node.id}] = 2")
+                //     clause(mapping[node.id] eq 2)
+                // }
+                "WAIT" -> {
+                    logger.debug("Encoding mapping for WAIT state: mapping[${node.id}] = 3")
+                    clause(mapping[node.id] eq 3)
+                }
+                else -> {
+                    // Do nothing
+                }
+            }.exhaustive
+        }
+    }
 
     if (isEncodeReverseImplication) {
         val C: Int = context["C"]

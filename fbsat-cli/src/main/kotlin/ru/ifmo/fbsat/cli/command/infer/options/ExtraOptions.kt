@@ -38,6 +38,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isEncodeTransitionFunction: Boolean by isEncodeTransitionFunctionOption()
     val isEncodeEpsilonPassive: Boolean by isEncodeEpsilonPassiveOption()
     val isEncodeNotEpsilonActive: Boolean by isEncodeNotEpsilonActiveOption()
+    val isEncodeConstAlgorithms: Boolean by isEncodeConstAlgorithmsOption()
     val isFixActive: Boolean by isFixActiveOption()
     val isReuseK: Boolean by isReuseKOption()
     val isUseAssumptions: Boolean by isUseAssumptionsOption()
@@ -242,6 +243,15 @@ fun ParameterHolder.isEncodeNotEpsilonActiveOption() =
     ).flag(
         "--no-encode-not-epsilon-active",
         default = Globals.IS_ENCODE_NOT_EPSILON_ACTIVE
+    )
+
+fun ParameterHolder.isEncodeConstAlgorithmsOption() =
+    option(
+        "--encode-const-algorithms",
+        help = "Encode const algorithms"
+    ).flag(
+        "--no-encode-const-algorithms",
+        default = Globals.IS_ENCODE_CONST_ALGORITHMS
     )
 
 fun ParameterHolder.isFixActiveOption() =

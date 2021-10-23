@@ -24,6 +24,7 @@ import ru.ifmo.fbsat.core.scenario.Scenario
 import ru.ifmo.fbsat.core.scenario.inputActionsSeq
 import ru.ifmo.fbsat.core.scenario.negative.NegativeScenario
 import ru.ifmo.fbsat.core.scenario.negative.OldNegativeScenarioTree
+import ru.ifmo.fbsat.core.scenario.outputValues
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
@@ -330,8 +331,8 @@ class Automaton(
         val mapping: MutableList<EvalResult?> = mutableListOfNulls(scenario.elements.size)
         out@ for ((i, result) in eval(scenario).withIndex()) {
             val element = scenario.elements[i]
-            if (result.outputAction != element.outputAction) {
-                // logger.error("No mapping for ${i + 1}-th element = $element, result = $result")
+            if (!Globals.IS_ENCODE_EVENTLESS || result.outputAction.values != element.outputValues) {
+                logger.error("No mapping for ${i + 1}-th element = $element, result = $result")
                 break@out
             }
             mapping[i] = result

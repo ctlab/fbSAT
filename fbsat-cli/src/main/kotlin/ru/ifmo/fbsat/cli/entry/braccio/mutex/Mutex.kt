@@ -6,6 +6,7 @@ import com.soywiz.klock.DateTime
 import com.soywiz.klock.PerformanceCounter
 import okio.buffer
 import okio.source
+import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.InputAction
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.InputValues
@@ -18,8 +19,12 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.preprocessed
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.single.basic.basicMin
+import ru.ifmo.fbsat.core.task.single.extended.extendedMin
+import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
+import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
+import ru.ifmo.fbsat.core.utils.all
 import ru.ifmo.fbsat.core.utils.lineSequence
 import ru.ifmo.fbsat.core.utils.timeSince
 import java.io.File
@@ -31,6 +36,8 @@ private fun String.toBool(): Boolean = when (lowercase()) {
     "1", "true" -> true
     else -> error("Bad non-boolean string '$this'")
 }
+
+private val elementData: MutableMap<ScenarioElement, Any> = mutableMapOf()
 
 data class LogLine(
     val iter: Int,
@@ -44,12 +51,22 @@ data class LogLine(
 
         fun from(s: String): LogLine {
             val m = regexLine.matchEntire(s)
-                ?: error("Bad string 's' doesn't match a regex")
+                ?: error("Bad string 's' doesn't match regex")
             val (iter, index, rest) = m.destructured
             val data = rest.split(" ").associate {
                 val (name, value) = it.split("=", limit = 2).map(String::trim)
                 name to value
-            }
+            }.toMutableMap()
+            data["is_done_all"] = listOf(
+                "is_done_m1",
+                "is_done_m2",
+                "is_done_m3",
+                "is_done_m4",
+                "is_done_m5",
+                "is_done_m6",
+            ).map {
+                data.getValue(it).toBool()
+            }.all().let { if (it) 1 else 0 }.toString()
             return LogLine(iter.toInt(), index.toInt(), data)
         }
     }
@@ -57,10 +74,12 @@ data class LogLine(
 
 private fun readScenarioFromLog(
     file: File,
+    controllerIndex: Int,
     inputNames: List<String>,
     outputNames: List<String>,
     outputNamesBoolean: List<String>,
     outputNamesIntWithDomain: List<Pair<String, List<Int>>>,
+    preprocess: Boolean = false, // FIXME
 ): PositiveScenario {
     val interestingLines = file.source().buffer().lineSequence().filter {
         it.startsWith("[iter #")
@@ -75,14 +94,14 @@ private fun readScenarioFromLog(
     // }
     val logLines = interestingLines.map { LogLine.from(it) }
     val elements = logLines
-        .filter { it.index == 1 }
-        .zipWithNext { a, b ->
+        .filter { it.index == controllerIndex }
+        .map { x ->
             val outputValuesBoolean = outputNamesBoolean.associateWith { name ->
-                b.data.getValue(name).toBool()
+                x.data.getValue(name).toBool()
             }
             val outputValuesInt = outputNamesIntWithDomain.flatMap { (name, domain) ->
                 domain.map { v ->
-                    Pair("${name}_$v", (b.data.getValue(name).toInt() == v))
+                    Pair("${name}_$v", (x.data.getValue(name).toInt() == v))
                 }
             }.toMap()
             val map = outputValuesBoolean + outputValuesInt
@@ -90,15 +109,21 @@ private fun readScenarioFromLog(
             ScenarioElement(
                 InputAction(
                     event = InputEvent("REQ"),
-                    values = InputValues(inputNames.map { a.data.getValue(it).toBool() })
+                    values = InputValues(inputNames.map { x.data.getValue(it).toBool() })
                 ),
                 OutputAction(
                     event = OutputEvent("CNF"),
                     values = OutputValues(outputValues)
                 )
-            )
+            ).also {
+                elementData[it] = x.data
+            }
         }
-    return PositiveScenario(elements.preprocessed)
+    return if (preprocess) {
+        PositiveScenario(elements.preprocessed)
+    } else {
+        PositiveScenario(elements)
+    }
 }
 
 fun main() {
@@ -113,15 +138,17 @@ fun main() {
     val inferrer = Inferrer(solver, outDir)
 
     // input
+    val controllerIndex =1
     val inputNames = listOf(
         "want_cargo_on_out",
         "is_acquired",
-        "is_done_m1",
-        "is_done_m2",
-        "is_done_m3",
-        "is_done_m4",
-        "is_done_m5",
-        "is_done_m6",
+        // "is_done_m1",
+        // "is_done_m2",
+        // "is_done_m3",
+        // "is_done_m4",
+        // "is_done_m5",
+        // "is_done_m6",
+        "is_done_all",
     )
     val outputNamesBoolean = listOf(
         "want_to_release",
@@ -134,47 +161,107 @@ fun main() {
     val anglesWristRot = listOf(0, 90)
     val anglesGripper = listOf(15, 73)
     val outputNamesInt =
-        anglesBase.map { "go_base_$it" } +
-            anglesShoulder.map { "go_shoulder_$it" } +
-            anglesElbow.map { "go_elbow_$it" } +
-            anglesWristVer.map { "go_wrist_ver_$it" } +
-            anglesWristRot.map { "go_wrist_rot_$it" } +
-            anglesGripper.map { "go_gripper_$it" }
+        anglesBase.map { "base_$it" } +
+            anglesShoulder.map { "shoulder_$it" } +
+            anglesElbow.map { "elbow_$it" } +
+            anglesWristVer.map { "wrist_ver_$it" } +
+            anglesWristRot.map { "wrist_rot_$it" } +
+            anglesGripper.map { "gripper_$it" }
     val outputNames = outputNamesBoolean + outputNamesInt
+    // [lq 002 55050 08 0550 00 53]
+    // [ec 091 68114 01 1167 09 17]
+    // [ra bbb sssss ee vvvv rr gg]
 
-    val fileLog = File("data/braccio/mutex/serial_mutex_i2c_button1.log")
-    val scenario = readScenarioFromLog(
-        file = fileLog,
-        inputNames = inputNames,
-        outputNames = outputNames,
-        outputNamesBoolean = outputNamesBoolean,
-        outputNamesIntWithDomain = listOf(
-            "go_base" to anglesBase,
-            "go_shoulder" to anglesShoulder,
-            "go_elbow" to anglesElbow,
-            "go_wrist_ver" to anglesWristVer,
-            "go_wrist_rot" to anglesWristRot,
-            "go_gripper" to anglesGripper,
-        )
+    val logDir = "data/braccio/mutex/logs"
+    val logFiles = listOf(
+        "$logDir/serial_mutex_i2c_button1.log",
+        "$logDir/serial_mutex_i2c_button2.log",
+        "$logDir/serial_mutex_i2c_button3.log",
+        "$logDir/serial_mutex_i2c_button123.log",
+        "$logDir/serial_mutex_i2c_2work_1wait_loop.log",
+        "$logDir/serial_mutex_i2c_but_1and23_loop.log",
+        "$logDir/serial_mutex_i2c_but_1and2and3_loop.log",
+        "$logDir/serial_mutex_i2c_but_2and13_loop.log",
     )
-    val scenarios = listOf(scenario)
+    val scenarios = logFiles.map { logFile ->
+        readScenarioFromLog(
+            file = File(logFile),
+            controllerIndex = controllerIndex,
+            inputNames = inputNames,
+            outputNames = outputNames,
+            outputNamesBoolean = outputNamesBoolean,
+            outputNamesIntWithDomain = listOf(
+                "base" to anglesBase,
+                "shoulder" to anglesShoulder,
+                "elbow" to anglesElbow,
+                "wrist_ver" to anglesWristVer,
+                "wrist_rot" to anglesWristRot,
+                "gripper" to anglesGripper,
+            ),
+            preprocess = true
+        )
+    }
+    // for ((i, scenario) in scenarios.withIndex(start = 1)) {
+    //     println("Scenario #$i:")
+    //     for (element in scenario.elements) {
+    //         println("  - $element")
+    //     }
+    // }
     val scenarioTree = PositiveScenarioTree.fromScenarios(
         scenarios = scenarios,
         inputNames = inputNames,
-        outputNames = outputNamesBoolean,
+        outputNames = outputNames,
         inputEvents = listOf(InputEvent("REQ")),
         outputEvents = listOf(OutputEvent("CNF"))
     )
     scenarioTree.printStats()
+    logger.info("Input names: ${scenarioTree.inputNames}")
+    logger.info("Output names: ${scenarioTree.outputNames}")
+
+    // Globals.IS_FORBID_TRANSITIONS_TO_FIRST_STATE = false
+    // Globals.START_STATE_ALGORITHMS = StartStateAlgorithms.ZERONOTHING
+    Globals.START_STATE_ALGORITHMS = StartStateAlgorithms.ZERO
+    Globals.EPSILON_OUTPUT_EVENTS = EpsilonOutputEvents.NONE
+    Globals.IS_ENCODE_EVENTLESS = true
+    Globals.IS_ENCODE_CONST_ALGORITHMS = true
+
+    inferrer.solver.context["elementData"] = elementData
 
     // infer
-    val automaton = inferrer.basicMin(scenarioTree)
+    // val automaton: Automaton? = inferrer.basicMin(
+    //     scenarioTree,
+    //     start = 13,
+    // )
+    val automaton: Automaton? = inferrer.extendedMin(
+        scenarioTree,
+        numberOfStates = 10, // 13 is SAT
+        maxGuardSize = 5
+    )
+    // val automaton: Automaton? = inferrer.basic(
+    //     scenarioTree,
+    //     numberOfStates = 13,
+    //     maxOutgoingTransitions = 3,
+    //     maxTransitions = null,
+    // )
 
     if (automaton != null) {
         logger.info("Inferred automaton:")
         automaton.pprint()
         logger.info("Inferred automaton has:")
         automaton.printStats()
+
+        logger.debug("Cleaning outDir = '$outDir'...")
+        outDir.walkBottomUp().forEach { file ->
+            file.delete()
+        }
+
+        automaton.dump(outDir, name = "ControllerX1")
+
+        if (automaton.verify(scenarioTree))
+            logger.info("Verify: OK")
+        else {
+            logger.error("Verify: FAILED")
+        }
     } else {
         logger.error("Inference failed")
     }

@@ -96,7 +96,11 @@ fun Solver.declareBasicVariables(
         newBoolVarArray(C, Z)
     }
     val stateAlgorithmTop = context("stateAlgorithmTop") {
-        newBoolVarArray(C, Z)
+        if (Globals.IS_ENCODE_CONST_ALGORITHMS) {
+            stateAlgorithmBot
+        } else {
+            newBoolVarArray(C, Z)
+        }
     }
 
     /* Mapping variables */
