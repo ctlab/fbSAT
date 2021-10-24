@@ -5,6 +5,7 @@ import com.github.lipen.satlib.solver.Solver
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.PerformanceCounter
 import okio.buffer
+import okio.sink
 import okio.source
 import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.scenario.InputAction
@@ -18,15 +19,18 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.preprocessed
 import ru.ifmo.fbsat.core.task.Inferrer
-import ru.ifmo.fbsat.core.task.single.basic.basicMin
+import ru.ifmo.fbsat.core.task.single.extended.extended
 import ru.ifmo.fbsat.core.task.single.extended.extendedMin
 import ru.ifmo.fbsat.core.utils.EpsilonOutputEvents
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.StartStateAlgorithms
 import ru.ifmo.fbsat.core.utils.all
+import ru.ifmo.fbsat.core.utils.ensureParentExists
 import ru.ifmo.fbsat.core.utils.lineSequence
 import ru.ifmo.fbsat.core.utils.timeSince
+import ru.ifmo.fbsat.core.utils.useWith
+import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
 
 private val logger = MyLogger {}
@@ -138,7 +142,7 @@ fun main() {
     val inferrer = Inferrer(solver, outDir)
 
     // input
-    val controllerIndex =1
+    val controllerIndex = 1
     val inputNames = listOf(
         "want_cargo_on_out",
         "is_acquired",
@@ -160,6 +164,14 @@ fun main() {
     val anglesWristVer = listOf(10, 15, 165, 170)
     val anglesWristRot = listOf(0, 90)
     val anglesGripper = listOf(15, 73)
+    val outputNamesIntWithDomain = listOf(
+        "base" to anglesBase,
+        "shoulder" to anglesShoulder,
+        "elbow" to anglesElbow,
+        "wrist_ver" to anglesWristVer,
+        "wrist_rot" to anglesWristRot,
+        "gripper" to anglesGripper,
+    )
     val outputNamesInt =
         anglesBase.map { "base_$it" } +
             anglesShoulder.map { "shoulder_$it" } +
@@ -190,14 +202,7 @@ fun main() {
             inputNames = inputNames,
             outputNames = outputNames,
             outputNamesBoolean = outputNamesBoolean,
-            outputNamesIntWithDomain = listOf(
-                "base" to anglesBase,
-                "shoulder" to anglesShoulder,
-                "elbow" to anglesElbow,
-                "wrist_ver" to anglesWristVer,
-                "wrist_rot" to anglesWristRot,
-                "gripper" to anglesGripper,
-            ),
+            outputNamesIntWithDomain = outputNamesIntWithDomain,
             preprocess = true
         )
     }
@@ -228,21 +233,27 @@ fun main() {
     inferrer.solver.context["elementData"] = elementData
 
     // infer
-    // val automaton: Automaton? = inferrer.basicMin(
-    //     scenarioTree,
-    //     start = 13,
-    // )
-    val automaton: Automaton? = inferrer.extendedMin(
-        scenarioTree,
-        numberOfStates = 10, // 13 is SAT
-        maxGuardSize = 5
-    )
     // val automaton: Automaton? = inferrer.basic(
     //     scenarioTree,
     //     numberOfStates = 13,
     //     maxOutgoingTransitions = 3,
     //     maxTransitions = null,
     // )
+    // val automaton: Automaton? = inferrer.basicMin(
+    //     scenarioTree,
+    //     start = 13,
+    // )
+    // val automaton: Automaton? = inferrer.extended(
+    //     scenarioTree,
+    //     numberOfStates = 13, // 13 is SAT
+    //     maxOutgoingTransitions = 3,
+    //     maxGuardSize = 5
+    // )
+    val automaton: Automaton? = inferrer.extendedMin(
+        scenarioTree,
+        numberOfStates = 13, // 13 is SAT
+        maxGuardSize = 5
+    )
 
     if (automaton != null) {
         logger.info("Inferred automaton:")
@@ -252,10 +263,21 @@ fun main() {
 
         logger.debug("Cleaning outDir = '$outDir'...")
         outDir.walkBottomUp().forEach { file ->
-            file.delete()
+            if (file != outDir) {
+                file.delete()
+            }
         }
 
-        automaton.dump(outDir, name = "ControllerX1")
+        automaton.dump(outDir, name = "ControllerX${controllerIndex}")
+
+        val hppFile = outDir.resolve("generated_Controller${controllerIndex}.hpp")
+        hppFile.ensureParentExists().sink().buffer().useWith {
+            writeln(automaton.toMutexControllerCppString(
+                controllerName = "ControllerX${controllerIndex}",
+                outputNamesBoolean = outputNamesBoolean,
+                outputNamesIntWithDomain = outputNamesIntWithDomain
+            ))
+        }
 
         if (automaton.verify(scenarioTree))
             logger.info("Verify: OK")

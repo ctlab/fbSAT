@@ -65,6 +65,8 @@ fun Solver.declarePositiveMappingConstraints(
     /* Additional constraints */
 
     run {
+        if (true) return@run
+
         comment("Adhoc mapping to WAIT state")
         val elementData: Map<ScenarioElement, Any> = context["elementData"]
         val mapping: IntVarArray = context["mapping"]
