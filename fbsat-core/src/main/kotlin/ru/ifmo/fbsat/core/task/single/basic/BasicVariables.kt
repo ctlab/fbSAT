@@ -105,8 +105,10 @@ fun Solver.declareBasicVariables(
         newIntVarArray(V) { 1..C }
     }
     if (Globals.IS_ENCODE_EVENTLESS) {
-        val active = context("active") {
-            newBoolVarArray(V)
+        if (!context.map.containsKey("active")) {
+            val active = context("active") {
+                newBoolVarArray(V)
+            }
         }
     }
 
