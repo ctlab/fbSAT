@@ -24,6 +24,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isBfsGuard: Boolean by isBfsGuardOption()
     val epsilonOutputEvents: EpsilonOutputEvents by getEpsilonOutputEventsOption()
     val startStateAlgorithms: StartStateAlgorithms by getStartStateAlgorithmsOption()
+    val fixedOutputDecomposition: List<Int?>? by getFixedOutputDecompositionOption()
     val isEncodeReverseImplication: Boolean by isEncodeReverseImplicationOption()
     val isEncodeTransitionsOrder: Boolean by isEncodeTransitionsOrderOption()
     val isEncodeTerminalsOrder: Boolean by isEncodeTerminalsOrderOption()
@@ -38,7 +39,10 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val isEncodeTransitionFunction: Boolean by isEncodeTransitionFunctionOption()
     val isEncodeEpsilonPassive: Boolean by isEncodeEpsilonPassiveOption()
     val isEncodeNotEpsilonActive: Boolean by isEncodeNotEpsilonActiveOption()
+    val isEncodeConjunctiveGuards: Boolean by isEncodeConjunctiveGuardsOption()
+    val isEncodeCardinalityCKA: Boolean by isEncodeCardinalityCKAOption()
     val isFixActive: Boolean by isFixActiveOption()
+    val isFixOutputDecomposition: Boolean by isFixOutputDecompositionOption()
     val isReuseK: Boolean by isReuseKOption()
     val isUseAssumptions: Boolean by isUseAssumptionsOption()
     val isRenderWithDot: Boolean by isRenderWithDotOption()
@@ -117,6 +121,17 @@ fun ParameterHolder.getStartStateAlgorithmsOption() =
     ).default(
         Globals.START_STATE_ALGORITHMS
     )
+
+fun ParameterHolder.getFixedOutputDecompositionOption() =
+    option(
+        "--fixed-output-decomposition",
+        help = "[modular-parallel] Comma-separated modules (1-based), controlling output variables"
+    ).convert {
+        require(it.isNotBlank()) { "string should not be blank" }
+        it.split(",").map { s ->
+            s.trim().toIntOrNull()
+        }
+    }
 
 fun ParameterHolder.isEncodeReverseImplicationOption() =
     option(
@@ -244,6 +259,24 @@ fun ParameterHolder.isEncodeNotEpsilonActiveOption() =
         default = Globals.IS_ENCODE_NOT_EPSILON_ACTIVE
     )
 
+fun ParameterHolder.isEncodeConjunctiveGuardsOption() =
+    option(
+        "--encode-conjunctive-guards",
+        help = "Encode conjunctive guards"
+    ).flag(
+        "--no-encode-conjunctive-guards",
+        default = Globals.IS_ENCODE_CONJUNCTIVE_GUARDS
+    )
+
+fun ParameterHolder.isEncodeCardinalityCKAOption() =
+    option(
+        "--encode-cardinality-CKA",
+        help = "Encode cardinalityCKA (just declare, but not use)"
+    ).flag(
+        "--no-encode-cardinality-CKA",
+        default = Globals.IS_ENCODE_CARDINALITY_CKA
+    )
+
 fun ParameterHolder.isFixActiveOption() =
     option(
         "--fix-active",
@@ -251,6 +284,15 @@ fun ParameterHolder.isFixActiveOption() =
     ).flag(
         "--no-fix-active",
         default = Globals.IS_FIX_ACTIVE
+    )
+
+fun ParameterHolder.isFixOutputDecompositionOption() =
+    option(
+        "--fix-output-decomposition",
+        help = "Fix moduleControllingOutputVariable after modular-parallel-basic-minC"
+    ).flag(
+        "--no-fix-output-decomposition",
+        default = Globals.IS_FIX_OUTPUT_DECOMPOSITION
     )
 
 fun ParameterHolder.isReuseKOption() =

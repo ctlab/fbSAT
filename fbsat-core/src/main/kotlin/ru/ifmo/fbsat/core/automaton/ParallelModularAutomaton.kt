@@ -11,6 +11,7 @@ import com.github.lipen.satlib.core.Model
 import com.soywiz.klock.DateTime
 import org.redundent.kotlin.xml.xml
 import ru.ifmo.fbsat.core.automaton.guard.BooleanExpressionGuard
+import ru.ifmo.fbsat.core.automaton.guard.ConjunctiveGuard
 import ru.ifmo.fbsat.core.automaton.guard.NodeType
 import ru.ifmo.fbsat.core.automaton.guard.TruthTableGuard
 import ru.ifmo.fbsat.core.scenario.InputEvent
@@ -152,12 +153,33 @@ class ParallelModularAutomaton(
     }
 
     fun getStats(): String {
-        return "M = $numberOfModules, " +
-            "C = ${modules.values.joinToString("+") { it.numberOfStates.toString() }} = $numberOfStates, " +
-            "K = ${modules.values.map { it.maxOutgoingTransitions }}, " +
-            "P = ${modules.values.map { it.maxGuardSize }}, " +
-            "T = ${modules.values.joinToString("+") { it.numberOfTransitions.toString() }} = $numberOfTransitions, " +
-            "N = ${modules.values.joinToString("+") { it.totalGuardsSize.toString() }} = $totalGuardsSize"
+        return "M = $numberOfModules" +
+            ", C = ${
+                modules.values.joinToString("+") {
+                    it.numberOfStates.toString()
+                }
+            } = $numberOfStates" +
+            ", K = ${
+                modules.values.map { it.maxOutgoingTransitions }
+            }" +
+            ", P = ${
+                modules.values.map { it.maxGuardSize }
+            }" +
+            ", T = ${
+                modules.values.joinToString("+") {
+                    it.numberOfTransitions.toString()
+                }
+            } = $numberOfTransitions" +
+            ", N = ${
+                modules.values.joinToString("+") {
+                    it.totalGuardsSize.toString()
+                }
+            } = $totalGuardsSize" +
+            ", A = ${
+                modules.values.joinToString("+") {
+                    it.getA()?.toString() ?: "?"
+                }
+            } = ${getA() ?: "?"}"
     }
 
     fun printStats() {
@@ -312,6 +334,7 @@ fun buildBasicParallelModularAutomaton(
     val modules = modularContext.mapIndexed { (m), ctx ->
         val C: Int = ctx["C"]
         val K: Int = ctx["K"]
+        val X: Int = ctx["X"]
         val Z: Int = ctx["Z"]
         val transitionDestination = ctx.convertIntVarArray("transitionDestination", model)
         val transitionInputEvent = ctx.convertIntVarArray("transitionInputEvent", model)
@@ -321,6 +344,14 @@ fun buildBasicParallelModularAutomaton(
         val stateAlgorithmTop = ctx.convertBoolVarArray("stateAlgorithmTop", model)
         val moduleOutputVariables = (1..Z).filter { z -> moduleControllingOutputVariable[z] == m }
         val initialOutputValues: OutputValues = ctx["initialOutputValues"]
+
+        // Only available if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS)
+        val inputVariableUsed by lazy {
+            ctx.convertBoolVarArray("inputVariableUsed", model)
+        }
+        val inputVariableLiteral by lazy {
+            ctx.convertBoolVarArray("inputVariableLiteral", model)
+        }
 
         Automaton(
             inputEvents = scenarioTree.inputEvents,
@@ -349,15 +380,24 @@ fun buildBasicParallelModularAutomaton(
                 scenarioTree.inputEvents[transitionInputEvent[c, k] - 1]
             },
             transitionGuard = { c, k ->
-                TruthTableGuard(
-                    truthTable = scenarioTree.uniqueInputs
-                        .withIndex(start = 1)
-                        .associate { (u, input) ->
-                            input to transitionTruthTable[c, k, u]
-                        }
-                    // inputNames = scenarioTree.inputNames,
-                    // uniqueInputs = scenarioTree.uniqueInputs
-                )
+                if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
+                    ConjunctiveGuard(
+                        literals = (1..X)
+                            .filter { x -> inputVariableUsed[x] }
+                            .map { x -> if (inputVariableLiteral[c, k, x]) x else -x },
+                        inputNames = scenarioTree.inputNames
+                    )
+                } else {
+                    TruthTableGuard(
+                        truthTable = scenarioTree.uniqueInputs
+                            .withIndex(start = 1)
+                            .associate { (u, input) ->
+                                input to transitionTruthTable[c, k, u]
+                            }
+                        // inputNames = scenarioTree.inputNames,
+                        // uniqueInputs = scenarioTree.uniqueInputs
+                    )
+                }
             }
         )
     }
@@ -435,4 +475,13 @@ fun buildExtendedParallelModularAutomaton(
     }
 
     return ParallelModularAutomaton(modules, moduleControllingOutputVariable)
+}
+
+fun ParallelModularAutomaton.getA(): Int? {
+    var sum = 0
+    for (module in modules.values) {
+        val a = module.getA() ?: return null
+        sum += a
+    }
+    return sum
 }

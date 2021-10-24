@@ -6,16 +6,21 @@ import com.github.lipen.satlib.core.BoolVarArray
 import com.github.lipen.satlib.core.IntVarArray
 import com.github.lipen.satlib.core.eq
 import com.github.lipen.satlib.core.neq
+import com.github.lipen.satlib.core.sign
 import com.github.lipen.satlib.op.atLeastOne
 import com.github.lipen.satlib.op.atMostOne
 import com.github.lipen.satlib.op.exactlyOne
 import com.github.lipen.satlib.op.iff
 import com.github.lipen.satlib.op.iffAnd
+import com.github.lipen.satlib.op.iffImply
 import com.github.lipen.satlib.op.imply
 import com.github.lipen.satlib.op.implyAnd
+import com.github.lipen.satlib.op.implyIffAnd
 import com.github.lipen.satlib.op.implyOr
 import com.github.lipen.satlib.solver.Solver
+import ru.ifmo.fbsat.core.scenario.InputValues
 import ru.ifmo.fbsat.core.scenario.OutputValues
+import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.solver.autoneg
 import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.forEachModularContext
@@ -75,7 +80,7 @@ fun Solver.declareParallelModularAutomatonStructureConstraints() {
                 yield(moduleControllingOutputVariable[z] eq m)
         }
 
-    comment("Constraint free variables")
+    comment("Constrain free variables")
     forEachModularContext { m ->
         val C: Int = context["C"]
         val stateAlgorithmBot: BoolVarArray = context["stateAlgorithmBot"]
@@ -85,6 +90,16 @@ fun Solver.declareParallelModularAutomatonStructureConstraints() {
                 imply(moduleControllingOutputVariable[z] neq m, stateAlgorithmTop[c, z])
                 imply(moduleControllingOutputVariable[z] neq m, -stateAlgorithmBot[c, z])
             }
+    }
+
+    if (Globals.FIXED_OUTPUT_DECOMPOSITION != null) {
+        comment("(adhoc) Fixing output decomposition")
+        for (z in 1..Z) {
+            val m = Globals.FIXED_OUTPUT_DECOMPOSITION!![z - 1]
+            if (m != null) {
+                clause(moduleControllingOutputVariable[z] eq m)
+            }
+        }
     }
 }
 
@@ -429,6 +444,15 @@ internal fun Solver.declareAutomatonStructureConstraintsForInputs(
         }
     }
 
+    comment("Null-transitions have False guards")
+    for (c in 1..C)
+        for (k in 1..K)
+            for (u in Us)
+                imply(
+                    transitionDestination[c, k] eq 0,
+                    -transitionTruthTable[c, k, u]
+                )
+
     if (Globals.IS_ENCODE_DISJUNCTIVE_TRANSITIONS) {
         comment("Transitions are disjunctive (without priority function)")
         for (c in 1..C)
@@ -438,5 +462,50 @@ internal fun Solver.declareAutomatonStructureConstraintsForInputs(
                         for (k in 1..K)
                             yield(transitionFiring[c, k, e, u])
                     }
+    }
+
+    if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
+        val tree: ScenarioTree<*, *> = context["tree"]
+        val uniqueInputs: List<InputValues> = tree.uniqueInputs
+        val X: Int = context["X"]
+        val inputVariableUsed: BoolVarArray = context["inputVariableUsed"]
+        val inputVariableLiteral: BoolVarArray = context["inputVariableLiteral"]
+
+        comment("Conjunctive guard definition")
+        // (transitionDestination[c,k] != 0) => (tt[c,k,u] <=> AND_{x}(used[x] => (lit[c,k,x] <=> u[x])))
+        for (c in 1..C)
+            for (k in 1..K)
+                for (u in Us)
+                    implyIffAnd(
+                        transitionDestination[c, k] neq 0,
+                        transitionTruthTable[c, k, u]
+                    ) {
+                        for (x in 1..X) {
+                            val aux = newLiteral()
+                            iffImply(
+                                aux,
+                                inputVariableUsed[x],
+                                inputVariableLiteral[c, k, x] sign uniqueInputs[u - 1][x - 1]
+                            )
+                            yield(aux)
+                        }
+                    }
+
+        comment("ALO inputVariableUsed")
+        // ALO_{x}(used[x])
+        atLeastOne {
+            for (x in 1..X)
+                yield(inputVariableUsed[x])
+        }
+
+        comment("Fix free variables")
+        // (transitionDestination[c,k] = 0) => lit[c,k,x]
+        for (c in 1..C)
+            for (k in 1..K)
+                for (x in 1..X)
+                    imply(
+                        transitionDestination[c, k] eq 0,
+                        inputVariableLiteral[c, k, x]
+                    )
     }
 }

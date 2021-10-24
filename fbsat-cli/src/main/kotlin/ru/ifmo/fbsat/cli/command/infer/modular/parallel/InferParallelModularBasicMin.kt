@@ -11,6 +11,7 @@ import ru.ifmo.fbsat.cli.command.infer.options.INPUT_OUTPUT_OPTIONS
 import ru.ifmo.fbsat.cli.command.infer.options.SolverOptions
 import ru.ifmo.fbsat.cli.command.infer.options.getInitialOutputValuesOption
 import ru.ifmo.fbsat.cli.command.infer.options.inputNamesOption
+import ru.ifmo.fbsat.cli.command.infer.options.maxOutgoingTransitionsOption
 import ru.ifmo.fbsat.cli.command.infer.options.numberOfModulesOption
 import ru.ifmo.fbsat.cli.command.infer.options.numberOfStatesOption
 import ru.ifmo.fbsat.cli.command.infer.options.outDirOption
@@ -32,6 +33,7 @@ private class ParallelModularBasicMinInputOutputOptions : OptionGroup(INPUT_OUTP
 private class ParallelModularBasicMinAutomatonOptions : OptionGroup(AUTOMATON_OPTIONS) {
     val numberOfModules: Int by numberOfModulesOption().required()
     val numberOfStates: Int? by numberOfStatesOption()
+    val maxOutgoingTransitions: Int? by maxOutgoingTransitionsOption()
 }
 
 class InferParallelModularBasicMinCommand :
@@ -51,6 +53,7 @@ class InferParallelModularBasicMinCommand :
         inferrer.parallelModularBasicMin(
             scenarioTree = scenarioTree,
             numberOfModules = params.numberOfModules,
-            numberOfStates = params.numberOfStates
+            numberOfStates = params.numberOfStates,
+            maxOutgoingTransitionsForC = { params.maxOutgoingTransitions ?: it }
         )
 }

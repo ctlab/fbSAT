@@ -1,17 +1,21 @@
 package ru.ifmo.fbsat.core.task.single.basic
 
 import com.github.lipen.satlib.card.declareCardinality
+import com.github.lipen.satlib.core.BoolVarArray
 import com.github.lipen.satlib.core.IntVarArray
 import com.github.lipen.satlib.core.eq
 import com.github.lipen.satlib.core.neq
 import com.github.lipen.satlib.core.newBoolVarArray
 import com.github.lipen.satlib.core.newIntVar
 import com.github.lipen.satlib.core.newIntVarArray
+import com.github.lipen.satlib.op.iffAnd
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.scenario.initialOutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
-import ru.ifmo.fbsat.core.solver.literals
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 @Suppress("LocalVariableName")
 fun Solver.declareBasicVariables(
@@ -98,6 +102,14 @@ fun Solver.declareBasicVariables(
     val stateAlgorithmTop = context("stateAlgorithmTop") {
         newBoolVarArray(C, Z)
     }
+    if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
+        val inputVariableUsed = context("inputVariableUsed") {
+            newBoolVarArray(X)
+        }
+        val inputVariableLiteral = context("inputVariableLiteral") {
+            newBoolVarArray(C, K, X)
+        }
+    }
 
     /* Mapping variables */
     comment("Mapping variables")
@@ -105,8 +117,10 @@ fun Solver.declareBasicVariables(
         newIntVarArray(V) { 1..C }
     }
     if (Globals.IS_ENCODE_EVENTLESS) {
-        val active = context("active") {
-            newBoolVarArray(V)
+        if (!context.map.containsKey("active")) {
+            val active = context("active") {
+                newBoolVarArray(V)
+            }
         }
     }
 
@@ -119,19 +133,29 @@ fun Solver.declareBasicVariables(
                     yield(transitionDestination[c, k] neq 0)
         }
     }
-
-    if (Globals.IS_DUMP_VARS_IN_CNF) {
-        comment("actualTransitionFunction = ${actualTransitionFunction.literals}")
-        comment("transitionDestination = ${transitionDestination.literals}")
-        comment("transitionInputEvent = ${transitionInputEvent.literals}")
-        comment("transitionTruthTable = ${transitionTruthTable.literals}")
-        comment("transitionFiring = ${transitionFiring.literals}")
-        comment("firstFired = ${firstFired.literals}")
-        comment("notFired = ${notFired.literals}")
-        comment("stateOutputEvent = ${stateOutputEvent.literals}")
-        comment("stateAlgorithmBot = ${stateAlgorithmBot.literals}")
-        comment("stateAlgorithmTop = ${stateAlgorithmTop.literals}")
-        comment("mapping = ${mapping.literals}")
-        comment("totalizerT = ${cardinalityT.totalizer}")
+    if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
+        comment("Cardinality (T*A)")
+        val inputVariableUsed: BoolVarArray = context["inputVariableUsed"]
+        val cardinalityTA = context("cardinalityTA") {
+            val nVars = numberOfVariables
+            val nCons = numberOfClauses
+            declareCardinality {
+                for (c in 1..C)
+                    for (k in 1..K)
+                        for (x in 1..X) {
+                            val aux = newLiteral()
+                            iffAnd(
+                                aux,
+                                transitionDestination[c, k] neq 0,
+                                inputVariableUsed[x]
+                            )
+                            yield(aux)
+                        }
+            }.also {
+                val diffVars = numberOfVariables - nVars
+                val diffCons = numberOfClauses - nCons
+                logger.debug("Declared cardinalityTA: $diffVars vars and $diffCons clauses")
+            }
+        }
     }
 }

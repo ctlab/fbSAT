@@ -7,6 +7,8 @@ import ru.ifmo.fbsat.core.automaton.Automaton
 import ru.ifmo.fbsat.core.automaton.ConsecutiveModularAutomaton
 import ru.ifmo.fbsat.core.automaton.DistributedAutomaton
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
+import ru.ifmo.fbsat.core.automaton.getA
+import ru.ifmo.fbsat.core.automaton.getTA
 import ru.ifmo.fbsat.core.task.distributed.basic.inferDistributedBasic
 import ru.ifmo.fbsat.core.task.distributed.complete.inferDistributedComplete
 import ru.ifmo.fbsat.core.task.distributed.extended.inferDistributedExtended
@@ -111,6 +113,23 @@ fun Inferrer.optimizeN(
         useAssumptions = useAssumptions,
         infer = { inferExtended() },
         query = { it.totalGuardsSize }
+    )
+}
+
+@Suppress("FunctionName")
+fun Inferrer.optimizeTA(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): Automaton? {
+    logger.info("Optimizing T*A (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
+    val cardinality: Cardinality = solver.context["cardinalityTA"]
+    return cardinality.optimizeTopDown(
+        start = start,
+        end = end,
+        useAssumptions = useAssumptions,
+        infer = { inferBasic() },
+        query = { it.getTA()!! }
     )
 }
 
@@ -241,6 +260,42 @@ fun Inferrer.optimizeArbitraryModularN(
         useAssumptions = useAssumptions,
         infer = { inferArbitraryModularExtended() },
         query = { it.totalGuardsSize }
+    )
+}
+
+fun Inferrer.optimizeParallelModularA(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): ParallelModularAutomaton? {
+    logger.info("Optimizing A (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
+    val cardinality: Cardinality = solver.context["cardinalityA"]
+    return cardinality.optimizeTopDown(
+        start = start,
+        end = end,
+        useAssumptions = useAssumptions,
+        infer = { inferParallelModularBasic() },
+        query = { it.getA()!! }
+    )
+}
+
+fun Inferrer.optimizeParallelModularCKA(
+    start: Int? = null,
+    end: Int = 0,
+    useAssumptions: Boolean = Globals.IS_USE_ASSUMPTIONS,
+): ParallelModularAutomaton? {
+    logger.info("Optimizing C*K*A (${if (useAssumptions) "with" else "without"} assumptions) from $start to $end...")
+    val cardinality: Cardinality = solver.context["cardinalityCKA"]
+    return cardinality.optimizeTopDown(
+        start = start,
+        end = end,
+        useAssumptions = useAssumptions,
+        infer = { inferParallelModularBasic() },
+        query = {
+            it.modules.values.sumOf { module ->
+                module.numberOfTransitions * module.maxOutgoingTransitions * module.getA()!!
+            }
+        }
     )
 }
 
