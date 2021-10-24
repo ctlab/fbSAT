@@ -1,5 +1,6 @@
 package ru.ifmo.fbsat.core.task.modular.basic.parallel
 
+import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.satlib.card.declareCardinality
 import com.github.lipen.satlib.core.BoolVarArray
 import com.github.lipen.satlib.core.IntVarArray
@@ -43,12 +44,21 @@ fun Solver.declareParallelModularBasicVariables(
 
     /* Modular */
     declareModularContext(M)
-    forEachModularContext {
+    var active: IntMultiArray? = null
+    forEachModularContext { m ->
+        if (m != 1) {
+            logger.debug("Reusing active[v] for module m = $m")
+            context("active") { active!! }
+        }
         declareBasicVariables(
             positiveScenarioTree = scenarioTree,
             C = C, K = K,
             V = V, E = E, O = O, X = X, Z = Z, U = U
         )
+        if (m == 1) {
+            logger.debug("Saving active[v] from module m = $m")
+            active = context["active"]
+        }
     }
 
     /* Interface variables */
