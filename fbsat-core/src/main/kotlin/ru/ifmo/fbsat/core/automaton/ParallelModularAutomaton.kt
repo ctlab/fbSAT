@@ -30,7 +30,6 @@ import ru.ifmo.fbsat.core.utils.ModularContext
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.random
-import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.withIndex
 import ru.ifmo.fbsat.core.utils.writeEventMerger
 import java.io.File
