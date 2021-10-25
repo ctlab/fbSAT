@@ -30,6 +30,7 @@ import ru.ifmo.fbsat.core.utils.ModularContext
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.mutableListOfNulls
 import ru.ifmo.fbsat.core.utils.random
+import ru.ifmo.fbsat.core.utils.toBinaryString
 import ru.ifmo.fbsat.core.utils.withIndex
 import ru.ifmo.fbsat.core.utils.writeEventMerger
 import java.io.File
@@ -330,6 +331,11 @@ fun buildBasicParallelModularAutomaton(
     val scenarioTree: PositiveScenarioTree = context["scenarioTree"]
     val modularContext: ModularContext = context["modularContext"]
     val moduleControllingOutputVariable = context.convertIntVarArray("moduleControllingOutputVariable", model)
+
+    if (Globals.IS_ENCODE_EVENTLESS) {
+        val active = context.convertBoolVarArray("active", model)
+        logger.info("active = $active")
+    }
 
     val modules = modularContext.mapIndexed { (m), ctx ->
         val C: Int = ctx["C"]

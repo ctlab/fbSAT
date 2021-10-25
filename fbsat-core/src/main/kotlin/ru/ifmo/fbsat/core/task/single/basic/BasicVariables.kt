@@ -8,7 +8,7 @@ import com.github.lipen.satlib.core.neq
 import com.github.lipen.satlib.core.newBoolVarArray
 import com.github.lipen.satlib.core.newIntVar
 import com.github.lipen.satlib.core.newIntVarArray
-import com.github.lipen.satlib.op.iffAnd
+import com.github.lipen.satlib.op.*
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.scenario.initialOutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
@@ -118,6 +118,7 @@ fun Solver.declareBasicVariables(
     }
     if (Globals.IS_ENCODE_EVENTLESS) {
         if (!context.map.containsKey("active")) {
+            logger.debug("Declaring 'active'")
             val active = context("active") {
                 newBoolVarArray(V)
             }
