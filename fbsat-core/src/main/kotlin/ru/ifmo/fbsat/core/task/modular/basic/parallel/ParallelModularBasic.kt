@@ -101,7 +101,7 @@ fun Inferrer.inferParallelModularBasic(): ParallelModularAutomaton? {
     val model = solveAndGetModel() ?: return null
     val automaton = buildBasicParallelModularAutomaton(solver.context, model)
     val moduleControllingOutputVariable =
-    solver.context.convertIntVarArray("moduleControllingOutputVariable", model)
+        solver.context.convertIntVarArray("moduleControllingOutputVariable", model)
 
     logger.info("output-decomposition = " + moduleControllingOutputVariable)
 
@@ -113,7 +113,6 @@ fun Inferrer.inferParallelModularBasic(): ParallelModularAutomaton? {
             val Z: Int = ctx["Z"]
             val inputVariableUsed = ctx.convertBoolVarArray("inputVariableUsed", model)
             logger.info("$m: input-used = $inputVariableUsed")
-
 
             val sliceInput = (1..X).filter { x ->
                 inputVariableUsed[x]
