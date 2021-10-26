@@ -16,7 +16,6 @@ import com.github.lipen.satlib.op.iffImply
 import com.github.lipen.satlib.op.iffOr
 import com.github.lipen.satlib.op.imply
 import com.github.lipen.satlib.op.implyIff
-import com.github.lipen.satlib.op.implyImplyIffAnd
 import com.github.lipen.satlib.op.implyIffAnd
 import com.github.lipen.satlib.op.implyIffIte
 import com.github.lipen.satlib.op.implyImply
