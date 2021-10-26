@@ -240,7 +240,7 @@ fun Solver.declareEventlessPositiveMappingConstraints(
     }
 }
 
-fun Solver.declareEventlessPositiveParallelModularMappingConstraints(
+fun Solver.declarePositiveParallelModularEventlessMappingConstraints(
     isEncodeReverseImplication: Boolean,
 ) {
     comment("Eventless parallel modular positive mapping constraints")
