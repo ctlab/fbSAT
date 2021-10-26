@@ -137,14 +137,13 @@ fun ParameterHolder.getFixedOutputDecompositionOption() =
 fun ParameterHolder.getFixedActivityOption() =
     option(
         "--fixed-activity",
-        help = "[modular-parallel] Comma-separated values of activity of scenario tree elements"
+        help = "[modular-parallel] Comma-separated values (boolean) of activity of scenario tree elements"
     ).convert {
         require(it.isNotBlank()) { "string should not be blank" }
         it.split(",").map { s ->
-            s.trim().toBooleanStrictOrNull()
+            s.trim().toBoolean()
         }
     }
-
 
 fun ParameterHolder.isEncodeReverseImplicationOption() =
     option(
