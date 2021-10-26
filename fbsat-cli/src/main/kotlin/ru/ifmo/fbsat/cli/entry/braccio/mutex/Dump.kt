@@ -95,18 +95,6 @@ fun Automaton.toMutexControllerCppString(
         outStructLines += "${name.toEnumName()} $name;".myIndent()
     }
     outStructLines += "} out;"
-    """
-        struct Out {
-            AngleBase go_base;
-            AngleShoulder go_shoulder;
-            AngleElbow go_elbow;
-            AngleWristVer go_wrist_ver;
-            AngleWristRot go_wrist_rot;
-            AngleGripper go_gripper;
-            bool want_to_release;
-            bool want_to_acquire;
-        } out;
-    """.trimIndent().split("\n")
 
     val state2stringFunctionLines: MutableList<String> = mutableListOf()
     state2stringFunctionLines += "String state2string(State s) {"
