@@ -2,6 +2,7 @@ package ru.ifmo.fbsat.core.task.modular.basic.parallel
 
 import com.github.lipen.satlib.card.Cardinality
 import com.github.lipen.satlib.solver.Solver
+import ru.ifmo.fbsat.core.constraints.declareEventlessPositiveParallelModularMappingConstraints
 import ru.ifmo.fbsat.core.constraints.declareParallelModularAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareParallelModularAutomatonStructureConstraints
 import ru.ifmo.fbsat.core.constraints.declarePositiveParallelModularMappingConstraints
@@ -31,7 +32,11 @@ data class ParallelModularBasicTask(
         comment("$name: Constraints")
         declareParallelModularAutomatonStructureConstraints()
         if (Globals.IS_BFS_AUTOMATON) declareParallelModularAutomatonBfsConstraints()
-        declarePositiveParallelModularMappingConstraints(isEncodeReverseImplication)
+        if (Globals.IS_ENCODE_EVENTLESS) {
+            declareEventlessPositiveParallelModularMappingConstraints(isEncodeReverseImplication)
+        } else {
+            declarePositiveParallelModularMappingConstraints(isEncodeReverseImplication)
+        }
 
         /* Initial cardinality constraints */
         comment("$name: Initial cardinality (T) constraints")

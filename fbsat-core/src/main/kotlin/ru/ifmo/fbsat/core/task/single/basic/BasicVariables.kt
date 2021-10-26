@@ -118,7 +118,6 @@ fun Solver.declareBasicVariables(
     }
     if (Globals.IS_ENCODE_EVENTLESS) {
         if (!context.map.containsKey("active")) {
-            logger.debug("Declaring 'active'")
             val active = context("active") {
                 newBoolVarArray(V)
             }

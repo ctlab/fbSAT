@@ -9,9 +9,11 @@ import com.github.lipen.satlib.op.iffOr
 import com.github.lipen.satlib.op.imply
 import com.github.lipen.satlib.op.implyIff
 import com.github.lipen.satlib.op.implyImplyIff
+import com.github.lipen.satlib.op.implyImplyImply
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.solver.clause
+import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.solver.imply2
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.algorithmChoice
@@ -235,5 +237,176 @@ fun Solver.declareEventlessPositiveMappingConstraints(
                 // Adhoc: other way around!
                 imply(rhsAux, lhsAux)
             }
+    }
+}
+
+fun Solver.declareEventlessPositiveParallelModularMappingConstraints(
+    isEncodeReverseImplication: Boolean,
+) {
+    comment("Eventless parallel modular positive mapping constraints")
+    // Note: yet we only consider the SYNC-ALL mapping semantics
+    val moduleControllingOutputVariable: IntVarArray = context["moduleControllingOutputVariable"]
+
+    forEachModularContext { m ->
+        val tree: ScenarioTree<*, *> = context["tree"]
+        val V: Int = context["V"]
+        val C: Int = context["C"]
+        val K: Int = context["K"]
+        val Z: Int = context["Z"]
+        val stateOutputEvent: IntVarArray = context["stateOutputEvent"]
+        val stateAlgorithmTop: BoolVarArray = context["stateAlgorithmTop"]
+        val stateAlgorithmBot: BoolVarArray = context["stateAlgorithmBot"]
+        val actualTransitionFunction: IntVarArray = context["actualTransitionFunction"]
+        val transitionDestination: IntVarArray = context["transitionDestination"]
+        val mapping: IntVarArray = context["mapping"]
+        val active: BoolVarArray = context["active"]
+
+        comment("Root maps to the first state")
+        clause(mapping[1] eq 1)
+
+        comment("Root is passive")
+        clause(-active[1])
+
+        comment("Mapping constraints")
+        for (v in 2..V) {
+            val p = tree.parent(v)
+            val e = tree.inputEvent(v)
+            val u = tree.inputNumber(v)
+            val o = tree.outputEvent(v)
+
+            // If any output value changed, then the node is definitely active
+            if ((1..Z).any { z -> tree.outputValue(v, z) != tree.outputValue(p, z) }) {
+                clause(active[v])
+            }
+
+            if (Globals.IS_ENCODE_EPSILON_PASSIVE) {
+                // If output event is epsilon, then the node is definitely passive
+                if (o == 0) {
+                    clause(-active[v])
+                }
+            }
+
+            if (Globals.IS_ENCODE_NOT_EPSILON_ACTIVE) {
+                // If output event is not epsilon, then the node is definitely active
+                if (o != 0) {
+                    clause(active[v])
+                }
+            }
+
+            if (Globals.IS_ENCODE_TRANSITION_FUNCTION) {
+                val transitionFunction: IntVarArray = context["transitionFunction"]
+
+                comment("Positive mapping/transitionFunction definition for v = $v")
+                // (mapping[p] = q) => ((mapping[v] = q') <=> (transitionFunction[q,e,u] = q'))
+                for (i in 1..C)
+                    for (j in 1..C)
+                        implyIff(
+                            mapping[p] eq i,
+                            mapping[v] eq j,
+                            transitionFunction[i, e, u] eq j
+                        )
+            }
+
+            comment("Positive active-mapping definition for v = $v")
+            // active[v] =>
+            //  (mapping[v] = c) <=> (actualTransition[mapping[tp(v)],tie(v),tin(v)] = c)
+            for (i in 1..C)
+                for (j in 1..C)
+                    implyImplyIff(
+                        active[v],
+                        mapping[p] eq i,
+                        mapping[v] eq j,
+                        actualTransitionFunction[i, e, u] eq j
+                    )
+            // active[v] =>
+            //  (mapping[v] = c) => (stateOutputEvent[c] = toe(v))
+            for (c in 1..C)
+                imply2(
+                    active[v],
+                    mapping[v] eq c,
+                    stateOutputEvent[c] eq o
+                )
+            // active[v] =>
+            //  (mapping[v] = c) => AND_{z}(moduleControllingOutputVariable[z]=m) => (stateAlgorithm{tov(tp(v),z)}[c,z] = tov(v,z)))
+            // Note: here we use `moduleControllingOutputVariable`, because we are inside parallel-modular reduction
+            for (c in 1..C)
+                for (z in 1..Z)
+                    implyImplyImply(
+                        active[v],
+                        mapping[v] eq c,
+                        moduleControllingOutputVariable[z] eq m,
+                        algorithmChoice(
+                            tree = tree,
+                            v = v, c = c, z = z,
+                            algorithmTop = stateAlgorithmTop,
+                            algorithmBot = stateAlgorithmBot
+                        )
+                    )
+
+            comment("REVERSE actualTransitionFunction/active")
+            // (mapping[p] = q) & (actualTransitionFunction[q,e,u] != 0) => active[v]
+            for (c in 1..C)
+                imply2(
+                    mapping[p] eq c,
+                    actualTransitionFunction[c, e, u] neq 0,
+                    active[v]
+                )
+
+            comment("Positive passive-mapping definition for v = $v")
+            // ~active[v] =>
+            //  mapping[v] = mapping[tp(v)]
+            for (c in 1..C)
+                imply2(
+                    -active[v],
+                    mapping[p] eq c,
+                    mapping[v] eq c
+                )
+            // ~active[v] =>
+            //  (mapping[tp(v)] = c) => (actualTransition[c,tie(v),tin(v)] = 0)
+            for (c in 1..C)
+                imply2(
+                    -active[v],
+                    mapping[p] eq c,
+                    actualTransitionFunction[c, e, u] eq 0
+                )
+
+            comment("REVERSE actualTransitionFunction/passive")
+            // (mapping[p] = q) & (actualTransitionFunction[q,e,u] = 0) => ~active[v]
+            for (c in 1..C)
+                imply2(
+                    mapping[p] eq c,
+                    actualTransitionFunction[c, e, u] eq 0,
+                    -active[v]
+                )
+        }
+
+        if (isEncodeReverseImplication) {
+            comment("Mysterious reverse-implication")
+            // OR_k(transitionDestination[i,k,j]) => OR_{v}( mapping[p]=i & mapping[v]=j & active[v] )
+            for (i in 1..C)
+                for (j in 1..C) {
+                    val lhsAux = newLiteral()
+                    iffOr(lhsAux) {
+                        for (k in 1..K)
+                            yield(transitionDestination[i, k] eq j)
+                    }
+
+                    // val rhsAux = newLiteral()
+                    val rhsAux = lhsAux // Note: when encoding `<=>` it is better to just use the same literal
+                    iffOr(rhsAux) {
+                        for (v in 2..V) {
+                            val p = tree.parent(v)
+                            val aux = newLiteral()
+                            iffAnd(aux, mapping[p] eq i, mapping[v] eq j, active[v])
+                            yield(aux)
+                        }
+                    }
+
+                    // imply(lhsAux, rhsAux)
+                    //
+                    // // Adhoc: other way around!
+                    // imply(rhsAux, lhsAux)
+                }
+        }
     }
 }
