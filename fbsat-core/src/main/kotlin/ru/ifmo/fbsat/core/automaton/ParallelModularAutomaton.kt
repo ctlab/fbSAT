@@ -19,6 +19,7 @@ import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
+import ru.ifmo.fbsat.core.scenario.outputValues
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
@@ -108,10 +109,18 @@ class ParallelModularAutomaton(
             check(result.values.mapNotNull { it.outputAction.event }.all { it == outputEvent })
             val outputValues = gather(MultiArray.new(M) { (m) -> result[m].outputAction.values })
 
-            if (OutputAction(outputEvent, outputValues) == element.outputAction) {
-                results[j] = result
+            if (Globals.IS_ENCODE_EVENTLESS) {
+                if (outputValues == element.outputValues) {
+                    results[j] = result
+                } else {
+                    break
+                }
             } else {
-                break
+                if (OutputAction(outputEvent, outputValues) == element.outputAction) {
+                    results[j] = result
+                } else {
+                    break
+                }
             }
 
             for (m in 1..M) {
