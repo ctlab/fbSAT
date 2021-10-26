@@ -16,6 +16,7 @@ import com.github.lipen.satlib.op.iffImply
 import com.github.lipen.satlib.op.iffOr
 import com.github.lipen.satlib.op.imply
 import com.github.lipen.satlib.op.implyIff
+import com.github.lipen.satlib.op.implyImplyIffAnd
 import com.github.lipen.satlib.op.implyIffAnd
 import com.github.lipen.satlib.op.implyIffIte
 import com.github.lipen.satlib.op.implyImply
@@ -303,32 +304,34 @@ fun Solver.declarePositiveParallelModularMappingConstraints(
                         -active[v]
                     )
 
-                // comment("Parallel modular mapping definition for active node v = $v, module m = $m")
+                 comment("Parallel modular mapping definition for active node v = $v, module m = $m")
                 // (mapping[v]=c) <=> (actualTransition[mapping[tp(v)],tie(v),tin(v)]=c) & (stateOutputEvent[c]=toe(v)) & AND_{z}( (moduleControllingOutputVariable[z]=m) => (stateAlgorithm{tov(tp(v),z)}(c,z) = tov(v,z)) )
-                // for (i in 1..C)
-                //     for (j in 1..C)
-                //         implyIffAnd(
-                //             mapping[p] eq i,
-                //             mapping[v] eq j
-                //         ) {
-                //             yield(actualTransitionFunction[i, e, u] eq j)
-                //             yield(stateOutputEvent[j] eq o)
-                //             for (z in 1..Z)
-                //                 yield(
-                //                     newLiteral().also { aux ->
-                //                         iffImply(
-                //                             aux,
-                //                             moduleControllingOutputVariable[z] eq m,
-                //                             algorithmChoice(
-                //                                 tree = tree,
-                //                                 v = v, c = j, z = z,
-                //                                 algorithmTop = stateAlgorithmTop,
-                //                                 algorithmBot = stateAlgorithmBot
-                //                             )
-                //                         )
-                //                     }
-                //                 )
-                //         }
+/*                 for (i in 1..C)
+                     for (j in 1..C)
+                         implyImplyIffAnd(
+		             active[v],
+                             mapping[p] eq i,
+                             mapping[v] eq j
+                         ) {
+                             yield(actualTransitionFunction[i, e, u] eq j)
+                             yield(stateOutputEvent[j] eq o)
+                             for (z in 1..Z)
+                                 yield(
+                                     newLiteral().also { aux ->
+                                         iffImply(
+                                             aux,
+                                             moduleControllingOutputVariable[z] eq m,
+                                             algorithmChoice(
+                                                 tree = tree,
+                                                 v = v, c = j, z = z,
+                                                 algorithmTop = stateAlgorithmTop,
+                                                 algorithmBot = stateAlgorithmBot
+                                             )
+                                         )
+                                     }
+                                 )
+                         }
+			 */
             }
 
             if (isEncodeReverseImplication) {

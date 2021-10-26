@@ -19,6 +19,7 @@ import ru.ifmo.fbsat.core.scenario.OutputAction
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.OutputValues
 import ru.ifmo.fbsat.core.scenario.Scenario
+import ru.ifmo.fbsat.core.scenario.outputValues
 import ru.ifmo.fbsat.core.scenario.positive.OldPositiveScenarioTree
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
@@ -60,6 +61,7 @@ class ParallelModularAutomaton(
     val numberOfStates: Int = modules.values.sumOf { it.numberOfStates }
     val numberOfTransitions: Int = modules.values.sumOf { it.numberOfTransitions }
     val totalGuardsSize: Int = modules.values.sumOf { it.totalGuardsSize }
+//    val numberOfActiveVertices = sumOf {it.active}
 
     init {
         require(modules.values.all { it.inputEvents == inputEvents })
@@ -108,11 +110,19 @@ class ParallelModularAutomaton(
             check(result.values.mapNotNull { it.outputAction.event }.all { it == outputEvent })
             val outputValues = gather(MultiArray.new(M) { (m) -> result[m].outputAction.values })
 
-            if (OutputAction(outputEvent, outputValues) == element.outputAction) {
-                results[j] = result
-            } else {
-                break
-            }
+	    if (!Globals.IS_ENCODE_EVENTLESS) {
+		if (OutputAction(outputEvent, outputValues) == element.outputAction) {
+		    results[j] = result
+		} else {
+		    break
+		}
+	    } else {
+		if (outputValues == element.outputValues) {
+		    results[j] = result
+		} else {
+	            break
+		}
+	    }
 
             for (m in 1..M) {
                 currentState[m] = result[m].destination
@@ -331,10 +341,10 @@ fun buildBasicParallelModularAutomaton(
     val modularContext: ModularContext = context["modularContext"]
     val moduleControllingOutputVariable = context.convertIntVarArray("moduleControllingOutputVariable", model)
 
-    // if (Globals.IS_ENCODE_EVENTLESS) {
-    //     val active = context.convertBoolVarArray("active", model)
-    //     logger.info("active = $active")
-    // }
+    if (Globals.IS_ENCODE_EVENTLESS) {
+        val active = context.convertBoolVarArray("active", model)
+        logger.info("active = $active")
+    }
 
     val modules = modularContext.mapIndexed { (m), ctx ->
         val C: Int = ctx["C"]
