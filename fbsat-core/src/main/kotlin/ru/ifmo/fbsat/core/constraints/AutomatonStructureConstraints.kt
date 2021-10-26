@@ -55,6 +55,7 @@ fun Solver.declareNegativeAutomatonStructureConstraints(Us: Iterable<Int>) {
 
 fun Solver.declareParallelModularAutomatonStructureConstraints() {
     comment("Parallel modular automaton structure constraints")
+    val V: Int = context["V"]
     val M: Int = context["M"]
     val Z: Int = context["Z"]
     val moduleControllingOutputVariable: IntVarArray = context["moduleControllingOutputVariable"]
@@ -101,6 +102,31 @@ fun Solver.declareParallelModularAutomatonStructureConstraints() {
             }
         }
     }
+
+    forEachModularContext { m ->
+        comment("Parallel modular automaton structure constraints: for module m = $m")
+    }
+
+    if (Globals.FIXED_ACTIVITY != null) {
+        comment("(adhoc) Fixing scenario tree node activity")
+        val activeValues: List<Boolean?> = Globals.FIXED_ACTIVITY!!
+
+	forEachModularContext { m ->
+ 	    comment("Parallel modular automaton structure constraints: for module m = $m")
+	    val active: BoolVarArray = context["active"]
+	    for (v in 1..V) { 
+		if (activeValues[v - 1] == null) {
+		    continue
+                }
+		if (activeValues[v - 1]!!) {
+	            clause(active[v])
+                } else {
+	            clause(-active[v])
+	        }
+            }
+	}
+    }
+
 }
 
 fun Solver.declareConsecutiveModularAutomatonStructureConstraints() {

@@ -100,16 +100,20 @@ fun Inferrer.parallelModularBasicMin(
 fun Inferrer.inferParallelModularBasic(): ParallelModularAutomaton? {
     val model = solveAndGetModel() ?: return null
     val automaton = buildBasicParallelModularAutomaton(solver.context, model)
+    val moduleControllingOutputVariable =
+    solver.context.convertIntVarArray("moduleControllingOutputVariable", model)
+
+    logger.info("output-decomposition = " + moduleControllingOutputVariable)
 
     if (Globals.IS_ENCODE_CONJUNCTIVE_GUARDS) {
         val modularContext: ModularContext = solver.context["modularContext"]
-        val moduleControllingOutputVariable =
-            solver.context.convertIntVarArray("moduleControllingOutputVariable", model)
         modularContext.forEachIndexed { (m), ctx ->
             val scenarioTree: PositiveScenarioTree = ctx["scenarioTree"]
             val X: Int = ctx["X"]
             val Z: Int = ctx["Z"]
             val inputVariableUsed = ctx.convertBoolVarArray("inputVariableUsed", model)
+            logger.info("$m: input-used = $inputVariableUsed")
+
 
             val sliceInput = (1..X).filter { x ->
                 inputVariableUsed[x]

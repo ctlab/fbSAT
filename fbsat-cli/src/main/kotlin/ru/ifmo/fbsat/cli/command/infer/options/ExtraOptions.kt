@@ -25,6 +25,7 @@ class ExtraOptions : OptionGroup(EXTRA_OPTIONS) {
     val epsilonOutputEvents: EpsilonOutputEvents by getEpsilonOutputEventsOption()
     val startStateAlgorithms: StartStateAlgorithms by getStartStateAlgorithmsOption()
     val fixedOutputDecomposition: List<Int?>? by getFixedOutputDecompositionOption()
+    val fixedActivity: List<Boolean?>? by getFixedActivityOption()
     val isEncodeReverseImplication: Boolean by isEncodeReverseImplicationOption()
     val isEncodeTransitionsOrder: Boolean by isEncodeTransitionsOrderOption()
     val isEncodeTerminalsOrder: Boolean by isEncodeTerminalsOrderOption()
@@ -129,9 +130,21 @@ fun ParameterHolder.getFixedOutputDecompositionOption() =
     ).convert {
         require(it.isNotBlank()) { "string should not be blank" }
         it.split(",").map { s ->
-            s.trim().toIntOrNull()
+            s.trim().toInt()
         }
     }
+
+fun ParameterHolder.getFixedActivityOption() =
+    option(
+        "--fixed-activity",
+        help = "[modular-parallel] Comma-separated values of activity of scenario tree elements"
+    ).convert {
+        require(it.isNotBlank()) { "string should not be blank" }
+        it.split(",").map { s ->
+            s.trim().toBooleanStrictOrNull()
+        }
+    }
+
 
 fun ParameterHolder.isEncodeReverseImplicationOption() =
     option(

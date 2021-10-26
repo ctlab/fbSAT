@@ -16,6 +16,7 @@ object Globals {
     var EPSILON_OUTPUT_EVENTS: EpsilonOutputEvents = EpsilonOutputEvents.ONLYSTART
     var START_STATE_ALGORITHMS: StartStateAlgorithms = StartStateAlgorithms.ZERO
     var FIXED_OUTPUT_DECOMPOSITION: List<Int?>? = null
+    var FIXED_ACTIVITY: List<Boolean?>? = null
     var IS_FORBID_OR: Boolean = false
     var IS_FORBID_TRANSITIONS_TO_FIRST_STATE: Boolean = true
     var IS_BFS_AUTOMATON: Boolean = true

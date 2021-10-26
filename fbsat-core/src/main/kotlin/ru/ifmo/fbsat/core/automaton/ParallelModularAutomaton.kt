@@ -61,6 +61,7 @@ class ParallelModularAutomaton(
     val numberOfStates: Int = modules.values.sumOf { it.numberOfStates }
     val numberOfTransitions: Int = modules.values.sumOf { it.numberOfTransitions }
     val totalGuardsSize: Int = modules.values.sumOf { it.totalGuardsSize }
+//    val numberOfActiveVertices = sumOf {it.active}
 
     init {
         require(modules.values.all { it.inputEvents == inputEvents })
@@ -340,10 +341,10 @@ fun buildBasicParallelModularAutomaton(
     val modularContext: ModularContext = context["modularContext"]
     val moduleControllingOutputVariable = context.convertIntVarArray("moduleControllingOutputVariable", model)
 
-    // if (Globals.IS_ENCODE_EVENTLESS) {
-    //     val active = context.convertBoolVarArray("active", model)
-    //     logger.info("active = $active")
-    // }
+    if (Globals.IS_ENCODE_EVENTLESS) {
+        val active = context.convertBoolVarArray("active", model)
+        logger.info("active = $active")
+    }
 
     val modules = modularContext.mapIndexed { (m), ctx ->
         val C: Int = ctx["C"]

@@ -25,6 +25,7 @@ abstract class AbstractInferCommand<AutomatonType : Any>(name: String) : CliktCo
             Globals.EPSILON_OUTPUT_EVENTS = epsilonOutputEvents
             Globals.START_STATE_ALGORITHMS = startStateAlgorithms
             Globals.FIXED_OUTPUT_DECOMPOSITION = fixedOutputDecomposition
+            Globals.FIXED_ACTIVITY = fixedActivity
             Globals.IS_FORBID_OR = isForbidOr
             Globals.IS_FORBID_TRANSITIONS_TO_FIRST_STATE = isForbidTransitionsToFirstState
             Globals.IS_BFS_AUTOMATON = isBfsAutomaton
