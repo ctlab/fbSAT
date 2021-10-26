@@ -6,6 +6,7 @@ import com.github.lipen.satlib.card.Cardinality
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.constraints.declareDistributedAutomatonBfsConstraints
 import ru.ifmo.fbsat.core.constraints.declareDistributedAutomatonStructureConstraints
+import ru.ifmo.fbsat.core.constraints.declareDistributedPositiveEventlessMappingConstraints_compound
 import ru.ifmo.fbsat.core.constraints.declareDistributedPositiveMappingConstraints_compound
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.forEachModularContext
@@ -48,8 +49,12 @@ data class DistributedBasicTask(
         comment("$name: Constraints")
         declareDistributedAutomatonStructureConstraints()
         if (Globals.IS_BFS_AUTOMATON) declareDistributedAutomatonBfsConstraints()
-        // declareDistributedPositiveMappingConstraints_modular(vars, modularIsEncodeReverseImplication)
-        declareDistributedPositiveMappingConstraints_compound(modularIsEncodeReverseImplication)
+        if (Globals.IS_ENCODE_EVENTLESS) {
+            declareDistributedPositiveEventlessMappingConstraints_compound(modularIsEncodeReverseImplication)
+        } else {
+            // declareDistributedPositiveMappingConstraints_modular(vars, modularIsEncodeReverseImplication)
+            declareDistributedPositiveMappingConstraints_compound(modularIsEncodeReverseImplication)
+        }
         // declareDistributedBasicAdhocConstraints()
 
         /* Initial cardinality constraints */
