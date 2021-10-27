@@ -175,11 +175,13 @@ fun main() {
 
         val hppFile = outDir.resolve("generated_Controller${controllerIndex}.hpp")
         hppFile.ensureParentExists().sink().buffer().useWith {
-            writeln(automaton.toCargoControllerCppString(
-                controllerName = "ControllerX${controllerIndex}",
-                outputNamesBoolean = outputNamesBoolean,
-                outputNamesIntWithDomain = outputNamesIntWithDomain
-            ))
+            writeln(
+                automaton.toCargoControllerCppString(
+                    controllerName = "ControllerX${controllerIndex}",
+                    outputNamesBoolean = outputNamesBoolean,
+                    outputNamesIntWithDomain = outputNamesIntWithDomain
+                )
+            )
         }
 
         if (automaton.verify(scenarioTree))
