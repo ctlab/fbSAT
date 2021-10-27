@@ -154,7 +154,7 @@ fun main() {
     val automaton: Automaton? = inferrer.extendedMin(
         scenarioTree,
         numberOfStates = 25, // ? is SAT
-        maxOutgoingTransitionsForC = { C -> if (C < 5) null else 2 },
+        maxOutgoingTransitionsForC = { C -> if (C < 5) null else 3 },
         maxGuardSize = 5,
     )
 
