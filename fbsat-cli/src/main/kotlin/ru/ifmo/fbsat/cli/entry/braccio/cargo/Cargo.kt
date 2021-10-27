@@ -80,10 +80,10 @@ fun main() {
 
     val logDir = "data/braccio/cargo/logs"
     val logFiles = listOf(
-        // "$logDir/serial_proc_i2c_but1_proc1.log",
-        // "$logDir/serial_proc_i2c_but2_proc2.log",
-        // "$logDir/serial_proc_i2c_but12_proc12.log",
-        // "$logDir/serial_proc_i2c_but12_proc12_loop1.log",
+        "$logDir/serial_proc_i2c_but1_proc1.log",
+        "$logDir/serial_proc_i2c_but2_proc2.log",
+        "$logDir/serial_proc_i2c_but12_proc12.log",
+        "$logDir/serial_proc_i2c_but12_proc12_loop1.log",
         "$logDir/serial_proc_i2c_but1_but1_but2_but2.log",
     )
     val scenarios = logFiles.map { logFile ->
