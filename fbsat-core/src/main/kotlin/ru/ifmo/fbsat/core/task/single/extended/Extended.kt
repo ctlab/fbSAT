@@ -66,11 +66,16 @@ fun Inferrer.extended(
 fun Inferrer.extendedMin(
     scenarioTree: PositiveScenarioTree,
     numberOfStates: Int? = null, // C_start
+    maxOutgoingTransitionsForC: (Int) -> Int? = { null }, // lambda for computing K for C (input arg)
     maxGuardSize: Int, // P
 ): Automaton? {
     val timeStart = PerformanceCounter.reference
     val automaton = run {
-        basicMinC(scenarioTree, start = numberOfStates ?: 1) ?: return@run null
+        basicMinC(
+            scenarioTree,
+            start = numberOfStates ?: 1,
+            maxOutgoingTransitionsForC = maxOutgoingTransitionsForC,
+        ) ?: return@run null
         if (Globals.IS_ENCODE_EVENTLESS) {
             if (Globals.IS_FIX_ACTIVE) {
                 logger.info("Fixing found active[v] values")

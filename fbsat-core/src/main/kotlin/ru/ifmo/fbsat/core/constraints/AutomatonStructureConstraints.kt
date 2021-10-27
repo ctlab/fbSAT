@@ -16,7 +16,6 @@ import com.github.lipen.satlib.op.implyAnd
 import com.github.lipen.satlib.op.implyOr
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.scenario.OutputValues
-import ru.ifmo.fbsat.core.scenario.ScenarioElement
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.autoneg
 import ru.ifmo.fbsat.core.solver.clause
@@ -247,36 +246,29 @@ internal fun Solver.declareAutomatonStructureConstraintsInputless() {
 
     run {
         val scenarioTree: PositiveScenarioTree = context["tree"]
-        val V: Int = context["V"]
-
-        val anglesBase = listOf(0, 90, 120)
-        val anglesShoulder = listOf(65, 80, 100, 115, 140)
-        val anglesElbow = listOf(0, 180)
-        val anglesWristVer = listOf(10, 15, 165, 170)
-        val anglesWristRot = listOf(0, 90)
-        val anglesGripper = listOf(15, 73)
-        val outputNamesIntWithDomains = listOf(
-            "base" to anglesBase,
-            "shoulder" to anglesShoulder,
-            "elbow" to anglesElbow,
-            "wrist_ver" to anglesWristVer,
-            "wrist_rot" to anglesWristRot,
-            "gripper" to anglesGripper,
-        )
+        val outputNamesIntWithDomain: List<Pair<String, List<Int>>> = context["outputNamesIntWithDomain"]
 
         comment("Ad-hoc domain algorithms")
         for (c in 2..C) {
-            for ((name, domain) in outputNamesIntWithDomains) {
+            for ((name, domain) in outputNamesIntWithDomain) {
                 atMostOne {
                     for (v in domain) {
                         val z = scenarioTree.outputNames.indexOf("${name}_$v") + 1
+                        if (z == 0) {
+                            logger.error("Output variable '${name}_$v' not found")
+                        }
                         yield(stateAlgorithmBot[c, z])
                     }
                 }
-                atMostOne {
-                    for (v in domain) {
-                        val z = scenarioTree.outputNames.indexOf("${name}_$v") + 1
-                        yield(stateAlgorithmTop[c, z])
+                if (!Globals.IS_ENCODE_CONST_ALGORITHMS ) {
+                    atMostOne {
+                        for (v in domain) {
+                            val z = scenarioTree.outputNames.indexOf("${name}_$v") + 1
+                            if (z == 0) {
+                                logger.error("Output variable '${name}_$v' not found")
+                            }
+                            yield(stateAlgorithmTop[c, z])
+                        }
                     }
                 }
             }

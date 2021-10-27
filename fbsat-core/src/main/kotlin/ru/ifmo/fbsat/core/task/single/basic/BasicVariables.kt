@@ -12,6 +12,9 @@ import ru.ifmo.fbsat.core.scenario.initialOutputValues
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.literals
 import ru.ifmo.fbsat.core.utils.Globals
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 @Suppress("LocalVariableName")
 fun Solver.declareBasicVariables(
@@ -38,6 +41,15 @@ fun Solver.declareBasicVariables(
     context["Z"] = Z
     context["U"] = U
     context["initialOutputValues"] = positiveScenarioTree.initialOutputValues
+
+    logger.debug("C = $C")
+    logger.debug("K = $K")
+    logger.debug("V = $V")
+    logger.debug("E = $E")
+    logger.debug("O = $O")
+    logger.debug("X = $X")
+    logger.debug("Z = $Z")
+    logger.debug("U = $U")
 
     /* Core variables */
     comment("Core variables")

@@ -52,7 +52,8 @@ fun Inferrer.basic(
 fun Inferrer.basicMinC(
     scenarioTree: PositiveScenarioTree,
     start: Int = 1, // C_start
-    end: Int = 20, // C_end
+    end: Int = 50, // C_end
+    maxOutgoingTransitionsForC: (Int) -> Int? = { null }, // lambda for computing K for C (input arg)
     isEncodeReverseImplication: Boolean = true,
 ): Automaton? {
     var best: Automaton? = null
@@ -61,6 +62,7 @@ fun Inferrer.basicMinC(
             basic(
                 scenarioTree = scenarioTree,
                 numberOfStates = C,
+                maxOutgoingTransitions = maxOutgoingTransitionsForC(C),
                 isEncodeReverseImplication = isEncodeReverseImplication
             )
         }
@@ -90,7 +92,8 @@ fun Inferrer.basicMinC(
 fun Inferrer.basicMin(
     scenarioTree: PositiveScenarioTree,
     start: Int = 1, // C_start
-    end: Int = 20, // C_end
+    end: Int = 50, // C_end
+    maxOutgoingTransitionsForC: (Int) -> Int? = { null }, // lambda for computing K for C (input arg)
     isEncodeReverseImplication: Boolean = true,
 ): Automaton? {
     val timeStart = PerformanceCounter.reference
@@ -99,6 +102,7 @@ fun Inferrer.basicMin(
             scenarioTree = scenarioTree,
             start = start,
             end = end,
+            maxOutgoingTransitionsForC = maxOutgoingTransitionsForC,
             isEncodeReverseImplication = isEncodeReverseImplication
         ) ?: return@run null
         optimizeT()

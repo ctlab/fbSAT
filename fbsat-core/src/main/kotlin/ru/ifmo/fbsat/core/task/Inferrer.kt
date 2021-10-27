@@ -18,6 +18,7 @@ class Inferrer(
     val outDir: File = File("out"),
     val timeout: Long? = null, // milliseconds
     val timeStart: TimeSpan = PerformanceCounter.reference,
+    var onReset: () -> Unit = {},
 ) {
     // TODO: inline the function call
     private val timeoutLeft: Long?
@@ -33,6 +34,7 @@ class Inferrer(
     fun reset() {
         logger.debug { "Resetting solver..." }
         solver.reset()
+        onReset()
     }
 
     fun declare(task: Task) {
