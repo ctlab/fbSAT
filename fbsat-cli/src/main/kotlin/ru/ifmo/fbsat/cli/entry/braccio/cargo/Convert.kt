@@ -16,6 +16,8 @@ fun main() {
     val inputNames: List<String> = listOf(
         "want_cargo_on_Z1",
         "want_cargo_on_Z2",
+        "cargo_on_Z1",
+        "cargo_on_Z2",
         // "is_done_m1",
         // "is_done_m2",
         // "is_done_m3",
