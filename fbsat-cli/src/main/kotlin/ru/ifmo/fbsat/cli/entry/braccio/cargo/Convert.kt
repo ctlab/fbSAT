@@ -2,18 +2,22 @@ package ru.ifmo.fbsat.cli.entry.braccio.cargo
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import okio.buffer
+import okio.sink
 import ru.ifmo.fbsat.core.scenario.InputEvent
 import ru.ifmo.fbsat.core.scenario.OutputEvent
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.ensureParentExists
+import ru.ifmo.fbsat.core.utils.useWith
+import ru.ifmo.fbsat.core.utils.writeln
 import java.io.File
 
 private val logger = MyLogger {}
 
 fun main() {
     val controllerIndex = 1
-    val inputNames: List<String> = listOf(
+    val inputNames: List<String> = if (controllerIndex == 1) listOf(
         "want_cargo_on_Z1",
         "want_cargo_on_Z2",
         "cargo_on_Z1",
@@ -25,12 +29,24 @@ fun main() {
         // "is_done_m5",
         // "is_done_m6",
         "is_done_all",
-    )
+    ) else if (controllerIndex == 2) listOf(
+        "cargo_is_processed_Z1",
+        "cargo_is_processed_Z2",
+        "is_done_all",
+    ) else error("!")
     val outputNamesBoolean: List<String> = listOf()
     val anglesBase = listOf(0, 60, 90, 120, 180)
-    val anglesShoulder = listOf(65, 80, 90, 115, 140)
+    val anglesShoulder = if (controllerIndex == 1)
+        listOf(65, 80, 90, 115, 140)
+    else if (controllerIndex == 2)
+        listOf(65, 90, 100, 115, 140)
+    else error("!")
     val anglesElbow = listOf(0, 180)
-    val anglesWristVer = listOf(10, 15, 160, 165, 170)
+    val anglesWristVer = if (controllerIndex == 1)
+        listOf(10, 15, 160, 165, 170)
+    else if (controllerIndex == 2)
+        listOf(10, 15, 165)
+    else error("!")
     val anglesWristRot = listOf(0, 90)
     val anglesGripper = listOf(15, 73)
     val outputNamesIntWithDomain = listOf(
@@ -101,6 +117,17 @@ fun main() {
     val fileAllScenarios = outDir.resolve("all-scenarios-X$controllerIndex.json")
     logger.info("Serializing all scenario for X$controllerIndex to '$fileAllScenarios'")
     fileAllScenarios.ensureParentExists().writeText(json.encodeToString(scenarios))
+
+    outDir.resolve("input-names-X$controllerIndex").ensureParentExists().sink().buffer().useWith {
+        for (name in inputNames) {
+            writeln(name)
+        }
+    }
+    outDir.resolve("output-names-X$controllerIndex").ensureParentExists().sink().buffer().useWith {
+        for (name in outputNames) {
+            writeln(name)
+        }
+    }
 
     logger.info("All done!")
 }
