@@ -251,7 +251,7 @@ fun main() {
     // )
     val automaton: Automaton? = inferrer.extendedMin(
         scenarioTree,
-        numberOfStates = 13, // 13 is SAT
+        // numberOfStates = 13, // 13 is SAT
         maxGuardSize = 5
     )
 
