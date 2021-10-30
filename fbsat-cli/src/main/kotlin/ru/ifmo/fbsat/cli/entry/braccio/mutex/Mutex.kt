@@ -230,7 +230,10 @@ fun main() {
     Globals.IS_ENCODE_EVENTLESS = true
     Globals.IS_ENCODE_CONST_ALGORITHMS = true
 
-    inferrer.solver.context["elementData"] = elementData
+    inferrer.onReset = {
+        solver.context["outputNamesIntWithDomain"] = outputNamesIntWithDomain
+        solver.context["elementData"] = elementData
+    }
 
     // infer
     // val automaton: Automaton? = inferrer.basic(
