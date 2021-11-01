@@ -259,7 +259,7 @@ class Automaton(
 
     // TODO: Rewrite all `eval` methods to use EvalState
     data class EvalState(
-        val state: Automaton.State,
+        val state: State,
         val outputValues: OutputValues,
     ) {
         fun eval(inputAction: InputAction): EvalResult {
