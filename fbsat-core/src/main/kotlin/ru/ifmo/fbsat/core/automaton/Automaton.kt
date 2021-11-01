@@ -115,7 +115,7 @@ class Automaton(
     )
 
     fun getState(id: Int): State {
-        return _states[id]!!
+        return _states.getValue(id)
     }
 
     fun addState(id: Int, outputEvent: OutputEvent?, algorithm: Algorithm) {
