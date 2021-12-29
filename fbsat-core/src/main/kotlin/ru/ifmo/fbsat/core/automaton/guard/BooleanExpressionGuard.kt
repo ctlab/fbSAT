@@ -12,7 +12,7 @@ import ru.ifmo.fbsat.core.utils.boolexpr.Variable
 import ru.ifmo.fbsat.core.utils.serializers.BooleanExpressionGuardSerializer
 
 @Serializable(with = BooleanExpressionGuardSerializer::class)
-class BooleanExpressionGuard(
+data class BooleanExpressionGuard(
     val expr: BooleanExpression,
 ) : Guard {
     override val size: Int = expr.size()

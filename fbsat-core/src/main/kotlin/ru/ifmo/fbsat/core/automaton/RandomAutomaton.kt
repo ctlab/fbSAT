@@ -83,21 +83,43 @@ fun newRandomAutomaton(
 fun Automaton.randomWalk(random: Random = Random): Sequence<Automaton.EvalResult> {
     val inputActions = sequence {
         while (true) {
-            yield(
-                InputAction(
-                    event = inputEvents.random(random),
-                    values = InputValues(randomBinaryString(inputNames.size, random = random))
-                )
+            val action = InputAction(
+                event = inputEvents.random(random),
+                values = InputValues(randomBinaryString(inputNames.size, random = random))
             )
+            yield(action)
         }
     }
-    // for ((inputAction, evalResult) in inputActions.zip(eval(inputActions))) {
-    //     yield(ScenarioElement(inputAction, evalResult.outputAction))
-    // }
     return eval(inputActions)
 }
 
 fun Automaton.generateRandomScenario(length: Int, random: Random = Random): PositiveScenario {
+    // logger.debug { "Generating random scenario of length $length..." }
+    val elements = randomWalk(random)
+        .take(length)
+        .map {
+            ScenarioElement(
+                inputAction = it.inputAction,
+                outputAction = it.outputAction
+            )
+        }
+    return PositiveScenario(elements.toList())
+}
+
+fun ArbitraryModularAutomaton.randomWalk(random: Random = Random): Sequence<ArbitraryModularAutomaton.EvalResult> {
+    val inputActions = sequence {
+        while (true) {
+            val action = InputAction(
+                event = inputEvents.random(random),
+                values = InputValues(randomBinaryString(inputNames.size, random = random))
+            )
+            yield(action)
+        }
+    }
+    return eval(inputActions)
+}
+
+fun ArbitraryModularAutomaton.generateRandomScenario(length: Int, random: Random = Random): PositiveScenario {
     // logger.debug { "Generating random scenario of length $length..." }
     val elements = randomWalk(random)
         .take(length)

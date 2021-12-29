@@ -40,7 +40,7 @@ fun String.toBooleanList(): List<Boolean> {
 }
 
 fun BooleanArray.toBinaryString(): String {
-    return joinToString("") { if (it) "1" else "0" }
+    return asIterable().toBinaryString()
 }
 
 fun Iterable<Boolean>.toBinaryString(): String {

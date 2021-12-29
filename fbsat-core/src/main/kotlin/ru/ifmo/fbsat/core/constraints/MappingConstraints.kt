@@ -70,7 +70,7 @@ fun Solver.declarePositiveMappingConstraints(
         val mapping: IntVarArray = context["mapping"]
 
         comment("Mysterious reverse-implication")
-        // OR_k(transitionDestination[i,k,j]) => OR_{v|active}( mapping[tp(v),i] & mapping[v,j] )
+        // OR_k(transitionDestination[i,k,j]) <=> OR_{v|active}( mapping[tp(v),i] & mapping[v,j] )
         for (i in 1..C)
             for (j in 1..C) {
                 val lhsAux = newLiteral()
@@ -79,7 +79,8 @@ fun Solver.declarePositiveMappingConstraints(
                         yield(transitionDestination[i, k] eq j)
                 }
 
-                val rhsAux = newLiteral()
+                // val rhsAux = newLiteral()
+                val rhsAux = lhsAux // Note: when encoding `<=>` it is better to just use the same literal
                 iffOr(rhsAux) {
                     for (v in scenarioTree.activeVertices) {
                         val p = scenarioTree.parent(v)
@@ -89,10 +90,9 @@ fun Solver.declarePositiveMappingConstraints(
                     }
                 }
 
-                imply(lhsAux, rhsAux)
-
-                // Adhoc: other way around!
-                imply(rhsAux, lhsAux)
+                // imply(lhsAux, rhsAux)
+                // // Adhoc: other way around!
+                // imply(rhsAux, lhsAux)
             }
     }
 }

@@ -25,12 +25,16 @@ interface Guard {
     fun toSmvString(): String
 }
 
+fun allInputValues(n: Int): Sequence<InputValues> =
+    (0 until 2.pow(n)).asSequence().map { i ->
+        InputValues(i.toString(2).padStart(n, '0'))
+    }
+
 fun Guard.truthTableString(inputNames: List<String>): String =
-    (0 until 2.pow(inputNames.size)).map { i ->
-        val input = InputValues(i.toString(2).padStart(inputNames.size, '0'))
+    allInputValues(inputNames.size).map { input ->
         if (this is TruthTableGuard) {
             this.truthTable[input]
         } else {
             eval(input)
         }
-    }.toBinaryString()
+    }.asIterable().toBinaryString()

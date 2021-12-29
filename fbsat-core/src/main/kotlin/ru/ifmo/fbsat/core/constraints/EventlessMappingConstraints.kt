@@ -1,14 +1,18 @@
 package ru.ifmo.fbsat.core.constraints
 
+import com.github.lipen.multiarray.MultiArray
 import com.github.lipen.satlib.core.BoolVarArray
 import com.github.lipen.satlib.core.IntVarArray
+import com.github.lipen.satlib.core.Lit
 import com.github.lipen.satlib.core.eq
 import com.github.lipen.satlib.core.neq
+import com.github.lipen.satlib.core.newBoolVarArray
 import com.github.lipen.satlib.op.iffAnd
 import com.github.lipen.satlib.op.iffOr
 import com.github.lipen.satlib.op.imply
 import com.github.lipen.satlib.op.implyIff
 import com.github.lipen.satlib.op.implyImplyIff
+import com.github.lipen.satlib.op.implyOr
 import com.github.lipen.satlib.solver.Solver
 import ru.ifmo.fbsat.core.scenario.ScenarioTree
 import ru.ifmo.fbsat.core.solver.clause
@@ -211,7 +215,7 @@ fun Solver.declareEventlessPositiveMappingConstraints(
 
     if (isEncodeReverseImplication) {
         comment("Mysterious reverse-implication")
-        // OR_k(transitionDestination[i,k,j]) => OR_{v}( mapping[p]=i & mapping[v]=j & active[v] )
+        // OR_k(transitionDestination[i,k,j]) <=> OR_{v}( mapping[p]=i & mapping[v]=j & active[v] )
         for (i in 1..C)
             for (j in 1..C) {
                 val lhsAux = newLiteral()
@@ -220,7 +224,8 @@ fun Solver.declareEventlessPositiveMappingConstraints(
                         yield(transitionDestination[i, k] eq j)
                 }
 
-                val rhsAux = newLiteral()
+                // val rhsAux = newLiteral()
+                val rhsAux = lhsAux // Note: when encoding `<=>` it is better to just use the same literal
                 iffOr(rhsAux) {
                     for (v in 2..V) {
                         val p = tree.parent(v)
@@ -230,10 +235,9 @@ fun Solver.declareEventlessPositiveMappingConstraints(
                     }
                 }
 
-                imply(lhsAux, rhsAux)
-
-                // Adhoc: other way around!
-                imply(rhsAux, lhsAux)
+                // imply(lhsAux, rhsAux)
+                // // Adhoc: other way around!
+                // imply(rhsAux, lhsAux)
             }
     }
 }

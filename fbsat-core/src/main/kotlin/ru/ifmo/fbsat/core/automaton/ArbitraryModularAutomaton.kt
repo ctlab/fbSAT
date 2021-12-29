@@ -114,13 +114,14 @@ class ArbitraryModularAutomaton(
             var currentOutputValues = initialOutputValues
 
             return inputActions.map { inputAction ->
+                // update external outbound var (input var) pins
                 for (x in 1..X) {
                     val pin = externalOutboundVarPins[x - 1]
                     currentOutboundVarPinComputedValue[pin] = inputAction.values[x - 1]
                 }
 
                 for (m in 1..M) {
-                    // update inbound pins
+                    // update modular inbound pins
                     for (pin in modularInboundVarPins[m]) {
                         val parent = inboundVarPinParent[pin]
                         if (parent != 0) {
@@ -138,8 +139,7 @@ class ArbitraryModularAutomaton(
                     val moduleInputValues = InputValues(
                         modularInboundVarPins[m].map { currentInboundVarPinComputedValue[it] }
                     )
-                    val moduleInputAction =
-                        InputAction(moduleInputEvent, moduleInputValues)
+                    val moduleInputAction = InputAction(moduleInputEvent, moduleInputValues)
                     val result = modules[m].eval(
                         inputAction = moduleInputAction,
                         state = currentModularState[m],
@@ -152,14 +152,16 @@ class ArbitraryModularAutomaton(
                     currentModularOutputEvent[m] = result.outputAction.event
                     currentModularOutputValues[m] = result.outputAction.values
 
-                    // update outbound pins
+                    // update modular outbound pins
                     for (z in 1..Z) {
-                        val pin = modularOutboundVarPins[m][z - 1]
-                        currentOutboundVarPinComputedValue[pin] = currentModularOutputValues[m][z - 1]
+                        if (z <= modules[m].outputNames.size) {
+                            val pin = modularOutboundVarPins[m][z - 1]
+                            currentOutboundVarPinComputedValue[pin] = currentModularOutputValues[m][z - 1]
+                        }
                     }
                 }
 
-                // update external inbound var pins
+                // update external inbound var (output var) pins
                 for (pin in externalInboundVarPins) {
                     val parent = inboundVarPinParent[pin]
                     if (parent != 0) {
@@ -171,17 +173,18 @@ class ArbitraryModularAutomaton(
                 val outputEvent = currentModularOutputEvent[M]
 
                 // merge output values (composite)
-                if (outputEvent != null)
+                if (outputEvent != null) {
                     currentOutputValues = OutputValues(
                         externalInboundVarPins.map { currentInboundVarPinComputedValue[it] }
                     )
+                }
 
                 EvalResult(
-                    inputAction,
-                    OutputAction(outputEvent, currentOutputValues),
-                    currentModularInputAction.map { it },
-                    currentModularState.map { it },
-                    MultiArray.new(M) { (m) ->
+                    inputAction = inputAction,
+                    outputAction = OutputAction(outputEvent, currentOutputValues),
+                    modularInputAction = currentModularInputAction.map { it },
+                    modularDestination = currentModularState.map { it },
+                    modularOutputAction = MultiArray.new(M) { (m) ->
                         OutputAction(
                             currentModularOutputEvent[m],
                             currentModularOutputValues[m]

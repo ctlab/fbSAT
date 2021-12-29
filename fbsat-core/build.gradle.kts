@@ -14,6 +14,7 @@ dependencies {
     implementation(Libs.LazyCache.lazycache)
     implementation(Libs.Klock.klock_jvm)
     implementation(Libs.Satlib.satlib_core)
+    // implementation(Libs.SatlibSonatypeSnapshot.satlib_core)
     implementation(Libs.KotlinxSerialization.serialization_json)
     implementation(Libs.XmlUtil.xmlutil_jvm)
     implementation(Libs.XmlUtil.xmlutil_serialization_jvm)

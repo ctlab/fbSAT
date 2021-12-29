@@ -1,6 +1,6 @@
 @file:Suppress("DuplicatedCode")
 
-package ru.ifmo.fbsat.core.task.extra.schema
+package ru.ifmo.fbsat.core.task.extra.schema.stateless
 
 import com.github.lipen.multiarray.IntMultiArray
 import com.github.lipen.multiarray.MultiArray
@@ -9,6 +9,7 @@ import com.github.lipen.satlib.core.IntVarArray
 import com.github.lipen.satlib.core.Model
 import com.github.lipen.satlib.core.convert
 import com.github.lipen.satlib.core.eq
+import com.github.lipen.satlib.core.neq
 import com.github.lipen.satlib.core.newBoolVarArray
 import com.github.lipen.satlib.core.newDomainVarArray
 import com.github.lipen.satlib.core.newIntVarArray
@@ -32,6 +33,7 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenario
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.clause
 import ru.ifmo.fbsat.core.solver.solveAndGetModel
+import ru.ifmo.fbsat.core.task.extra.schema.toTruthTable
 import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 import ru.ifmo.fbsat.core.utils.timeSince
@@ -312,6 +314,25 @@ fun synthesizeStatelessSchema(
         //     clause(-externalOutputVarValue[z, 1])
         // }
 
+        comment("ADHOCs")
+        comment("All pins are used")
+        for (m in 1..M)
+            for (v in 1..V) {
+                clause(modularInputVarParent[m, 1] neq 0)
+                // imply(
+                //     blockType[m] eq SchemaBlockType.AND,
+                //     modularInputVarParent[m, 1] neq 0
+                // )
+                // imply(
+                //     blockType[m] eq SchemaBlockType.OR,
+                //     modularInputVarParent[m, 1] neq 0
+                // )
+                // imply(
+                //     blockType[m] eq SchemaBlockType.NOT,
+                //     modularInputVarParent[m, 1] neq 0
+                // )
+            }
+
         val nClausesDiff = numberOfClauses - nClausesStart
         logger.debug {
             "Done declaring $nClausesDiff constraints (total $numberOfClauses) in %.2f s."
@@ -450,7 +471,7 @@ fun synthesizeStatelessSchemaIterativelyBottomUp(
 private fun main() {
     val timeStart = PerformanceCounter.reference
 
-    val X = 5
+    val X = 3
     val Z = 1
 
     Globals.IS_DEBUG = true
@@ -489,24 +510,30 @@ private fun main() {
     // )
     // val es = tt.map { elem(it) }
 
-    val tt = "00000000000000000000000010110110"
+    // val tt = "00000000000000000000000010110110"
+    // val tt = "01010111" // (A and B) or C
+    // val tt = "00001001" // case 1
+    val tt = "01111100" // case 2
     val es = tt.toTruthTable(X = X).map { (input, output) ->
         elem(InputValues(input.values), OutputValues(listOf(output)))
     }
 
     val elements = es
-    tree.addScenario(PositiveScenario(elements))
-    tree.addScenario(PositiveScenario(es.shuffled()))
-    tree.addScenario(PositiveScenario(es.shuffled()))
-
-    val M = 10
-    if (synthesizeStatelessSchema(tree, M = M, X = X, Z = Z)) {
-        logger.info("M = $M: SAT")
-    } else {
-        logger.info("M = $M: UNSAT")
+    // tree.addScenario(PositiveScenario(elements))
+    // tree.addScenario(PositiveScenario(es.shuffled()))
+    // tree.addScenario(PositiveScenario(es.shuffled()))
+    for (e in es) {
+        tree.addScenario(PositiveScenario(listOf(e)))
     }
 
-    // synthesizeIterativeBottomUp(tree, X = X, Z = Z, maxM = 12)
+    // val M = 10
+    // if (synthesizeStatelessSchema(tree, M = M, X = X, Z = Z)) {
+    //     logger.info("M = $M: SAT")
+    // } else {
+    //     logger.info("M = $M: UNSAT")
+    // }
+
+    synthesizeStatelessSchemaIterativelyBottomUp(tree, X = X, Z = Z, maxM = 12)
 
     logger.info("All done in %.3f s.".format(timeSince(timeStart).seconds))
 }
