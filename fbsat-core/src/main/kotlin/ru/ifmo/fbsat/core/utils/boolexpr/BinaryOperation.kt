@@ -30,12 +30,12 @@ data class BinaryOperation(
     }
 }
 
-fun BooleanExpression.and(other: BooleanExpression): BinaryOperation {
+infix fun BooleanExpression.and(other: BooleanExpression): BinaryOperation {
     return BinaryOperation(BinaryOperation.Kind.And, this, other)
     // return BooleanExpression.and(this, other)
 }
 
-fun BooleanExpression.or(other: BooleanExpression): BinaryOperation {
+infix fun BooleanExpression.or(other: BooleanExpression): BinaryOperation {
     return BinaryOperation(BinaryOperation.Kind.Or, this, other)
     // return BooleanExpression.or(this, other)
 }

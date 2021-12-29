@@ -1,7 +1,5 @@
 package ru.ifmo.fbsat.core.task.extra.schema.stateless
 
-
-
 private var iSchemaBlockType = 0
 
 enum class SchemaBlockType(val value: Int) {

@@ -1,7 +1,5 @@
 package ru.ifmo.fbsat.core.task.extra.schema.stateful
 
-
-
 private var iSystemBlockType = 0
 
 enum class SystemBlockType(

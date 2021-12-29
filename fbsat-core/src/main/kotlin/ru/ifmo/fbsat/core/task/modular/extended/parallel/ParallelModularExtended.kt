@@ -3,10 +3,14 @@ package ru.ifmo.fbsat.core.task.modular.extended.parallel
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
 import ru.ifmo.fbsat.core.automaton.buildExtendedParallelModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.convertIntVarArray
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.ParallelModularBasicTask
 import ru.ifmo.fbsat.core.task.modular.basic.parallel.parallelModularBasicMinC
 import ru.ifmo.fbsat.core.task.optimizeParallelModularN
+import ru.ifmo.fbsat.core.utils.MyLogger
+
+private val logger = MyLogger {}
 
 fun Inferrer.parallelModularExtended(
     scenarioTree: PositiveScenarioTree,
@@ -52,6 +56,10 @@ fun Inferrer.parallelModularExtendedMin(
 fun Inferrer.inferParallelModularExtended(): ParallelModularAutomaton? {
     val model = solveAndGetModel() ?: return null
     val automaton = buildExtendedParallelModularAutomaton(solver.context, model)
+
+    val moduleControllingOutputVariable =
+        solver.context.convertIntVarArray("moduleControllingOutputVariable", model)
+    logger.info("output-decomposition = $moduleControllingOutputVariable")
 
     // TODO: check automaton
     // log.warn("Mapping check is not implemented yet")

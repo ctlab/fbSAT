@@ -4,6 +4,7 @@ import com.soywiz.klock.measureTimeWithResult
 import ru.ifmo.fbsat.core.automaton.ParallelModularAutomaton
 import ru.ifmo.fbsat.core.automaton.buildBasicParallelModularAutomaton
 import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
+import ru.ifmo.fbsat.core.solver.convertIntVarArray
 import ru.ifmo.fbsat.core.task.Inferrer
 import ru.ifmo.fbsat.core.task.optimizeParallelModularT
 import ru.ifmo.fbsat.core.utils.MyLogger
@@ -71,6 +72,10 @@ fun Inferrer.parallelModularBasicMin(
 fun Inferrer.inferParallelModularBasic(): ParallelModularAutomaton? {
     val model = solveAndGetModel() ?: return null
     val automaton = buildBasicParallelModularAutomaton(solver.context, model)
+
+    val moduleControllingOutputVariable =
+        solver.context.convertIntVarArray("moduleControllingOutputVariable", model)
+    logger.info("output-decomposition = $moduleControllingOutputVariable")
 
     // TODO: check automaton
     // log.warn("Mapping check is not implemented yet")

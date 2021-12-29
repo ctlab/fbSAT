@@ -10,6 +10,7 @@ import ru.ifmo.fbsat.core.scenario.positive.PositiveScenarioTree
 import ru.ifmo.fbsat.core.solver.declareModularContext
 import ru.ifmo.fbsat.core.solver.forEachModularContext
 import ru.ifmo.fbsat.core.task.single.basic.declareBasicVariables
+import ru.ifmo.fbsat.core.utils.Globals
 import ru.ifmo.fbsat.core.utils.MyLogger
 
 private val logger = MyLogger {}
@@ -44,18 +45,28 @@ fun Solver.declareParallelModularBasicVariables(
     declareModularContext(M)
     var active: IntMultiArray? = null
     forEachModularContext { m ->
-        if (m != 1) {
-            logger.debug("Reusing active[v] for module m = $m")
-            context("active") { active!! }
+        if (Globals.IS_ENCODE_EVENTLESS) {
+            if (m != 1) {
+                logger.debug("Reusing active[v] for module m = $m")
+                context("active") { active!! }
+            }
         }
         declareBasicVariables(
             positiveScenarioTree = scenarioTree,
             C = C, K = K,
             V = V, E = E, O = O, X = X, Z = Z, U = U
         )
-        if (m == 1) {
-            logger.debug("Saving active[v] from module m = $m")
-            active = context["active"]
+        if (Globals.IS_ENCODE_EVENTLESS) {
+            if (m == 1) {
+                logger.debug("Saving active[v] from module m = $m")
+                active = context["active"]
+            }
+        }
+    }
+
+    if (!Globals.IS_ENCODE_EVENTLESS) {
+        check(active == null) {
+            "'active' should be null if --no-encode-eventless"
         }
     }
 
