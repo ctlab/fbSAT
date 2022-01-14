@@ -80,6 +80,10 @@ data class AutomatonBlock(
     override val numberOfOutputs: Int = automaton.outputNames.size
     override val numberOfStates: Int = automaton.numberOfStates
 
+    override fun toString(): String {
+        return name
+    }
+
     companion object {
         val CNT = AutomatonBlock("CNT", counterAutomaton)
     }
