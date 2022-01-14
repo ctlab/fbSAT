@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("plugin.serialization")
+    id(Plugins.Shadow.id)
 }
 
 dependencies {
@@ -34,4 +35,14 @@ tasks.withType<Test> {
         TestLogEvent.SKIPPED,
         TestLogEvent.STANDARD_ERROR
     )
+}
+
+tasks.shadowJar {
+    archiveBaseName.set(rootProject.name)
+    archiveClassifier.set("")
+    archiveVersion.set("")
+    minimize {
+        exclude(dependency("org.jetbrains.kotlin:kotlin-reflect"))
+        exclude(dependency(Libs.Log4j.log4j_core))
+    }
 }
